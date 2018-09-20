@@ -19,22 +19,44 @@ from smv.error import SmvRuntimeError
 smv_label = "smvLabel"
 smv_desc = "smvDesc"
 
+def getMetaDesc(m):
+    return m.get(smv_desc, u'')
+
 class SchemaMetaOps(object):
     def __init__(self, df):
         self.df = df
 
     def getDesc(self, colName):
+        if colName is None:
+            return [(col.name, getMetaDesc(col.metadata)) for col in self.df.schema.fields]
         try:
             meta = (col.metadata for col in self.df.schema.fields if col.name == colName).next()
         except:
             raise SmvRuntimeError("column name {} not found".format(colName))
 
-        return meta.get(smv_desc, u'')
+        return getMetaDesc(meta)
 
     def addDesc(self, *colDescs):
-        if not colDescs: raise SmvRuntimeError("must provide description argument")
-        colDict = dict(colDescs)
+        if not colDescs: raise SmvRuntimeError("must provide (name, description) pair to add")
+
+        # convert list [(name, desc), ...] to a dictionary {name: desc, ...}
+        addDict = dict(colDescs)
+
         for col in self.df.schema.fields:
-            if colDict.has_key(col.name):
-                col.metadata[smv_desc] = colDict[col.name]
+            if addDict.has_key(col.name):
+                col.metadata[smv_desc] = addDict[col.name]
+
         return self.df
+
+    def smvRemoveDesc(self, *colNames):
+        removeAll = not bool(colNames)
+
+        # convert list [name, ...] to a dictionary {name: True, ...}
+        if not removeAll: removeDict = {name: True for name in colNames}
+
+        for col in self.df.schema.fields:
+            if removeAll or removeDict.has_key(col.name):
+                col.metadata.pop(smv_desc, None)
+
+        return self.df
+        

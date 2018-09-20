@@ -1101,10 +1101,7 @@ class DataFrameHelper(object):
             Returns:
                 (list(tuple)): a list of (colName, description) pairs for all columns
         """
-        if (colName is not None):
-            return self._jSchemaMetaOps.getDesc(colName)
-        else:
-            return [(c, self._jSchemaMetaOps.getDesc(c)) for c in self.df.columns]
+        return self._jSchemaMetaOps.getDesc(colName)
 
     def smvRemoveDesc(self, *colNames):
         """Removes description for the given columns from the Dataframe
@@ -1118,8 +1115,7 @@ class DataFrameHelper(object):
             Returns:
                 (DataFrame): the DataFrame with column descriptions removed
         """
-        jdf = self._jPythonHelper.smvRemoveDesc(self._jdf, smv_copy_array(self._sc, *colNames))
-        return DataFrame(jdf, self._sql_ctx)
+        return self._jSchemaMetaOps.smvRemoveDesc(*colNames)
 
     #############################################
     # DfHelpers which print to STDOUT
