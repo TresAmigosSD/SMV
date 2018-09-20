@@ -1066,8 +1066,7 @@ class DataFrameHelper(object):
             Returns:
                 (DataFrame): the DataFrame with column descriptions added
         """
-        jdf = self._jPythonHelper.smvDesc(self._jdf, smv_copy_array(self._sc, *colDescs))
-        return DataFrame(jdf, self._sql_ctx)
+        return self._jSchemaMetaOps.addDesc(*colDescs)
 
     def smvDescFromDF(self, descDF):
         """Adds column descriptions
