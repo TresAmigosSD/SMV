@@ -70,7 +70,7 @@ package org.tresamigos.smv {
 
 package org.tresamigos.smv.needstoruntest {
   import org.tresamigos.smv._
-  object In1 extends SmvCsvFile("should/not/matter/what/file")
+  object In1 extends SmvCsvStringData("a:String", "Should not mater")
 
   abstract class BaseModule(desc: String) extends SmvModule(desc) {
     override def requiresDS = Seq.empty[SmvDataSet]

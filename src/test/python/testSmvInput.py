@@ -84,6 +84,19 @@ class SmvInputTest(SmvBaseTest):
   "type": "struct"
 }""")
 
+    def _create_csv_file(self, name):
+        self.createTempInputFile(name,
+            """"Name","ID"
+Bob,1
+Fred,2"""
+        )
+
+    def _create_csv_schema(self, name):
+        self.createTempInputFile(name,
+        """name:string
+id:integer"""
+        )
+
     def _schema_json_str(self, schema):
         import json
         sch_str = json.dumps(schema.jsonValue(), indent=2, separators=(',', ': '), sort_keys=True)
@@ -147,3 +160,26 @@ class SmvInputTest(SmvBaseTest):
         expected = self.tmpInputDir() + "/xmltest/f1.schema"
         self.assertEqual(spath, expected)
 
+    def test_SmvCsvFile_run_method(self):
+        fqn = "stage.modules.Csv1"
+        self._create_csv_file('csvtest/csv1.csv')
+        self._create_csv_schema('csvtest/csv1.schema')
+        res = self.df(fqn)
+        expected = self.createDF(
+            "name:String;id:Integer;name_id:String",
+            """Bob,1,Bob1;
+            Fred,2,Fred2"""
+        )
+        self.should_be_same(res, expected)
+            
+    def test_SmvCsvFile_with_userSchema(self):
+        fqn = "stage.modules.Csv2"
+        self._create_csv_file('csvtest/csv1.csv')
+        self._create_csv_schema('csvtest/csv1.schema')
+        res = self.df(fqn)
+        expected = self.createDF(
+            "eman:String;di:Integer",
+            """Bob,1;
+            Fred,2"""
+        )
+        self.should_be_same(res, expected)

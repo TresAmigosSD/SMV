@@ -2,16 +2,10 @@
 smv.appName = Example App
 
 # stage definitions
-smv.stages = integration.test.test1, \
-             integration.test.test2, \
-             integration.test.test3, \
-             integration.test.test3_1, \
+smv.stages = integration.test.test2, \
              integration.test.test4, \
              integration.test.test4_1, \
              integration.test.test5, \
-             integration.test.test6, \
-             integration.test.test7, \
-             integration.test.test7_1, \
              integration.test.test8, \
              integration.test.test8_1, \
              integration.test.hashtest

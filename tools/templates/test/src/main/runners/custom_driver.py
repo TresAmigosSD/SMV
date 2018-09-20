@@ -12,7 +12,7 @@ class CustomDriver(SmvDriver):
         assert config_value == expected_value, \
             "Expected config value for {} to be {} but got {}".format(config_key, config_value, expected_value) 
         # verify that smvApp constructed by SmvDriver can run a module
-        smvApp.runModuleByName("integration.test.test3.M2")
+        smvApp.runModuleByName("integration.test.test4.modules.M2")
 
 if __name__ == "__main__":
     CustomDriver().run()

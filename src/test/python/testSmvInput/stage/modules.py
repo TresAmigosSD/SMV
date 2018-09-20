@@ -12,6 +12,8 @@
 # limitations under the License.
 
 from smv import *
+from smv.functions import smvStrCat
+import pyspark.sql.functions as F
 
 
 class Xml1(SmvXmlFile):
@@ -41,3 +43,21 @@ class IFF1(SmvInputFromFile):
         return "xmltest/f1.xml.gz"
     def readAsDF(self):
         pass
+
+class Csv1(SmvCsvFile):
+    def path(self):
+        return "csvtest/csv1.csv"
+    def csvAttr(self):
+        return CsvAttributes(",", '"', True)
+    def run(self, df):
+        return df.withColumn("name_id",
+            smvStrCat(F.col("name"), F.col("id"))
+        )
+
+class Csv2(SmvCsvFile):
+    def path(self):
+        return "csvtest/csv1.csv"
+    def csvAttr(self):
+        return CsvAttributes(",", '"', True)
+    def userSchema(self):
+        return "eman:String;di:integer"
