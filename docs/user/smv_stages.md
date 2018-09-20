@@ -12,7 +12,6 @@ By convention, each stage should have an `inputdata.py` module where all the inp
 
 ## Raw input files
 Raw input files (e.g. CSV files) should be defined as `Smv*File` instances in the input package.  For example:
-
 ```python
 # In src/main/python/stage1/inputdata.py
 class Employment(smv.SmvCsvFile):
@@ -25,6 +24,7 @@ See [SmvModule](smv_module.md) for details on how to specify dependent files.
 ## Linking to modules across stages
 
 If a module in stage Y depends on a module in stage X, user can either
+
 1. Refer to the dependent module directly
 
 ### Python
