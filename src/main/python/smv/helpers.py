@@ -1171,7 +1171,7 @@ class DataFrameHelper(object):
         """
         return self.SchemaMetaOps.addLabel(labels, colNames)
 
-    def smvRemoveLabel(self, labels, colNames = None):
+    def smvRemoveLabel(self, labels = None, colNames = None):
         """Removes labels from the specified columns
 
             For multiple colNames, the same set of labels will be removed from all of them.
@@ -1188,7 +1188,7 @@ class DataFrameHelper(object):
 
             Example:
                 >>> df.smvRemoveLabel(["tag_1"], ["col_a"])
-                >>> df.smvRemoveLabel([])
+                >>> df.smvRemoveLabel()
 
             Returns:
                 (DataFrame): the DataFrame with specified labels removed from the specified columns

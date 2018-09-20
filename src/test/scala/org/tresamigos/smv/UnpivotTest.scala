@@ -29,17 +29,6 @@ class UnpivotTest extends SmvTestUtil {
        2,X,D;2,Y,E;2,Z,F""")
   }
 
-  test("unpivot with column description") {
-    val df = dfFrom("id:String; X:String; Y:String; Z:String", """1,A,B,C; 2,D,E,F""").smvDesc(
-      "X" -> "Desc of X")
-
-    val res = df.smvUnpivot("X", "Y")
-    assertSrddSchemaEqual(res, "id:String; Z:String; column:String; value:String")
-    assertSrddDataEqual(res, """1,C,X,A;1,C,Y,B;
-       2,F,X,D;2,F,Y,E""")
-
-  }
-
   test("multi-column unpivot should be the inverse of pivot") {
     val df = dfFrom("id:String;A_1:String;A_2:String;B_1:String;B_2:String",
                     "1,1a1,1a2,1b1,1b2;2,2a1,2a2,2b1,2b2")

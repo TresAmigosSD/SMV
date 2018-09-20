@@ -6,28 +6,12 @@ class SmvLabelTest extends SmvTestUtil {
     dfFrom("variables:String;decriptions:String",
            "id,This is an ID field;name,This is a name field;sex,This is a sex filed")
 
-  test("labeling a column should not affect other columns") {
-    val labeled = fixture.smvLabel("name")("white")
-    labeled.smvGetLabels("name") shouldBe Seq("white")
-    labeled.smvGetLabels("sex") shouldBe Seq.empty
-
-    intercept[IllegalArgumentException] {
-      labeled.smvGetLabels("does not exist")
-    }
-  }
-
-  test("labeling columns should not alter the data in the data frame") {
-    val df      = fixture
-    val labeled = df.smvLabel("name")("white")
-    assertDataFramesEqual(df, labeled)
-  }
-
-  test("labeling a column should preserve previous meta data on the column") {
-    val df1     = fixture
-    val df2     = df1.smvSelectPlus(df1("id") + 1 as "id1").smvDesc("id1" -> "id plus 1")
-    val labeled = df2.smvLabel("id1")("purple")
-    labeled.smvGetDesc() shouldBe Seq("id" -> "", "name" -> "", "sex" -> "", "id1" -> "id plus 1")
-  }
+  // test("labeling a column should preserve previous meta data on the column") {
+  //   val df1     = fixture
+  //   val df2     = df1.smvSelectPlus(df1("id") + 1 as "id1").smvDesc("id1" -> "id plus 1")
+  //   val labeled = df2.smvLabel("id1")("purple")
+  //   labeled.smvGetDesc() shouldBe Seq("id" -> "", "name" -> "", "sex" -> "", "id1" -> "id plus 1")
+  // }
 
   test("labeling a column twice should have the same effect as labeling once") {
     val label1 = fixture.smvLabel("name")("white")
@@ -110,36 +94,11 @@ class SmvLabelTest extends SmvTestUtil {
     }
   }
 
-  test("adding description should be able to read out the same") {
-    val df  = fixture
-    val res = df.smvDesc("id" -> "This is an ID field")
-    res.smvGetDesc("id") shouldBe "This is an ID field"
-    res.smvGetDesc() shouldBe Seq(("id", "This is an ID field"), ("name", ""), ("sex", ""))
-  }
-
   test("adding description to a column should preserve previous meta data on the column") {
     val df1     = fixture
     val labeled = df1.smvLabel("id")("purple")
     val res     = labeled.smvDesc("id" -> "This is an ID field")
     res.smvGetLabels("id") shouldBe Seq("purple")
-  }
-
-  test("removeDesc should remove all desc with empty parameter") {
-    val df1 = fixture
-    val df2 = df1.smvDesc(
-      "name" -> "a name",
-      "id"   -> "The ID"
-    )
-    val res = df2.smvRemoveDesc()
-    res.smvGetDesc() shouldBe Seq(("id", ""), ("name", ""), ("sex", ""))
-  }
-
-  test("adding description through DF should generate correct descriptions") {
-    val df  = fixture
-    val res = df.smvDescFromDF(descriptionDF)
-    res.smvGetDesc() shouldBe Seq(("id", "This is an ID field"),
-                                  ("name", "This is a name field"),
-                                  ("sex", "This is a sex filed"))
   }
 
 }

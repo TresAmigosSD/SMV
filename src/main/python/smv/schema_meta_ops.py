@@ -87,7 +87,7 @@ class SchemaMetaOps(object):
 
         return self.df
 
-    def removeLabel(self, labels, colNames = None):
+    def removeLabel(self, labels = None, colNames = None):
         allLabel = not bool(labels)
         allCol = not bool(colNames)
         if not allCol:

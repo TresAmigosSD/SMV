@@ -354,11 +354,36 @@ class DfHelperTest(SmvBaseTest):
         res = df.smvDesc(("a", "this is col a")).smvRemoveDesc("a")
         self.assertEqual(res.smvGetDesc("a"), "")
 
+    def test_smvRemoveDesc_remove_all(self):
+        df1 = self.createDF("id:Integer;name:String;sex:String", "1,Adam,male;2,Eve,female")
+        df2 = df1.smvDesc(("name", "a name"), ("id", "The ID"))
+        res = df2.smvRemoveDesc()
+        self.assertEqual(res.smvGetDesc(), [('id', ""), ('name', ""), ('sex', "")])
+
     def test_smvDescFromDF(self):
-        df = self.createDF("a:String;b:Integer", "a,1")
-        desc = self.createDF("c:String;desc:String", "a,this is col a from a df;b,this is b")
-        res = df.smvDescFromDF(desc)
-        self.assertEqual(res.smvGetDesc("b"), "this is b")
+        df = self.createDF("id:Integer;name:String;sex:String", "1,Adam,male;2,Eve,female")
+        desc_df = self.createDF("variables:String;decriptions:String",\
+           "id,This is an ID field;name,This is a name field;sex,This is a sex filed")
+        res = df.smvDescFromDF(desc_df)
+        self.assertEqual(res.smvGetDesc(), [('id', 'This is an ID field'),\
+            ('name', 'This is a name field'), ('sex', 'This is a sex filed')])
+
+    def test_smvLabel(self):
+        df = self.createDF("id:Integer;name:String;sex:String", "1,Adam,male;2,Eve,female")
+        res = df.smvLabel(["white"], ["name"])
+        self.assertEqual(res.smvGetLabel("name"), ["white"])
+        self.assertEqual(res.smvGetLabel("sex"), [])
+
+    def test_smvLabel_not_alter_data(self):
+        df1 = self.createDF("id:Integer;name:String;sex:String", "1,Adam,male;2,Eve,female")
+        df2 = df1.smvLabel(["white"], ["name"])
+        self.assertEqual(df1, df2)
+
+    def test_smvLabel_preserve_metadata(self):
+        df1 = self.createDF("id:Integer;name:String;sex:String", "1,Adam,male;2,Eve,female")
+        df2 = df1.smvSelectPlus((col("id") + 1).alias("id1")).smvDesc(("id1", "id plus 1"))
+        res = df2.smvLabel(["purple"], ["id1"])
+        self.assertEqual(res.smvGetDesc(), [("id", ""), ("name", ""), ("sex", ""), ("id1", "id plus 1")])
 
 class ShellDfHelperTest(SmvBaseTest):
     def test_smvEdd(self):
