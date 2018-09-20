@@ -90,7 +90,7 @@ class DQMTest extends SmvTestUtil {
     val res = dqm.attachTasks(df)
     assert(res.count === 1)
 
-    val dqmRes = dqm.applyPolicies(res)
+    val dqmRes = dqm.applyPolicies()
     assert(dqmRes === DqmValidationResult(false,
       DqmStateSnapshot(2,ErrorReport(0, Seq.empty), Map.empty, Map(
         "a_le_0" -> ErrorReport(1, Seq("org.tresamigos.smv.dqm.DQMRuleError: a_le_0 @FIELDS: a=1")))),
@@ -115,7 +115,7 @@ class DQMTest extends SmvTestUtil {
     val res = dqm.attachTasks(df)
     assertSrddDataEqual(res, "1,0.3;1,0.2")
 
-    val dqmRes = dqm.applyPolicies(res)
+    val dqmRes = dqm.applyPolicies()
     assert(dqmRes === DqmValidationResult(false,
       DqmStateSnapshot(3,ErrorReport(0,Seq()),
         Map("a_lt_1_fix" -> 1),
@@ -150,7 +150,7 @@ class DQMTest extends SmvTestUtil {
     //res.foreach(r => Unit)
     res.rdd.count
 
-    val dqmRes = dqm.applyPolicies(res)
+    val dqmRes = dqm.applyPolicies()
     assertUnorderedSeqEqual(
       dqmRes.errorMessages,
       Seq(

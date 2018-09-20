@@ -224,7 +224,7 @@ class DQMValidator(dqm: SmvDQM, persistable: Boolean) {
     if (forceAction)
       doForceAction(df)
 
-    val res = applyPolicies(df)
+    val res = applyPolicies()
 
     // print report to console if any policies were failed
     if(!res.isEmpty)
@@ -239,9 +239,8 @@ class DQMValidator(dqm: SmvDQM, persistable: Boolean) {
 
   /**
    * Appl DQM policies to DataFrame and return result
-   * @param df the data to apply policies to
    */
-  def applyPolicies(df: DataFrame): DqmValidationResult = {
+  def applyPolicies(): DqmValidationResult = {
     /** need to take a snapshot on the DQMState before validation, since validation step could
      * have actions on the DF, which will change the accumulators of the DQMState*/
     val snapshot = dqmState.snapshot()
