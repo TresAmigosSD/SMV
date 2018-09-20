@@ -55,7 +55,6 @@ class SchemaMetaOps(object):
 
     def removeDesc(self, *colNames):
         removeAll = not bool(colNames)
-
         if not removeAll:
             removeSet = set(colNames)
 
@@ -75,12 +74,23 @@ class SchemaMetaOps(object):
             raise SmvRuntimeError("must provide a set of labels to add")
         
         addToAll = not bool(colNames)
-
         if not addToAll:
             addSet = set(colNames)
 
         for col in self.df.schema.fields:
             if addToAll or col.name in addSet:
                 col.metadata[smv_label] = getMetaLabels(col.metadata) | labels
+
+        return self.df
+
+    def removeLabel(self, labels, *colNames):
+        allLabel = not bool(labels)
+        allCol = not bool(colNames)
+        if not allCol:
+            removeSet = set(colNames)
+
+        for col in self.df.schema.fields:
+            if allCol or col.name in removeSet:
+                col.metadata[smv_label] = set() if allLabel else getMetaLabels(col.metadata) - labels
 
         return self.df

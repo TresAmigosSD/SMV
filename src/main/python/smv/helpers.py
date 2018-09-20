@@ -1111,9 +1111,15 @@ class DataFrameHelper(object):
 
             Example:
                 >>> df.smvRemoveDesc("col_a", "col_b")
+                >>> df.smvRemoveDesc()
 
             Returns:
                 (DataFrame): the DataFrame with column descriptions removed
+
+            or:
+
+            Returns:
+                (DataFrame): the DataFrae with all column descriptions removed
         """
         return self.SchemaMetaOps.removeDesc(*colNames)
 
@@ -1164,6 +1170,37 @@ class DataFrameHelper(object):
                 (DataFrame): the DataFrame with labels added to all columns
         """
         return self.SchemaMetaOps.addLabel(labels, *colNames)
+
+    def smvRemoveLabel(self, labels, *colNames):
+        """Removes labels from the specified columns
+
+            For multiple colNames, the same set of labels will be removed from all of them.
+            When colNames is empty, the set of labels will be removed from all columns of the df.
+            When labels is empty, all labels will be removed from the given columns.
+
+            Args:
+                labels: (set(string)) a set of label strings to remove
+                colNames: (\*string) names of columns for which to remove labels
+
+            Example:
+                >>> df.smvRemoveLabel(set(["tag_1"]), "col_a")
+                >>> df.smvRemoveLabel(set(["tag_1"]))
+                >>> df.smvRemoveLabel(set(), "col_a")
+
+            Returns:
+                (DataFrame): the DataFrame with labels removed from the specified columns
+
+            or:
+
+            Returns:
+                (DataFrame): the DataFrame with labels removed from all columns
+
+            or:
+
+            Returns:
+                (DataFrame): the DataFrame with all labels removed from the specified columns
+        """
+        return self.SchemaMetaOps.removeLabel(labels, *colNames)
 
     #############################################
     # DfHelpers which print to STDOUT
