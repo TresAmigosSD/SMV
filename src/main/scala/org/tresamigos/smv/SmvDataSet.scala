@@ -694,42 +694,6 @@ private[smv] abstract class SmvInputDataSet extends SmvDataSet {
   def run(df: DataFrame) = df
 }
 
-/**
- * Wrapper for a database table accessed via JDBC
- */
-class SmvJdbcTable(override val tableName: String)
-  extends SmvInputDataSet {
-
-  override def description = s"JDBC table ${tableName}"
-
-  /**
-   * Custom queries are not officially supported because the approach used here
-   * is not documented or officially supported by Spark. We will essentially
-   * substitute the user-query as a subquery in place of the table name, with
-   * the result a query like SELECT * FROM (USER_QUERY)
-   */
-  def userQuery: String = null
-
-  val tableNameOrQuery = {
-    if (userQuery == null){
-      tableName
-    } else {
-      // For Derby, subqueries must be aliased
-      s"(${userQuery}) as TMP_${tableName}"
-    }
-  }
-
-  override private[smv] def doRun(dqmValidator: DQMValidator, collector: SmvRunInfoCollector, quickRun: Boolean): DataFrame = {
-    val url = app.smvConfig.jdbcUrl
-    val tableDf =
-      app.sqlContext.read
-        .format("jdbc")
-        .option("url", url)
-        .option("dbtable", tableNameOrQuery)
-        .load()
-    run(tableDf)
-  }
-}
 
 /**
  * Both SmvFile and SmvCsvStringData shared the parser validation part, extract the

@@ -43,21 +43,6 @@ class SmvJdbcTest extends SmvTestUtil {
     assertDataFramesEqual(publishableDf, readDf)
   }
 
-  test("Test SmvJdbcTable can read table from JDBC") {
-    val df = app.createDF("k:String", "")
-    df.write.jdbc(url, JdbcModules.ReadableMod.tableName, JdbcProps)
-    val tableDF = JdbcModules.ReadableMod.rdd(collector=new SmvRunInfoCollector)
-    assertDataFramesEqual(tableDF, df)
-  }
-
-  test("Test SmvJdbcTable can read table from JDBC with custom query") {
-    // Capitlize the columns as 
-    val df = app.createDF("J:String;K:String", "abc,abc;abc,def;def,def")
-    df.write.jdbc(url, JdbcModules.CustomQueryMod.tableName, JdbcProps)
-    val tableDF = JdbcModules.CustomQueryMod.rdd(collector=new SmvRunInfoCollector)
-    val expectedDF = df.where(col("k") === col("j"))
-    assertDataFramesEqual(tableDF.orderBy(col("j").asc), expectedDF.orderBy(col("j").asc))
-  }
 }
 
 package JdbcModules {
@@ -66,17 +51,4 @@ package JdbcModules {
     override def run(i: runParams) = app.createDF("k:String", "")
     override def requiresDS = Seq()
   }
-
-  object AppendMod extends SmvModule("AppendMod") with SmvOutput {
-    override def tableName = "AppendMod"
-    override def run(i: runParams) = app.createDF("k:String", "row1")
-    override def requiresDS = Seq()
-  }
-
-  object CustomQueryMod extends SmvJdbcTable("CustomQueryMod") with SmvOutput {
-    // since Spark 2.1 (not sure about the Derby version)
-    override def userQuery = "select * from CustomQueryMod where K like J"
-  }
-
-  object ReadableMod extends SmvJdbcTable("ReadableMod")
 }
