@@ -255,10 +255,6 @@ abstract class SmvDataSet {
   private def moduleEddPath(): String =
     versionedBasePath() + ".edd"
 
-  /** Returns the path for the module's reject report output */
-  private def moduleValidPath(): String =
-    versionedBasePath() + ".valid"
-
   /** Returns the path for the module's metadata output */
   private[smv] def moduleMetaPath(): String =
     versionedBasePath() + ".meta"
@@ -297,14 +293,14 @@ abstract class SmvDataSet {
    * Returns current all outputs produced by this module.
    */
   private[smv] def allOutputFiles(): Seq[String] = {
-    Seq(moduleCsvPath(), moduleSchemaPath(), moduleEddPath(), moduleValidPath(), moduleMetaPath(), moduleMetaHistoryPath())
+    Seq(moduleCsvPath(), moduleSchemaPath(), moduleEddPath(), moduleMetaPath(), moduleMetaHistoryPath())
   }
 
   /**
    * Returns current versioned outputs produced by this module. Excludes metadata history
    */
   private def versionedOutputFiles(): Seq[String] = {
-    Seq(moduleCsvPath(), moduleSchemaPath(), moduleEddPath(), moduleValidPath(), moduleMetaPath())
+    Seq(moduleCsvPath(), moduleSchemaPath(), moduleEddPath(), moduleMetaPath())
   }
 
   /**
