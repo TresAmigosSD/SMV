@@ -19,7 +19,6 @@ import py4j.GatewayServer
 
 import scala.collection.JavaConversions._
 import java.util.ArrayList
-import java.io.File
 
 import org.apache.hadoop.mapred.InvalidInputException
 import org.apache.spark.sql.{Column, DataFrame, SQLContext, SparkSession}
@@ -104,15 +103,8 @@ object SmvPythonHelper {
     (new ArrayList(res._1), res._2)
   }
 
-  def smvDiscoverSchemaToFile(path: String, n: Int, csvattr: CsvAttributes): Unit = {
-    implicit val csvAttributes = csvattr
-    val helper                 = new SchemaDiscoveryHelper(SmvApp.app.sqlContext)
-    val schema                 = helper.discoverSchemaFromFile(path, n)
-    val outpath                = SmvSchema.dataPathToSchemaPath(path) + ".toBeReviewed"
-    val outFileName            = (new File(outpath)).getName
-    schema.saveToLocalFile(outFileName)
-    println(s"Discovered schema file saved as ${outFileName}, please review and make changes.")
-  }
+  def smvDiscoverSchemaToFile(path: String, nsamples: Int, csvattr: CsvAttributes): Unit =
+    shell.smvDiscoverSchemaToFile(path, nsamples, csvattr)
 
   def discoverSchemaAsSmvSchema(path: String, nsamples: Int, csvattr: CsvAttributes): SmvSchema = {
     implicit val csvAttributes = csvattr

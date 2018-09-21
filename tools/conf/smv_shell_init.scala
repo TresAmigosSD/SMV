@@ -1,5 +1,5 @@
 import org.apache.spark.sql.functions._
-import org.tresamigos.smv._, smvfuncs._
+import org.tresamigos.smv._, shell._, smvfuncs._
 
 val sc = spark.sparkContext
 sc.setLogLevel("ERROR")
