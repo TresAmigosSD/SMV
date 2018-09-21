@@ -22,7 +22,7 @@ from smv.helpers import DataFrameHelper as dfhelper
 import pyspark
 from pyspark.context import SparkContext
 from pyspark.sql import SQLContext, HiveContext
-from pyspark.sql.functions import col, struct
+from pyspark.sql.functions import col, struct, count
 from py4j.protocol import Py4JJavaError
 from smv.error import SmvRuntimeError
 
@@ -280,6 +280,16 @@ class DfHelperTest(SmvBaseTest):
         self.assertEqual(fieldNames, ['aa', 'b', 'cc'])
         self.should_be_same(expect, result)
 
+    def test_smvRenameField_preserve_meta_for_renamed_fields(self):
+        df = self.createDF("a:Integer; b:String", "1,abc;1,def;2,ghij")
+        desc = "c description"
+        res1 = df.groupBy(col("a")).agg(count(col("a")).alias("c"))\
+                 .smvDesc(("c", desc))
+        self.assertEqual(res1.smvGetDesc(), [("a", ""), ("c", desc)])
+
+        res2 = res1.smvRenameField(("c", "d"))
+        self.assertEqual(res2.smvGetDesc(), [("a", ""), ("d", desc)])
+
     def test_smvUnpivot(self):
         df = self.createDF("id:String; X:String; Y:String; Z:String",
             """1,A,B,C; 2,D,E,F""")
@@ -291,6 +301,17 @@ class DfHelperTest(SmvBaseTest):
             2,X,D;
             2,Y,E;
             2,Z,F""")
+        self.should_be_same(expect, res)
+
+    def test_smvUnpivot_with_column_description(self):
+        df = self.createDF("id:String; X:String; Y:String; Z:String", """1,A,B,C; 2,D,E,F""")\
+                 .smvDesc(("X", "Desc of X"))
+        res = df.smvUnpivot("X", "Y")
+        expect = self.createDF("id:String; Z:String; column:String; value:String",
+            """1,C,X,A;
+            1,C,Y,B;	
+            2,F,X,D;
+            2,F,Y,E""")
         self.should_be_same(expect, res)
 
     def test_smvUnpivotRegex(self):
@@ -306,7 +327,6 @@ class DfHelperTest(SmvBaseTest):
                    2,2,2_a_2,2_b_2
                 """)
         self.should_be_same(expect, res)
-
 
     def test_smvSelectMinus_with_string(self):
         schema = "k:String;v1:Integer;v2:Integer"
