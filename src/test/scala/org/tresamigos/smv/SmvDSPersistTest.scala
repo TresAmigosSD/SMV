@@ -23,12 +23,6 @@ package org.tresamigos.smv {
       "--data-dir",
       testcaseTempDir
     )
-
-    test("test read back persisted module with meta data") {
-      val res = app.runModule(org.tresamigos.smv.dspersistPkg.Y.urn)
-      assertUnorderedSeqEqual(res.smvGetDesc(),
-                              Seq(("k", ""), ("t", "the time sequence"), ("v", "")))
-    }
   }
 
 } //org.tresamigos.smv

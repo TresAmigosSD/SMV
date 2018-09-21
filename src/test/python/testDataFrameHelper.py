@@ -496,6 +496,10 @@ class DfHelperTest(SmvBaseTest):
         res = df.smvDesc(("id", "This is an ID field"))
         self.assertEqual(res.smvGetLabel("id"), ["purple"])
 
+    def test_read_back_persisted_module_with_meta(self):
+        res = self.df("stage.modules.X")
+        self.assertEqual(res.smvGetDesc(), [("k", ""), ("t", "the time sequence"), ("v", "")])
+
 class ShellDfHelperTest(SmvBaseTest):
     def test_smvEdd(self):
         df = self.createDF("k:String;v:Integer", "a,1;b,2")
