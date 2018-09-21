@@ -24,6 +24,7 @@ from pyspark.context import SparkContext
 from pyspark.sql import SQLContext, HiveContext
 from pyspark.sql.functions import col, struct
 from py4j.protocol import Py4JJavaError
+from smv.error import SmvRuntimeError
 
 class DfHelperTest(SmvBaseTest):
     @classmethod
@@ -336,7 +337,7 @@ class DfHelperTest(SmvBaseTest):
     def test_smvPrefixFieldNames_with_exception(self):
         df = self.createDF("k:String;_k:Integer", "a,1;b,2")
         with self.assertRaisesRegexp(Py4JJavaError, "Rename to existing fields"):
-            r1 = df.smvPrefixFieldNames("_")
+            df.smvPrefixFieldNames("_")
 
     def test_smvDesc(self):
         df = self.createDF("a:String", "a")
@@ -355,9 +356,9 @@ class DfHelperTest(SmvBaseTest):
         self.assertEqual(res.smvGetDesc("a"), "")
 
     def test_smvRemoveDesc_remove_from_all(self):
-        df1 = self.createDF("id:Integer;name:String;sex:String", "1,Adam,male;2,Eve,female")
-        df2 = df1.smvDesc(("name", "a name"), ("id", "The ID"))
-        res = df2.smvRemoveDesc()
+        df = self.createDF("id:Integer;name:String;sex:String", "1,Adam,male;2,Eve,female")\
+                 .smvDesc(("name", "a name"), ("id", "The ID"))
+        res = df.smvRemoveDesc()
         self.assertEqual(res.smvGetDesc(), [('id', ""), ('name', ""), ('sex', "")])
 
     def test_smvDescFromDF(self):
@@ -373,6 +374,8 @@ class DfHelperTest(SmvBaseTest):
         res = df.smvLabel(["name"], ["white"])
         self.assertEqual(res.smvGetLabel("name"), ["white"])
         self.assertEqual(res.smvGetLabel("sex"), [])
+        with self.assertRaisesRegexp(SmvRuntimeError, "column name height not found"):
+            df.smvGetLabel("height")
 
     def test_smvLabel_preserve_data_order(self):
         df1 = self.createDF("id:Integer;name:String;sex:String", "1,Adam,male;2,Eve,female")
@@ -380,9 +383,9 @@ class DfHelperTest(SmvBaseTest):
         self.assertEqual(df1, df2)  # same data with same order
 
     def test_smvLabel_preserve_metadata(self):
-        df1 = self.createDF("id:Integer;name:String;sex:String", "1,Adam,male;2,Eve,female")
-        df2 = df1.smvSelectPlus((col("id") + 1).alias("id1")).smvDesc(("id1", "id plus 1"))
-        res = df2.smvLabel(["id1"], ["purple"])
+        df = self.createDF("id:Integer;name:String;sex:String", "1,Adam,male;2,Eve,female")\
+                 .smvSelectPlus((col("id") + 1).alias("id1")).smvDesc(("id1", "id plus 1"))
+        res = df.smvLabel(["id1"], ["purple"])
         self.assertEqual(res.smvGetDesc(), [("id", ""), ("name", ""), ("sex", ""), ("id1", "id plus 1")])
 
     def test_smvLabel_labeling_multiple_times(self):
@@ -398,46 +401,69 @@ class DfHelperTest(SmvBaseTest):
         self.assertEqual(set(res.smvGetLabel("name")), set(["white", "blue"]))  # ignore label order
 
     def test_smvRemoveLabel_preserve_other_meta(self):
-        df1 = self.createDF("id:Integer;name:String;sex:String", "1,Adam,male;2,Eve,female")
-        df2 = df1.smvSelectPlus((col("id") + 1).alias("id1")).smvDesc(("id1", "id plus 1"))
-        r1 = df2.smvLabel(["id1"], ["white", "blue"])
-        r2 = r1.smvRemoveLabel(["id1"], ["white", "blue"])
-        self.assertEqual(r2.smvGetDesc(), [("id", ""), ("name", ""), ("sex", ""), ("id1", "id plus 1")])
+        df = self.createDF("id:Integer;name:String;sex:String", "1,Adam,male;2,Eve,female")\
+                 .smvSelectPlus((col("id") + 1).alias("id1")).smvDesc(("id1", "id plus 1"))
+        res = df.smvLabel(["id1"], ["white", "blue"])\
+                .smvRemoveLabel(["id1"], ["white", "blue"])
+        self.assertEqual(res.smvGetDesc(), [("id", ""), ("name", ""), ("sex", ""), ("id1", "id plus 1")])
 
     def test_smvRemoveLabel_preserve_other_labels(self):
-        df1 = self.createDF("id:Integer;name:String;sex:String", "1,Adam,male;2,Eve,female")
-        df2 = df1.smvLabel(["name"], ["white", "blue", "red"])
-        df3 = df2.smvLabel(["sex"], ["white", "blue"])
-        res = df3.smvRemoveLabel(["name", "sex"], ["blue", "red"])
-        self.assertEqual(res.smvGetLabel("id"), [])
-        self.assertEqual(res.smvGetLabel("sex"), ["white"])
-        self.assertEqual(res.smvGetLabel("name"), ["white"])
+        df = self.createDF("id:Integer;name:String;sex:String", "1,Adam,male;2,Eve,female")\
+                 .smvLabel(["name"], ["white", "blue", "red"])\
+                 .smvLabel(["sex"], ["white", "blue"])
+        res = df.smvRemoveLabel(["name", "sex"], ["blue", "red"])
+        self.assertEqual(res.smvGetLabel(), [('id', []), ('name', ['white']), ('sex', ['white'])])
 
     def test_smvRemoveLabel_remove_from_all_cols(self):
-        df1 = self.createDF("id:Integer;name:String;sex:String", "1,Adam,male;2,Eve,female")
-        df2 = df1.smvLabel(["name"], ["white", "blue", "red"])
-        df3 = df2.smvLabel(["sex"], ["white", "blue"])
-        df4 = df3.smvLabel(["id"], ["white"])
-        res = df4.smvRemoveLabel([], ["white"])
+        df = self.createDF("id:Integer;name:String;sex:String", "1,Adam,male;2,Eve,female")\
+                 .smvLabel(["name"], ["white", "blue", "red"])\
+                 .smvLabel(["sex"], ["white", "blue"])\
+                 .smvLabel(["id"], ["white"])
+        res = df.smvRemoveLabel([], ["white"])
         self.assertEqual(res.smvGetLabel("id"), [])
         self.assertEqual(set(res.smvGetLabel("name")), set(["blue", "red"])) # ignore label order
         self.assertEqual(res.smvGetLabel("sex"), ["blue"])
 
     def test_smvRemoveLabel_remove_all_labels(self):
-        df1 = self.createDF("id:Integer;name:String;sex:String", "1,Adam,male;2,Eve,female")
-        df2 = df1.smvLabel(["name"], ["white", "blue", "red"])
-        df3 = df2.smvLabel(["sex"], ["white", "blue"])
-        df4 = df3.smvLabel(["id"], ["white"])
-        res = df4.smvRemoveLabel(["name", "sex"])
+        df = self.createDF("id:Integer;name:String;sex:String", "1,Adam,male;2,Eve,female")\
+                 .smvLabel(["name"], ["white", "blue", "red"])\
+                 .smvLabel(["sex"], ["white", "blue"])\
+                 .smvLabel(["id"], ["white"])
+        res = df.smvRemoveLabel(["name", "sex"])
         self.assertEqual(res.smvGetLabel(), [('id', ['white']), ('name', []), ('sex', [])])
 
     def test_smvRemoveLabel_remove_all_labels_from_all_cols(self):
-        df1 = self.createDF("id:Integer;name:String;sex:String", "1,Adam,male;2,Eve,female")
-        df2 = df1.smvLabel(["name"], ["white", "blue", "red"])
-        df3 = df2.smvLabel(["sex"], ["white", "blue"])
-        df4 = df3.smvLabel(["id"], ["white"])
-        res = df4.smvRemoveLabel()
+        df = self.createDF("id:Integer;name:String;sex:String", "1,Adam,male;2,Eve,female")\
+                 .smvLabel(["name"], ["white", "blue", "red"])\
+                 .smvLabel(["sex"], ["white", "blue"])\
+                 .smvLabel(["id"], ["white"])
+        res = df.smvRemoveLabel()
         self.assertEqual(res.smvGetLabel(), [('id', []), ('name', []), ('sex', [])])
+
+    def test_selectByLabel(self):
+        df = self.createDF("id:Integer;name:String;sex:String", "1,Adam,male;2,Eve,female")\
+                 .smvLabel(["name", "sex"], ["white"])\
+                 .smvLabel(["name"], ["red"])
+        res = df.selectByLabel(["white", "red"])
+        self.assertEqual(res.columns, ["name"])
+
+    def test_selectByLabel_match_unlabeled(self):
+        df = self.createDF("id:Integer;name:String;sex:String", "1,Adam,male;2,Eve,female")\
+                 .smvLabel(["name", "sex"], ["white"])
+        res = df.selectByLabel()
+        self.assertEqual(res.columns, ["id"])
+
+    def test_smvWithLabel_with_exception(self):
+        df = self.createDF("id:Integer;name:String;sex:String", "1,Adam,male;2,Eve,female")\
+                 .smvLabel(["name", "sex"], ["white"])
+        with self.assertRaisesRegexp(SmvRuntimeError, "no columns labeled with"):
+            df.smvWithLabel("nothing is labeled with this".split(" "))
+
+    def test_smvDesc_preserve_label(self):
+        df = self.createDF("id:Integer;name:String;sex:String", "1,Adam,male;2,Eve,female")\
+                 .smvLabel(["id"], ["purple"])
+        res = df.smvDesc(("id", "This is an ID field"))
+        self.assertEqual(res.smvGetLabel("id"), ["purple"])
 
 class ShellDfHelperTest(SmvBaseTest):
     def test_smvEdd(self):
