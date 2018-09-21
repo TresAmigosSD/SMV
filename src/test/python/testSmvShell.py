@@ -13,6 +13,7 @@
 
 from test_support.smvbasetest import SmvBaseTest
 import smv.smvshell as smvshell
+import os
 
 class SmvShellTest(SmvBaseTest):
     @classmethod
@@ -31,3 +32,13 @@ class SmvShellTest(SmvBaseTest):
     def test_shell_cmds(self):
         smvshell.ls()
         smvshell.lsStage()
+
+    def test_smvDiscoverSchemaToFile(self):
+        file_name = "discoverSchema.csv"
+        out_schema_name = "discoverSchema.schema.toBeReviewed"
+        self.createTempInputFile(file_name,
+            "name,id\nbob,1"
+        )
+        smvshell.smvDiscoverSchemaToFile(self.tmpInputDir() + "/" + file_name)
+        assert os.path.exists(out_schema_name)
+        os.remove(out_schema_name)
