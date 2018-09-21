@@ -109,20 +109,6 @@ object ShellCmd {
    **/
   def lsDeadLeaf = appGU.createDeadLeafDSList()
 
-  /** take no parameter, print stages and inter-stage links */
-  def _graphStage() = appGU.createStageAsciiGraph()
-
-  /** take a stage name and print all DS in this stage, without unused input DS */
-  def _graph(stageName: String) = {
-    val singleStgGU = new SmvGraphUtil(SmvApp.app, Seq(dsm.inferStageFullName(stageName)))
-    singleStgGU.createDSAsciiGraph()
-  }
-
-  def _graph() = appGU.createDSAsciiGraph()
-
-  /** take a DS, print in-stage dependency of that DS */
-  def _graph(ds: SmvDataSet) = appGU.createDSAsciiGraph(Seq(load(ds)))
-
   /**
    * list all `ancestors` of a dataset
    * `ancestors` are datasets current dataset depends on, directly or in-directly,
