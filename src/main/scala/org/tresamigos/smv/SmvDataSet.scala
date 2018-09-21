@@ -917,29 +917,6 @@ class SmvModuleLink(val outputModule: SmvOutput)
 }
 
 /**
- * Class for declaring datasets defined in another language. Resolves to an
- * instance of SmvExtModulePython.
- */
-case class SmvExtModule(modFqn: String) extends SmvModule(s"External module ${modFqn}") {
-  override val fqn = modFqn
-  override def dsType(): String =
-    throw new SmvRuntimeException("SmvExtModule dsType should never be called")
-  override def requiresDS =
-    throw new SmvRuntimeException("SmvExtModule requiresDS should never be called")
-  override def resolve(resolver: DataSetResolver): SmvDataSet =
-    resolver.loadDataSet(urn).head.asInstanceOf[SmvExtModulePython]
-  override def run(i: RunParams) =
-    throw new SmvRuntimeException("SmvExtModule run should never be called")
-}
-
-/**
- * Declarative class for links to datasets defined in another language. Resolves
- * to a link to an SmvExtModulePython.
- */
-case class SmvExtModuleLink(modFqn: String)
-    extends SmvModuleLink(new SmvExtModule(modFqn) with SmvOutput)
-
-/**
  * Concrete SmvDataSet representation of modules defined in Python. Created
  * exclusively by DataSetRepoPython. Wraps an ISmvModule.
  */
