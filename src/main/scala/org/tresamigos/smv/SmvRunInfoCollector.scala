@@ -28,10 +28,9 @@ class SmvRunInfoCollector {
    * previous result is replaced (last one wins).
    */
   def addRunInfo(dsFqn: String,
-    validation: DqmValidationResult,
     metadata: SmvMetadata,
     metadataHistory: SmvMetadataHistory): SmvRunInfoCollector =
-    addRunInfo(dsFqn, SmvRunInfo(validation, metadata, metadataHistory))
+    addRunInfo(dsFqn, SmvRunInfo(metadata, metadataHistory))
 
   def addRunInfo(dsFqn: String, runInfo: SmvRunInfo): SmvRunInfoCollector = {
     require(dsFqn != null && !dsFqn.isEmpty, s"Dataset FQN [$dsFqn] cannot be empty or null")
@@ -44,13 +43,6 @@ class SmvRunInfoCollector {
 
   /** For use by Python side */
   def dsFqnsAsJava: java.util.List[String] = dsFqns.toSeq.asJava
-
-  /**
-   * Returns the DQM validation result for a given dataset
-   *
-   * @throws NoSuchElementException if the dataset is not known to the collector
-   */
-  def getDqmValidationResult(dsName: String): DqmValidationResult = inferRunInfo(dsName).validation
 
   /**
    * Returns the metadata for a given dataset
@@ -90,4 +82,4 @@ class SmvRunInfoCollector {
   def inferRunInfo(dsName: String): SmvRunInfo = runInfo(inferFqn(dsName))
 }
 
-case class SmvRunInfo(validation: DqmValidationResult, metadata: SmvMetadata, metadataHistory: SmvMetadataHistory)
+case class SmvRunInfo(metadata: SmvMetadata, metadataHistory: SmvMetadataHistory)

@@ -491,7 +491,7 @@ abstract class SmvDataSet {
       persistMetadata(metadata)
       persistMetadataHistory(metadata, metadataHistory)
 
-      collector.addRunInfo(fqn, validationResult, metadata, metadataHistory)
+      collector.addRunInfo(fqn, metadata, metadataHistory)
     }
 
     if (quickRun) {
@@ -547,10 +547,9 @@ abstract class SmvDataSet {
    * null for its components.
    */
   def runInfo: SmvRunInfo = {
-    val validation = DQMValidator.readPersistedValidationFile(moduleValidPath()).toOption.orNull
     val meta = readPersistedMetadata().toOption.orNull
     val mhistory = readMetadataHistory().toOption.orNull
-    SmvRunInfo(validation, meta, mhistory)
+    SmvRunInfo(meta, mhistory)
   }
 
   /** path to published output without file extension **/
