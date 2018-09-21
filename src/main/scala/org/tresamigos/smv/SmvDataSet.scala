@@ -29,18 +29,13 @@ import edd._
 
 import org.joda.time._, format._
 
-/** A module's file name part is stackable, e.g. with Using[SmvRunConfig] */
-trait FilenamePart {
-  def fnpart: String
-}
-
 /**
  * Dependency management unit within the SMV application framework.  Execution order within
  * the SMV application framework is derived from dependency between SmvDataSet instances.
  * Instances of this class can either be a file or a module. In either case, there would
  * be a single result DataFrame.
  */
-abstract class SmvDataSet extends FilenamePart {
+abstract class SmvDataSet {
 
   def app: SmvApp                                                = SmvApp.app
 
@@ -76,9 +71,6 @@ abstract class SmvDataSet extends FilenamePart {
   def fqn: String       = this.getClass().getName().filterNot(_ == '$')
   def urn: URN          = ModURN(fqn)
   override def toString = urn.toString
-
-  /** Names the persisted file for the result of this SmvDataSet */
-  override def fnpart = fqn
 
   def description(): String
 
@@ -123,14 +115,6 @@ abstract class SmvDataSet extends FilenamePart {
         elem.allDeps ++ (elem +: acc)
       })
       .distinct
-
-  def requiresAnc(): Seq[SmvAncillary] = Seq.empty
-
-  /** TODO: remove this method as checkDependency replaced this function */
-  def getAncillary[T <: SmvAncillary](anc: T) = {
-    if (requiresAnc.contains(anc)) anc
-    else throw new SmvRuntimeException(s"SmvAncillary: ${anc} is not in requiresAnc")
-  }
 
   /** user tagged code "version".  Derived classes should update the value when code or data */
   def version(): Int = 0
@@ -710,42 +694,6 @@ private[smv] abstract class SmvInputDataSet extends SmvDataSet {
   def run(df: DataFrame) = df
 }
 
-/**
- * Wrapper for a database table accessed via JDBC
- */
-class SmvJdbcTable(override val tableName: String)
-  extends SmvInputDataSet {
-
-  override def description = s"JDBC table ${tableName}"
-
-  /**
-   * Custom queries are not officially supported because the approach used here
-   * is not documented or officially supported by Spark. We will essentially
-   * substitute the user-query as a subquery in place of the table name, with
-   * the result a query like SELECT * FROM (USER_QUERY)
-   */
-  def userQuery: String = null
-
-  val tableNameOrQuery = {
-    if (userQuery == null){
-      tableName
-    } else {
-      // For Derby, subqueries must be aliased
-      s"(${userQuery}) as TMP_${tableName}"
-    }
-  }
-
-  override private[smv] def doRun(dqmValidator: DQMValidator, collector: SmvRunInfoCollector, quickRun: Boolean): DataFrame = {
-    val url = app.smvConfig.jdbcUrl
-    val tableDf =
-      app.sqlContext.read
-        .format("jdbc")
-        .option("url", url)
-        .option("dbtable", tableNameOrQuery)
-        .load()
-    run(tableDf)
-  }
-}
 
 /**
  * Both SmvFile and SmvCsvStringData shared the parser validation part, extract the
@@ -1101,35 +1049,4 @@ object SmvCsvStringData {
  */
 trait SmvOutput { this: SmvDataSet =>
   override def dsType(): String = "Output"
-}
-
-/** Base marker trait for run configuration objects */
-trait SmvRunConfig
-
-/**
- * SmvDataSet that can be configured to return different DataFrames.
- */
-trait Using[+T <: SmvRunConfig] extends FilenamePart { self: SmvDataSet =>
-
-  lazy val confObjName = self.app.smvConfig.runConfObj
-
-  /** The actual run configuration object */
-  lazy val runConfig: T = {
-    require(
-      confObjName.isDefined,
-      s"Expected a run configuration object provided with ${SmvConfig.RunConfObjKey} but found none")
-
-    import scala.reflect.runtime.{universe => ru}
-    val mir = ru.runtimeMirror(getClass.getClassLoader)
-
-    val sym    = mir.staticModule(confObjName.get)
-    val module = mir.reflectModule(sym)
-    module.instance.asInstanceOf[T]
-  }
-
-  // Configurable SmvDataSet has the configuration object appended to its name
-  abstract override def fnpart = {
-    val confObjStr = confObjName.get
-    super.fnpart + '-' + confObjStr.substring(1 + confObjStr.lastIndexOf('.'))
-  }
 }

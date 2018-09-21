@@ -40,18 +40,8 @@ object ClassCRC {
   def checksum(bytecode: Array[Byte]): CRC32 = cksum0(new CRC32, new asm.ClassReader(bytecode))
 
   /** compute checksum for a SmvDataSet, including config object if any */
-  def checksum(dataset: SmvDataSet, classLoader: ClassLoader): CRC32 = {
-    val crc = checksum(dataset.getClass.getName, classLoader)
-
-    // #319: include configuration object in the hash calculation
-    if (dataset.isInstanceOf[Using[_]]) {
-      checksum(dataset.asInstanceOf[Using[SmvRunConfig]].runConfig.getClass.getName,
-               classLoader,
-               crc)
-    } else {
-      crc
-    }
-  }
+  def checksum(dataset: SmvDataSet, classLoader: ClassLoader): CRC32 = 
+    checksum(dataset.getClass.getName, classLoader)
 
   /**
    * Compute a checksum of the bytecode of the class and all its

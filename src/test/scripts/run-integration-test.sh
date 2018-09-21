@@ -8,12 +8,6 @@ I_APP_NAME=IntegrationApp
 S_APP_NAME=SimpleApp
 E_APP_NAME=EnterpriseApp
 
-# Test stages containing a dependency scenario with a Scala output module
-SCALA_MODULE_STAGES="\
-test5 \
-test8 \
-"
-
 # Test stages containing a dependency scenario with a Python output module
 PYTHON_MODULE_STAGES="\
 test2 \
@@ -123,18 +117,6 @@ function test_custom_driver() {
 
 function validate_integration_app_output() {
   echo "--------- CHECK INTEGRATION APP OUTPUT -------------"
-  for stage in $SCALA_MODULE_STAGES; do
-    TEST_INPUT=$(< data/input/$stage/table.csv)
-    TEST_OUTPUT=$(cat data/output/integration.test.$stage.M2_*.csv/part*)
-    if [[ $TEST_INPUT != $TEST_OUTPUT ]]; then
-      echo "Test failure: $stage"
-      echo "Expected output:"
-      echo $TEST_INPUT
-      echo "Got:"
-      echo $TEST_OUTPUT
-      exit 1
-    fi
-  done
 
   for stage in $PYTHON_MODULE_STAGES; do
     TEST_INPUT=$(< data/input/$stage/table.csv)
