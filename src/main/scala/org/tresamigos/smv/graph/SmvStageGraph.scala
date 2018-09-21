@@ -14,8 +14,6 @@
 
 package org.tresamigos.smv
 package graph
-import com.github.mdr.ascii.graph.{Graph => AsciiGraph}
-import com.github.mdr.ascii.layout.{GraphLayout => AsciiGraphLayout}
 import org.apache.commons.lang.StringEscapeUtils
 
 /**
@@ -108,10 +106,7 @@ private[smv] class SmvStageGraph(app: SmvApp, pstages: Seq[String] = Nil) {
 private[smv] class SmvGraphUtil(app: SmvApp, pstages: Seq[String] = Nil) {
   val stages = if (pstages.isEmpty) app.smvConfig.stageNames else pstages
   val dsm    = app.dsm
-  // max string length per line in an ascii Box
-  private val asciiBoxWidth = 12
 
-  private def wrapStr(str: String)     = str.grouped(asciiBoxWidth).mkString("\n")
   private def baseName(ds: SmvDataSet) = FQN.removePrefix(ds.urn.fqn, FQN.sharedPrefix(stages))
 
   private def baseNameWithFlag(ds: SmvDataSet) = ds.dsType() match {
@@ -119,51 +114,6 @@ private[smv] class SmvGraphUtil(app: SmvApp, pstages: Seq[String] = Nil) {
     case "Link"   => "(L) " + baseName(ds)
     case "Input"  => "(I) " + baseName(ds)
     case "Module" => "(M) " + baseName(ds)
-  }
-
-  /**
-   * Create DS's Ascii Graph, for printing in shell
-   **/
-  def createDSAsciiGraph(targetDSs: Seq[SmvDataSet] = Nil): String = {
-    val g = new SmvDSGraph(app, stages, targetDSs)
-
-    val toPrint = (ds: SmvDataSet) => wrapStr(baseNameWithFlag(ds))
-
-    val vertices = g.nodeString(toPrint, toPrint).toSet
-    val edges    = g.edges.map { case (f, t) => toPrint(f) -> toPrint(t) }.toList
-
-    val graphObj = AsciiGraph(vertices, edges)
-
-    // /** Graph as a string */
-    val graphStr = AsciiGraphLayout.renderGraph(graphObj)
-
-    graphStr
-
-  }
-
-  /**
-   * Create Stage Ascii Graph, for printing in Shell
-   **/
-  def createStageAsciiGraph(): String = {
-    val g = new SmvStageGraph(app, stages)
-
-    val printStage = (s: String) => FQN.removePrefix(s, FQN.sharedPrefix(stages))
-    val printInterface = (i: SmvStageInterface) =>
-      i match {
-        case SmvStageInterface(s1, s2, links) =>
-          links.map { baseNameWithFlag }.mkString("\n")
-    }
-
-    val vertices = g.nodeString(printStage, printInterface).toSet
-    val edges    = g.edgeStringPair(printStage, printInterface).toList
-
-    // val graphObj = AsciiGraph(vertices, edges)
-
-    // /** Graph as a string */
-    // val graphStr = AsciiGraphLayout.renderGraph(graphObj)
-
-    // graphStr
-    "TODO: waiting for asciigraph for scala 2.11"
   }
 
   /**

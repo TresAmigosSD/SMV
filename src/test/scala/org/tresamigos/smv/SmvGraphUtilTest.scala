@@ -67,61 +67,6 @@ org.tresamigos.smv.smvAppTestPkg3:
 (O) smvAppTestPkg3.U""")
     }
 
-    test("Test createGraphvisCode") {
-      val graphString = new graph.SmvGraphUtil(app).createGraphvisCode(Seq(smvAppTestPkg3.U))
-      val expectPart  = """    label="org.tresamigos.smv.smvAppTestPkg3"
-    color="#e0e0e0"
-    "smvAppTestPkg3.U""""
-
-      assertTextContains(graphString, expectPart)
-    }
-
-    ignore("Test createDSAsciiGraph") {
-      val graphString = new graph.SmvGraphUtil(app).createDSAsciiGraph()
-      //println(graphString)
-      assertStrIgnoreSpace(
-        graphString,
-        """               ┌────────────┐
-               │(M) smvAppTe│
-               │  stPkg1.X  │
-               └──────┬─────┘
-                      │
-                      v
-               ┌────────────┐
-               │(O) smvAppTe│
-               │  stPkg1.Y  │
-               └────┬──┬────┘
-                    │  │
-        ┌───────────┘  │
-        │              │
-        v              v
- ┌────────────┐ ┌────────────┐ ┌────────────┐
- │(M) smvAppTe│ │(O) smvAppTe│ │(O) smvAppTe│
- │  stPkg3.T  │ │  stPkg3.U  │ │  stPkg2.Z  │
- └────────────┘ └────────────┘ └────────────┘"""
-      )
-    }
-
-    ignore("Test createStageAsciiGraph") {
-      val graphString = new graph.SmvGraphUtil(app).createStageAsciiGraph()
-      assertStrIgnoreSpace(
-        graphString,
-        """         ┌──────────────┐
-         │smvAppTestPkg1│
-         └───────┬──────┘
-                 │
-                 v
-      ┌────────────────────┐
-      │(L) smvAppTestPkg1.Y│
-      └──┬─────────────────┘
-         │
-         v
- ┌──────────────┐ ┌──────────────┐
- │smvAppTestPkg3│ │smvAppTestPkg2│
- └──────────────┘ └──────────────┘"""
-      )
-    }
-
     // Ignore createGraphJSON test until bug that causes false failure in SBT is fixed
     ignore("Test createGraphJSON") {
       val graphString = new graph.SmvGraphUtil(app).createGraphJSON()
