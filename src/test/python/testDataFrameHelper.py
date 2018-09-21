@@ -290,6 +290,16 @@ class DfHelperTest(SmvBaseTest):
         res2 = res1.smvRenameField(("c", "d"))
         self.assertEqual(res2.smvGetDesc(), [("a", ""), ("d", desc)])
 
+    def test_smvRenameField_preserve_meta_for_unrenamed_fields(self):
+        df = self.createDF("a:Integer; b:String", "1,abc;1,def;2,ghij")
+        desc = "c description"
+        res1 = df.groupBy(col("a")).agg(count(col("a")).alias("c"))\
+                 .smvDesc(("c", desc))
+        self.assertEqual(res1.smvGetDesc(), [("a", ""), ("c", desc)])
+
+        res2 = res1.smvRenameField(("a", "d"))
+        self.assertEqual(res2.smvGetDesc(), [("d", ""), ("c", desc)])
+
     def test_smvUnpivot(self):
         df = self.createDF("id:String; X:String; Y:String; Z:String",
             """1,A,B,C; 2,D,E,F""")
@@ -400,7 +410,8 @@ class DfHelperTest(SmvBaseTest):
     def test_smvLabel_preserve_data_order(self):
         df1 = self.createDF("id:Integer;name:String;sex:String", "1,Adam,male;2,Eve,female")
         df2 = df1.smvLabel(["name"], ["white"])
-        self.assertEqual(df1, df2)  # same data with same order
+        self.assertEqual(df1.columns, df2.columns) # same data order
+        self.should_be_same(df1, df2)  # same data value
 
     def test_smvLabel_preserve_metadata(self):
         df = self.createDF("id:Integer;name:String;sex:String", "1,Adam,male;2,Eve,female")\

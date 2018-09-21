@@ -25,7 +25,7 @@ def getMetaDesc(m):
     return m.get(smv_desc, u'')
 
 def getMetaLabels(m):
-    return m.get(smv_label, set())
+    return m.get(smv_label, [])
 
 def setMetaDesc(m, desc):
     m[smv_desc] = desc
@@ -33,6 +33,14 @@ def setMetaDesc(m, desc):
 
 def removeMetaDesc(m):
     m.pop(smv_desc, None)
+    return m
+
+def setMetaLabel(m, labels):
+    m[smv_label] = list(set(getMetaLabels(m)) | set(labels))
+    return m
+
+def removeMetaLabel(m, labels, removeAll):
+    m[smv_label] = [] if removeAll else list(set(getMetaLabels(m)) - set(labels))
     return m
 
 class SchemaMetaOps(object):
@@ -83,8 +91,8 @@ class SchemaMetaOps(object):
         
     def getLabel(self, colName):
         if colName is None:
-            return [(col.name, list(getMetaLabels(col.metadata))) for col in self.df.schema.fields]
-        return list(getMetaLabels(self.getMetaByName(colName)))
+            return [(col.name, getMetaLabels(col.metadata)) for col in self.df.schema.fields]
+        return getMetaLabels(self.getMetaByName(colName))
 
     def addLabel(self, colNames, labels):
         if not labels:
@@ -94,11 +102,11 @@ class SchemaMetaOps(object):
         if not addToAll:
             addSet = set(colNames)
 
-        for col in self.df.schema.fields:
-            if addToAll or col.name in addSet:
-                col.metadata[smv_label] = getMetaLabels(col.metadata) | set(labels)
+        jdf = self._jPythonHelper.smvColMeta(self.jdf,\
+            [(col.name, json.dumps(setMetaLabel(col.metadata, labels)))\
+            for col in self.df.schema.fields if addToAll or col.name in addSet])
 
-        return self.df
+        return DataFrame(jdf, self._sql_ctx)
 
     def removeLabel(self, colNames = None, labels = None):
         allLabel = not bool(labels)
@@ -106,15 +114,15 @@ class SchemaMetaOps(object):
         if not allCol:
             removeSet = set(colNames)
 
-        for col in self.df.schema.fields:
-            if allCol or col.name in removeSet:
-                col.metadata[smv_label] = set() if allLabel else getMetaLabels(col.metadata) - set(labels)
+        jdf = self._jPythonHelper.smvColMeta(self.jdf,\
+            [(col.name, json.dumps(removeMetaLabel(col.metadata, labels, allLabel)))\
+            for col in self.df.schema.fields if allCol or col.name in removeSet])
 
-        return self.df
+        return DataFrame(jdf, self._sql_ctx)
 
     def colsWithLabel(self, labels = None):
         def match(meta):
-            return set(labels) <= getMetaLabels(meta) if bool(labels) else not getMetaLabels(meta)
+            return set(labels) <= set(getMetaLabels(meta)) if bool(labels) else not getMetaLabels(meta)
 
         ret = [col.name for col in self.df.schema.fields if match(col.metadata)]
 

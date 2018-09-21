@@ -1123,6 +1123,17 @@ class SmvDFHelper(df: DataFrame) {
   def smvDesc(colDescs: (String, String)*): DataFrame =
     (new SchemaMetaOps(df)).addDesc(colDescs)
 
+  /**
+   * Sets column metadata
+   *
+   * Example:
+   * {{{
+   *   val res = df.smvColMeta(
+   *     ("name", "{"smvDesc": "name description"}"),
+   *     ("sex", "{"smvLabel": "sex label"}")
+   *   )
+   * }}}
+   **/
   def smvColMeta(colMeta: (String, String)*): DataFrame =
     (new SchemaMetaOps(df)).setColMeta(colMeta)
 
