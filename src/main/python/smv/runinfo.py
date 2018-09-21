@@ -46,10 +46,10 @@ class SmvRunInfoCollector(object):
                 (e.g. caused by a typo in the name)
 
         """
-        java_result = self.jcollector.getDqmValidationResult(ds_name)
-        if java_result is None:
+        metadata = self.metadata(ds_name)
+        if (not metadata):
             return {}
-        return json.loads(java_result.toJSON())
+        return metadata["_validation"]
 
     def dqm_state(self, ds_name):
         """Returns the DQM state for a given dataset

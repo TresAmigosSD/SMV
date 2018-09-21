@@ -193,9 +193,6 @@ abstract class SmvDataSet {
     doAction(f"PUBLISH TO HIVE") {queries foreach {app.sqlContext.sql}}
   }
 
-  /** do not persist validation result if isObjectInShell **/
-  private def isPersistValidateResult = !isObjectInShell
-
   /**
    * Define the DQM rules, fixes and policies to be applied to this `DataSet`.
    * See [[org.tresamigos.smv.dqm]], [[org.tresamigos.smv.dqm.DQMRule]], and [[org.tresamigos.smv.dqm.DQMFix]]
@@ -472,12 +469,12 @@ abstract class SmvDataSet {
   private def computeDataFrame(genEdd: Boolean,
                                     collector: SmvRunInfoCollector,
                                     quickRun: Boolean): DataFrame = {
-    val dqmValidator  = new DQMValidator(dqmWithTypeSpecificPolicy(dqm), isPersistValidateResult)
+    val dqmValidator  = new DQMValidator(dqmWithTypeSpecificPolicy(dqm))
 
     // shared logic when running ephemeral and non-ephemeral modules
     def runDqmAndMeta(df: DataFrame, hasAction: Boolean): Unit = {
       val (validationResult, validationDuration) =
-        doAction(f"VALIDATE DATA QUALITY") {dqmValidator.validate(df, hasAction, moduleValidPath())}
+        doAction(f"VALIDATE DATA QUALITY") {dqmValidator.validate(df, hasAction)}
       dqmTimeElapsed = Some(validationDuration)
 
       val metadata = getOrCreateMetadata(Some(df), Some(validationResult))

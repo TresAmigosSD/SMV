@@ -103,10 +103,8 @@ object SmvDQM {
 /**
  * Validates data against DQM rules
  * @param dqm
- * @param persistable whether the results can be persisted. if true, validator will look.
- *                    for persisted results before running, and persist its own results
  */
-class DQMValidator(dqm: SmvDQM, persistable: Boolean) {
+class DQMValidator(dqm: SmvDQM) {
   import DQMValidator._
 
   private lazy val app: SmvApp = SmvApp.app
@@ -173,10 +171,6 @@ class DQMValidator(dqm: SmvDQM, persistable: Boolean) {
     df.rdd.count
   }
 
-  private def persist(res: DqmValidationResult, path: String) = {
-    SmvReportIO.saveReport(res.toJSON, path)
-  }
-
   private def toConsole(res: DqmValidationResult) = {
     SmvReportIO.printReport(res.toJSON())
   }
@@ -194,22 +188,13 @@ class DQMValidator(dqm: SmvDQM, persistable: Boolean) {
    * @param hadAction whether df has already had an action (used to decide whether to force an action)
    * @param path the path where the validation result will be persisted
    */
-  def validate(df: DataFrame, hadAction: Boolean, path: String = "") = {
+  def validate(df: DataFrame, hadAction: Boolean) = {
     val forceAction = needAction && !hadAction
 
-      val result = if (persistable) {
-        // try to read from persisted validation file
-        readPersistedValidationFile(path).recoverWith {
-          case e => {
-            Try(runValidation(df, forceAction, path))
-          }
-        }.get
-      } else {
-        runValidation(df, forceAction, path)
-      }
+    val result = runValidation(df, forceAction)
 
-      terminateAtError(result)
-      result
+    terminateAtError(result)
+    result
   }
 
   /**
@@ -218,7 +203,7 @@ class DQMValidator(dqm: SmvDQM, persistable: Boolean) {
    * @param forceAction whether an action needs to be forced on df
    * @param path the path where the validation result should be persisted
    */
-  def runValidation(df: DataFrame, forceAction: Boolean, path: String = ""): DqmValidationResult = {
+  def runValidation(df: DataFrame, forceAction: Boolean): DqmValidationResult = {
     // If necessary, force action of dataframe with DQM tasks attached in order to trigger the accumulators
     // that count task failures
     if (forceAction)
@@ -229,10 +214,6 @@ class DQMValidator(dqm: SmvDQM, persistable: Boolean) {
     // print report to console if any policies were failed
     if(!res.isEmpty)
       toConsole(res)
-
-    // persist if result is persistable
-    if (persistable)
-      persist(res, path)
 
     res
   }
