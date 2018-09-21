@@ -14,6 +14,8 @@
 
     Provides helper functions for SmvDesc and SmvLabel operations
 """
+import json
+from pyspark.sql import DataFrame
 from smv.error import SmvRuntimeError
 
 smv_label = "smvLabel"
@@ -25,9 +27,20 @@ def getMetaDesc(m):
 def getMetaLabels(m):
     return m.get(smv_label, set())
 
+def setMetaDesc(m, desc):
+    m[smv_desc] = desc
+    return m
+
+def removeMetaDesc(m):
+    m.pop(smv_desc, None)
+    return m
+
 class SchemaMetaOps(object):
     def __init__(self, df):
         self.df = df
+        self.jdf = df._jdf
+        self._sql_ctx = df.sql_ctx
+        self._jPythonHelper = df._sc._jvm.SmvPythonHelper
 
     def getMetaByName(self, colName):
         """Returns the metadata of the first column that matches the column name
@@ -51,22 +64,22 @@ class SchemaMetaOps(object):
 
         addDict = dict(colDescs)
 
-        for col in self.df.schema.fields:
-            if col.name in addDict:
-                col.metadata[smv_desc] = addDict[col.name]
+        jdf = self._jPythonHelper.smvColMeta(self.jdf,\
+            [(col.name, json.dumps(setMetaDesc(col.metadata, addDict[col.name])))\
+            for col in self.df.schema.fields if col.name in addDict])
 
-        return self.df
+        return DataFrame(jdf, self._sql_ctx)
 
     def removeDesc(self, *colNames):
         removeAll = not bool(colNames)
         if not removeAll:
             removeSet = set(colNames)
 
-        for col in self.df.schema.fields:
-            if removeAll or col.name in removeSet:
-                col.metadata.pop(smv_desc, None)
+        jdf = self._jPythonHelper.smvColMeta(self.jdf,\
+            [(col.name, json.dumps(removeMetaDesc(col.metadata)))\
+            for col in self.df.schema.fields if removeAll or col.name in removeSet])
 
-        return self.df
+        return DataFrame(jdf, self._sql_ctx)
         
     def getLabel(self, colName):
         if colName is None:

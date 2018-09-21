@@ -18,6 +18,9 @@ import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.types.Metadata
 import org.tresamigos.smv.SmvKeys._
 
+import org.json4s._
+import org.json4s.jackson.JsonMethods.{parse}
+
 private[smv] class SchemaMetaOps(df: DataFrame) {
 
   /**
@@ -56,6 +59,21 @@ private[smv] class SchemaMetaOps(df: DataFrame) {
       if (colMap.contains(c)) {
         val meta = addDescToMeta(f.metadata, colMap.getOrElse(c, ""))
         df(c).as(c, meta)
+      } else df(c)
+    }
+
+    df.select(columns: _*)
+  }
+
+  def setColMeta(colMeta: Seq[(String, String)]): DataFrame = {
+    require(!colMeta.isEmpty)
+    val colMap = colMeta.toMap
+    println(colMap)
+
+    val columns = df.schema.fields map { f =>
+      val c = f.name
+      if (colMap.contains(c)) {
+        df(c).as(c, Metadata.fromJson(colMap.getOrElse(c, "")))
       } else df(c)
     }
 

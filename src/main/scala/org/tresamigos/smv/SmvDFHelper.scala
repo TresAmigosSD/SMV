@@ -18,7 +18,7 @@ import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.{DataFrame, Row, Column}
 import org.apache.spark.sql.expressions.Window
 import org.apache.spark.sql.functions._
-import org.apache.spark.sql.types.{StructType, StringType, StructField, LongType}
+import org.apache.spark.sql.types.{StructType, StringType, StructField, LongType, Metadata}
 import org.apache.spark.sql.catalyst.expressions.{NamedExpression, GenericRow}
 import org.apache.spark.annotation.Experimental
 import org.apache.spark.util.LongAccumulator
@@ -1122,6 +1122,9 @@ class SmvDFHelper(df: DataFrame) {
    **/
   def smvDesc(colDescs: (String, String)*): DataFrame =
     (new SchemaMetaOps(df)).addDesc(colDescs)
+
+  def smvColMeta(colMeta: (String, String)*): DataFrame =
+    (new SchemaMetaOps(df)).setColMeta(colMeta)
 
   /**
    * Adds column descriptions with a companion 2-column desciptionDF, which has variable names as

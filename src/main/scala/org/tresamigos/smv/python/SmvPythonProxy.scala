@@ -144,6 +144,11 @@ object SmvPythonHelper {
     df.smvDesc(colDescPairs: _*)
   }
 
+  def smvColMeta(df: DataFrame, colMeta: ArrayList[ArrayList[String]]): DataFrame = {
+    val colMetaPairs = colMeta.map(inner => Tuple2(inner(0), inner(1)))
+    df.smvColMeta(colMetaPairs: _*)
+  }
+
   def smvRemoveDesc(df: DataFrame, colNames: Array[String]): DataFrame = {
     df.smvRemoveDesc(colNames: _*)
   }
