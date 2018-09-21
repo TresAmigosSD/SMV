@@ -139,18 +139,9 @@ object SmvPythonHelper {
   def smvOverlapCheck(df: DataFrame, key: String, otherDf: Array[DataFrame]): DataFrame =
     df.smvOverlapCheck(key)(otherDf: _*)
 
-  def smvDesc(df: DataFrame, colDescs: ArrayList[ArrayList[String]]): DataFrame = {
-    val colDescPairs = colDescs.map(inner => Tuple2(inner(0), inner(1)))
-    df.smvDesc(colDescPairs: _*)
-  }
-
   def smvColMeta(df: DataFrame, colMeta: ArrayList[ArrayList[String]]): DataFrame = {
     val colMetaPairs = colMeta.map(inner => Tuple2(inner(0), inner(1)))
     df.smvColMeta(colMetaPairs: _*)
-  }
-
-  def smvRemoveDesc(df: DataFrame, colNames: Array[String]): DataFrame = {
-    df.smvRemoveDesc(colNames: _*)
   }
 
   def smvCollectSet(col: Column, datatypeJson: String): Column = {

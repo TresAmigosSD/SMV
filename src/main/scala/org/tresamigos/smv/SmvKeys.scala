@@ -19,41 +19,14 @@ import org.apache.spark.sql.types.{Metadata, MetadataBuilder, StructField}
 /** Utility for using the metadata part of StructField to store Smv keys 
  */
 private[smv] object SmvKeys {
-  val SmvLabel = "smvLabel"
   val SmvDesc  = "smvDesc"
 
   def getMetaDesc(m: Metadata): String = {
     if (m.contains(SmvDesc)) m.getString(SmvDesc) else ""
   }
 
-  def getMetaLabels(m: Metadata): Seq[String] = {
-    if (m.contains(SmvLabel)) m.getStringArray(SmvLabel).toSeq else Seq.empty
-  }
-
   def createMetaWithDesc(desc: String): Metadata = {
     val builder = new MetadataBuilder()
     builder.putString(SmvDesc, desc).build
-  }
-
-  def addDescToMeta(m: Metadata, desc: String): Metadata = {
-    val builder = new MetadataBuilder().withMetadata(m)
-    builder.putString(SmvDesc, desc).build
-  }
-
-  def addLabelsToMeta(m: Metadata, labels: Seq[String]): Metadata = {
-    val builder = new MetadataBuilder().withMetadata(m)
-    // preserve the current meta data
-    builder.putStringArray(SmvLabel, (getMetaLabels(m) ++ labels).distinct.toArray).build
-  }
-
-  def removeLabelsFromMeta(m: Metadata, labels: Seq[String]): Metadata = {
-    val newLabels = if (labels.isEmpty) Seq.empty else (getMetaLabels(m) diff labels).distinct
-    val builder   = new MetadataBuilder().withMetadata(m)
-    builder.putStringArray(SmvLabel, newLabels.toArray).build
-  }
-
-  def removeDescFromMeta(m: Metadata): Metadata = {
-    val builder = new MetadataBuilder().withMetadata(m)
-    builder.putString(SmvDesc, "").build
   }
 }
