@@ -18,7 +18,7 @@ import os
 class SmvShellTest(SmvBaseTest):
     @classmethod
     def smvAppInitArgs(cls):
-        return ['--smv-props', 'smv.stages=stage']
+        return ['--smv-props', 'smv.stages=stage:stage2']
 
     def test_shell_df(self):
         fqn = "stage.modules.CsvStr"
@@ -30,8 +30,45 @@ class SmvShellTest(SmvBaseTest):
         self.should_be_same(res, expected)
 
     def test_shell_cmds(self):
-        smvshell.ls()
-        smvshell.lsStage()
+        cmd = smvshell._jvmShellCmd()
+        self.assertEqual(cmd.ls(),
+            """
+stage:
+  (I) stage.modules.CsvStr
+  (O) stage.modules.M1
+
+stage2:
+  (L) stage.modules.M1
+  (I) stage2.modules.CsvStr2
+  (M) stage2.modules.M2""")
+        self.assertEqual(cmd.lsStage(),
+        """stage
+stage2""")
+
+        self.assertEqual(cmd.lsDead(),
+        """
+stage:
+
+stage2:
+  (L) stage.modules.M1
+  (I) stage2.modules.CsvStr2
+  (M) stage2.modules.M2""")
+        
+        self.assertEqual(cmd.lsDeadLeaf(),
+        """
+stage:
+
+stage2:
+  (M) stage2.modules.M2""")
+
+        self.assertEqual(cmd.ancestors("M2"),
+        """(I) stage2.modules.CsvStr2
+(L) stage.modules.M1
+(I) stage.modules.CsvStr""")
+
+        self.assertEqual(cmd.descendants("CsvStr"),
+        """(O) stage.modules.M1
+(M) stage2.modules.M2""")
 
     def test_smvDiscoverSchemaToFile(self):
         file_name = "discoverSchema.csv"
