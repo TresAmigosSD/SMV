@@ -95,7 +95,6 @@ example demonstrates it:
 [("b", "test col a")]
 ```
 
-As you can see, rename will persist the metadata when you referring the original
-column as `col(colname)`.
+As you can see, renaming a column will persist its metadata in this way.
 
 Regular projections without re-calculation will preserve metadata.
