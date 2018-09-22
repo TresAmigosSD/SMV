@@ -39,32 +39,64 @@ def _setMetaLabel(meta, labels):
     meta[smv_label] = list(set(_getMetaLabels(meta)) | set(labels))
     return meta
 
-def _removeMetaLabel(meta, labels, removeAll):
-    meta[smv_label] = [] if removeAll else list(set(_getMetaLabels(meta)) - set(labels))
+def _removeMetaLabel(meta, labels):
+    meta[smv_label] = [] if not labels else list(set(_getMetaLabels(meta)) - set(labels))
     return meta
 
 class SchemaMetaOps(object):
     def __init__(self, df):
         self.df = df
         self.jdf = df._jdf
+        self.fields = df.schema.fields
         self._sql_ctx = df.sql_ctx
         self._jPythonHelper = df._sc._jvm.SmvPythonHelper
 
     def _getMetaByName(self, colName):
         """Returns the metadata of the first column that matches the column name
 
-            Will throw if there's no column that matches the specified name
+            Will throw if there's no column matching the specified name
+
+            Args:
+                colName (string) the name of the column that is being looked for
+            
+            Returns:
+                (dict) the metadata of the given column
         """
         try:
-            meta = next(col.metadata for col in self.df.schema.fields if col.name == colName)
-        except:
+            meta = next(col.metadata for col in self.fields if col.name == colName)
+        except StopIteration:
             raise SmvRuntimeError("column name {} not found".format(colName))
         return meta
 
+    def _updateColMeta(self, colShouldUpdate, colUpdateMeta):
+        """Returns a DataFrame with the specified meta data updated in specified columns
+
+            Args:
+                colShouldUpdate (function):
+                    input - (dict) a DataFrame column
+                    output - (bool) whether we should update the given column
+
+                colUpdateMeta (function):
+                    input - (dict) a DataFrame column
+                    output - (dict) the metadata that should be assigned to the given column
+
+            Returns:
+                (DataFrame) a new DataFrame containing the updated metadata
+        """
+        cols = [col for col in self.fields if colShouldUpdate(col)]
+        colMeta = [(col.name, json.dumps(colUpdateMeta(col))) for col in cols]
+        jdf = self._jPythonHelper.smvColMeta(self.jdf, colMeta)
+        return DataFrame(jdf, self._sql_ctx)
+
     def getDesc(self, colName):
         if colName is None:
-            return [(col.name, _getMetaDesc(col.metadata)) for col in self.df.schema.fields]
+            return [(col.name, _getMetaDesc(col.metadata)) for col in self.fields]
         return _getMetaDesc(self._getMetaByName(colName))
+
+    def getLabel(self, colName):
+        if colName is None:
+            return [(col.name, _getMetaLabels(col.metadata)) for col in self.fields]
+        return _getMetaLabels(self._getMetaByName(colName))
 
     def addDesc(self, *colDescs):
         if not colDescs:
@@ -72,59 +104,58 @@ class SchemaMetaOps(object):
 
         addDict = dict(colDescs)
 
-        jdf = self._jPythonHelper.smvColMeta(self.jdf,\
-            [(col.name, json.dumps(_setMetaDesc(col.metadata, addDict[col.name])))\
-            for col in self.df.schema.fields if col.name in addDict])
+        def colShouldUpdate(col):
+            return col.name in addDict
 
-        return DataFrame(jdf, self._sql_ctx)
+        def colUpdateMeta(col):
+            return _setMetaDesc(col.metadata, addDict[col.name])
+        
+        return self._updateColMeta(colShouldUpdate, colUpdateMeta)
 
     def removeDesc(self, *colNames):
-        removeAll = not bool(colNames)
-        if not removeAll:
+        if colNames:
             removeSet = set(colNames)
 
-        jdf = self._jPythonHelper.smvColMeta(self.jdf,\
-            [(col.name, json.dumps(_removeMetaDesc(col.metadata)))\
-            for col in self.df.schema.fields if removeAll or col.name in removeSet])
+        def colShouldUpdate(col):
+            return not colNames or col.name in removeSet
 
-        return DataFrame(jdf, self._sql_ctx)
-        
-    def getLabel(self, colName):
-        if colName is None:
-            return [(col.name, _getMetaLabels(col.metadata)) for col in self.df.schema.fields]
-        return _getMetaLabels(self._getMetaByName(colName))
+        def colUpdateMeta(col):
+            return _removeMetaDesc(col.metadata)
+
+        return self._updateColMeta(colShouldUpdate, colUpdateMeta)
 
     def addLabel(self, colNames, labels):
         if not labels:
             raise SmvRuntimeError("must provide a list of labels to add")
-        
-        addToAll = not bool(colNames)
-        if not addToAll:
+
+        if colNames:
             addSet = set(colNames)
 
-        jdf = self._jPythonHelper.smvColMeta(self.jdf,\
-            [(col.name, json.dumps(_setMetaLabel(col.metadata, labels)))\
-            for col in self.df.schema.fields if addToAll or col.name in addSet])
+        def colShouldUpdate(col):
+            return not colNames or col.name in addSet
 
-        return DataFrame(jdf, self._sql_ctx)
+        def colUpdateMeta(col):
+            return _setMetaLabel(col.metadata, labels)
+
+        return self._updateColMeta(colShouldUpdate, colUpdateMeta)
 
     def removeLabel(self, colNames = None, labels = None):
-        allLabel = not bool(labels)
-        allCol = not bool(colNames)
-        if not allCol:
+        if colNames:
             removeSet = set(colNames)
 
-        jdf = self._jPythonHelper.smvColMeta(self.jdf,\
-            [(col.name, json.dumps(_removeMetaLabel(col.metadata, labels, allLabel)))\
-            for col in self.df.schema.fields if allCol or col.name in removeSet])
+        def colShouldUpdate(col):
+            return not colNames or col.name in removeSet
 
-        return DataFrame(jdf, self._sql_ctx)
+        def colUpdateMeta(col):
+            return _removeMetaLabel(col.metadata, labels)
+
+        return self._updateColMeta(colShouldUpdate, colUpdateMeta)
 
     def colsWithLabel(self, labels = None):
         def match(meta):
             return set(labels) <= set(_getMetaLabels(meta)) if bool(labels) else not _getMetaLabels(meta)
 
-        ret = [col.name for col in self.df.schema.fields if match(col.metadata)]
+        ret = [col.name for col in self.fields if match(col.metadata)]
 
         if not ret:
             if bool(labels):
