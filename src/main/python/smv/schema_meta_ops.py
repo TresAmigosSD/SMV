@@ -152,13 +152,18 @@ class SchemaMetaOps(object):
         return self._updateColMeta(colShouldUpdate, colUpdateMeta)
 
     def colsWithLabel(self, labels = None):
-        def match(meta):
-            return set(labels) <= set(_getMetaLabels(meta)) if bool(labels) else not _getMetaLabels(meta)
+        def metaLabelMatched(meta):
+            if labels:
+                # if labels are provided, match the column whose labels contain the given ones
+                return set(labels) <= set(_getMetaLabels(meta))
+            else:
+                # if labels are empty, match the column with no label
+                return not _getMetaLabels(meta)
 
-        ret = [col.name for col in self.fields if match(col.metadata)]
+        ret = [col.name for col in self.fields if metaLabelMatched(col.metadata)]
 
         if not ret:
-            if bool(labels):
+            if labels:
                 raise SmvRuntimeError("there are no columns labeled with {{{}}} in {}"\
                     .format(", ".join(labels), self.df))
             else:
