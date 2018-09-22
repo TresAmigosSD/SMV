@@ -565,7 +565,7 @@ class DataFrameHelper(object):
         self._jdf = df._jdf
         self._jPythonHelper = df._sc._jvm.SmvPythonHelper
         self._jDfHelper = df._sc._jvm.SmvDFHelper(df._jdf)
-        self.SchemaMetaOps = SchemaMetaOps(df)
+        self._SchemaMetaOps = SchemaMetaOps(df)
 
     def smvExpandStruct(self, *cols):
         """Expand structure type column to a group of columns
@@ -1066,7 +1066,7 @@ class DataFrameHelper(object):
             Returns:
                 (DataFrame): the DataFrame with column descriptions added
         """
-        return self.SchemaMetaOps.addDesc(*colDescs)
+        return self._SchemaMetaOps.addDesc(*colDescs)
 
     def smvDescFromDF(self, descDF):
         """Adds column descriptions
@@ -1101,7 +1101,7 @@ class DataFrameHelper(object):
             Returns:
                 (list(tuple)): a list of (colName, description) pairs for all columns
         """
-        return self.SchemaMetaOps.getDesc(colName)
+        return self._SchemaMetaOps.getDesc(colName)
 
     def smvRemoveDesc(self, *colNames):
         """Removes description for the given columns from the Dataframe
@@ -1121,7 +1121,7 @@ class DataFrameHelper(object):
             Returns:
                 (DataFrame): the DataFrae with all column descriptions removed
         """
-        return self.SchemaMetaOps.removeDesc(*colNames)
+        return self._SchemaMetaOps.removeDesc(*colNames)
 
     def smvGetLabel(self, colName = None):
         """Returns a list column label(s)
@@ -1141,7 +1141,7 @@ class DataFrameHelper(object):
             Returns:
                 (list(tuple)): a list of (colName, list(labels)) pairs for all columns
         """
-        return self.SchemaMetaOps.getLabel(colName)
+        return self._SchemaMetaOps.getLabel(colName)
 
     def smvLabel(self, colNames, labels):
         """Adds labels to the specified columns
@@ -1169,7 +1169,7 @@ class DataFrameHelper(object):
             Returns:
                 (DataFrame): the DataFrame with labels added to all columns
         """
-        return self.SchemaMetaOps.addLabel(colNames, labels)
+        return self._SchemaMetaOps.addLabel(colNames, labels)
 
     def smvRemoveLabel(self, colNames = None, labels = None):
         """Removes labels from the specified columns
@@ -1198,7 +1198,7 @@ class DataFrameHelper(object):
             Returns:
                 (DataFrame): the DataFrame with all label meta data cleared
         """
-        return self.SchemaMetaOps.removeLabel(colNames, labels)
+        return self._SchemaMetaOps.removeLabel(colNames, labels)
 
     def smvWithLabel(self, labels = None):
         """Returns all column names in the data frame that contain all the specified labels
@@ -1215,7 +1215,7 @@ class DataFrameHelper(object):
             Returns:
                 (list(string)): a list of column name strings that match the specified labels
         """
-        return self.SchemaMetaOps.colsWithLabel(labels)
+        return self._SchemaMetaOps.colsWithLabel(labels)
 
     def selectByLabel(self, labels = None):
         """Select columns whose metadata contains the specified labels

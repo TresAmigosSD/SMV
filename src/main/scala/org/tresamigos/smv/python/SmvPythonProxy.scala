@@ -22,7 +22,7 @@ import java.util.ArrayList
 
 import org.apache.hadoop.mapred.InvalidInputException
 import org.apache.spark.sql.{Column, DataFrame, SQLContext, SparkSession}
-import org.apache.spark.sql.types.DataType
+import org.apache.spark.sql.types.{DataType, Metadata}
 import matcher._
 import org.tresamigos.smv.dqm.ParserLogger
 
@@ -139,9 +139,27 @@ object SmvPythonHelper {
   def smvOverlapCheck(df: DataFrame, key: String, otherDf: Array[DataFrame]): DataFrame =
     df.smvOverlapCheck(key)(otherDf: _*)
 
+  /**
+   * Sets the metadata of the specified columns.
+   *
+   * @param colMeta a list of (colName, meta) pairs, where colName is the column name for which
+   *                to set the metadata. And meta is the jsonfied metadata.
+   *
+   * This helper exists since we can't select columns with meta in pyspark 2.1 or lower versions.
+   *
+   * TODO: once we decide to completely move to pyspark 2.2 or higher, remove this function and
+   *       re-implement it in python side, using df.select(col("a").alias("a", metadata = {...}))
+   */
   def smvColMeta(df: DataFrame, colMeta: ArrayList[ArrayList[String]]): DataFrame = {
     val colMetaPairs = colMeta.map(inner => Tuple2(inner(0), inner(1)))
-    df.smvColMeta(colMetaPairs: _*)
+    val colMap = colMetaPairs.toMap
+    val columns = df.schema.fields map { f =>
+      val c = f.name
+      if (colMap.contains(c)) {
+        df(c).as(c, Metadata.fromJson(colMap.getOrElse(c, "")))
+      } else df(c)
+    }
+    df.select(columns: _*)
   }
 
   def smvCollectSet(col: Column, datatypeJson: String): Column = {
