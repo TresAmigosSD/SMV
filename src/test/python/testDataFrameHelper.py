@@ -410,8 +410,7 @@ class DfHelperTest(SmvBaseTest):
     def test_smvLabel_preserve_data_order(self):
         df1 = self.createDF("id:Integer;name:String;sex:String", "1,Adam,male;2,Eve,female")
         df2 = df1.smvLabel(["name"], ["white"])
-        self.assertEqual(df1.columns, df2.columns) # same data order
-        self.should_be_same(df1, df2)  # same data value
+        self.should_be_same(df1, df2)
 
     def test_smvLabel_preserve_metadata(self):
         df = self.createDF("id:Integer;name:String;sex:String", "1,Adam,male;2,Eve,female")\
