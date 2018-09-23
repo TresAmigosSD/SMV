@@ -88,6 +88,18 @@ class SchemaMetaOps(object):
         jdf = self._jPythonHelper.smvColMeta(self.jdf, colMeta)
         return DataFrame(jdf, self._sql_ctx)
 
+    def _checkColExistence(self, colNames):
+        """Check if the given column names exist in the DataFrame
+
+            Will throw if some of the column names are not found
+
+            Args:
+                colNames (list(string)) a list of column names to check
+        """
+        invalidCols = set(colNames) - set(self.df.columns)
+        if invalidCols:
+            raise SmvRuntimeError("column name {} not found".format(", ".join(invalidCols)))
+
     def getDesc(self, colName):
         if colName is None:
             return [(col.name, _getMetaDesc(col.metadata)) for col in self.fields]
@@ -102,6 +114,8 @@ class SchemaMetaOps(object):
         if not colDescs:
             raise SmvRuntimeError("must provide (name, description) pair to add")
 
+        self._checkColExistence([tup[0] for tup in colDescs])
+
         addDict = dict(colDescs)
 
         def colShouldUpdate(col):
@@ -114,6 +128,7 @@ class SchemaMetaOps(object):
 
     def removeDesc(self, *colNames):
         if colNames:
+            self._checkColExistence(colNames)
             removeSet = set(colNames)
 
         def colShouldUpdate(col):
@@ -129,6 +144,7 @@ class SchemaMetaOps(object):
             raise SmvRuntimeError("must provide a list of labels to add")
 
         if colNames:
+            self._checkColExistence(colNames)
             addSet = set(colNames)
 
         def colShouldUpdate(col):
@@ -141,6 +157,7 @@ class SchemaMetaOps(object):
 
     def removeLabel(self, colNames = None, labels = None):
         if colNames:
+            self._checkColExistence(colNames)
             removeSet = set(colNames)
 
         def colShouldUpdate(col):
