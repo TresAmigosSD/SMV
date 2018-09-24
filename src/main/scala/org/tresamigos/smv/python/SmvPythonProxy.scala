@@ -104,10 +104,10 @@ object SmvPythonHelper {
     (new ArrayList(res._1), res._2)
   }
 
-  def smvDiscoverSchemaToFile(path: String, n: Int, csvattr: CsvAttributes): Unit = {
+  def smvDiscoverSchemaToFile(path: String, nsamples: Int, csvattr: CsvAttributes): Unit = {
     implicit val csvAttributes = csvattr
     val helper                 = new SchemaDiscoveryHelper(SmvApp.app.sqlContext)
-    val schema                 = helper.discoverSchemaFromFile(path, n)
+    val schema                 = helper.discoverSchemaFromFile(path, nsamples)
     val outpath                = SmvSchema.dataPathToSchemaPath(path) + ".toBeReviewed"
     val outFileName            = (new File(outpath)).getName
     schema.saveToLocalFile(outFileName)
