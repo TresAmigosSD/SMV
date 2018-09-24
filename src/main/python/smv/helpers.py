@@ -1124,7 +1124,7 @@ class DataFrameHelper(object):
         return self._SchemaMetaOps.removeDesc(*colNames)
 
     def smvGetLabel(self, colName = None):
-        """Returns a list column label(s)
+        """Returns a list of column label(s)
 
             Args:
                 colName (string):  optional column name for which to get the label.

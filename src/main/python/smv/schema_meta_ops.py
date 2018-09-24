@@ -98,19 +98,29 @@ class SchemaMetaOps(object):
         """
         invalidCols = set(colNames) - set(self.df.columns)
         if invalidCols:
-            raise SmvRuntimeError("column name {} not found".format(", ".join(invalidCols)))
+            raise SmvRuntimeError("{} does not have columns {}".format(self.df, ", ".join(invalidCols)))
 
     def getDesc(self, colName):
+        """Returns column description(s)
+
+            If colName is empty, returns descriptions for all columns
+        """
         if colName is None:
             return [(col.name, _getMetaDesc(col.metadata)) for col in self.fields]
         return _getMetaDesc(self._getMetaByName(colName))
 
     def getLabel(self, colName):
+        """Returns a list of column label(s)
+
+            If colName is empty, returns labels for all columns
+        """
         if colName is None:
             return [(col.name, _getMetaLabels(col.metadata)) for col in self.fields]
         return _getMetaLabels(self._getMetaByName(colName))
 
     def addDesc(self, *colDescs):
+        """Adds column descriptions
+        """
         if not colDescs:
             raise SmvRuntimeError("must provide (name, description) pair to add")
 
@@ -127,6 +137,10 @@ class SchemaMetaOps(object):
         return self._updateColMeta(colShouldUpdate, colUpdateMeta)
 
     def removeDesc(self, *colNames):
+        """Removes description for the given columns from the Dataframe
+
+            If colNames are empty, removes descriptions of all columns
+        """
         if colNames:
             self._checkColExistence(colNames)
             removeSet = set(colNames)
@@ -140,6 +154,10 @@ class SchemaMetaOps(object):
         return self._updateColMeta(colShouldUpdate, colUpdateMeta)
 
     def addLabel(self, colNames, labels):
+        """Adds labels to the specified columns
+
+            If colNames are empty, adds the same set of labels to all columns
+        """
         if not labels:
             raise SmvRuntimeError("must provide a list of labels to add")
 
@@ -156,6 +174,12 @@ class SchemaMetaOps(object):
         return self._updateColMeta(colShouldUpdate, colUpdateMeta)
 
     def removeLabel(self, colNames = None, labels = None):
+        """Removes labels from the specified columns
+
+            If colNames are empty, removes the same set of labels from all columns
+            If labels are empty, removes all labels from the given columns
+            If they are both empty, removes all labels from all columns
+        """
         if colNames:
             self._checkColExistence(colNames)
             removeSet = set(colNames)
@@ -169,6 +193,10 @@ class SchemaMetaOps(object):
         return self._updateColMeta(colShouldUpdate, colUpdateMeta)
 
     def colsWithLabel(self, labels = None):
+        """Returns all column names in the data frame that contain all the specified labels
+
+            If labels are empty, returns names of unlabeled columns
+        """
         def metaLabelMatched(meta):
             if labels:
                 # if labels are provided, match the column whose labels contain the given ones
