@@ -224,29 +224,13 @@ override def dqm() = SmvDQM().
     add(DQMRule($"Price" < 1000000.0, "rule1")).
     add(DQMRule($"Price" > 0.0, "rule2")).
     add(DQMFix($"age" > 120, lit(120) as "age", "fix1")).
-    add(policy, "my_udp1")
+    add(DQMPolicy(policy, "my_udp1"))
 ```
 
 **Python**
 ```python
 Not implemented yet
 ```
-
-Please note that the user defined policy function has access to both `DataFrame` and `DQMState`.
-In above example, we only used the `DQMState`. One can actually do complicated `DataFrame`
-calculation to make the policy decision. For example,
-
-```scala
-val policy: (DataFrame, DQMState) => Boolean = {(df, state) =>
-  val avgPrice = df.agg(avg($"Price")).first.toSeq.head.asInstanceOf[Double]
-  avgPrice < 100.0
-}
-```
-It checks the average price on the entire DF, and require it to be less than `100.0`.
-
-Using `DataFrame` directly could introduce additional `actions` on the data, which could be
-costly. For any policy which can be fully determined by using the `DQMState`, we should do so and
-avoid using `DataFrame` actions.
 
 ### DQMState
 

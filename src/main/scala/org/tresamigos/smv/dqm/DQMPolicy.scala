@@ -22,34 +22,34 @@ import org.apache.spark.sql.DataFrame
  **/
 abstract class DQMPolicy {
   def name: String
-  def policy(df: DataFrame, state: DQMState): Boolean
+  def policy(state: DQMState): Boolean
 }
 
-case class UDPolicy(_policy: (DataFrame, DQMState) => Boolean, name: String) extends DQMPolicy {
-  def policy(df: DataFrame, state: DQMState) = _policy(df, state)
+case class UDPolicy(_policy: (DQMState) => Boolean, name: String) extends DQMPolicy {
+  def policy(state: DQMState) = _policy(state)
 }
 
 object DQMPolicy {
-  def apply(policy: (DataFrame, DQMState) => Boolean, name: String) =
+  def apply(policy: (DQMState) => Boolean, name: String) =
     UDPolicy(policy, name)
 }
 
 /** No requirement, always pass */
 private[smv] object NoOpDQMPolicy extends DQMPolicy {
   val name                                            = "NoOpDQMPolicy"
-  def policy(df: DataFrame, state: DQMState): Boolean = true
+  def policy(state: DQMState): Boolean = true
 }
 
 /** Fail if count >= threshold */
 private[smv] case class ImplementFailCountPolicy(name: String, threshold: Int) extends DQMPolicy {
-  def policy(df: DataFrame, state: DQMState): Boolean = {
+  def policy(state: DQMState): Boolean = {
     state.getTaskCount(name) < threshold
   }
 }
 
 private[smv] case class ImplementFailPercentPolicy(name: String, threshold: Double)
     extends DQMPolicy {
-  def policy(df: DataFrame, state: DQMState): Boolean = {
+  def policy(state: DQMState): Boolean = {
     state.getTaskCount(name) < threshold * state.getRecCount()
   }
 }
@@ -59,7 +59,7 @@ private[smv] case class ImplementFailPercentPolicy(name: String, threshold: Doub
  **/
 case class FailParserCountPolicy(threshold: Int) extends DQMPolicy {
   def name = s"FailParserCountPolicy(${threshold})"
-  def policy(df: DataFrame, state: DQMState): Boolean = {
+  def policy(state: DQMState): Boolean = {
     state.getParserCount() < threshold
   }
 }
@@ -69,7 +69,7 @@ case class FailParserCountPolicy(threshold: Int) extends DQMPolicy {
  **/
 case class FailTotalRuleCountPolicy(threshold: Int) extends DQMPolicy {
   def name = s"FailTotalRuleCountPolicy(${threshold})"
-  def policy(df: DataFrame, state: DQMState): Boolean = {
+  def policy(state: DQMState): Boolean = {
     state.getTotalRuleCount() < threshold
   }
 }
@@ -79,7 +79,7 @@ case class FailTotalRuleCountPolicy(threshold: Int) extends DQMPolicy {
  **/
 case class FailTotalFixCountPolicy(threshold: Int) extends DQMPolicy {
   def name = s"FailTotalFixCountPolicy(${threshold})"
-  def policy(df: DataFrame, state: DQMState): Boolean = {
+  def policy(state: DQMState): Boolean = {
     state.getTotalFixCount() < threshold
   }
 }
@@ -90,7 +90,7 @@ case class FailTotalFixCountPolicy(threshold: Int) extends DQMPolicy {
  **/
 case class FailTotalRulePercentPolicy(threshold: Double) extends DQMPolicy {
   def name = s"FailTotalRulePercentPolicy(${threshold})"
-  def policy(df: DataFrame, state: DQMState): Boolean = {
+  def policy(state: DQMState): Boolean = {
     state.getTotalRuleCount() < threshold * state.getRecCount()
   }
 }
@@ -101,7 +101,7 @@ case class FailTotalRulePercentPolicy(threshold: Double) extends DQMPolicy {
  **/
 case class FailTotalFixPercentPolicy(threshold: Double) extends DQMPolicy {
   def name = s"FailTotalFixPercentPolicy(${threshold})"
-  def policy(df: DataFrame, state: DQMState): Boolean = {
+  def policy(state: DQMState): Boolean = {
     state.getTotalFixCount() < threshold * state.getRecCount()
   }
 }
