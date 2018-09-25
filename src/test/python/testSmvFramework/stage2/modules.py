@@ -12,22 +12,20 @@
 # limitations under the License.
 
 from smv import *
+import stage.modules
 
-class MyJdbcTable(SmvJdbcTable):
-    def tableName(self):
-        return "MyJdbcTable"
+CsvLink = SmvModuleLink(stage.modules.CsvFile)
 
-class MyJdbcWithQuery(SmvJdbcTable):
-    def tableQuery(self):
-        return "select K from MyJdbcTable"
-    def tableName(self):
-        return "MyJdbcTable"
+class DependsOnLink(SmvModule):
+    def requiresDS(self):
+        return [CsvLink]
 
-class MyJdbcCsvString(SmvCsvStringData, SmvOutput):
-    def tableName(self):
-        return "MyJdbcOutput"
+    def run(self, i):
+        return i[CsvLink]
 
-    def schemaStr(self):
-        return "a:String;b:Integer"
-    def dataStr(self):
-        return "x,10;y,1"
+class DependsDirectly(SmvModule):
+    def requiresDS(self):
+        return [stage.modules.CsvFile]
+
+    def run(self, i):
+        return None
