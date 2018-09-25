@@ -37,11 +37,6 @@ class JdbcTest(SmvBaseTest):
             "smv.jdbc.driver=" + cls.driver()
         ]
 
-    @classmethod
-    def load(cls, fqn):
-        urn = "mod:" + fqn
-        return cls.smvApp.j_smvPyClient.loadSingleUrn(urn)
-
     def test_SmvJdbcTable(self):
         df = self.createDF("K:String", "xxx")
         df.write.jdbc(self.url(), "MyJdbcTable", properties={"driver": "org.apache.derby.jdbc.EmbeddedDriver"})

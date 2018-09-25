@@ -85,6 +85,11 @@ class SmvBaseTest(unittest.TestCase):
     def df(cls, fqn, forceRun=False):
         return cls.smvApp.runModule("mod:" + fqn, forceRun=forceRun)[0]
 
+    @classmethod
+    def load(cls, fqn):
+        urn = "mod:" + fqn
+        return cls.smvApp.j_smvPyClient.loadSingleUrn(urn)
+
     def should_be_same(self, expected, result):
         """Asserts that the two dataframes contain the same data, ignoring order
         """

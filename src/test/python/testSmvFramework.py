@@ -167,11 +167,6 @@ class SmvNeedsToRunTest(SmvBaseTest):
         return ['--smv-props', 'smv.stages=stage']
 
     @classmethod
-    def load(cls, fqn):
-        urn = "mod:" + fqn
-        return cls.smvApp.j_smvPyClient.loadSingleUrn(urn)
-
-    @classmethod
     def deleteModuleOutput(cls, j_m):
         cls.smvApp.j_smvPyClient.deleteModuleOutput(j_m)
 
@@ -222,11 +217,6 @@ class SmvPublishTest(SmvBaseTest):
             '--publish',
             'v1'
         ]
-
-    @classmethod
-    def load(cls, fqn):
-        urn = "mod:" + fqn
-        return cls.smvApp.j_smvPyClient.loadSingleUrn(urn)
 
     def test_publish_as_file(self):
         self.createTempInputFile("test3.csv", "col1\na\nb\n")
