@@ -141,3 +141,27 @@ class ModWithBadName(SmvModule):
 
     def run(self, i):
         return self.smvApp.createDF("b: String", "xxx")
+
+class NeedRunM1(SmvModule):
+    def requiresDS(self):
+        return []
+    
+    def run(self, i):
+        return self.smvApp.createDF("ida: Integer; a: String", "1,def;2,ghi")
+
+class NeedRunM2(SmvModule):
+    def requiresDS(self):
+        return [NeedRunM1]
+    
+    def run(self, i):
+        return i[NeedRunM1]
+
+class NeedRunM3(SmvModule):
+    def requiresDS(self):
+        return [NeedRunM1]
+    
+    def isEphemeral(self):
+        return True
+
+    def run(self, i):
+        return i[NeedRunM1]

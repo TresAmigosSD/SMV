@@ -230,7 +230,42 @@ class SmvNeedsToRunTest(SmvBaseTest):
         urn = "mod:" + fqn
         return cls.smvApp.j_smvPyClient.loadSingleUrn(urn)
 
+    @classmethod
+    def deleteModuleOutput(cls, j_m):
+        cls.smvApp.j_smvPyClient.deleteModuleOutput(j_m)
+
     def test_input_module_does_not_need_to_run(self):
         fqn = "stage.modules.CsvFile"
         j_m = self.load(fqn)
         self.assertFalse(j_m.needsToRun())
+
+    def test_module_not_persisted_should_need_to_run(self):
+        fqn = "stage.modules.NeedRunM1"
+        j_m = self.load(fqn)
+        self.deleteModuleOutput(j_m)
+        self.assertTrue(j_m.needsToRun())
+
+    def test_module_persisted_should_not_need_to_run(self):
+        fqn = "stage.modules.NeedRunM1"
+        self.df(fqn, forceRun=True)
+        self.assertFalse(self.load(fqn).needsToRun())
+
+    def test_module_depends_on_need_to_run_module_also_need_to_run(self):
+        fqn = "stage.modules.NeedRunM2"
+        fqn0 = "stage.modules.NeedRunM1"
+        self.df(fqn, True)
+        self.deleteModuleOutput(self.load(fqn0)) # deleting persist files made M1 need to run
+        self.assertTrue(self.load(fqn).needsToRun())
+
+    def test_ephemeral_module_depends_on_not_need_to_run_also_not(self):
+        fqn = "stage.modules.NeedRunM3"
+        fqn0 = "stage.modules.NeedRunM1"
+        self.df(fqn0, True)
+        self.assertFalse(self.load(fqn).needsToRun())
+
+    def test_ephemeral_module_depends_on_need_to_run_also_need(self):
+        fqn = "stage.modules.NeedRunM3"
+        fqn0 = "stage.modules.NeedRunM1"
+        self.df(fqn, True)
+        self.deleteModuleOutput(self.load(fqn0)) # deleting persist files made M1 need to run
+        self.assertTrue(self.load(fqn).needsToRun())
