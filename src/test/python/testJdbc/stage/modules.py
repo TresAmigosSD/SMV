@@ -23,7 +23,7 @@ class MyJdbcWithQuery(SmvJdbcTable):
     def tableName(self):
         return "MyJdbcTable"
 
-class Csv(SmvCsvStringData, SmvOutput):
+class MyJdbcCsvString(SmvCsvStringData, SmvOutput):
     def tableName(self):
         return "MyJdbcOutput"
 

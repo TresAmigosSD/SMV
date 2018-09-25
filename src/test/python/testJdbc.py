@@ -46,7 +46,7 @@ class JdbcTest(SmvBaseTest):
         self.should_be_same(res2, df)
 
     def test_publish_to_jdbc(self):
-        fqn = "stage.modules.Csv"
+        fqn = "stage.modules.MyJdbcCsvString"
         j_m = self.load(fqn)
         j_m.publishThroughJDBC(self.smvApp._jvm.SmvRunInfoCollector())
         res = self.df(fqn)
