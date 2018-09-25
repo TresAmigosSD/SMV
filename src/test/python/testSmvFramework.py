@@ -16,6 +16,7 @@ import json
 
 from test_support.smvbasetest import SmvBaseTest
 from smv import *
+import smv.utils
 from smv.dqm import *
 from smv.error import SmvDqmValidationError
 
@@ -218,3 +219,18 @@ class SmvMetadataTest(SmvBaseTest):
         # Note: must import AFTER `df` above to get latest instance of package!
         from metadata_stage.modules import metadata_count
         self.assertEqual(metadata_count, 1)
+
+class SmvNeedsToRunTest(SmvBaseTest):
+    @classmethod
+    def smvAppInitArgs(cls):
+        return ['--smv-props', 'smv.stages=stage']
+
+    @classmethod
+    def load(cls, fqn):
+        urn = "mod:" + fqn
+        return cls.smvApp.j_smvPyClient.loadSingleUrn(urn)
+
+    def test_input_module_does_not_need_to_run(self):
+        fqn = "stage.modules.CsvFile"
+        j_m = self.load(fqn)
+        self.assertFalse(j_m.needsToRun())
