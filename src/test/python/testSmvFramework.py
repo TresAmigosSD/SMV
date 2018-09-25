@@ -18,7 +18,7 @@ from test_support.smvbasetest import SmvBaseTest
 from smv import *
 import smv.utils
 from smv.dqm import *
-from smv.error import SmvDqmValidationError
+from smv.error import SmvDqmValidationError, SmvRuntimeError
 
 import pyspark
 from pyspark.context import SparkContext
@@ -30,7 +30,7 @@ from py4j.protocol import Py4JJavaError
 class SmvFrameworkTest(SmvBaseTest):
     @classmethod
     def smvAppInitArgs(cls):
-        return ['--smv-props', 'smv.stages=stage']
+        return ['--smv-props', 'smv.stages=stage:stage2']
 
     def test_SmvDQM(self):
         fqn = "stage.modules.D3"
@@ -49,6 +49,17 @@ class SmvFrameworkTest(SmvBaseTest):
         self.assertEqual(e.dqmValidationResult["dqmStateSnapshot"]["ruleErrors"]["b_lt_03"]["total"],1)
 
     # All SmvInput related tests were moved to testSmvInput.py
+
+    def test_depends_on_other_stage_wo_link_should_fail(self):
+        fqn = "stage2.modules.DependsDirectly"
+        with self.assertRaisesRegexp(Py4JJavaError, "must use SmvModuleLink"):
+            df = self.df(fqn)
+
+    def test_depends_through_link_should_pass(self):
+        self.createTempInputFile("test3.csv", "col1\na\nb\n")
+        self.createTempInputFile("test3.schema", "col1: String\n")
+        fqn = "stage2.modules.DependsOnLink"
+        df = self.df(fqn)
     #TODO: add other SmvDataSet unittests
 
 class SmvRunConfigTest1(SmvBaseTest):

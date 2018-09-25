@@ -65,7 +65,7 @@ class D4(SmvCsvStringData, SmvRunConfig):
 
         return ";".join(testVals)
 
-class CsvFile(SmvCsvFile):
+class CsvFile(SmvCsvFile, SmvOutput):
     UserSchema = "1loc: String"
 
     def path(self):
