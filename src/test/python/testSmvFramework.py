@@ -32,50 +32,6 @@ class SmvFrameworkTest(SmvBaseTest):
     def smvAppInitArgs(cls):
         return ['--smv-props', 'smv.stages=stage']
 
-    def test_SmvCsvStringData(self):
-        fqn = "stage.modules.D1"
-        df = self.df(fqn)
-        expect = self.createDF("a:String;b:Integer", "x,10;y,1")
-        self.should_be_same(expect, df)
-
-    def test_SmvCsvStringData_with_error(self):
-        fqn = "stage.modules.D1WithError"
-        try:
-            df = self.df(fqn)
-        except SmvDqmValidationError as e:
-            self.assertEqual(e.dqmValidationResult["passed"], False)
-            self.assertEqual(e.dqmValidationResult["dqmStateSnapshot"]["totalRecords"], 3)
-            self.assertEqual(e.dqmValidationResult["dqmStateSnapshot"]["parseError"]["total"],2)
-
-    def test_SmvMultiCsvFiles(self):
-        self.createTempInputFile("multiCsvTest/f1", "col1\na\n")
-        self.createTempInputFile("multiCsvTest/f2", "col1\nb\n")
-        self.createTempInputFile("multiCsvTest.schema", "col1: String\n")
-
-        fqn = "stage.modules.MultiCsv"
-        df = self.df(fqn)
-        exp = self.createDF("col1: String", "a;b")
-        self.should_be_same(df, exp)
-
-    def test_SmvCsvFileWithUserSchema(self):
-        self.createTempInputFile("test3.csv", "col1\na\nb\n")
-        self.createTempInputFile("test3.schema", "col1: String\n")
-
-        fqn = "stage.modules.CsvFile"
-        df = self.df(fqn)
-        exp = self.createDF("1loc: String", "a;b")
-        self.should_be_same(df, exp)
-
-    def test_SmvMultiCsvFilesWithUserSchema(self):
-        self.createTempInputFile("test3/f1", "col1\na\n")
-        self.createTempInputFile("test3/f2", "col1\nb\n")
-        self.createTempInputFile("test3.schema", "col1: String\n")
-
-        fqn = "stage.modules.MultiCsvWithUserSchema"
-        df = self.df(fqn)
-        exp = self.createDF("1loc: String", "a;b")
-        self.should_be_same(df, exp)
-
     def test_SmvDQM(self):
         fqn = "stage.modules.D3"
 
@@ -92,34 +48,7 @@ class SmvFrameworkTest(SmvBaseTest):
         self.assertEqual(e.dqmValidationResult["dqmStateSnapshot"]["fixCounts"]["a_lt_1_fix"],1)
         self.assertEqual(e.dqmValidationResult["dqmStateSnapshot"]["ruleErrors"]["b_lt_03"]["total"],1)
 
-    def test_SmvSqlModule(self):
-        fqn = "stage.modules.SqlMod"
-        exp = self.createDF("a: String; b: String", "def,mno;ghi,jkl")
-        df = self.df(fqn)
-        self.should_be_same(df, exp)
-
-        # verify that the tables have been dropped
-        tablesDF = self.smvApp.sqlContext.tables()
-        tableNames = [r.tableName for r in tablesDF.collect()]
-        self.assertNotIn("a", tableNames)
-        self.assertNotIn("b", tableNames)
-
-    def test_SmvSqlCsvFile(self):
-        self.createTempInputFile("test3.csv", "a,b,c\na1,100,c1\na2,200,c2\n")
-        self.createTempInputFile("test3.schema", "a: String;b: Integer;c: String\n")
-
-        fqn = "stage.modules.SqlCsvFile"
-        df = self.df(fqn)
-        exp = self.createDF("a: String; b:Integer",
-             """a1,100;
-                a2,200""")
-        self.should_be_same(df, exp)
-
-        # verify that the table have been dropped
-        tablesDF = self.smvApp.sqlContext.tables()
-        tableNames = [r.tableName for r in tablesDF.collect()]
-        self.assertNotIn("a", tableNames)
-
+    # All SmvInput related tests were moved to testSmvInput.py
     #TODO: add other SmvDataSet unittests
 
 class SmvRunConfigTest1(SmvBaseTest):
@@ -247,6 +176,7 @@ class SmvNeedsToRunTest(SmvBaseTest):
 
     def test_module_persisted_should_not_need_to_run(self):
         fqn = "stage.modules.NeedRunM1"
+        # Need to force run, since the df might in cache while the persisted file get deleted
         self.df(fqn, forceRun=True)
         self.assertFalse(self.load(fqn).needsToRun())
 
