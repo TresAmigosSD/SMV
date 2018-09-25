@@ -11,7 +11,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from smv import SmvJdbcTable
+from smv import *
 
 class MyJdbcTable(SmvJdbcTable):
     def tableName(self):
@@ -22,3 +22,12 @@ class MyJdbcWithQuery(SmvJdbcTable):
         return "select K from MyJdbcTable"
     def tableName(self):
         return "MyJdbcTable"
+
+class Csv(SmvCsvStringData, SmvOutput):
+    def tableName(self):
+        return "MyJdbcOutput"
+
+    def schemaStr(self):
+        return "a:String;b:Integer"
+    def dataStr(self):
+        return "x,10;y,1"
