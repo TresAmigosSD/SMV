@@ -18,7 +18,6 @@ libraryDependencies ++= Seq(
   "org.apache.spark"             %% "spark-hive"        % sparkVersion % "provided",
   "org.scalatest"                %% "scalatest"         % "2.2.6"      % "test",
   "com.google.guava"             % "guava"              % "14.0.1",
-  "com.github.jlmauduy"          %% "ascii-graphs"      % "0.0.7",
   "org.rogach"                   %% "scallop"           % "0.9.5",
   "org.joda"                     % "joda-convert"       % "1.7",
   "joda-time"                    % "joda-time"          % "2.7",

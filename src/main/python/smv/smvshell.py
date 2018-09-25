@@ -214,22 +214,6 @@ def descendants(dsname):
     """
     print(_jvmShellCmd().descendants(dsname))
 
-def graph(stageName = None):
-    """Print ascii graph of all datasets in a given stage or all stages
-
-        Args:
-            stageName (str): Optional name of stage to graph. Do not
-    """
-    if(stageName is None):
-        print(_jvmShellCmd()._graph())
-    else:
-        print(_jvmShellCmd()._graph(stageName))
-
-def graphStage():
-    """Print ascii graph of all stages (not datasets)
-    """
-    print(_jvmShellCmd()._graphStage())
-
 def now():
     """Print current time
     """

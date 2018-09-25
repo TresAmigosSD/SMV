@@ -12,15 +12,18 @@
 # limitations under the License.
 
 from smv import *
+import stage.modules
 
-class CsvStr(SmvCsvStringData):
+class CsvStr2(SmvCsvStringData):
     def schemaStr(self):
         return "name:String;id:integer"
     def dataStr(self):
         return "bob,1"
 
-class M1(SmvModule, SmvOutput):
+M1Link = SmvModuleLink(stage.modules.M1)
+
+class M2(SmvModule):
     def requiresDS(self):
-        return[CsvStr]
+        return[CsvStr2, M1Link]
     def run(self, i):
-        return i[CsvStr]
+        return i[CsvStr2]
