@@ -677,55 +677,6 @@ abstract class SmvDataSet {
   }
 }
 
-/**
- * Abstract out the common part of input SmvDataSet
- */
-private[smv] abstract class SmvInputDataSet extends SmvDataSet {
-  override def requiresDS() = Seq.empty
-  override val isEphemeral  = true
-
-  override def dsType() = "Input"
-
-  /**
-   * Method to run/pre-process the input file.
-   * Users can override this method to perform file level
-   * ETL operations.
-   */
-  def run(df: DataFrame) = df
-}
-
-
-/**
- * Both SmvFile and SmvCsvStringData shared the parser validation part, extract the
- * common part to the new ABC: SmvDSWithParser
- */
-private[smv] abstract class SmvDSWithParser extends SmvInputDataSet {
-  val forceParserCheck   = true
-  val failAtParsingError = true
-
-  /**
-   *  Add parser failure policy to any DataSets that use a parser (e.g. csv files and hive tables)
-   */
-  override def dqmWithTypeSpecificPolicy(userDQM: SmvDQM) = {
-    val baseDqm = super.dqmWithTypeSpecificPolicy(userDQM)
-    if (failAtParsingError) baseDqm.add(FailParserCountPolicy(1)).addAction()
-    else if (forceParserCheck) baseDqm.addAction()
-    else baseDqm
-  }
-
-  /**
-   * Read contents from file, dir or data string (without running the `run` method) as a DataFrame.
-   */
-  private[smv] def readFromSrc(parserLogger: ParserLogger): DataFrame
-
-  override private[smv] def doRun(dqmValidator: DQMValidator, collector: SmvRunInfoCollector, quickRun: Boolean): DataFrame = {
-    val parserValidator =
-      if (dqmValidator == null) TerminateParserLogger else dqmValidator.createParserValidator()
-    val df      = readFromSrc(parserValidator)
-    run(df)
-  }
-}
-
 
 /**
  * Maps SmvDataSet to DataFrame by FQN. This is the type of the parameter expected
