@@ -125,16 +125,6 @@ abstract class SmvDataSet {
   /** Objects defined in Spark Shell has class name start with $ **/
   val isObjectInShell: Boolean = this.getClass.getName matches """\$.*"""
 
-  /**
-   * SmvDataSet code (not data) CRC. Always return 0 for objects created in spark shell
-   */
-  private[smv] lazy val datasetCRC = {
-    if (isObjectInShell)
-      0l
-    else
-      ClassCRC(this)
-  }
-
   /** Hash computed from the dataset, could be overridden to include things other than CRC */
   def datasetHash(): Int = instanceValHash + sourceCodeHash
   /** Hash computed based on instance values of the dataset, such as the timestamp of an input file **/
