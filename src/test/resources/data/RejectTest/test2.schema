@@ -1,4 +1,0 @@
-id: String
-val: double
-val2: timestamp[yyyyMMddHHmmss]
-val3: String
