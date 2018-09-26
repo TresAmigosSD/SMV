@@ -19,7 +19,6 @@ import org.apache.spark.sql.{DataFrame, Row}
 import org.apache.spark.sql.functions._
 
 class EddTest extends SmvTestUtil {
-  override def appArgs = super.appArgs ++ Seq("--smv-props", "smv.stages=org.tresamigos.smv.EddModules")
   test("test EddResult Report") {
     val df1 =
       dfFrom("colName:String;taskType:String;taskName:String;taskDesc:String;valueJSON:String", "col_a,stat,avg,Average,13.75")
@@ -96,14 +95,6 @@ col_b                Average                21.7""")
     assert(res1 === "/my/project/dir/data/dir/data1.edd")
     assert(res2 === "my/project/dir/data/dir/data1.edd")
     assert(res3 === "my/project/dir/data/dir/data1.edd")
-  }
-
-  test("test SmvModule can get EDD for result even if persisted without EDD") {
-    val ds = app.dsm.load(EddModules.M.urn).head
-    // persist without generating edd
-    ds.rdd(collector=new SmvRunInfoCollector)
-    // this will fail if the module doesn't persist EDD
-    ds.getEdd(collector=new SmvRunInfoCollector)
   }
 }
 
@@ -552,12 +543,5 @@ p                    Null Rate              0.0
 v                    Null Rate              0.0
 d                    Null Rate              0.0
 b                    Null Rate              0.3333333333333333""")
-  }
-}
-
-package EddModules {
-  object M extends SmvModule("M") {
-    def requiresDS = Seq()
-    def run(i: runParams) = app.createDF("k:String", "abc;def")
   }
 }
