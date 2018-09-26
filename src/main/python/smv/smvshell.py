@@ -302,8 +302,6 @@ __all__ = [
     'exportToHive',
     'ancestors',
     'descendants',
-    'graph',
-    'graphStage',
     'now',
     'smvDiscoverSchemaToFile',
     'edd',
