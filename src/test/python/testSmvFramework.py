@@ -28,6 +28,8 @@ from pyspark.sql.functions import col, lit
 from py4j.protocol import Py4JJavaError
 
 
+single_run_counter = 0
+
 class SmvFrameworkTest(SmvBaseTest):
     @classmethod
     def smvAppInitArgs(cls):
@@ -88,6 +90,18 @@ b: String[,_SmvStrNull_]
         fqn = "cycle.modules.CycleA"
         with self.assertRaisesRegexp(Py4JJavaError, "Cycle found while resolving mod"):
             df = self.df(fqn)
+
+    def test_module_should_only_run_once(self):
+        fqnA = "cycle.modules.SingleRunA"
+        fqnB = "cycle.modules.SingleRunB"
+        fqnC = "cycle.modules.SingleRunC"
+
+        b_res = self.df(fqnB)
+        b_res.count()
+        c_res = self.df(fqnC)
+        c_res.count()
+
+        self.assertEqual(single_run_counter, 1)
 
     #TODO: add other SmvDataSet unittests
 

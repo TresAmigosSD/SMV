@@ -17,38 +17,6 @@ import org.apache.spark.sql.types._
 
 package org.tresamigos.smv {
 
-  class SmvAppTest extends SmvTestUtil {
-    override def appArgs =
-      Seq(
-        "-m",
-        "C",
-        "--data-dir",
-        testcaseTempDir,
-        "--input-dir",
-        testcaseTempDir,
-        "--smv-props",
-        "smv.stages=org.tresamigos.smv.fixture.smvapptest",
-        "smv.config.keys=sample",
-        "smv.config.sample=1pct"
-      )
-
-    test("Test normal dependency execution") {
-      import org.tresamigos.smv.fixture.smvapptest._
-      resetTestcaseTempDir()
-
-      val res = app.runModule(C.urn)
-      assertSrddDataEqual(res, "1,2,3;2,3,4;3,4,5")
-
-      // even though both B and C depended on A, A should have only run once!
-      assert(A.moduleRunCount === 1)
-
-      //Resolve the same module, it should read the persisted file and not run the module again
-      val res2 = app.runModule(C.urn)
-      assertSrddDataEqual(res2, "1,2,3;2,3,4;3,4,5")
-      assert(A.moduleRunCount === 1)
-    }
-  }
-
   class SmvAppModuleResolutionTest extends SparkTestUtil {
     val stageNames = Seq("org.tresamigos.smv.test1", "org.tresamigos.smv.test2")
     def config(modname: String): Unit =
