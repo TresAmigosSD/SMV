@@ -47,23 +47,6 @@ package org.tresamigos.smv {
       assertSrddDataEqual(res2, "1,2,3;2,3,4;3,4,5")
       assert(A.moduleRunCount === 1)
     }
-
-    test("Test cycle dependency execution") {
-      import org.tresamigos.smv.fixture.smvapptest.B_cycle
-      intercept[IllegalStateException] {
-        app.runModule(B_cycle.urn)
-      }
-    }
-
-    test("SmvApp.createDF should be able to create an empty dataframe with schema") {
-      val r1 = app.createDF("k:String")
-      r1.count() shouldBe 0
-      r1.schema shouldBe StructType(Seq(StructField("k", StringType, true)))
-
-      val r2 = app.createDF("k:String")
-      r2.count() shouldBe 0
-      r2.schema shouldBe StructType(Seq(StructField("k", StringType, true)))
-    }
   }
 
   class SmvAppModuleResolutionTest extends SparkTestUtil {
