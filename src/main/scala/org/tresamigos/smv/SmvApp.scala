@@ -55,14 +55,6 @@ class SmvApp(private val cmdLineArgs: Seq[String], _spark: Option[SparkSession] 
     nextLine
   }
 
-
-  /** Register Kryo Classes
-   * Since none of the SMV classes will be put in an RDD, register them or not does not make
-   * significant performance improvement
-   *
-   * val allSerializables = SmvReflection.objectsInPackage[Serializable]("org.tresamigos.smv")
-   * sparkConf.registerKryoClasses(allSerializables.map{_.getClass}.toArray)
-   **/
   val sparkSession = _spark getOrElse (SparkSession
     .builder()
     .appName(smvConfig.appName)
