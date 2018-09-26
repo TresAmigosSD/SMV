@@ -17,20 +17,6 @@ import org.apache.spark.sql.types._
 
 package org.tresamigos.smv {
 
-  class SmvHashOfHashTest extends SmvTestUtil {
-    test("Test module hashOfHash") {
-      import org.tresamigos.smv.fixture.hashofhash._
-      assert(X1.hashOfHash != X2.hashOfHash)
-    }
-  }
-
-  class SmvNewAppTest extends SparkTestUtil {
-    test("test newApp function") {
-      val app = SmvApp.newApp(sparkSession, testDataDir)
-      assert(app.smvConfig.appName === "Smv Application")
-    }
-  }
-
   class SmvAppTest extends SmvTestUtil {
     override def appArgs =
       Seq(
@@ -45,22 +31,6 @@ package org.tresamigos.smv {
         "smv.config.keys=sample",
         "smv.config.sample=1pct"
       )
-
-    test("Test runtime configuration") {
-      import org.tresamigos.smv.fixture.smvapptest._
-      resetTestcaseTempDir()
-
-      assert(app.smvConfig.getRunConfig("sample") === "1pct")
-
-      app.runModule(C.urn, runConfig = Map("sample" -> "2pct"))
-      assert(app.smvConfig.getRunConfig("sample") === "2pct")
-
-      app.runModule(C.urn, runConfig = Map("sample" -> "3pct"))
-      assert(app.smvConfig.getRunConfig("sample") === "3pct")
-
-      // test to make sure undefined runConfig returns null not an exception
-      assert(app.smvConfig.getRunConfig("sampleTwo") === null)
-    }
 
     test("Test normal dependency execution") {
       import org.tresamigos.smv.fixture.smvapptest._
