@@ -62,6 +62,28 @@ class SmvFrameworkTest(SmvBaseTest):
         fqn = "stage2.modules.DependsOnLink"
         df = self.df(fqn)
 
+    def test_module_persist_with_null(self):
+        fqn = "stage.modules.CsvStrWithNullData"
+        df = self.df(fqn, True)
+        j_m = self.load(fqn)
+        f = open(j_m.moduleCsvPath("") + "/part-00000", "r")
+        res = f.read()
+        expect = """"1",""
+"_SmvStrNull_",""
+"3",""
+"""
+        self.assertEqual(res, expect)
+
+        s_f = open(j_m.moduleSchemaPath("") + "/part-00000", "r")
+        s_res = s_f.read()
+        s_expect = """@delimiter = ,
+@has-header = false
+@quote-char = "
+a: String[,_SmvStrNull_]
+b: String[,_SmvStrNull_]
+"""
+        self.assertEqual(s_res, s_expect)
+
     def test_cycle_dependency_error_out(self):
         fqn = "cycle.modules.CycleA"
         with self.assertRaisesRegexp(Py4JJavaError, "Cycle found while resolving mod"):
