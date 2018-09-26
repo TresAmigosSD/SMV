@@ -985,43 +985,6 @@ object SmvExtModulePython extends python.InterfacesWithPy4J {
 }
 
 /**
- * a built-in SmvModule from schema string and data string
- *
- * E.g.
- * {{{
- * SmvCsvStringData("a:String;b:Double;c:String", "aa,1.0,cc;aa2,3.5,CC")
- * }}}
- *
- **/
-class SmvCsvStringData(
-    schemaStr: String,
-    data: String,
-    override val isPersistValidateResult: Boolean = false
-) extends SmvDSWithParser {
-
-  override def description() = s"Dummy module to create DF from strings"
-
-  override def instanceValHash() = {
-    val crc = new java.util.zip.CRC32
-    crc.update((schemaStr + data).toCharArray.map(_.toByte))
-    (crc.getValue).toInt
-  }
-
-  private[smv] def readFromSrc(parserValidator: ParserLogger): DataFrame =
-    app.createDFWithLogger(schemaStr, data, parserValidator)
-}
-
-object SmvCsvStringData {
-  def apply(
-      schemaStr: String,
-      data: String,
-      isPersistValidateResult: Boolean = false
-  ): SmvCsvStringData = {
-    new SmvCsvStringData(schemaStr, data, isPersistValidateResult)
-  }
-}
-
-/**
  * A marker trait that indicates that a SmvDataSet/SmvModule decorated with this trait is an output DataSet/module.
  */
 trait SmvOutput { this: SmvDataSet =>
