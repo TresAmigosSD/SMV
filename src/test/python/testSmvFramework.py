@@ -31,7 +31,7 @@ from py4j.protocol import Py4JJavaError
 class SmvFrameworkTest(SmvBaseTest):
     @classmethod
     def smvAppInitArgs(cls):
-        return ['--smv-props', 'smv.stages=stage:stage2']
+        return ['--smv-props', 'smv.stages=stage:stage2:cycle']
 
     def test_SmvDQM(self):
         fqn = "stage.modules.D3"
@@ -61,6 +61,12 @@ class SmvFrameworkTest(SmvBaseTest):
         self.createTempInputFile("test3.schema", "col1: String\n")
         fqn = "stage2.modules.DependsOnLink"
         df = self.df(fqn)
+
+    def test_cycle_dependency_error_out(self):
+        fqn = "cycle.modules.CycleA"
+        with self.assertRaisesRegexp(Py4JJavaError, "Cycle found while resolving mod"):
+            df = self.df(fqn)
+
     #TODO: add other SmvDataSet unittests
 
 class SmvRunConfigTest1(SmvBaseTest):

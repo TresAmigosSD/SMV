@@ -67,18 +67,18 @@ class DataSetResolver(val repos: Seq[DataSetRepo],
    * dependency cycles. Note: we no longer have to worry about corruption of
    * resolve stack because a new stack is created per transaction.
    */
-  var resolveStack: Seq[SmvDataSet] = Seq.empty
+  var resolveStack: Seq[URN] = Seq.empty
 
   /**
    * Return cached resolved version of given SmvDataSet if it exists, or resolve
    * it otherwise.
    */
   def resolveDataSet(ds: SmvDataSet): SmvDataSet = {
-    if (resolveStack.contains(ds))
+    if (resolveStack.contains(ds.urn))
       throw new IllegalStateException(msg.dependencyCycle(ds, resolveStack))
     else
       urn2res.get(ds.urn).getOrElse {
-        resolveStack = ds +: resolveStack
+        resolveStack = ds.urn +: resolveStack
         val resolvedDs = ds.resolve(this)
         resolvedDs.setTimestamp(transactionTime)
         urn2res = urn2res + (ds.urn -> resolvedDs)
@@ -135,7 +135,7 @@ class DataSetResolver(val repos: Seq[DataSetRepo],
       s"Module ${dsUrn} in ${dsStage} must use SmvModuleLink to depend on module ${depUrn} in ${depStage}"
     def sameStageLink(linkUrn: URN, stage: String): String =
       s"SmvModuleLink ${linkUrn} cannot link to ${linkUrn.toModURN} because they belong to the same stage"
-    def dependencyCycle(ds: SmvDataSet, s: Seq[SmvDataSet]): String =
-      s"Cycle found while resolving ${ds.urn}: " + s.foldLeft("")((acc, ds) => s"${acc},${ds.urn}")
+    def dependencyCycle(ds: SmvDataSet, s: Seq[URN]): String =
+      s"Cycle found while resolving ${ds.urn}: " + s.foldLeft("")((acc, urn) => s"${acc},${urn}")
   }
 }
