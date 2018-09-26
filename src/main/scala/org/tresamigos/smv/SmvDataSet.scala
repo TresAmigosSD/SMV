@@ -140,7 +140,7 @@ abstract class SmvDataSet {
   /** Hash computed based on instance values of the dataset, such as the timestamp of an input file **/
   def instanceValHash(): Int = 0
   /** Hash computed based on the source code of the dataset's class **/
-  def sourceCodeHash(): Int = datasetCRC.toInt
+  def sourceCodeHash(): Int
 
   /**
    * Determine the hash of this module and the hash of hash (HOH) of all the modules it depends on.
@@ -834,6 +834,8 @@ class SmvModuleLink(val outputModule: SmvOutput)
 
     (dependedHash).toInt
   }
+
+  override def sourceCodeHash() = 0
 
   /**
    * SmvModuleLinks should not cache or validate their data
