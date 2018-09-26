@@ -148,3 +148,4 @@ package org.tresamigos.smv {
       conf.appId shouldBe expectedAppId
     }
   }
+}
