@@ -16,8 +16,6 @@ package org.tresamigos.smv
 
 import scala.util.Try
 
-import classloaders.SmvClassLoader
-
 /**
  * DataSetRepo is the entity responsible for discovering and loading the datasets
  * in a given language. A new repo is created for each new transaction.
