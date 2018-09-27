@@ -81,5 +81,5 @@ stage2:
         os.remove(out_schema_name)
 
     def test_app_createDF_to_create_empty_df(self):
-        res = self.smvApp.createDF("a:String", "")
-        self.assertEqual(res.count(), 1)
+        res = self.smvApp.createDF("a:String")
+        self.assertEqual(res.count(), 0)
