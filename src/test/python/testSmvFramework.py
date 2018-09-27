@@ -67,7 +67,7 @@ class SmvFrameworkTest(SmvBaseTest):
     def test_module_persist_with_null(self):
         fqn = "stage.modules.CsvStrWithNullData"
         df = self.df(fqn, True)
-        j_m = self.load(fqn)
+        j_m = self.load(fqn)[0]
         f = open(j_m.moduleCsvPath("") + "/part-00000", "r")
         res = f.read()
         expect = """"1",""
@@ -214,12 +214,12 @@ class SmvNeedsToRunTest(SmvBaseTest):
 
     def test_input_module_does_not_need_to_run(self):
         fqn = "stage.modules.CsvFile"
-        j_m = self.load(fqn)
+        j_m = self.load(fqn)[0]
         self.assertFalse(j_m.needsToRun())
 
     def test_module_not_persisted_should_need_to_run(self):
         fqn = "stage.modules.NeedRunM1"
-        j_m = self.load(fqn)
+        j_m = self.load(fqn)[0]
         self.deleteModuleOutput(j_m)
         self.assertTrue(j_m.needsToRun())
 
@@ -227,27 +227,27 @@ class SmvNeedsToRunTest(SmvBaseTest):
         fqn = "stage.modules.NeedRunM1"
         # Need to force run, since the df might in cache while the persisted file get deleted
         self.df(fqn, forceRun=True)
-        self.assertFalse(self.load(fqn).needsToRun())
+        self.assertFalse(self.load(fqn)[0].needsToRun())
 
     def test_module_depends_on_need_to_run_module_also_need_to_run(self):
         fqn = "stage.modules.NeedRunM2"
         fqn0 = "stage.modules.NeedRunM1"
         self.df(fqn, True)
-        self.deleteModuleOutput(self.load(fqn0)) # deleting persist files made M1 need to run
-        self.assertTrue(self.load(fqn).needsToRun())
+        self.deleteModuleOutput(self.load(fqn0)[0]) # deleting persist files made M1 need to run
+        self.assertTrue(self.load(fqn)[0].needsToRun())
 
     def test_ephemeral_module_depends_on_not_need_to_run_also_not(self):
         fqn = "stage.modules.NeedRunM3"
         fqn0 = "stage.modules.NeedRunM1"
         self.df(fqn0, True)
-        self.assertFalse(self.load(fqn).needsToRun())
+        self.assertFalse(self.load(fqn)[0].needsToRun())
 
     def test_ephemeral_module_depends_on_need_to_run_also_need(self):
         fqn = "stage.modules.NeedRunM3"
         fqn0 = "stage.modules.NeedRunM1"
         self.df(fqn, True)
-        self.deleteModuleOutput(self.load(fqn0)) # deleting persist files made M1 need to run
-        self.assertTrue(self.load(fqn).needsToRun())
+        self.deleteModuleOutput(self.load(fqn0)[0]) # deleting persist files made M1 need to run
+        self.assertTrue(self.load(fqn)[0].needsToRun())
 
 class SmvPublishTest(SmvBaseTest):
     @classmethod
@@ -264,7 +264,7 @@ class SmvPublishTest(SmvBaseTest):
         self.createTempInputFile("test3.csv", "col1\na\nb\n")
         self.createTempInputFile("test3.schema", "col1: String\n")
         fqn = "stage.modules.CsvFile"
-        j_m = self.load(fqn)
+        j_m = self.load(fqn)[0]
         j_m.publish(self.smvApp._jvm.SmvRunInfoCollector())
 
         # Read from the file

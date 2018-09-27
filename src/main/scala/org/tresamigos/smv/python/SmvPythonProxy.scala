@@ -396,8 +396,17 @@ class SmvPyClient(val j_smvApp: SmvApp) {
   def getDirList(dirPath: String): java.util.List[String] = SmvHDFS.dirList(dirPath)
 
   //Scare folding for moving all SmvDataSet framework to python #1338
-  def loadSingleUrn(urn: String): SmvDataSet =
-    j_smvApp.dsm.load(URN(urn)).head
+  def loadUrns(urns: Array[String]): java.util.List[SmvDataSet] = {
+    val urnObjs = urns.map{URN(_)}
+    j_smvApp.dsm.load(urnObjs: _*)
+  }
+
+  def dataSetsForStage(stage: String): java.util.List[SmvDataSet] = 
+    j_smvApp.dsm.dataSetsForStage(stage)
+
+
+  def linkToModule(link: SmvModuleLink): SmvDataSet =
+    link.smvModule
 
   //Scare folding for moving all SmvDataSet framework to python #1338
   def deleteModuleOutput(m: SmvDataSet) = 
