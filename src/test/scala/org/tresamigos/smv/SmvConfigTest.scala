@@ -148,14 +148,4 @@ package org.tresamigos.smv {
       conf.appId shouldBe expectedAppId
     }
   }
-
-  /**
-   * For testing module resolution.
-   *
-   * The packages correspond to the stages defined in the test config file
-   */
-  class TestSmvModule extends SmvModule("Test module resolution by basename") {
-    override def requiresDS()      = Seq.empty
-    override def run(i: runParams) = null
-  }
 }

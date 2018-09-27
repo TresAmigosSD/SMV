@@ -12,6 +12,7 @@
 # limitations under the License.
 
 from smv import *
+import testSmvFramework
 
 class CycleA(SmvModule):
     def requiresDS(self):
@@ -26,3 +27,23 @@ class CycleB(SmvModule):
 
     def run(self, i):
         return None
+
+class SingleRunA(SmvModule):
+    def requiresDS(self):
+        return []
+
+    def run(self, i):
+        testSmvFramework.single_run_counter = testSmvFramework.single_run_counter + 1
+        return self.smvApp.createDF("cnt:Integer", "0")
+
+class SingleRunB(SmvModule):
+    def requiresDS(self):
+        return [SingleRunA]
+    def run(self, i):
+        return i[SingleRunA]
+
+class SingleRunC(SmvModule):
+    def requiresDS(self):
+        return [SingleRunA]
+    def run(self, i):
+        return i[SingleRunA]

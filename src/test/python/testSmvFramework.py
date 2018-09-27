@@ -28,6 +28,8 @@ from pyspark.sql.functions import col, lit
 from py4j.protocol import Py4JJavaError
 
 
+single_run_counter = 0
+
 class SmvFrameworkTest(SmvBaseTest):
     @classmethod
     def smvAppInitArgs(cls):
@@ -62,10 +64,44 @@ class SmvFrameworkTest(SmvBaseTest):
         fqn = "stage2.modules.DependsOnLink"
         df = self.df(fqn)
 
+    def test_module_persist_with_null(self):
+        fqn = "stage.modules.CsvStrWithNullData"
+        df = self.df(fqn, True)
+        j_m = self.load(fqn)
+        f = open(j_m.moduleCsvPath("") + "/part-00000", "r")
+        res = f.read()
+        expect = """"1",""
+"_SmvStrNull_",""
+"3",""
+"""
+        self.assertEqual(res, expect)
+
+        s_f = open(j_m.moduleSchemaPath("") + "/part-00000", "r")
+        s_res = s_f.read()
+        s_expect = """@delimiter = ,
+@has-header = false
+@quote-char = "
+a: String[,_SmvStrNull_]
+b: String[,_SmvStrNull_]
+"""
+        self.assertEqual(s_res, s_expect)
+
     def test_cycle_dependency_error_out(self):
         fqn = "cycle.modules.CycleA"
         with self.assertRaisesRegexp(Py4JJavaError, "Cycle found while resolving mod"):
             df = self.df(fqn)
+
+    def test_module_should_only_run_once(self):
+        fqnA = "cycle.modules.SingleRunA"
+        fqnB = "cycle.modules.SingleRunB"
+        fqnC = "cycle.modules.SingleRunC"
+
+        b_res = self.df(fqnB)
+        b_res.count()
+        c_res = self.df(fqnC)
+        c_res.count()
+
+        self.assertEqual(single_run_counter, 1)
 
     #TODO: add other SmvDataSet unittests
 

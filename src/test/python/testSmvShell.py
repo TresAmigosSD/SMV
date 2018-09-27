@@ -79,3 +79,7 @@ stage2:
         smvshell.smvDiscoverSchemaToFile(self.tmpInputDir() + "/" + file_name)
         assert os.path.exists(out_schema_name)
         os.remove(out_schema_name)
+
+    def test_app_createDF_to_create_empty_df(self):
+        res = self.smvApp.createDF("a:String")
+        self.assertEqual(res.count(), 0)

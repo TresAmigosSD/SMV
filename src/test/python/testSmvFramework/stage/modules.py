@@ -69,6 +69,19 @@ class CsvFile(SmvCsvFile, SmvOutput):
     def path(self):
         return "test3.csv"
 
+class CsvStrWithNullData(SmvCsvStringData):
+    def schemaStr(self):
+        return "a:String"
+
+    def dataStr(self):
+        return "1;;3"
+
+    def isEphemeral(self):
+        return False
+
+    def run(self, df):
+        return df.withColumn("b", lit("")).repartition(1)
+    
 class ModWithBadName(SmvModule):
     def requiresDS(self):
         return [ModWhoseNameDoesntExist]
