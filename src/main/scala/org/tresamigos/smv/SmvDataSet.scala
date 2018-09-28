@@ -652,6 +652,17 @@ abstract class SmvDataSet {
   }
 
   private[smv] def parentStage: Option[String] = urn.getStage
+
+  /**
+   * Read the published data of this module if the parent stage has specified a version.
+   * @return Some(DataFrame) if the stage has a version specified, None otherwise.
+   */
+  private[smv] def readPublishedData(version: Option[String]): Option[DataFrame] = {
+    version.map { v =>
+      val handler = new FileIOHandler(app.sparkSession, publishCsvPath(v))
+      handler.csvFileWithSchema(null)
+    }
+  }
 }
 
 
@@ -827,10 +838,9 @@ class SmvModuleLink(val outputModule: SmvOutput)
     if (isFollowLink) {
       smvModule.rdd(collector=collector, quickRun=quickRun)
     } else {
-      smvModule
-        smvModule.readPersistedFile().toOption
-        .getOrElse(
-          throw new IllegalStateException(s"can not find published or persisted ${description}"))
+      smvModule.readPersistedFile().toOption
+      .getOrElse(
+        throw new IllegalStateException(s"can not find published or persisted ${description}"))
     }
   }
 }

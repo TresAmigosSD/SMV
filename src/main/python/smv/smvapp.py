@@ -265,16 +265,16 @@ class SmvApp(object):
         """
         return self.j_smvApp.generateAllGraphJSON()
 
-    def getModuleResult(self, urn, forceRun=False):
+    def getModuleResult(self, urn, forceRun=False, version=None):
         """Run module and get its result, which may not be a DataFrame
         """
         fqn = urn[urn.find(":")+1:]
         ds = self.repoFactory.createRepo().loadDataSet(fqn)
-        df, collector = self.runModule(urn, forceRun)
+        df, collector = self.runModule(urn, forceRun, version)
         return ds.df2result(df)
 
     @exception_handling
-    def runModule(self, urn, forceRun=False, runConfig=None, quickRun=False):
+    def runModule(self, urn, forceRun=False, version=None, runConfig=None, quickRun=False):
         """Runs either a Scala or a Python SmvModule by its Fully Qualified Name(fqn)
 
         Use j_smvPyClient instead of j_smvApp directly so we don't
@@ -283,6 +283,7 @@ class SmvApp(object):
         Args:
             urn (str): The URN of a module
             forceRun (bool): True if the module should be forced to run even if it has persisted output. False otherwise.
+            version (str): The name of the published version to load from
             runConfig (dict): runtime configuration to use when running the module
             quickRun (bool): skip computing dqm+metadata and persisting csv
 
@@ -299,12 +300,12 @@ class SmvApp(object):
               about the run, such as validation results.
         """
         # TODO call setDynamicRunConfig() here not on scala side
-        java_result = self.j_smvPyClient.runModule(urn, forceRun, runConfig, quickRun)
+        java_result = self.j_smvPyClient.runModule(urn, forceRun, self.scalaOption(version), runConfig, quickRun)
         return (DataFrame(java_result.df(), self.sqlContext),
                 SmvRunInfoCollector(java_result.collector()) )
 
     @exception_handling
-    def runModuleByName(self, name, forceRun=False, runConfig=None, quickRun=False):
+    def runModuleByName(self, name, forceRun=False, version=None, runConfig=None, quickRun=False):
         """Runs a SmvModule by its name (can be partial FQN)
 
         See the `runModule` method above
@@ -312,6 +313,7 @@ class SmvApp(object):
         Args:
             name (str): The unique name of a module. Does not have to be the FQN.
             forceRun (bool): True if the module should be forced to run even if it has persisted output. False otherwise.
+            version (str): The name of the published version to load from
             runConfig (dict): runtime configuration to use when running the module
             quickRun (bool): skip computing dqm+metadata and persisting csv
 
@@ -322,7 +324,7 @@ class SmvApp(object):
               about the run, such as validation results.
         """
         # TODO call setDynamicRunConfig() here not on scala side
-        java_result = self.j_smvPyClient.runModuleByName(name, forceRun, runConfig, quickRun)
+        java_result = self.j_smvPyClient.runModuleByName(name, forceRun, self.scalaOption(version), runConfig, quickRun)
         return (DataFrame(java_result.df(), self.sqlContext),
                 SmvRunInfoCollector(java_result.collector()) )
 
