@@ -17,6 +17,7 @@ from test_support.testconfig import TestConfig
 import pyspark
 from pyspark.context import SparkContext
 from pyspark.sql import *
+from smv.utils import smv_copy_array
 
 import os, shutil, sys
 
@@ -86,9 +87,9 @@ class SmvBaseTest(unittest.TestCase):
         return cls.smvApp.runModule("mod:" + fqn, forceRun=forceRun)[0]
 
     @classmethod
-    def load(cls, fqn):
-        urn = "mod:" + fqn
-        return cls.smvApp.j_smvPyClient.loadSingleUrn(urn)
+    def load(cls, *fqn):
+        urns = ["mod:" + x for x in fqn]
+        return cls.smvApp.j_smvPyClient.loadUrns(smv_copy_array(cls.smvApp.sc, *urns))
 
     def should_be_same(self, expected, result):
         """Asserts that the two dataframes contain the same data, ignoring order

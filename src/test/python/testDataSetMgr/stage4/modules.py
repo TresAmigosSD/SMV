@@ -11,10 +11,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from smv import SmvApp, SmvModule
+from smv import SmvModuleLink
+import stage1.modules
 
-class A(SmvModule):
-    def isEphemeral(self): return True
-    def requiresDS(self): return []
-    def run(self, i):
-        return self.smvApp.createDF("k:String;v:Integer", "a,;b,2")
+L = SmvModuleLink(stage1.modules.A)
