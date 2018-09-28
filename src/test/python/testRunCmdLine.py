@@ -14,7 +14,7 @@
 from test_support.smvbasetest import SmvBaseTest
 from py4j.protocol import Py4JJavaError
 
-class RunCmtLineBaseTest(SmvBaseTest):
+class RunCmdLineBaseTest(SmvBaseTest):
     @classmethod
     def whatToRun(cls):
         ["-m", "None"]
@@ -25,7 +25,7 @@ class RunCmtLineBaseTest(SmvBaseTest):
 
     
 
-class RunModuleFromCmdLineTest(RunCmtLineBaseTest):
+class RunModuleFromCmdLineTest(RunCmdLineBaseTest):
     @classmethod
     def whatToRun(cls):
         return ['-m', "modules.A"]
@@ -37,7 +37,7 @@ class RunModuleFromCmdLineTest(RunCmtLineBaseTest):
         self.should_be_same(a, expected)
 
 
-class RunStageFromCmdLineTest(RunCmtLineBaseTest):
+class RunStageFromCmdLineTest(RunCmdLineBaseTest):
     @classmethod
     def whatToRun(cls):
         return ['-s', "runstage.stage1"]
@@ -49,7 +49,7 @@ class RunStageFromCmdLineTest(RunCmtLineBaseTest):
         b = self.df("runstage.stage1.modules.B")
         self.should_be_same(b, self.createDF("k:String;v:Integer", "c,3;d,4"))
 
-class RunNotExistModuleTest(RunCmtLineBaseTest):
+class RunNotExistModuleTest(RunCmdLineBaseTest):
     @classmethod
     def whatToRun(cls):
         return ['-m', 'tooth-fary']
@@ -58,7 +58,7 @@ class RunNotExistModuleTest(RunCmtLineBaseTest):
         with self.assertRaisesRegexp(Py4JJavaError, "Cannot find module"):
             self.smvApp.run()
 
-class RunModuleAmbiguousTest(RunCmtLineBaseTest):
+class RunModuleAmbiguousTest(RunCmdLineBaseTest):
     @classmethod
     def whatToRun(cls):
         return ['-m', 'A']
