@@ -654,8 +654,8 @@ abstract class SmvDataSet {
   private[smv] def parentStage: Option[String] = urn.getStage
 
   /**
-   * Read the published data of this module if the parent stage has specified a version.
-   * @return Some(DataFrame) if the stage has a version specified, None otherwise.
+   * Read the published data of this module
+   * @return Some(DataFrame) if the module has a version specified, None otherwise.
    */
   private[smv] def readPublishedData(version: Option[String]): Option[DataFrame] = {
     version.map { v =>
@@ -769,8 +769,7 @@ class SmvModuleLink(val outputModule: SmvOutput)
 
   /**
    * Get the path of the metadata for the output csv this link will read from
-   * If using published data, get the target's published metadata path. Otherwise,
-   * use the target's peristed metadata path.
+   * Use the target's peristed metadata path.
    */
   private[smv] override def moduleMetaPath(prefix: String = ""): String = smvModule.moduleMetaPath()
 
@@ -802,10 +801,7 @@ class SmvModuleLink(val outputModule: SmvOutput)
     new SmvModuleLink(resolver.resolveDataSet(smvModule).asInstanceOf[SmvOutput])
 
   /**
-   * If the depended smvModule has a published version, SmvModuleLink's datasetHash
-   * depends on the version string and the target's FQN (even with versioned data
-   * the hash should change if the target changes). Otherwise, depends on the
-   * smvModule's hashOfHash
+   * SmvModuleLink's datasetHash depends on the smvModule's hashOfHash
    **/
   override def instanceValHash() = {
     val dependedHash = smvModule.hashOfHash
@@ -824,9 +820,7 @@ class SmvModuleLink(val outputModule: SmvOutput)
     throw new SmvRuntimeException("SmvModuleLink doRun should never be called")
 
   /**
-   * "Running" a link requires that we read the published output from the upstream `DataSet`.
-   * When publish version is specified, it will try to read from the published dir. Otherwise
-   * it will either "follow-the-link", which means resolve the modules the linked DS depends on
+   * "Running" a link will either "follow-the-link", which means resolve the modules the linked DS depends on
    * and run the DS, or "not-follow-the-link", which will try to read from the persisted data dir
    * and fail if not found.
    */
