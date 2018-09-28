@@ -25,20 +25,19 @@ from pyspark.sql import DataFrame
 def _jvmShellCmd():
     return SmvApp.getInstance()._jvm.org.tresamigos.smv.shell.ShellCmd
 
-def df(name, forceRun=False, version=None, runConfig=None, quickRun=False):
+def df(name, forceRun=False, runConfig=None, quickRun=False):
     """The DataFrame result of running the named module
 
         Args:
             name (str): The unique name of a module. Does not have to be the FQN.
             forceRun (bool): True if the module should be forced to run even if it has persisted output. False otherwise.
-            version (str): The name of the published version to load from
             runConfig (dict): runtime configuration to use when running the module
             quickRun (bool): skip computing dqm+metadata and persisting csv
 
         Returns:
             (DataFrame): The result of running the named module.
     """
-    return SmvApp.getInstance().runModuleByName(name, forceRun, version, runConfig, quickRun)[0]
+    return SmvApp.getInstance().runModuleByName(name, forceRun, runConfig, quickRun)[0]
 
 def props():
     """The current app propertied used by SMV after the app, user, command-line
@@ -63,20 +62,19 @@ def dshash(name, runConfig=None):
     """
     return SmvApp.getInstance().getDsHash(name, runConfig)
 
-def getModel(name, forceRun = False, version = None):
+def getModel(name, forceRun = False):
     """Get the result of running the named SmvModel module
 
         Args:
             name (str): The name of a module. Does not have to be the FQN.
             forceRun (bool): True if the module should be forced to run even if it has persisted output. False otherwise.
-            version (str): The name of the published version to load from
 
         Returns:
             (object): The result of running the named module
     """
     app = SmvApp.getInstance()
     urn = app.inferUrn(name)
-    return app.getModuleResult(urn, forceRun, version)
+    return app.getModuleResult(urn, forceRun)
 
 def openHive(tableName):
     """Read in a Hive table as a DataFrame

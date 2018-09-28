@@ -248,34 +248,3 @@ class SmvNeedsToRunTest(SmvBaseTest):
         self.df(fqn, True)
         self.deleteModuleOutput(self.load(fqn0)[0]) # deleting persist files made M1 need to run
         self.assertTrue(self.load(fqn)[0].needsToRun())
-
-class SmvPublishTest(SmvBaseTest):
-    @classmethod
-    def smvAppInitArgs(cls):
-        return [
-            '--smv-props', 
-            'smv.stages=stage', 
-            'smv.stages.stage.version=v1',
-            '--publish',
-            'v1'
-        ]
-
-    def test_publish_as_file(self):
-        self.createTempInputFile("test3.csv", "col1\na\nb\n")
-        self.createTempInputFile("test3.schema", "col1: String\n")
-        fqn = "stage.modules.CsvFile"
-        j_m = self.load(fqn)[0]
-        j_m.publish(self.smvApp._jvm.SmvRunInfoCollector())
-
-        # Read from the file
-        res = smv.smvshell.openCsv(self.tmpDataDir() + "/publish/v1/" + fqn + ".csv")
-
-        # Using DS interface to readback
-        readback = DataFrame(
-            j_m.readPublishedData(self.smvApp.scalaOption('v1')).get(),
-            self.smvApp.sqlContext
-        )
-        expected = self.createDF("col1: String", "a;b")
-
-        self.should_be_same(res, expected)
-        self.should_be_same(readback, expected)

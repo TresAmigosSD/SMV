@@ -100,13 +100,6 @@ package org.tresamigos.smv {
       val ss = conf.stageNames
       assert(ss.size === 2)
       assertUnorderedSeqEqual(ss, Seq("com.myproj.s1pkg", "com.myproj.s2pkg"))
-
-      val s1 = conf.stageVersions.get("com.myproj.s1pkg")
-      assert(s1 === Some("5"))
-
-      // find stage using basename instead of FQN
-      val s2 = conf.stageVersions.get("s2pkg")
-      assert(s2 === None)
     }
 
     test("test EDD args") {

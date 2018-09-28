@@ -652,19 +652,6 @@ abstract class SmvDataSet {
   }
 
   private[smv] def parentStage: Option[String] = urn.getStage
-
-  private[smv] def stageVersion()                   = parentStage flatMap { app.smvConfig.stageVersions.get(_) }
-
-  /**
-   * Read the published data of this module if the parent stage has specified a version.
-   * @return Some(DataFrame) if the stage has a version specified, None otherwise.
-   */
-  private[smv] def readPublishedData(version: Option[String] = stageVersion): Option[DataFrame] = {
-    version.map { v =>
-      val handler = new FileIOHandler(app.sparkSession, publishCsvPath(v))
-      handler.csvFileWithSchema(null)
-    }
-  }
 }
 
 
@@ -774,11 +761,7 @@ class SmvModuleLink(val outputModule: SmvOutput)
    * If using published data, get the target's published metadata path. Otherwise,
    * use the target's peristed metadata path.
    */
-  private[smv] override def moduleMetaPath(prefix: String = ""): String =
-    smvModule.stageVersion match {
-      case Some(v) => smvModule.publishMetaPath(v)
-      case _ => smvModule.moduleMetaPath()
-    }
+  private[smv] override def moduleMetaPath(prefix: String = ""): String = smvModule.moduleMetaPath()
 
   override lazy val ancestors = smvModule.ancestors
 
@@ -814,13 +797,7 @@ class SmvModuleLink(val outputModule: SmvOutput)
    * smvModule's hashOfHash
    **/
   override def instanceValHash() = {
-    val dependedHash = smvModule.stageVersion
-      .map { v =>
-        val crc = new java.util.zip.CRC32
-        crc.update((v + smvModule.fqn).toCharArray.map(_.toByte))
-        (crc.getValue).toInt
-      }
-      .getOrElse(smvModule.hashOfHash)
+    val dependedHash = smvModule.hashOfHash
 
     (dependedHash).toInt
   }
@@ -848,11 +825,10 @@ class SmvModuleLink(val outputModule: SmvOutput)
                    quickRun: Boolean = false): DataFrame = {
     // forceRun argument is ignored (SmvModuleLink is rerun anyway)
     if (isFollowLink) {
-      smvModule.readPublishedData().getOrElse(smvModule.rdd(collector=collector, quickRun=quickRun))
+      smvModule.rdd(collector=collector, quickRun=quickRun)
     } else {
       smvModule
-        .readPublishedData()
-        .orElse { smvModule.readPersistedFile().toOption }
+        smvModule.readPersistedFile().toOption
         .getOrElse(
           throw new IllegalStateException(s"can not find published or persisted ${description}"))
     }
