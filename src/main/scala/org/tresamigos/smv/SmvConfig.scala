@@ -244,25 +244,6 @@ class SmvConfig(cmdLineArgs: Seq[String]) {
 
   val classDir = mergedProps("smv.class_dir")
 
-  def stageVersions =
-    stageNames
-      .map { sn: String =>
-        {
-          val baseName            = FQN.extractBaseName(sn)
-          val stageBasePropPrefix = s"smv.stages.${baseName}"
-          val stageFQNPropPrefix  = s"smv.stages.${sn}"
-
-          // get stage version (if any)
-          val version = getProp(stageBasePropPrefix + ".version").orElse(
-            getProp(stageFQNPropPrefix + ".version")
-          )
-
-          (sn, version)
-        }
-      }
-      .collect { case (x, Some(y)) => (x, y) }
-      .toMap
-
   val sparkSqlProps = mergedProps.filterKeys(k => k.startsWith("spark.sql."))
 
   def jdbcUrl: String =

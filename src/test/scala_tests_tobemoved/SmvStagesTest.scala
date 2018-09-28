@@ -32,16 +32,9 @@ package org.tresamigos.smv {
       Seq(
         "--smv-props",
         "smv.stages=com.myproj.s1:com.myproj.stages.s2:com.myproj.stages.s3:com.myproj2.s1:com.myproj2.stages.s3",
-        "smv.stages.com.myproj.s1.version=publishedS1",
-        "smv.stages.s2.version=publishedS2",
         "-m",
         "None"
       )
-
-    test("Stage version should work with smv.stage.basename.version") {
-      val s2v = app.smvConfig.stageVersions.get(app.dsm.inferStageFullName("s2"))
-      assert(s2v.getOrElse("") === "publishedS2")
-    }
 
     test("inferStageFullName should fail if stage name is ambiguous") {
       val e1 = intercept[SmvRuntimeException] {
@@ -59,11 +52,6 @@ package org.tresamigos.smv {
     test("inferStageFullName should find any stage by its unambiguous suffix") {
       val s1 = app.dsm.inferStageFullName("2.stages.s3")
       assert(s1 === "com.myproj2.stages.s3")
-    }
-
-    test("Stage version should work with smv.stage.FQN.version") {
-      val s1v = app.smvConfig.stageVersions.get(app.dsm.inferStageFullName("com.myproj.s1"))
-      assert(s1v.getOrElse("") === "publishedS1")
     }
   }
 
