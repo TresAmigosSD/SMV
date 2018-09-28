@@ -68,7 +68,6 @@ class SmvApp(private val cmdLineArgs: Seq[String], _spark: Option[SparkSession] 
   val dsm = new DataSetMgr(smvConfig)
   def registerRepoFactory(factory: DataSetRepoFactory): Unit =
     dsm.register(factory)
-  //registerRepoFactory(new DataSetRepoFactoryScala(smvConfig))
 
   // Since OldVersionHelper will be used by executors, need to inject the version from the driver
   OldVersionHelper.version = sc.version
