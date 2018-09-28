@@ -55,14 +55,6 @@ class SmvApp(private val cmdLineArgs: Seq[String], _spark: Option[SparkSession] 
     nextLine
   }
 
-
-  /** Register Kryo Classes
-   * Since none of the SMV classes will be put in an RDD, register them or not does not make
-   * significant performance improvement
-   *
-   * val allSerializables = SmvReflection.objectsInPackage[Serializable]("org.tresamigos.smv")
-   * sparkConf.registerKryoClasses(allSerializables.map{_.getClass}.toArray)
-   **/
   val sparkSession = _spark getOrElse (SparkSession
     .builder()
     .appName(smvConfig.appName)
@@ -76,7 +68,6 @@ class SmvApp(private val cmdLineArgs: Seq[String], _spark: Option[SparkSession] 
   val dsm = new DataSetMgr(smvConfig)
   def registerRepoFactory(factory: DataSetRepoFactory): Unit =
     dsm.register(factory)
-  registerRepoFactory(new DataSetRepoFactoryScala(smvConfig))
 
   // Since OldVersionHelper will be used by executors, need to inject the version from the driver
   OldVersionHelper.version = sc.version
@@ -84,7 +75,7 @@ class SmvApp(private val cmdLineArgs: Seq[String], _spark: Option[SparkSession] 
   // configure spark sql params and inject app here rather in run method so that it would be done even if we use the shell.
   setSparkSqlConfigParams()
 
-  // Used by smvApp.createDF and SmvCsvStringData (both scala and python)
+  // Used by smvApp.createDF (both scala and python)
   private[smv] def createDFWithLogger(schemaStr: String, data: String, parserLogger: ParserLogger) = {
     val schema    = SmvSchema.fromString(schemaStr)
     val dataArray = if (null == data) Array.empty[String] else data.split(";").map(_.trim)

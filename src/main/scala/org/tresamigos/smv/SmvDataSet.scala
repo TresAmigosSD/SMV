@@ -125,22 +125,12 @@ abstract class SmvDataSet {
   /** Objects defined in Spark Shell has class name start with $ **/
   val isObjectInShell: Boolean = this.getClass.getName matches """\$.*"""
 
-  /**
-   * SmvDataSet code (not data) CRC. Always return 0 for objects created in spark shell
-   */
-  private[smv] lazy val datasetCRC = {
-    if (isObjectInShell)
-      0l
-    else
-      ClassCRC(this)
-  }
-
   /** Hash computed from the dataset, could be overridden to include things other than CRC */
   def datasetHash(): Int = instanceValHash + sourceCodeHash
   /** Hash computed based on instance values of the dataset, such as the timestamp of an input file **/
   def instanceValHash(): Int = 0
   /** Hash computed based on the source code of the dataset's class **/
-  def sourceCodeHash(): Int = datasetCRC.toInt
+  def sourceCodeHash(): Int
 
   /**
    * Determine the hash of this module and the hash of hash (HOH) of all the modules it depends on.
@@ -677,55 +667,6 @@ abstract class SmvDataSet {
   }
 }
 
-/**
- * Abstract out the common part of input SmvDataSet
- */
-private[smv] abstract class SmvInputDataSet extends SmvDataSet {
-  override def requiresDS() = Seq.empty
-  override val isEphemeral  = true
-
-  override def dsType() = "Input"
-
-  /**
-   * Method to run/pre-process the input file.
-   * Users can override this method to perform file level
-   * ETL operations.
-   */
-  def run(df: DataFrame) = df
-}
-
-
-/**
- * Both SmvFile and SmvCsvStringData shared the parser validation part, extract the
- * common part to the new ABC: SmvDSWithParser
- */
-private[smv] abstract class SmvDSWithParser extends SmvInputDataSet {
-  val forceParserCheck   = true
-  val failAtParsingError = true
-
-  /**
-   *  Add parser failure policy to any DataSets that use a parser (e.g. csv files and hive tables)
-   */
-  override def dqmWithTypeSpecificPolicy(userDQM: SmvDQM) = {
-    val baseDqm = super.dqmWithTypeSpecificPolicy(userDQM)
-    if (failAtParsingError) baseDqm.add(FailParserCountPolicy(1)).addAction()
-    else if (forceParserCheck) baseDqm.addAction()
-    else baseDqm
-  }
-
-  /**
-   * Read contents from file, dir or data string (without running the `run` method) as a DataFrame.
-   */
-  private[smv] def readFromSrc(parserLogger: ParserLogger): DataFrame
-
-  override private[smv] def doRun(dqmValidator: DQMValidator, collector: SmvRunInfoCollector, quickRun: Boolean): DataFrame = {
-    val parserValidator =
-      if (dqmValidator == null) TerminateParserLogger else dqmValidator.createParserValidator()
-    val df      = readFromSrc(parserValidator)
-    run(df)
-  }
-}
-
 
 /**
  * Maps SmvDataSet to DataFrame by FQN. This is the type of the parameter expected
@@ -884,6 +825,8 @@ class SmvModuleLink(val outputModule: SmvOutput)
     (dependedHash).toInt
   }
 
+  override def sourceCodeHash() = 0
+
   /**
    * SmvModuleLinks should not cache or validate their data
    */
@@ -981,43 +924,6 @@ object SmvExtModulePython extends python.InterfacesWithPy4J {
       new SmvExtModulePython(target) with SmvOutput
     else
       new SmvExtModulePython(target)
-  }
-}
-
-/**
- * a built-in SmvModule from schema string and data string
- *
- * E.g.
- * {{{
- * SmvCsvStringData("a:String;b:Double;c:String", "aa,1.0,cc;aa2,3.5,CC")
- * }}}
- *
- **/
-class SmvCsvStringData(
-    schemaStr: String,
-    data: String,
-    override val isPersistValidateResult: Boolean = false
-) extends SmvDSWithParser {
-
-  override def description() = s"Dummy module to create DF from strings"
-
-  override def instanceValHash() = {
-    val crc = new java.util.zip.CRC32
-    crc.update((schemaStr + data).toCharArray.map(_.toByte))
-    (crc.getValue).toInt
-  }
-
-  private[smv] def readFromSrc(parserValidator: ParserLogger): DataFrame =
-    app.createDFWithLogger(schemaStr, data, parserValidator)
-}
-
-object SmvCsvStringData {
-  def apply(
-      schemaStr: String,
-      data: String,
-      isPersistValidateResult: Boolean = false
-  ): SmvCsvStringData = {
-    new SmvCsvStringData(schemaStr, data, isPersistValidateResult)
   }
 }
 
