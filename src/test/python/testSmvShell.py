@@ -14,6 +14,7 @@
 from test_support.smvbasetest import SmvBaseTest
 import smv.smvshell as smvshell
 import os
+import json
 
 class SmvShellTest(SmvBaseTest):
     @classmethod
@@ -88,3 +89,9 @@ stage2:
         self.createTempInputFile("check_file.csv")
         self.createTempInputFile("check_file.schema")
         self.assertEqual(self.smvApp.getFileNamesByType("csv"), ['check_file.csv'])
+
+    def test_app_getMetadataJson(self):
+        fqn = "stage.modules.CsvStr"
+        self.df(fqn)
+        meta = json.loads(self.smvApp.getMetadataJson("mod:" + fqn))
+        self.assertEqual(meta['_fqn'], fqn)

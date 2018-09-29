@@ -274,6 +274,10 @@ class SmvApp(object):
         df, collector = self.runModule(urn, forceRun, version)
         return ds.df2result(df)
 
+    def load(self, urn):
+        """Return j_ds from urn"""
+        return self.j_smvPyClient.loadUrns(smv_copy_array(self.sc, urn))[0]
+
     @exception_handling
     def runModule(self, urn, forceRun=False, version=None, runConfig=None, quickRun=False):
         """Runs either a Scala or a Python SmvModule by its Fully Qualified Name(fqn)
@@ -302,7 +306,7 @@ class SmvApp(object):
         """
         self.setDynamicRunConfig(runConfig)
         collector = self._jvm.SmvRunInfoCollector()
-        j_ds = self.j_smvPyClient.loadUrns(smv_copy_array(self.sc, urn))[0]
+        j_ds = self.load(urn)
         if (forceRun):
             self.j_smvPyClient.deleteModuleOutput(j_ds)
 
@@ -396,7 +400,8 @@ class SmvApp(object):
 
     def getMetadataJson(self, urn):
         """Returns the metadata for a given urn"""
-        return self.j_smvPyClient.getMetadataJson(urn)
+        j_ds = self.load(urn)
+        return j_ds.getMetadata().toJson()
 
     def getMetadataHistoryJson(self, urn):
         """Returns the metadata history for a given urn"""

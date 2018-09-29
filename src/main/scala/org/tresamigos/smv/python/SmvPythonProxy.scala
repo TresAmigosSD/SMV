@@ -300,10 +300,6 @@ class SmvPyClient(val j_smvApp: SmvApp) {
   def copyToHdfs(in: IAnyInputStream, dest: String): Unit =
     SmvHDFS.writeToFile(in, dest)
 
-  /** Returns metadata for a given urn*/
-  def getMetadataJson(urn: String): String =
-    j_smvApp.getMetadataJson(URN(urn))
-
   /** Returns metadata history for a given urn*/
   def getMetadataHistoryJson(urn: String): String =
     j_smvApp.getMetadataHistoryJson(URN(urn))

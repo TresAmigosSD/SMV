@@ -362,14 +362,6 @@ class SmvApp(private val cmdLineArgs: Seq[String], _spark: Option[SparkSession] 
   }
 
   /**
-   * Returns metadata for a given urn
-   */
-  def getMetadataJson(urn: URN): String = {
-    val ds = dsm.load(urn).head
-    ds.getMetadata().toJson
-  }
-
-  /**
    * Returns metadata history for a given urn
    */
   def getMetadataHistoryJson(urn: URN): String = {
