@@ -133,35 +133,8 @@ object ShellCmd {
     fmt.print(DateTime.now())
   }
 
-  /**
-   * Deprecated
-   * ShellCmd.smvExportCsv should use SmvDFHelper.smvExportCsv (#884)
-   */
-  def smvExportCsv(name: String, path: String, collector: SmvRunInfoCollector=new SmvRunInfoCollector) = {
-    println("The smvExportCsv shell method is deprecated")
-    dsm.inferDS(name).head.rdd(collector=collector).smvExportCsv(path)
-  }
-
   def _edd(name: String, collector: SmvRunInfoCollector=new SmvRunInfoCollector): String =
     dsm.inferDS(name).head.getEdd(collector=collector)
 
   def edd(name: String): Unit =
     println(_edd(name))
-
-  /**
-   * Reload modules using custom class loader
-   **/
-  private[smv] def hotdeployIfCapable(ds: SmvDataSet,
-                                      cl: ClassLoader = getClass.getClassLoader): Unit = {
-    import scala.reflect.runtime.universe
-
-    val mir  = universe.runtimeMirror(cl).reflect(SmvApp.app.sc)
-    val meth = mir.symbol.typeSignature.member(universe.TermName("hotdeploy"))
-
-    if (meth.isMethod) {
-      mir.reflectMethod(meth.asMethod)()
-    } else {
-      println("hotdeploy is not available in the current SparkContext")
-    }
-  }
-}
