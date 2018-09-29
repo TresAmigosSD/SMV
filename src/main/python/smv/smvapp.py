@@ -26,6 +26,7 @@ from pyspark import SparkContext
 from pyspark.sql import SparkSession, DataFrame
 
 
+from smv.datasetmgr import DataSetMgr
 from smv.datasetrepo import DataSetRepoFactory
 from smv.utils import smv_copy_array, check_socket
 from smv.error import SmvRuntimeError, SmvDqmValidationError
@@ -102,6 +103,7 @@ class SmvApp(object):
         # shortcut is meant for internal use only
         self.j_smvApp = self.j_smvPyClient.j_smvApp()
         self.log = self.j_smvApp.log()
+        self.dsm = DataSetMgr(self.sc, self.j_smvApp.dsm())
 
         # AFTER app is available but BEFORE stages,
         # use the dynamically configured app dir to set the source path, library path
@@ -274,9 +276,9 @@ class SmvApp(object):
         df, collector = self.runModule(urn, forceRun, version)
         return ds.df2result(df)
 
-    def load(self, urn):
+    def loadSingleDS(self, urn):
         """Return j_ds from urn"""
-        return self.j_smvPyClient.loadUrns(smv_copy_array(self.sc, urn))[0]
+        return self.dsm.load(urn)[0]
 
     @exception_handling
     def runModule(self, urn, forceRun=False, version=None, runConfig=None, quickRun=False):
@@ -306,7 +308,7 @@ class SmvApp(object):
         """
         self.setDynamicRunConfig(runConfig)
         collector = self._jvm.SmvRunInfoCollector()
-        j_ds = self.load(urn)
+        j_ds = self.loadSingleDS(urn)
         if (forceRun):
             self.j_smvPyClient.deleteModuleOutput(j_ds)
 
@@ -400,7 +402,7 @@ class SmvApp(object):
 
     def getMetadataJson(self, urn):
         """Returns the metadata for a given urn"""
-        j_ds = self.load(urn)
+        j_ds = self.loadSingleDS(urn)
         return j_ds.getMetadata().toJson()
 
     def getMetadataHistoryJson(self, urn):

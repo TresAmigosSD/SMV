@@ -184,6 +184,11 @@ object SmvPythonHelper {
 
   def getTerminateParserLogger() = 
     dqm.TerminateParserLogger
+
+  def dsmLoad(dsm: DataSetMgr, urns: Array[String]): java.util.List[SmvDataSet] = {
+    val urnObjs = urns.map{URN(_)}
+    dsm.load(urnObjs: _*)
+  }
 }
 
 class SmvGroupedDataAdaptor(grouped: SmvGroupedData) {
