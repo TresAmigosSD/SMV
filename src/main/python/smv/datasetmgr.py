@@ -41,3 +41,24 @@ class DataSetMgr(object):
             list(SmvDataSet): list of Scala SmvDataSets (j_ds)
         """
         return self.helper.dsmLoad(self.j_dsm, smv_copy_array(self.sc, *urns))
+
+    def inferDS(self, *partial_names):
+        """Return DSs from a list of partial names
+
+        Args:
+            *partial_names (str): list of partial names
+
+        Returns:
+            list(SmvDataSet): list of Scala SmvDataSets (j_ds)
+        """
+        return self.helper.dsmInferDS(self.j_dsm, smv_copy_array(self.sc, *partial_names))
+
+    def inferUrn(self, partial_name):
+        """Return URN string from partial name
+        """
+        return self.inferDS(partial_name)[0].urn().toString()
+
+    def dataSetsForStage(self, stage):
+        """Return all SmvDataSets in a stage
+        """
+        return self.helper.dsmDataSetsForStage(self.j_dsm, stage)

@@ -244,16 +244,6 @@ class SmvApp(object):
         all_files = self._jvm.SmvHDFS.dirList(self.inputDir()).array()
         return [str(f) for f in all_files if f.endswith(ftype)]
 
-    def getLockStatusForModule(self, name):
-        """Returns a dictionary that, if the lock exists for a given module,
-        contains the lock file modification time as a datetime object
-        under the key 'lockTime'
-        """
-        retval = dict(self.j_smvPyClient.getLockfileStatusForModule(name))
-        if retval.get('lockTime') is not None:
-            retval['lockTime'] = datetime.fromtimestamp(long(retva['lockTime'])/1000.0)
-        return retval
-
     def create_smv_pyclient(self, arglist):
         '''
         return a smvPyClient instance
@@ -335,7 +325,7 @@ class SmvApp(object):
             - SmvRunInfoCollector contains additional information
               about the run, such as validation results.
         """
-        urn = self.inferUrn(name)
+        urn = self.dsm.inferUrn(name)
         return self.runModule(urn, forceRun, version, runConfig, quickRun)
 
     def getRunInfo(self, urn, runConfig=None):
@@ -408,9 +398,6 @@ class SmvApp(object):
     def getMetadataHistoryJson(self, urn):
         """Returns the metadata history for a given urn"""
         return self.j_smvPyClient.getMetadataHistoryJson(urn)
-
-    def inferUrn(self, name):
-        return self.j_smvPyClient.inferDS(name).urn().toString()
 
     def getDsHash(self, name, runConfig):
         """The current hashOfHash for the named module as a hex string

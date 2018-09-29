@@ -189,6 +189,12 @@ object SmvPythonHelper {
     val urnObjs = urns.map{URN(_)}
     dsm.load(urnObjs: _*)
   }
+
+  def dsmInferDS(dsm: DataSetMgr, names: Array[String]): java.util.List[SmvDataSet] =
+    dsm.inferDS(names: _*)
+
+  def dsmDataSetsForStage(dsm: DataSetMgr, stage: String): java.util.List[SmvDataSet] = 
+    dsm.dataSetsForStage(stage)
 }
 
 class SmvGroupedDataAdaptor(grouped: SmvGroupedData) {
@@ -275,9 +281,6 @@ class SmvPyClient(val j_smvApp: SmvApp) {
 
   def userLibs: Array[String] = j_smvApp.userLibs.toArray
 
-  def inferDS(name: String): SmvDataSet =
-    j_smvApp.dsm.inferDS(name).head
-
   /** Used to create small dataframes for testing */
   def dfFrom(schema: String, data: String): DataFrame =
     j_smvApp.createDF(schema, data)
@@ -315,31 +318,6 @@ class SmvPyClient(val j_smvApp: SmvApp) {
     val cl                      = j_smvApp.smvConfig.cmdLine
     val directMods: Seq[String] = cl.modsToRun()
     directMods
-  }
-
-  /**
-   * Returns the lock file status, if any, for a given module in a
-   * java.util.Map.  The file modification time will be a String
-   * representation of the datetime in milliseconds, under the key
-   * 'lockTime'.
-   *
-   * Returns an empty map if the lock is not found for the module.
-   *
-   * If the module is not found, the call to inferDS() would throw an
-   * SmvRuntimeException.
-   *
-   * @param modName a name that uniquely identifies a module, typically its FQN
-   * @return a map with the key "lockTime" and the file modification time in milliseconds
-   */
-  def getLockfileStatusForModule(modName: String): java.util.Map[String, String] = {
-    j_smvApp.dsm.inferDS(modName) match {
-      case Nil => java.util.Collections.emptyMap()
-      case ds::_ =>
-        ds.lockfileStatus match {
-          case None => java.util.Collections.emptyMap()
-          case Some(fs) => Map("lockTime" -> fs.getModificationTime.toString)
-        }
-    }
   }
 
   // ---- User Run Configuration Parameters proxy funcs.
@@ -383,15 +361,6 @@ class SmvPyClient(val j_smvApp: SmvApp) {
   }
 
   def getDirList(dirPath: String): java.util.List[String] = SmvHDFS.dirList(dirPath)
-
-  //Scare folding for moving all SmvDataSet framework to python #1338
-  def loadUrns(urns: Array[String]): java.util.List[SmvDataSet] = {
-    val urnObjs = urns.map{URN(_)}
-    j_smvApp.dsm.load(urnObjs: _*)
-  }
-
-  def dataSetsForStage(stage: String): java.util.List[SmvDataSet] = 
-    j_smvApp.dsm.dataSetsForStage(stage)
 
 
   def linkToModule(link: SmvModuleLink): SmvDataSet =
