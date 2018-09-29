@@ -302,8 +302,11 @@ class SmvApp(object):
         """
         self.setDynamicRunConfig(runConfig)
         collector = self._jvm.SmvRunInfoCollector()
-        j_urn = self._jvm.URN.apply(urn)
-        j_df = self.j_smvApp.runModule(j_urn, forceRun, self.scalaOption(version), collector, quickRun)
+        j_ds = self.j_smvPyClient.loadUrns(smv_copy_array(self.sc, urn))[0]
+        if (forceRun):
+            self.j_smvPyClient.deleteModuleOutput(j_ds)
+
+        j_df = j_ds.rdd(forceRun, False, collector, quickRun)
         return (DataFrame(j_df, self.sqlContext),
                 SmvRunInfoCollector(collector))
 

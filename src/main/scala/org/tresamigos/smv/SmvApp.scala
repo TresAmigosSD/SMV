@@ -330,41 +330,6 @@ class SmvApp(private val cmdLineArgs: Seq[String], _spark: Option[SparkSession] 
     modulesToRun.nonEmpty
   }
 
-  /**
-   * proceeds with the execution of an smvDS passed from runModule
-   * TODO: the name of this function should make its distinction from runModule clear (this is an implementation)
-   */
-  private def runDS(ds: SmvDataSet,
-                    forceRun: Boolean,
-                    version: Option[String],
-                    collector: SmvRunInfoCollector,
-                    quickRun: Boolean): DataFrame = {
-    if (version.isDefined)
-      // if fails, error already handled since input path doesn't exist
-      ds.readPublishedData(version).get
-    else {
-      if (forceRun)
-        deletePersistedResults(Seq(ds))
-      ds.rdd(forceRun, collector=collector, quickRun=quickRun)
-    }
-  }
-
-  /** Run a module by its fully qualified name in its respective language environment
-   *  If force argument is true, any existing persisted results will be deleted
-   *  and the module's DataFrame cache will be ignored, forcing the module to run again.
-   *  If a version is specified, try to read the module from the published data for the given version.
-   *  If dynamic runtime configuration is specified, run the module with the configuration provided.
-   */
-  def runModule(urn: URN,
-                forceRun: Boolean              = false,
-                version: Option[String]        = None,
-                collector: SmvRunInfoCollector = new SmvRunInfoCollector,
-                quickRun: Boolean              = false): DataFrame = {
-    // set dynamic runtime configuration before discovering ds as stage, etc impacts what can be discovered
-    val ds = dsm.load(urn).head
-    runDS(ds, forceRun, version, collector, quickRun)
-  }
-
   def publishModuleToHiveByName(modName: String,
                                 collector: SmvRunInfoCollector): Unit = {
       dsm.inferDS(modName).head.exportToHive(collector)
