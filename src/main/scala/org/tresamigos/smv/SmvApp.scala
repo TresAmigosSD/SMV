@@ -331,7 +331,7 @@ class SmvApp(private val cmdLineArgs: Seq[String], _spark: Option[SparkSession] 
   }
 
   /**
-   * proceeds with the execution of an smvDS passed from runModule or runModuleByName
+   * proceeds with the execution of an smvDS passed from runModule
    * TODO: the name of this function should make its distinction from runModule clear (this is an implementation)
    */
   private def runDS(ds: SmvDataSet,
@@ -362,23 +362,6 @@ class SmvApp(private val cmdLineArgs: Seq[String], _spark: Option[SparkSession] 
                 quickRun: Boolean              = false): DataFrame = {
     // set dynamic runtime configuration before discovering ds as stage, etc impacts what can be discovered
     val ds = dsm.load(urn).head
-    runDS(ds, forceRun, version, collector, quickRun)
-  }
-
-  /**
-   * Run a module based on the end of its name (must be unique). If force argument
-   * is true, any existing persisted results will be deleted and the module's
-   *  DataFrame cache will be ignored, forcing the module to run again.
-   * If a version is specified, try to read the module from the published data for the given version
-   */
-  def runModuleByName(modName: String,
-                      forceRun: Boolean              = false,
-                      version: Option[String]        = None,
-                      collector: SmvRunInfoCollector = new SmvRunInfoCollector,
-                      quickRun: Boolean              = false): DataFrame = {
-    // set dynamic runtime configuration before discovering ds as stage, etc impacts what can be discovered
-    val ds = dsm.inferDS(modName).head
-
     runDS(ds, forceRun, version, collector, quickRun)
   }
 
