@@ -358,7 +358,6 @@ class SmvApp(private val cmdLineArgs: Seq[String], _spark: Option[SparkSession] 
   def runModule(urn: URN,
                 forceRun: Boolean              = false,
                 version: Option[String]        = None,
-                runConfig: Map[String, String] = Map.empty,
                 collector: SmvRunInfoCollector = new SmvRunInfoCollector,
                 quickRun: Boolean              = false): DataFrame = {
     // set dynamic runtime configuration before discovering ds as stage, etc impacts what can be discovered
@@ -375,7 +374,6 @@ class SmvApp(private val cmdLineArgs: Seq[String], _spark: Option[SparkSession] 
   def runModuleByName(modName: String,
                       forceRun: Boolean              = false,
                       version: Option[String]        = None,
-                      runConfig: Map[String, String] = Map.empty,
                       collector: SmvRunInfoCollector = new SmvRunInfoCollector,
                       quickRun: Boolean              = false): DataFrame = {
     // set dynamic runtime configuration before discovering ds as stage, etc impacts what can be discovered
@@ -385,20 +383,19 @@ class SmvApp(private val cmdLineArgs: Seq[String], _spark: Option[SparkSession] 
   }
 
   def publishModuleToHiveByName(modName: String,
-                                runConfig: Map[String, String],
                                 collector: SmvRunInfoCollector): Unit = {
       dsm.inferDS(modName).head.exportToHive(collector)
   }
 
-  def getDsHash(name: String, runConfig: Map[String, String]): String = {
+  def getDsHash(name: String): String = {
     dsm.inferDS(name).head.verHex
   }
 
-  def getRunInfo(partialName: String, runConfig: Map[String, String]): SmvRunInfoCollector = {
+  def getRunInfo(partialName: String): SmvRunInfoCollector = {
     getRunInfo(dsm.inferDS(partialName).head)
   }
 
-  def getRunInfo(urn: URN, runConfig: Map[String, String]): SmvRunInfoCollector = {
+  def getRunInfo(urn: URN): SmvRunInfoCollector = {
     getRunInfo(dsm.load(urn).head)
   }
 

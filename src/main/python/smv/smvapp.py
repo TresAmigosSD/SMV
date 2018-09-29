@@ -300,7 +300,7 @@ class SmvApp(object):
               about the run, such as validation results.
         """
         self.setDynamicRunConfig(runConfig)
-        java_result = self.j_smvPyClient.runModule(urn, forceRun, self.scalaOption(version), runConfig, quickRun)
+        java_result = self.j_smvPyClient.runModule(urn, forceRun, self.scalaOption(version), quickRun)
         return (DataFrame(java_result.df(), self.sqlContext),
                 SmvRunInfoCollector(java_result.collector()) )
 
@@ -324,7 +324,7 @@ class SmvApp(object):
               about the run, such as validation results.
         """
         self.setDynamicRunConfig(runConfig)
-        java_result = self.j_smvPyClient.runModuleByName(name, forceRun, self.scalaOption(version), runConfig, quickRun)
+        java_result = self.j_smvPyClient.runModuleByName(name, forceRun, self.scalaOption(version), quickRun)
         return (DataFrame(java_result.df(), self.sqlContext),
                 SmvRunInfoCollector(java_result.collector()) )
 
@@ -353,7 +353,7 @@ class SmvApp(object):
 
         """
         self.setDynamicRunConfig(runConfig)
-        java_result = self.j_smvPyClient.getRunInfo(urn, runConfig)
+        java_result = self.j_smvPyClient.getRunInfo(urn)
         return SmvRunInfoCollector(java_result)
 
     def getRunInfoByPartialName(self, name, runConfig):
@@ -379,7 +379,8 @@ class SmvApp(object):
         Returns:
             SmvRunInfoCollector
         """
-        java_result = self.j_smvPyClient.getRunInfoByPartialName(name, runConfig)
+        self.setDynamicRunConfig(runConfig)
+        java_result = self.j_smvPyClient.getRunInfoByPartialName(name)
         return SmvRunInfoCollector(java_result)
 
     @exception_handling
@@ -387,7 +388,7 @@ class SmvApp(object):
         """Publish an SmvModule to Hive by its name (can be partial FQN)
         """
         self.setDynamicRunConfig(runConfig)
-        return self.j_smvPyClient.publishModuleToHiveByName(name, runConfig)
+        return self.j_smvPyClient.publishModuleToHiveByName(name)
 
     def getMetadataJson(self, urn):
         """Returns the metadata for a given urn"""
@@ -413,7 +414,7 @@ class SmvApp(object):
                 (str): The hashOfHash of the named module
         """
         self.setDynamicRunConfig(runConfig)
-        return self.j_smvPyClient.getDsHash(name, runConfig)
+        return self.j_smvPyClient.getDsHash(name)
 
     def copyToHdfs(self, fileobj, destination):
         """Copies the content of a file object to an HDFS location.

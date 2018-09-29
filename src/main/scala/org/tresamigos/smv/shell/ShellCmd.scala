@@ -138,3 +138,4 @@ object ShellCmd {
 
   def edd(name: String): Unit =
     println(_edd(name))
+}
