@@ -96,7 +96,6 @@ class SmvApp(object):
         java_import(self._jvm, "org.tresamigos.smv.python.SmvPythonHelper")
         java_import(self._jvm, "org.tresamigos.smv.SmvRunInfoCollector")
         java_import(self._jvm, "org.tresamigos.smv.SmvHDFS")
-        java_import(self._jvm, "org.tresamigos.smv.URN")
 
         self.j_smvPyClient = self.create_smv_pyclient(arglist)
 
