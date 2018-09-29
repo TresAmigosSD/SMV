@@ -326,10 +326,8 @@ class SmvApp(object):
             - SmvRunInfoCollector contains additional information
               about the run, such as validation results.
         """
-        self.setDynamicRunConfig(runConfig)
-        java_result = self.j_smvPyClient.runModuleByName(name, forceRun, self.scalaOption(version), quickRun)
-        return (DataFrame(java_result.df(), self.sqlContext),
-                SmvRunInfoCollector(java_result.collector()) )
+        urn = self.inferUrn(name)
+        return self.runModule(urn, forceRun, version, runConfig, quickRun)
 
     def getRunInfo(self, urn, runConfig=None):
         """Returns the run information of a module and all its dependencies
