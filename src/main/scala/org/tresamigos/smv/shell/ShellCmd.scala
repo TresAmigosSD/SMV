@@ -134,15 +134,6 @@ object ShellCmd {
   }
 
   /**
-   * Export dataset's running result to a Hive table
-  **/
-  def exportToHive(dsName: String,
-                   runConfig: Map[String, String] = Map.empty,
-                   collector: SmvRunInfoCollector=new SmvRunInfoCollector) = {
-    SmvApp.app.publishModuleToHiveByName(dsName, runConfig, collector)
-  }
-
-  /**
    * Deprecated
    * ShellCmd.smvExportCsv should use SmvDFHelper.smvExportCsv (#884)
    */
@@ -156,17 +147,6 @@ object ShellCmd {
 
   def edd(name: String): Unit =
     println(_edd(name))
-
-  /**
-   * Resolve SmvDataSet
-   *
-   * @param ds an SmvDataSet
-   * @return result DataFrame
-  **/
-  def df(ds: SmvDataSet) = {
-    hotdeployIfCapable(ds, getClass.getClassLoader)
-    SmvApp.app.runModule(ds.urn)
-  }
 
   /**
    * Reload modules using custom class loader

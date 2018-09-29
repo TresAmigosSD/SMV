@@ -299,7 +299,7 @@ class SmvApp(object):
             - SmvRunInfoCollector contains additional information
               about the run, such as validation results.
         """
-        # TODO call setDynamicRunConfig() here not on scala side
+        self.setDynamicRunConfig(runConfig)
         java_result = self.j_smvPyClient.runModule(urn, forceRun, self.scalaOption(version), runConfig, quickRun)
         return (DataFrame(java_result.df(), self.sqlContext),
                 SmvRunInfoCollector(java_result.collector()) )
@@ -323,7 +323,7 @@ class SmvApp(object):
             - SmvRunInfoCollector contains additional information
               about the run, such as validation results.
         """
-        # TODO call setDynamicRunConfig() here not on scala side
+        self.setDynamicRunConfig(runConfig)
         java_result = self.j_smvPyClient.runModuleByName(name, forceRun, self.scalaOption(version), runConfig, quickRun)
         return (DataFrame(java_result.df(), self.sqlContext),
                 SmvRunInfoCollector(java_result.collector()) )
@@ -352,6 +352,7 @@ class SmvApp(object):
             SmvRunInfoCollector
 
         """
+        self.setDynamicRunConfig(runConfig)
         java_result = self.j_smvPyClient.getRunInfo(urn, runConfig)
         return SmvRunInfoCollector(java_result)
 
@@ -385,6 +386,7 @@ class SmvApp(object):
     def publishModuleToHiveByName(self, name, runConfig=None):
         """Publish an SmvModule to Hive by its name (can be partial FQN)
         """
+        self.setDynamicRunConfig(runConfig)
         return self.j_smvPyClient.publishModuleToHiveByName(name, runConfig)
 
     def getMetadataJson(self, urn):
@@ -410,6 +412,7 @@ class SmvApp(object):
             Returns:
                 (str): The hashOfHash of the named module
         """
+        self.setDynamicRunConfig(runConfig)
         return self.j_smvPyClient.getDsHash(name, runConfig)
 
     def copyToHdfs(self, fileobj, destination):

@@ -331,14 +331,6 @@ class SmvApp(private val cmdLineArgs: Seq[String], _spark: Option[SparkSession] 
   }
 
   /**
-   * set dynamic runtime configuration.
-   * this should be set before run dataset.
-   */
-  private def setDynamicRunConfig(runConfig: Map[String, String]) = {
-    smvConfig.dynamicRunConfig = runConfig
-  }
-
-  /**
    * proceeds with the execution of an smvDS passed from runModule or runModuleByName
    * TODO: the name of this function should make its distinction from runModule clear (this is an implementation)
    */
@@ -370,7 +362,6 @@ class SmvApp(private val cmdLineArgs: Seq[String], _spark: Option[SparkSession] 
                 collector: SmvRunInfoCollector = new SmvRunInfoCollector,
                 quickRun: Boolean              = false): DataFrame = {
     // set dynamic runtime configuration before discovering ds as stage, etc impacts what can be discovered
-    setDynamicRunConfig(runConfig)
     val ds = dsm.load(urn).head
     runDS(ds, forceRun, version, collector, quickRun)
   }
@@ -388,7 +379,6 @@ class SmvApp(private val cmdLineArgs: Seq[String], _spark: Option[SparkSession] 
                       collector: SmvRunInfoCollector = new SmvRunInfoCollector,
                       quickRun: Boolean              = false): DataFrame = {
     // set dynamic runtime configuration before discovering ds as stage, etc impacts what can be discovered
-    setDynamicRunConfig(runConfig)
     val ds = dsm.inferDS(modName).head
 
     runDS(ds, forceRun, version, collector, quickRun)
@@ -397,22 +387,18 @@ class SmvApp(private val cmdLineArgs: Seq[String], _spark: Option[SparkSession] 
   def publishModuleToHiveByName(modName: String,
                                 runConfig: Map[String, String],
                                 collector: SmvRunInfoCollector): Unit = {
-      setDynamicRunConfig(runConfig)
       dsm.inferDS(modName).head.exportToHive(collector)
   }
 
   def getDsHash(name: String, runConfig: Map[String, String]): String = {
-    setDynamicRunConfig(runConfig)
     dsm.inferDS(name).head.verHex
   }
 
   def getRunInfo(partialName: String, runConfig: Map[String, String]): SmvRunInfoCollector = {
-    setDynamicRunConfig(runConfig)
     getRunInfo(dsm.inferDS(partialName).head)
   }
 
   def getRunInfo(urn: URN, runConfig: Map[String, String]): SmvRunInfoCollector = {
-    setDynamicRunConfig(runConfig)
     getRunInfo(dsm.load(urn).head)
   }
 
