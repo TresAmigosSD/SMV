@@ -173,14 +173,14 @@ class SmvApp(object):
         self.remove_source(self.SRC_PROJECT_PATH)
         self.remove_source(self.SRC_LIB_PATH)
 
-    def appName(self):
-        return self.j_smvApp.smvConfig().appName()
-
-    def maxCbsPortRetries(self):
-        return self.j_smvApp.smvConfig().maxCbsPortRetries()
-
     def config(self):
         return self.j_smvApp.smvConfig()
+
+    def appName(self):
+        return self.config().appName()
+
+    def maxCbsPortRetries(self):
+        return self.config().maxCbsPortRetries()
 
     def getConf(self, key):
         return self.j_smvPyClient.getRunConfig(key)
@@ -472,7 +472,7 @@ class SmvApp(object):
 
     def abs_path_for_project_path(self, project_path):
         # Load dynamic app dir from scala
-        smvAppDir = self.j_smvApp.smvConfig().appDir()
+        smvAppDir = self.config().appDir()
         return os.path.abspath(os.path.join(smvAppDir, project_path))
 
     def prepend_source(self, project_path):
