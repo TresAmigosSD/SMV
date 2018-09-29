@@ -269,16 +269,6 @@ class SmvPyClient(val j_smvApp: SmvApp) {
     j_smvApp.getDsHash(name)
 
   /** Runs an SmvModule written in either Python or Scala */
-  def runModule(urn: String,
-                forceRun: Boolean,
-                version: Option[String],
-                quickCompute: Boolean = false): RunModuleResult = {
-    val collector = new SmvRunInfoCollector
-    val df =  j_smvApp.runModule(URN(urn), forceRun, version, collector, quickCompute)
-    RunModuleResult(df, collector)
-  }
-
-  /** Runs an SmvModule written in either Python or Scala */
   def runModuleByName(name: String,
                 forceRun: Boolean,
                 version: Option[String],

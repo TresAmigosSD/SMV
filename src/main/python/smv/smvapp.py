@@ -96,6 +96,7 @@ class SmvApp(object):
         java_import(self._jvm, "org.tresamigos.smv.python.SmvPythonHelper")
         java_import(self._jvm, "org.tresamigos.smv.SmvRunInfoCollector")
         java_import(self._jvm, "org.tresamigos.smv.SmvHDFS")
+        java_import(self._jvm, "org.tresamigos.smv.URN")
 
         self.j_smvPyClient = self.create_smv_pyclient(arglist)
 
@@ -300,9 +301,11 @@ class SmvApp(object):
               about the run, such as validation results.
         """
         self.setDynamicRunConfig(runConfig)
-        java_result = self.j_smvPyClient.runModule(urn, forceRun, self.scalaOption(version), quickRun)
-        return (DataFrame(java_result.df(), self.sqlContext),
-                SmvRunInfoCollector(java_result.collector()) )
+        collector = self._jvm.SmvRunInfoCollector()
+        j_urn = self._jvm.URN.apply(urn)
+        j_df = self.j_smvApp.runModule(j_urn, forceRun, self.scalaOption(version), collector, quickRun)
+        return (DataFrame(j_df, self.sqlContext),
+                SmvRunInfoCollector(collector))
 
     @exception_handling
     def runModuleByName(self, name, forceRun=False, version=None, runConfig=None, quickRun=False):
