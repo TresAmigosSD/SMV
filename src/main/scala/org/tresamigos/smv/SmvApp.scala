@@ -98,12 +98,6 @@ class SmvApp(private val cmdLineArgs: Seq[String], _spark: Option[SparkSession] 
   private[smv] def validFilesInOutputDir(): Seq[String] =
     allDataSets.flatMap(_.allOutputFiles).map(SmvHDFS.baseName(_))
 
-  /**
-   * list of all the files with specific suffix in the given directory
-   **/
-  def getFileNamesByType(dirName: String, suffix: String): List[String] =
-    SmvHDFS.dirList(dirName).filter(f => f.endsWith(suffix)).asJava
-
   /** remove all non-current files in the output directory */
   private[smv] def purgeOldOutputFiles() = {
     if (smvConfig.cmdLine.purgeOldOutput()) {

@@ -239,7 +239,8 @@ class SmvApp(object):
         return self.config().inputDir()
 
     def getFileNamesByType(self, ftype):
-        return self.j_smvApp.getFileNamesByType(self.inputDir(), ftype)
+        all_files = self._jvm.SmvHDFS.dirList(self.inputDir()).array()
+        return [str(f) for f in all_files if f.endswith(ftype)]
 
     def getLockStatusForModule(self, name):
         """Returns a dictionary that, if the lock exists for a given module,
