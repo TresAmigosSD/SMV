@@ -101,9 +101,6 @@ class DataSetResolver(val repos: Seq[DataSetRepo],
             if (dsStage == l.smvModule.parentStage.get)
               throw new SmvRuntimeException(msg.sameStageLink(ds.urn, dsStage))
           case _ =>
-            val depStage = dep.parentStage.get
-            if (dsStage != depStage)
-              throw new SmvRuntimeException(msg.crossStageDependency(ds.urn, dsStage, dep.urn, depStage))
         }
       }
     }
@@ -131,8 +128,6 @@ class DataSetResolver(val repos: Seq[DataSetRepo],
    */
   object msg {
     def dsNotFound(urn: URN): String = s"SmvDataSet ${urn} not found"
-    def crossStageDependency(dsUrn: URN, dsStage: String, depUrn: URN, depStage: String): String =
-      s"Module ${dsUrn} in ${dsStage} must use SmvModuleLink to depend on module ${depUrn} in ${depStage}"
     def sameStageLink(linkUrn: URN, stage: String): String =
       s"SmvModuleLink ${linkUrn} cannot link to ${linkUrn.toModURN} because they belong to the same stage"
     def dependencyCycle(ds: SmvDataSet, s: Seq[URN]): String =
