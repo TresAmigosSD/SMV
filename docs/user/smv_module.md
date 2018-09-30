@@ -4,7 +4,7 @@ An SMV Module is a collection of transformation operations and validation rules.
 
 ## Module Dependency Definition
 Each module **must** define its input dependency by overriding the `requiresDS` method. The `requiresDS` method should return a sequence of `SmvDataSet`s required as input for this module.
-The dependent datasets **must** be defined in the same stage as this module. Dependencies in other stages should use the `SmvModuleLink` class as described in [SmvStage](smv_stages.md).
+The dependent datasets can be defined in the same or a different stage as this module.
 
 ### Scala
 ```scala
@@ -94,9 +94,7 @@ class MyModule(smv.SmvModule):
 # Output Modules
 As the number of modules in a given SMV stage grows, it becomes more difficult to track which modules are the "leaf"/output modules within the stage. Any module or `SmvDataSet` within the stage can be marked as an output module by mixing-in the `SmvOutput` trait.
 
-The set of `SmvOutput` output modules in a stage define the data *interface/api* of the stage.  Since modules outside this stage can only access modules marked as output, non-output modules can be changed at will without any fear of affecting external modules.
-
-In addition to the above, the ability to mark certain modules as output has the following benefits:
+The set of `SmvOutput` output modules in a stage define the data *interface/api* of the stage. The ability to mark certain modules as output has the following benefits:
 
 * Allows user to easily "run" all output modules within a stage (using the `-s` option to `smv-run`). Depending on the options specified, they can then be published to CSV or to Hive.
 * A future option might be added to allow for listing of "dead" modules.  That is, any module in a stage that does not contribute to any output module either directly or indirectly.

@@ -95,13 +95,6 @@ Note that for sequence/list type parameters (e.g. smv.stages), a "," or ":" can 
 </tr>
 
 <tr>
-<td>smv.stages.X.version</td>
-<td>empty</td>
-<td>Optional</td>
-<td>Current version name of stage X. See <a href="smv_stages.md"> for details on stage versions</td>
-</tr>
-
-<tr>
 <td>smv.runConfigObj</td>
 <td>empty</td>
 <td>Optional</td>
