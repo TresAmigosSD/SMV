@@ -4,7 +4,7 @@ An SMV Module is a collection of transformation operations and validation rules.
 
 ## Module Dependency Definition
 Each module **must** define its input dependency by overriding the `requiresDS` method. The `requiresDS` method should return a sequence of `SmvDataSet`s required as input for this module.
-The dependent datasets can be defined in the same or a different stage as this module.
+The dependent datasets can be defined in the same or a different stage as this module (see [SmvStage](smv_stages.md) for details).
 
 ### Scala
 ```scala
