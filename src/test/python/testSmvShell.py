@@ -96,6 +96,12 @@ stage2:
         meta = json.loads(self.smvApp.getMetadataJson("mod:" + fqn))
         self.assertEqual(meta['_fqn'], fqn)
 
+    def test_app_getMetadataHistoryJson(self):
+        fqn = "stage.modules.CsvStr"
+        self.df(fqn)
+        metahist = json.loads(self.smvApp.getMetadataHistoryJson("mod:" + fqn))
+        self.assertEqual(metahist['history'][0]['_fqn'], fqn)
+
     def test_app_getDsHash(self):
         fqn = "stage.modules.CsvStr"
         print(self.smvApp.getDsHash(fqn, None))

@@ -97,6 +97,7 @@ class SmvApp(object):
         java_import(self._jvm, "org.tresamigos.smv.python.SmvPythonHelper")
         java_import(self._jvm, "org.tresamigos.smv.SmvRunInfoCollector")
         java_import(self._jvm, "org.tresamigos.smv.SmvHDFS")
+        java_import(self._jvm, "org.tresamigos.smv.URN")
 
         self.j_smvPyClient = self.create_smv_pyclient(arglist)
 
@@ -398,7 +399,8 @@ class SmvApp(object):
 
     def getMetadataHistoryJson(self, urn):
         """Returns the metadata history for a given urn"""
-        return self.j_smvPyClient.getMetadataHistoryJson(urn)
+        j_ds = self.loadSingleDS(urn)
+        return j_ds.getMetadataHistory().toJson()
 
     def getDsHash(self, name, runConfig):
         """The current hashOfHash for the named module as a hex string

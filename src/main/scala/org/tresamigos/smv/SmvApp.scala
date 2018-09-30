@@ -351,14 +351,6 @@ class SmvApp(private val cmdLineArgs: Seq[String], _spark: Option[SparkSession] 
   }
 
   /**
-   * Returns metadata history for a given urn
-   */
-  def getMetadataHistoryJson(urn: URN): String = {
-    val ds = dsm.load(urn).head
-    ds.getMetadataHistory().toJson
-  }
-
-  /**
    * sequence of SmvModules to run based on the command line arguments.
    * Returns the union of -a/-m/-s command line flags.
    */
