@@ -428,7 +428,7 @@ class SmvApp(object):
         The file object is closed when this function completes.
         """
         src = FileObjInputStream(fileobj)
-        self.j_smvPyClient.copyToHdfs(src, destination)
+        self._jvm.SmvHDFS.writeToFile(src, destination)
 
     def urn2fqn(self, urnOrFqn):
         """Extracts the SMV module FQN portion from its URN; if it's already an FQN return it unchanged

@@ -297,9 +297,6 @@ class SmvPyClient(val j_smvApp: SmvApp) {
   def getRunInfoByPartialName(partialName: String): SmvRunInfoCollector =
     j_smvApp.getRunInfo(partialName)
 
-  def copyToHdfs(in: IAnyInputStream, dest: String): Unit =
-    SmvHDFS.writeToFile(in, dest)
-
   /** Returns metadata history for a given urn*/
   def getMetadataHistoryJson(urn: String): String =
     j_smvApp.getMetadataHistoryJson(URN(urn))
