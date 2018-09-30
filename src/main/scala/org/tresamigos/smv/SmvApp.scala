@@ -329,10 +329,6 @@ class SmvApp(private val cmdLineArgs: Seq[String], _spark: Option[SparkSession] 
       dsm.inferDS(modName).head.exportToHive(collector)
   }
 
-  def getDsHash(name: String): String = {
-    dsm.inferDS(name).head.verHex
-  }
-
   def getRunInfo(partialName: String): SmvRunInfoCollector = {
     getRunInfo(dsm.inferDS(partialName).head)
   }

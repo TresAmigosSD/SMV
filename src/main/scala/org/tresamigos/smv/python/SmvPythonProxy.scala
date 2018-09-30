@@ -287,9 +287,6 @@ class SmvPyClient(val j_smvApp: SmvApp) {
 
   def urn2fqn(modUrn: String): String = org.tresamigos.smv.urn2fqn(modUrn)
 
-  def getDsHash(name: String): String =
-    j_smvApp.getDsHash(name)
-
   def publishModuleToHiveByName(name: String) = {
       val collector = new SmvRunInfoCollector
       j_smvApp.publishModuleToHiveByName(name, collector)

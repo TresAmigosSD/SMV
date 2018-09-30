@@ -412,7 +412,7 @@ class SmvApp(object):
                 (str): The hashOfHash of the named module
         """
         self.setDynamicRunConfig(runConfig)
-        return self.j_smvPyClient.getDsHash(name)
+        return self.dsm.inferDS(name)[0].verHex()
 
     def copyToHdfs(self, fileobj, destination):
         """Copies the content of a file object to an HDFS location.
