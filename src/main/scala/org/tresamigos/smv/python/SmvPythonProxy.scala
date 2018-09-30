@@ -281,10 +281,6 @@ class SmvPyClient(val j_smvApp: SmvApp) {
 
   def userLibs: Array[String] = j_smvApp.userLibs.toArray
 
-  /** Used to create small dataframes for testing */
-  def dfFrom(schema: String, data: String): DataFrame =
-    j_smvApp.createDF(schema, data)
-
   def urn2fqn(modUrn: String): String = org.tresamigos.smv.urn2fqn(modUrn)
 
   /**
