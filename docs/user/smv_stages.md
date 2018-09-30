@@ -12,10 +12,7 @@ By convention, each stage should have an `inputdata.py` module where all the inp
 
 ## Raw input files
 Raw input files (e.g. CSV files) should be defined as `Smv*File` instances in the input package.  For example:
-```Scala
-package com.foo.bar.stage1.input
-object Employment extends SmvCsvFile("input/employment/CB1200CZ11.csv")
-```
+
 ```python
 # In src/main/python/stage1/inputdata.py
 class Employment(smv.SmvCsvFile):
@@ -27,63 +24,54 @@ See [SmvModule](smv_module.md) for details on how to specify dependent files.
 
 ## Linking to modules across stages
 
-If a module in stage Y depends on a module in stage X, it should not refer to the dependent module directly.
-Instead, a special input dataset (`SmvModuleLink`) needs to be defined in stage Y to link to the module in stage X.
+If a module in stage Y depends on a module in stage X, user can either
+1. Refer to the dependent module directly
 
-### Scala
-```scala
-import org.tresamigos.smv.SmvModuleLink
-package com.foo.bar.stage2.input
-val EmploymentByStateLink = SmvModuleLink(com.foo.bar.stage1.EmploymentByState)
-```
 ### Python
 ```python
 # In src/main/python/stage2/inputdata.py
-from smv import SmvModuleLink
+from smv import SmvModule
+from stage1 import employment as emp
+
+class DependsDirectly(SmvModule):
+    def requiresDS(self):
+        return [emp.EmploymentByState]
+
+    def run(self, i):
+        return i[emp.EmploymentByState]
+```
+
+2. Or define a special input dataset (`SmvModuleLink`) in stage Y to link to the module in stage X like below.
+
+### Python
+```python
+# In src/main/python/stage2/inputdata.py
+from smv import SmvModuleLink, SmvModule
 from stage1 import employment as emp
 
 EmploymentByStateLink = smv.SmvModuleLink(emp.EmploymentByState)
+
+class DependsOnLink(SmvModule):
+    def requiresDS(self):
+        return [EmploymentByStateLink]
+
+    def run(self, i):
+        return i[EmploymentByStateLink]
 ```
 
 In the above example, `EmploymentByStateLink` is defined as an input in stage 2. Modules in stage 2 can depend on `EmploymentByStateLink` directly. `EmploymentByStateLink` is linked to the **output file** of `EmploymentByState` module and **not** to the module code. Therefore, stage 1 needs to be run first before Stage 2 can run (so that `EmploymentByState` output is there when stage Y is run)
 
-See "Publishing Stage Output" section below for details on how to pin dependency to a specific published version
+See "Publishing Stage Output" section below for details on how to publish versioned stage output
 
 # Publishing Stage Output
 
-As project code/team size grows, it becomes necessary to be able to depend on a stable code/data snapshots in development.
-For example, on a large project we may have different teams working on etl stage and modeling stage.
-Those working on modeling would prefer a stable etl stage output while they are developing the models.
-One way to accomplish that is to "publish" the etl stage output and have the modeling team specify the published version in their configuration.
+As project code/team size grows, it becomes necessary to be able to depend on a stable code/data snapshots in development. In SMV, a stable stage can be published out and be used by down-stream jobs independently.
 
-In the above example, the `model` stage may depend on the output of `etl` stage as follows:
-
-```python
-# In src/main/python/model/inputdata.py
-modelAccts = smv.SmvModuleLink(etl.rawAccounts)
-```
-
-As described above, `modelAccts` will depend on the **output** of `rawAccounts`.  Normally, this would read the versioned output that is persisted in the output directory.
-To avoid having to "re-run" `rawAccounts` continuously, the user may choose to "publish" the current `etl` stage output and pin the links to the published version as follows:
-
-**1. Publish ETL stage**
+The way to publish an `etl` stage is as follows:
 
 ```shell
 $ smv-run --publish V1 -s etl
 ```
-
-**2. Pin `model` stage to use published ETL output**
-
-Modify the user configuration file (`conf/smv-user-conf.props`) to specify the etl stage version to use.  For example, to use the above published version:
-```
-# specify version of etl package to use.  If no ambiguity, stage basename can be used here
-smv.stages.etl.version = V1
-```
-
-When `modelAccts` re-runs it will use the published output of `rawAccounts` rather than rerun `rawAccounts`.
-
-Since we already setup the version control to ignore `conf/smv-user-conf.props`,
-this provides isolation for the model authors from changes in the ETL code.  Once ETL stage is stabilized, it can either be republished with a new version or the config version can be removed to get the latest and greatest ETL output as before.
 
 # Adding a stage
 As the project grows, it may become necessary to add additional stages.
