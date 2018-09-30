@@ -141,7 +141,7 @@ class SmvApp(object):
             gw.jvm.SmvPythonHelper.updatePythonGatewayPort(jgws, gw._python_proxy_port)
 
         self.repoFactory = DataSetRepoFactory(self)
-        self.j_smvPyClient.registerRepoFactory('Python', self.repoFactory)
+        self.dsm.register(self.repoFactory)
 
         # Initialize DataFrame and Column with helper methods
         smv.helpers.init_helpers()

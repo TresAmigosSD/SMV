@@ -28,6 +28,7 @@ class DataSetMgr(object):
 
         from py4j.java_gateway import java_import
         java_import(self._jvm, "org.tresamigos.smv.python.SmvPythonHelper")
+        java_import(self._jvm, "org.tresamigos.smv.DataSetRepoFactoryPython")
 
         self.helper = self._jvm.SmvPythonHelper
 
@@ -62,3 +63,9 @@ class DataSetMgr(object):
         """Return all SmvDataSets in a stage
         """
         return self.helper.dsmDataSetsForStage(self.j_dsm, stage)
+
+    def register(self, repo_factory):
+        """Register python repo factory
+        """
+        j_rfact = self._jvm.DataSetRepoFactoryPython(repo_factory)
+        self.j_dsm.register(j_rfact)

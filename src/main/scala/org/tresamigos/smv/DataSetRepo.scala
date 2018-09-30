@@ -29,7 +29,7 @@ abstract class DataSetRepoFactory {
   def createRepo(): DataSetRepo
 }
 
-class DataSetRepoPython(iDSRepo: IDataSetRepoPy4J, smvConfig: SmvConfig) extends DataSetRepo with python.InterfacesWithPy4J {
+class DataSetRepoPython(iDSRepo: IDataSetRepoPy4J) extends DataSetRepo with python.InterfacesWithPy4J {
   def loadDataSet(urn: ModURN): Option[SmvDataSet] = {
     val py4jResponse = iDSRepo.getLoadDataSet(urn.fqn)
     val moduleResult = getPy4JResult(py4jResponse)
@@ -42,10 +42,10 @@ class DataSetRepoPython(iDSRepo: IDataSetRepoPy4J, smvConfig: SmvConfig) extends
   }
 }
 
-class DataSetRepoFactoryPython(iDSRepoFactory: IDataSetRepoFactoryPy4J, smvConfig: SmvConfig)
+class DataSetRepoFactoryPython(iDSRepoFactory: IDataSetRepoFactoryPy4J)
     extends DataSetRepoFactory with python.InterfacesWithPy4J {
   def createRepo(): DataSetRepoPython = {
     val iDsRepo = getPy4JResult(iDSRepoFactory.getCreateRepo)
-    new DataSetRepoPython(iDsRepo, smvConfig)
+    new DataSetRepoPython(iDsRepo)
   }
 }

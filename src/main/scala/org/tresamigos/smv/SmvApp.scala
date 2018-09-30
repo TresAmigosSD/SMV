@@ -66,8 +66,6 @@ class SmvApp(private val cmdLineArgs: Seq[String], _spark: Option[SparkSession] 
 
   // dsm should be private but will be temporarily public to accomodate outside invocations
   val dsm = new DataSetMgr(smvConfig)
-  def registerRepoFactory(factory: DataSetRepoFactory): Unit =
-    dsm.register(factory)
 
   // Since OldVersionHelper will be used by executors, need to inject the version from the driver
   OldVersionHelper.version = sc.version
