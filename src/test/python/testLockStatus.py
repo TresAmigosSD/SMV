@@ -47,7 +47,6 @@ class SmvLockStatusTest(SmvBaseTest):
             while(not t1_running):
                 time.sleep(0.01)
             time.sleep(0.2)
-            print "checking"
             self.assertNotEqual(
                 self.load(fqn)[0].lockfileStatus(),
                 self.smvApp.scalaNone()

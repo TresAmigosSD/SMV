@@ -22,7 +22,7 @@ class Y(SmvModule):
     def requiresDS(self): return []
     def run(self, i):
         import time
-        print "start sleep"
+        print("start sleep")
         time.sleep(1)
-        print "end sleep"
+        print("end sleep")
         return self.smvApp.createDF("k:String;v:Integer", "a,;b,2")
