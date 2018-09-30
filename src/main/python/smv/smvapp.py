@@ -388,7 +388,8 @@ class SmvApp(object):
         """Publish an SmvModule to Hive by its name (can be partial FQN)
         """
         self.setDynamicRunConfig(runConfig)
-        return self.j_smvPyClient.publishModuleToHiveByName(name)
+        collector = self._jvm.SmvRunInfoCollector()
+        return self.dsm.inferDS(name)[0].exportToHive(collector)
 
     def getMetadataJson(self, urn):
         """Returns the metadata for a given urn"""

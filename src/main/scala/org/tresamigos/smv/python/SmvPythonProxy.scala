@@ -287,11 +287,6 @@ class SmvPyClient(val j_smvApp: SmvApp) {
 
   def urn2fqn(modUrn: String): String = org.tresamigos.smv.urn2fqn(modUrn)
 
-  def publishModuleToHiveByName(name: String) = {
-      val collector = new SmvRunInfoCollector
-      j_smvApp.publishModuleToHiveByName(name, collector)
-  }
-
   /**
    * Returns the run information of a dataset and all its dependencies
    * from the last run.

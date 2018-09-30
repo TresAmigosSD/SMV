@@ -324,11 +324,6 @@ class SmvApp(private val cmdLineArgs: Seq[String], _spark: Option[SparkSession] 
     modulesToRun.nonEmpty
   }
 
-  def publishModuleToHiveByName(modName: String,
-                                collector: SmvRunInfoCollector): Unit = {
-      dsm.inferDS(modName).head.exportToHive(collector)
-  }
-
   def getRunInfo(partialName: String): SmvRunInfoCollector = {
     getRunInfo(dsm.inferDS(partialName).head)
   }
