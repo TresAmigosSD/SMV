@@ -23,9 +23,16 @@ class DependsOnLink(SmvModule):
     def run(self, i):
         return i[CsvLink]
 
-class DependsDirectly(SmvModule):
+class DependsOutputModuleDirectly(SmvModule):
     def requiresDS(self):
         return [stage.modules.CsvFile]
 
     def run(self, i):
-        return None
+        return i[stage.modules.CsvFile]
+
+class DependsNonOutputModuleDirectly(SmvModule):
+    def requiresDS(self):
+        return [stage.modules.CsvStrWithNullData]
+
+    def run(self, i):
+        return i[stage.modules.CsvStrWithNullData]
