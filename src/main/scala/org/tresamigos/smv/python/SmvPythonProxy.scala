@@ -349,9 +349,6 @@ class SmvPyClient(val j_smvApp: SmvApp) {
     }
   }
 
-  def getDirList(dirPath: String): java.util.List[String] = SmvHDFS.dirList(dirPath)
-
-
   def linkToModule(link: SmvModuleLink): SmvDataSet =
     link.smvModule
 
