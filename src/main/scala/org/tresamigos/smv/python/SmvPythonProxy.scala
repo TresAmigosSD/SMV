@@ -279,49 +279,23 @@ class SmvPyClient(val j_smvApp: SmvApp) {
 
   def urn2fqn(modUrn: String): String = org.tresamigos.smv.urn2fqn(modUrn)
 
-  def getDsHash(name: String, runConfig: java.util.Map[String, String]): String =
-    j_smvApp.getDsHash(name, javaMapToImmutableMap(runConfig))
+  def getDsHash(name: String): String =
+    j_smvApp.getDsHash(name)
 
-  /** Runs an SmvModule written in either Python or Scala */
-  def runModule(urn: String,
-                forceRun: Boolean,
-                version: Option[String],
-                runConfig: java.util.Map[String, String],
-                quickCompute: Boolean = false): RunModuleResult = {
-    val dynamicRunConfig: Map[String, String] = if (null == runConfig) Map.empty else mapAsScalaMap(runConfig).toMap
-    val collector = new SmvRunInfoCollector
-    val df =  j_smvApp.runModule(URN(urn), forceRun, version, dynamicRunConfig, collector, quickCompute)
-    RunModuleResult(df, collector)
-  }
-
-  /** Runs an SmvModule written in either Python or Scala */
-  def runModuleByName(name: String,
-                forceRun: Boolean,
-                version: Option[String],
-                runConfig: java.util.Map[String, String],
-                quickCompute: Boolean = false): RunModuleResult = {
-    val dynamicRunConfig: Map[String, String] = if (null == runConfig) Map.empty else mapAsScalaMap(runConfig).toMap
-    val collector = new SmvRunInfoCollector
-    val df =  j_smvApp.runModuleByName(name, forceRun, version, dynamicRunConfig, collector, quickCompute)
-    RunModuleResult(df, collector)
-  }
-
-  def publishModuleToHiveByName(name: String,
-                                runConfig: java.util.Map[String, String]) = {
-      val dynamicRunConfig: Map[String, String] = if (null == runConfig) Map.empty else mapAsScalaMap(runConfig).toMap
+  def publishModuleToHiveByName(name: String) = {
       val collector = new SmvRunInfoCollector
-      j_smvApp.publishModuleToHiveByName(name, dynamicRunConfig, collector)
+      j_smvApp.publishModuleToHiveByName(name, collector)
   }
 
   /**
    * Returns the run information of a dataset and all its dependencies
    * from the last run.
    */
-  def getRunInfo(urn: String, runConfig: java.util.Map[String, String]): SmvRunInfoCollector =
-    j_smvApp.getRunInfo(URN(urn), javaMapToImmutableMap(runConfig))
+  def getRunInfo(urn: String): SmvRunInfoCollector =
+    j_smvApp.getRunInfo(URN(urn))
 
-  def getRunInfoByPartialName(partialName: String, runConfig: java.util.Map[String, String]): SmvRunInfoCollector =
-    j_smvApp.getRunInfo(partialName, javaMapToImmutableMap(runConfig))
+  def getRunInfoByPartialName(partialName: String): SmvRunInfoCollector =
+    j_smvApp.getRunInfo(partialName)
 
   def copyToHdfs(in: IAnyInputStream, dest: String): Unit =
     SmvHDFS.writeToFile(in, dest)

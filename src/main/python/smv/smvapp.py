@@ -299,10 +299,15 @@ class SmvApp(object):
             - SmvRunInfoCollector contains additional information
               about the run, such as validation results.
         """
-        # TODO call setDynamicRunConfig() here not on scala side
-        java_result = self.j_smvPyClient.runModule(urn, forceRun, self.scalaOption(version), runConfig, quickRun)
-        return (DataFrame(java_result.df(), self.sqlContext),
-                SmvRunInfoCollector(java_result.collector()) )
+        self.setDynamicRunConfig(runConfig)
+        collector = self._jvm.SmvRunInfoCollector()
+        j_ds = self.j_smvPyClient.loadUrns(smv_copy_array(self.sc, urn))[0]
+        if (forceRun):
+            self.j_smvPyClient.deleteModuleOutput(j_ds)
+
+        j_df = j_ds.rdd(forceRun, False, collector, quickRun)
+        return (DataFrame(j_df, self.sqlContext),
+                SmvRunInfoCollector(collector))
 
     @exception_handling
     def runModuleByName(self, name, forceRun=False, version=None, runConfig=None, quickRun=False):
@@ -323,10 +328,8 @@ class SmvApp(object):
             - SmvRunInfoCollector contains additional information
               about the run, such as validation results.
         """
-        # TODO call setDynamicRunConfig() here not on scala side
-        java_result = self.j_smvPyClient.runModuleByName(name, forceRun, self.scalaOption(version), runConfig, quickRun)
-        return (DataFrame(java_result.df(), self.sqlContext),
-                SmvRunInfoCollector(java_result.collector()) )
+        urn = self.inferUrn(name)
+        return self.runModule(urn, forceRun, version, runConfig, quickRun)
 
     def getRunInfo(self, urn, runConfig=None):
         """Returns the run information of a module and all its dependencies
@@ -352,7 +355,8 @@ class SmvApp(object):
             SmvRunInfoCollector
 
         """
-        java_result = self.j_smvPyClient.getRunInfo(urn, runConfig)
+        self.setDynamicRunConfig(runConfig)
+        java_result = self.j_smvPyClient.getRunInfo(urn)
         return SmvRunInfoCollector(java_result)
 
     def getRunInfoByPartialName(self, name, runConfig):
@@ -378,14 +382,16 @@ class SmvApp(object):
         Returns:
             SmvRunInfoCollector
         """
-        java_result = self.j_smvPyClient.getRunInfoByPartialName(name, runConfig)
+        self.setDynamicRunConfig(runConfig)
+        java_result = self.j_smvPyClient.getRunInfoByPartialName(name)
         return SmvRunInfoCollector(java_result)
 
     @exception_handling
     def publishModuleToHiveByName(self, name, runConfig=None):
         """Publish an SmvModule to Hive by its name (can be partial FQN)
         """
-        return self.j_smvPyClient.publishModuleToHiveByName(name, runConfig)
+        self.setDynamicRunConfig(runConfig)
+        return self.j_smvPyClient.publishModuleToHiveByName(name)
 
     def getMetadataJson(self, urn):
         """Returns the metadata for a given urn"""
@@ -410,7 +416,8 @@ class SmvApp(object):
             Returns:
                 (str): The hashOfHash of the named module
         """
-        return self.j_smvPyClient.getDsHash(name, runConfig)
+        self.setDynamicRunConfig(runConfig)
+        return self.j_smvPyClient.getDsHash(name)
 
     def copyToHdfs(self, fileobj, destination):
         """Copies the content of a file object to an HDFS location.
