@@ -98,7 +98,7 @@ class SmvApp(object):
         java_import(self._jvm, "org.tresamigos.smv.SmvRunInfoCollector")
         java_import(self._jvm, "org.tresamigos.smv.SmvHDFS")
         java_import(self._jvm, "org.tresamigos.smv.URN")
-        java_import(self._jvm, "org.tresamigos.smv.CreateDF")
+        java_import(self._jvm, "org.tresamigos.smv.DfCreator")
 
         self.j_smvPyClient = self.create_smv_pyclient(arglist)
 
@@ -453,7 +453,7 @@ class SmvApp(object):
         return self.scalaOption(None)
 
     def createDFWithLogger(self, schema, data, readerLogger):
-        return DataFrame(self._jvm.CreateDF.createDFWithLogger(
+        return DataFrame(self._jvm.DfCreator.createDFWithLogger(
             self.sparkSession._jsparkSession,
             schema,
             data,

@@ -242,7 +242,7 @@ trait SmvTestUtil extends SparkTestUtil {
     handler.csvFileWithSchema(csvAttr, None)
   }
 
-  def dfFrom(schemaStr: String, data: String): DataFrame = CreateDF.createDF(sparkSession, schemaStr, data)
+  def dfFrom(schemaStr: String, data: String): DataFrame = DfCreator.createDF(sparkSession, schemaStr, data)
 
 }
 

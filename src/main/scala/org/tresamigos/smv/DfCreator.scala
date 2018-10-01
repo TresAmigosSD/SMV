@@ -17,7 +17,12 @@ package org.tresamigos.smv
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.tresamigos.smv.dqm.{ParserLogger, TerminateParserLogger}
 
-private[smv] object CreateDF {
+/**
+ * Helper methods to create DF from data and schema strings
+ *
+ * It is shared by Scala side tests and python side tests + shell
+ **/
+private[smv] object DfCreator {
 
   // Used by smvApp.createDF (both scala and python)
   def createDFWithLogger(sparkSession: SparkSession, schemaStr: String, data: String, parserLogger: ParserLogger) = {
