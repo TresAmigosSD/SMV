@@ -95,13 +95,10 @@ class DataSetResolver(val repos: Seq[DataSetRepo],
   def validateDependencies(ds: SmvDataSet): Unit = {
     if (!ds.isInstanceOf[SmvModuleLink]) {
       val dsStage = ds.parentStage.get
-      ds.resolvedRequiresDS foreach {dep =>
-        dep match {
-          case l: SmvModuleLink =>
-            if (dsStage == l.smvModule.parentStage.get)
-              throw new SmvRuntimeException(msg.sameStageLink(ds.urn, dsStage))
-          case _ =>
-        }
+      ds.resolvedRequiresDS collect {
+        case l: SmvModuleLink =>
+          if (dsStage == l.smvModule.parentStage.get)
+            throw new SmvRuntimeException(msg.sameStageLink(ds.urn, dsStage))
       }
     }
   }
