@@ -227,25 +227,22 @@ trait SmvTestUtil extends SparkTestUtil {
     "--data-dir",
     testcaseTempDir
   )
-  var app: SmvApp = _
 
   override def beforeAll() = {
     super.beforeAll()
     SmvApp.init(appArgs.toArray, sparkSession)
-    app = SmvApp.app
   }
 
   override def afterAll() = {
-    app = null
     super.afterAll()
   }
 
   def open(path: String, csvAttr: CsvAttributes = CsvAttributes.defaultCsv) = {
-    val handler = new FileIOHandler(app.sparkSession, path, None, dqm.TerminateParserLogger)
+    val handler = new FileIOHandler(sparkSession, path, None, dqm.TerminateParserLogger)
     handler.csvFileWithSchema(csvAttr, None)
   }
 
-  def dfFrom(schemaStr: String, data: String): DataFrame = CreateDF.createDF(app.sparkSession, schemaStr, data)
+  def dfFrom(schemaStr: String, data: String): DataFrame = CreateDF.createDF(sparkSession, schemaStr, data)
 
 }
 
