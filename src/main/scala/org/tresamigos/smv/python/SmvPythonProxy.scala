@@ -341,7 +341,7 @@ object SmvPyClientFactory {
   def init(sparkSession: SparkSession): SmvPyClient = init(Array("-m", "None"), sparkSession)
 
   def init(args: Array[String], sparkSession: SparkSession): SmvPyClient =
-    new SmvPyClient(SmvApp.init(args, Option(sparkSession)))
+    new SmvPyClient(SmvApp.init(args, sparkSession))
 }
 
 

@@ -35,7 +35,7 @@ import org.tresamigos.smv.dqm.{ParserLogger, TerminateParserLogger}
  * Driver for SMV applications.  Most apps do not need to override this class and should just be
  * launched using the SmvApp object (defined below)
  */
-class SmvApp(private val cmdLineArgs: Seq[String], _spark: Option[SparkSession] = None) {
+class SmvApp(private val cmdLineArgs: Seq[String], _spark: SparkSession) {
   val log         = LogManager.getLogger("smv")
   val smvConfig   = new SmvConfig(cmdLineArgs)
   val genEdd      = smvConfig.cmdLine.genEdd()
@@ -45,8 +45,6 @@ class SmvApp(private val cmdLineArgs: Seq[String], _spark: Option[SparkSession] 
   def stages      = smvConfig.stageNames
   def userLibs    = smvConfig.userLibs
 
-  val sparkConf   = new SparkConf().setAppName(smvConfig.appName)
-
   lazy val smvVersion  = {
     val smvHome = sys.env("SMV_HOME")
     val versionFile = Source.fromFile(f"${smvHome}/.smv_version")
@@ -55,11 +53,7 @@ class SmvApp(private val cmdLineArgs: Seq[String], _spark: Option[SparkSession] 
     nextLine
   }
 
-  val sparkSession = _spark getOrElse (SparkSession
-    .builder()
-    .appName(smvConfig.appName)
-    .enableHiveSupport()
-    .getOrCreate())
+  val sparkSession = _spark 
 
   val sc         = sparkSession.sparkContext
   val sqlContext = sparkSession.sqlContext
@@ -322,10 +316,6 @@ class SmvApp(private val cmdLineArgs: Seq[String], _spark: Option[SparkSession] 
     modulesToRun.nonEmpty
   }
 
-  def getRunInfo(partialName: String): SmvRunInfoCollector = {
-    getRunInfo(dsm.inferDS(partialName).head)
-  }
-
   def getRunInfo(urn: URN): SmvRunInfoCollector = {
     getRunInfo(dsm.load(urn).head)
   }
@@ -406,7 +396,7 @@ class SmvApp(private val cmdLineArgs: Seq[String], _spark: Option[SparkSession] 
 object SmvApp {
   var app: SmvApp = _
 
-  def init(args: Array[String], _spark: Option[SparkSession] = None) = {
+  def init(args: Array[String], _spark: SparkSession) = {
     app = new SmvApp(args, _spark)
     app
   }
@@ -415,12 +405,7 @@ object SmvApp {
    * Creates a new app instances from a sql context.  This is used by SparkR to create a new app.
    */
   def newApp(sparkSession: SparkSession, appPath: String): SmvApp = {
-    SmvApp.init(Seq("-m", "None", "--smv-app-dir", appPath).toArray, Option(sparkSession))
+    SmvApp.init(Seq("-m", "None", "--smv-app-dir", appPath).toArray, sparkSession)
     SmvApp.app
-  }
-
-  def main(args: Array[String]) {
-    init(args)
-    app.run()
   }
 }
