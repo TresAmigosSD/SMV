@@ -113,14 +113,6 @@ class SmvApp(private val cmdLineArgs: Seq[String], _spark: SparkSession) {
   }
 
   /**
-   * Get the DataFrame associated with data set. The DataFrame plan (not data) is cached in
-   * dfCache the to ensure only a single DataFrame exists for a given data set
-   * (file/module).
-   * Note: this keyed by the "versioned" dataset FQN.
-   */
-  var dfCache: mutable.Map[String, DataFrame] = mutable.Map.empty[String, DataFrame]
-
-  /**
    * pass on the spark sql props set in the smv config file(s) to spark.
    * This is just for convenience so user can manage both smv/spark props in a single file.
    */
