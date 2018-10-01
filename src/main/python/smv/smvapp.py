@@ -354,7 +354,7 @@ class SmvApp(object):
 
         """
         self.setDynamicRunConfig(runConfig)
-        java_result = self.j_smvPyClient.getRunInfo(urn)
+        java_result = self.j_smvApp.getRunInfo(self._jvm.URN.apply(urn))
         return SmvRunInfoCollector(java_result)
 
     def getRunInfoByPartialName(self, name, runConfig):
@@ -380,9 +380,8 @@ class SmvApp(object):
         Returns:
             SmvRunInfoCollector
         """
-        self.setDynamicRunConfig(runConfig)
-        java_result = self.j_smvPyClient.getRunInfoByPartialName(name)
-        return SmvRunInfoCollector(java_result)
+        urn = self.dsm.inferUrn(name)
+        return self.getRunInfo(urn)
 
     @exception_handling
     def publishModuleToHiveByName(self, name, runConfig=None):

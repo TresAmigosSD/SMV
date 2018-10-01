@@ -283,16 +283,6 @@ class SmvPyClient(val j_smvApp: SmvApp) {
 
   def urn2fqn(modUrn: String): String = org.tresamigos.smv.urn2fqn(modUrn)
 
-  /**
-   * Returns the run information of a dataset and all its dependencies
-   * from the last run.
-   */
-  def getRunInfo(urn: String): SmvRunInfoCollector =
-    j_smvApp.getRunInfo(URN(urn))
-
-  def getRunInfoByPartialName(partialName: String): SmvRunInfoCollector =
-    j_smvApp.getRunInfo(partialName)
-
   // TODO: The following method should be removed when Scala side can
   // handle publish-hive SmvOutput tables
   def moduleNames: java.util.List[String] = {
