@@ -27,3 +27,10 @@ class T(SmvCsvFile):
         return "./target/python-test-export-csv.csv"
     def csvAttr(self):
         return self.smvApp.defaultCsvWithHeader()
+
+class X(SmvModule):
+    def isEphemeral(self): return True
+    def requiresDS(self): return []
+    def run(self, i):
+        return self.smvApp.createDF("""k:String; t:Integer @metadata={"smvDesc":"the time sequence"}; v:Double""",
+            "z,1,0.2;z,2,1.4;z,5,2.2;a,1,0.3;")

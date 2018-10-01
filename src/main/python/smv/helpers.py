@@ -26,6 +26,7 @@ from pyspark.sql.types import DataType
 from smv.utils import smv_copy_array
 from smv.error import SmvRuntimeError
 from smv.utils import is_string
+from smv.schema_meta_ops import SchemaMetaOps
 
 
 # common converters to pass to _to_seq and _to_list
@@ -564,6 +565,7 @@ class DataFrameHelper(object):
         self._jdf = df._jdf
         self._jPythonHelper = df._sc._jvm.SmvPythonHelper
         self._jDfHelper = df._sc._jvm.SmvDFHelper(df._jdf)
+        self._SchemaMetaOps = SchemaMetaOps(df)
 
     def smvExpandStruct(self, *cols):
         """Expand structure type column to a group of columns
@@ -1064,8 +1066,7 @@ class DataFrameHelper(object):
             Returns:
                 (DataFrame): the DataFrame with column descriptions added
         """
-        jdf = self._jPythonHelper.smvDesc(self._jdf, smv_copy_array(self._sc, *colDescs))
-        return DataFrame(jdf, self._sql_ctx)
+        return self._SchemaMetaOps.addDesc(*colDescs)
 
     def smvDescFromDF(self, descDF):
         """Adds column descriptions
@@ -1100,10 +1101,7 @@ class DataFrameHelper(object):
             Returns:
                 (list(tuple)): a list of (colName, description) pairs for all columns
         """
-        if (colName is not None):
-            return self._jDfHelper.smvGetDesc(colName)
-        else:
-            return [(c, self._jDfHelper.smvGetDesc(c)) for c in self.df.columns]
+        return self._SchemaMetaOps.getDesc(colName)
 
     def smvRemoveDesc(self, *colNames):
         """Removes description for the given columns from the Dataframe
@@ -1113,12 +1111,128 @@ class DataFrameHelper(object):
 
             Example:
                 >>> df.smvRemoveDesc("col_a", "col_b")
+                >>> df.smvRemoveDesc()
 
             Returns:
                 (DataFrame): the DataFrame with column descriptions removed
+
+            or:
+
+            Returns:
+                (DataFrame): the DataFrae with all column descriptions removed
         """
-        jdf = self._jPythonHelper.smvRemoveDesc(self._jdf, smv_copy_array(self._sc, *colNames))
-        return DataFrame(jdf, self._sql_ctx)
+        return self._SchemaMetaOps.removeDesc(*colNames)
+
+    def smvGetLabel(self, colName = None):
+        """Returns a list of column label(s)
+
+            Args:
+                colName (string):  optional column name for which to get the label.
+
+            Example:
+                >>> df.smvGetLabel("col_a")
+                >>> df.smvGetLabel()
+
+            Returns:
+                (list(string)): a list of label strings of colName, if specified
+
+            or:
+
+            Returns:
+                (list(tuple)): a list of (colName, list(labels)) pairs for all columns
+        """
+        return self._SchemaMetaOps.getLabel(colName)
+
+    def smvLabel(self, colNames, labels):
+        """Adds labels to the specified columns
+
+            A column may have multiple labels. Adding the same label twice
+            to a column has the same effect as adding that label once.
+
+            For multiple colNames, the same set of labels will be added to all of them.
+            When colNames is empty, the set of labels will be added to all columns of the df.
+            labels parameters must be non-empty.
+
+            Args:
+                labels: (list(string)) a list of label strings to add
+                colNames: (list(string)) list of names of columns for which to add labels
+
+            Example:
+                >>> df.smvLabel(["col_a", "col_b", "col_c"], ["tag_1", "tag_2"])
+                >>> df.smvLabel([], ["tag_1", "tag_2"])
+
+            Returns:
+                (DataFrame): the DataFrame with labels added to the specified columns
+
+            or:
+
+            Returns:
+                (DataFrame): the DataFrame with labels added to all columns
+        """
+        return self._SchemaMetaOps.addLabel(colNames, labels)
+
+    def smvRemoveLabel(self, colNames = None, labels = None):
+        """Removes labels from the specified columns
+
+            For multiple colNames, the same set of labels will be removed from all of them.
+            When colNames is empty, the set of labels will be removed from all columns of the df.
+            When labels is empty, all labels will be removed from the given columns.
+
+            If neither columns nor labels are specified, i.e. both parameter lists are empty,
+            then all labels are removed from all columns in the data frame, essentially clearing
+            the label meta data.
+
+            Args:
+                labels: (list(string)) a list of label strings to remove
+                colNames: (list(string)) list of names of columns for which to remove labels
+
+            Example:
+                >>> df.smvRemoveLabel(["col_a"], ["tag_1"])
+                >>> df.smvRemoveLabel()
+
+            Returns:
+                (DataFrame): the DataFrame with specified labels removed from the specified columns
+
+            or:
+
+            Returns:
+                (DataFrame): the DataFrame with all label meta data cleared
+        """
+        return self._SchemaMetaOps.removeLabel(colNames, labels)
+
+    def smvWithLabel(self, labels = None):
+        """Returns all column names in the data frame that contain all the specified labels
+        
+            If the labels is empty, returns all unlabeled columns in the data frame.
+            Will throw if there are no columns that satisfy the condition.
+
+            Args:
+                labels: (list(string)) a list of label strings for the columns to match
+
+            Example:
+                >>> df.smvWithLabel(["tag_1", "tag_2"])
+
+            Returns:
+                (list(string)): a list of column name strings that match the specified labels
+        """
+        return self._SchemaMetaOps.colsWithLabel(labels)
+
+    def selectByLabel(self, labels = None):
+        """Select columns whose metadata contains the specified labels
+
+            If the labels is empty, returns a DataFrame with all the unlabeled columns.
+            Will throw if there are no columns that satisfy the condition.
+
+            Args:
+                labels: (list(string)) a list of label strings for the columns to match
+
+            Example:
+                >>> df.selectByLabel(["tag_1"])
+
+            Returns:
+                (DataFrame): the DataFrame with the selected columns
+        """
+        return self.df.select(self.smvWithLabel(labels))
 
     #############################################
     # DfHelpers which print to STDOUT

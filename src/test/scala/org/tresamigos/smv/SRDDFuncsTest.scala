@@ -125,26 +125,6 @@ class smvRenameFieldTest extends SmvTestUtil {
     assert(fieldNames === Seq("a_xx", "b_xx", "c_xx"))
     assert(result.collect.map(_.toString) === Seq("[1,2.0,hello]"))
   }
-
-  test("rename field should preserve metadata in renamed fields") {
-    val df   = dfFrom("a:Integer; b:String", "1,abc;1,def;2,ghij")
-    val desc = "c description"
-    val res1 = df.groupBy(df("a")).agg(functions.count(df("a")) as "c").smvDesc("c" -> desc)
-    res1.smvGetDesc() shouldBe Seq(("a" -> ""), ("c" -> desc))
-
-    val res2 = res1.smvRenameField("c" -> "d")
-    res2.smvGetDesc() shouldBe Seq(("a" -> ""), ("d" -> desc))
-  }
-
-  test("rename field should preserve metadata for unrenamed fields") {
-    val df   = dfFrom("a:Integer; b:String", "1,abc;1,def;2,ghij")
-    val desc = "c description"
-    val res1 = df.groupBy(df("a")).agg(functions.count(df("a")) as "c").smvDesc("c" -> desc)
-    res1.smvGetDesc() shouldBe Seq(("a" -> ""), ("c" -> desc))
-
-    val res2 = res1.smvRenameField("a" -> "d")
-    res2.smvGetDesc() shouldBe Seq(("d" -> ""), ("c" -> desc))
-  }
 }
 
 class JoinHelperTest extends SmvTestUtil {
