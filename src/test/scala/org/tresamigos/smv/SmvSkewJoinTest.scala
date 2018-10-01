@@ -21,14 +21,14 @@ import org.apache.spark.sql.DataFrame
 class SmvSkewJoinTest extends SmvTestUtil {
 
   test("Test topNValsByFreq") {
-    val df   = app.createDF("a:Integer;b:String", """1,foo;2,foo;3,foo;3,foo;4,bar;4,bar;4,bar""")
+    val df   = dfFrom("a:Integer;b:String", """1,foo;2,foo;3,foo;3,foo;4,bar;4,bar;4,bar""")
     val topN = df.topNValsByFreq(2, df("a"))
     assert(Seq(4, 3) === topN)
   }
 
   test("Test smvSkewJoinByKey result same as smvJoinByKey") {
-    val df1           = app.createDF("a:Integer;b:String", """1,foo;2,foo;3,foo;3,foo;4,bar;4,bar;4,bar""")
-    val df2           = app.createDF("a:Integer;c:String", """1,foo;2,foo;3,foo;3,foo;4,bar;4,bar;4,bar""")
+    val df1           = dfFrom("a:Integer;b:String", """1,foo;2,foo;3,foo;3,foo;4,bar;4,bar;4,bar""")
+    val df2           = dfFrom("a:Integer;c:String", """1,foo;2,foo;3,foo;3,foo;4,bar;4,bar;4,bar""")
     val normalJoinRes = df1.smvJoinByKey(df2, Seq("a"), "inner")
     val skewJoinRes   = df1.smvSkewJoinByKey(df2, "inner", Seq(4), "a")
     assertDataFramesEqual(df1, df2)
@@ -47,8 +47,8 @@ class SmvSkewJoinTest extends SmvTestUtil {
   }
 
   test("Test smvSkewJoinByKey result's physical plan includes BroadcastHashJoin") {
-    val df1         = app.createDF("a:Integer;b:String", """1,foo;2,foo;3,foo;3,foo;4,bar;4,bar;4,bar""")
-    val df2         = app.createDF("a:Integer;c:String", """1,foo;2,foo;3,foo;3,foo;4,bar;4,bar;4,bar""")
+    val df1         = dfFrom("a:Integer;b:String", """1,foo;2,foo;3,foo;3,foo;4,bar;4,bar;4,bar""")
+    val df2         = dfFrom("a:Integer;c:String", """1,foo;2,foo;3,foo;3,foo;4,bar;4,bar;4,bar""")
     val skewJoinRes = df1.smvSkewJoinByKey(df2, "inner", Seq(4), "a")
     val explanation = dfExplanation(skewJoinRes)
     assert(explanation contains ("BroadcastHashJoin"))

@@ -373,9 +373,7 @@ class SmvCsvStringData(WithParser):
         return smvSchemaObj.fromString(self.schemaStr())
 
     def readAsDF(self, readerLogger):
-        return DataFrame(self.smvApp.j_smvApp.createDFWithLogger(
-            self.schemaStr(), self.dataStr(), readerLogger
-        ), self.smvApp.sqlContext)
+        return self.smvApp.createDFWithLogger(self.schemaStr(), self.dataStr(), readerLogger)
 
     def dataSrcHash(self):
         return _smvhash(self.dataStr())

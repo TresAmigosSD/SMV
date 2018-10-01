@@ -27,8 +27,6 @@ import org.apache.spark.{SparkContext, SparkConf}
 import org.joda.time.DateTime
 
 import org.tresamigos.smv.util.Edd
-import org.tresamigos.smv.dqm.{ParserLogger, TerminateParserLogger}
-
 
 
 /**
@@ -66,23 +64,6 @@ class SmvApp(private val cmdLineArgs: Seq[String], _spark: SparkSession) {
 
   // configure spark sql params and inject app here rather in run method so that it would be done even if we use the shell.
   setSparkSqlConfigParams()
-
-  // Used by smvApp.createDF (both scala and python)
-  private[smv] def createDFWithLogger(schemaStr: String, data: String, parserLogger: ParserLogger) = {
-    val schema    = SmvSchema.fromString(schemaStr)
-    val dataArray = if (null == data) Array.empty[String] else data.split(";").map(_.trim)
-    val handler = new FileIOHandler(sparkSession, null, None, parserLogger)
-    handler.csvStringRDDToDF(sc.makeRDD(dataArray), schema, schema.extractCsvAttributes())
-  }
-
-    /**
-   * Create a DataFrame from string for temporary use (in test or shell)
-   * By default, don't persist validation result
-   *
-   * Passing null for data will create an empty dataframe with a specified schema.
-   **/
-  def createDF(schemaStr: String, data: String = null) =
-    createDFWithLogger(schemaStr, data, TerminateParserLogger)
 
   lazy val allDataSets = dsm.allDataSets
 

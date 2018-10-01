@@ -98,6 +98,7 @@ class SmvApp(object):
         java_import(self._jvm, "org.tresamigos.smv.SmvRunInfoCollector")
         java_import(self._jvm, "org.tresamigos.smv.SmvHDFS")
         java_import(self._jvm, "org.tresamigos.smv.URN")
+        java_import(self._jvm, "org.tresamigos.smv.CreateDF")
 
         self.j_smvPyClient = self.create_smv_pyclient(arglist)
 
@@ -451,8 +452,17 @@ class SmvApp(object):
         """Returns a Scala None value"""
         return self.scalaOption(None)
 
+    def createDFWithLogger(self, schema, data, readerLogger):
+        return DataFrame(self._jvm.CreateDF.createDFWithLogger(
+            self.sparkSession._jsparkSession,
+            schema,
+            data,
+            readerLogger
+        ), self.sqlContext)
+    
     def createDF(self, schema, data = None):
-        return DataFrame(self.j_smvApp.createDF(schema, data), self.sqlContext)
+        readerLogger = self._jvm.SmvPythonHelper.getTerminateParserLogger()
+        return self.createDFWithLogger(schema, data, readerLogger)
 
     def _mkCsvAttr(self, delimiter=',', quotechar='"', hasHeader=False):
         """Factory method for creating instances of Scala case class CsvAttributes"""

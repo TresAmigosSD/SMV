@@ -84,7 +84,7 @@ class SmvSchemaTest extends SmvTestUtil {
   }
 
   test("Test Decimal default format") {
-    val df = app.createDF("a:Decimal", "1234")
+    val df = dfFrom("a:Decimal", "1234")
     assertSrddSchemaEqual(df, "a: Decimal[10,0]")
     assertSrddDataEqual(df, "1234")
   }

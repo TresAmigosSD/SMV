@@ -205,8 +205,8 @@ class JoinHelperTest extends SmvTestUtil {
   }
 
   test("smvJoinByKey with underscore column name on the left table") {
-    val df1 = app.createDF("a:String;_a:String", "a,1;a,2")
-    val df2 = app.createDF("a:String;x:String", "a,f")
+    val df1 = dfFrom("a:String;_a:String", "a,1;a,2")
+    val df2 = dfFrom("a:String;x:String", "a,f")
 
     val res = df1.smvJoinByKey(df2, Seq("a"), SmvJoinType.Inner)
     assert(res.columns === Seq("a", "_a", "x"))
@@ -214,8 +214,8 @@ class JoinHelperTest extends SmvTestUtil {
   }
 
   test("smvJoinByKey with null-safe") {
-    val df1 = app.createDF("a:String;y:String", "a,1;,2")
-    val df2 = app.createDF("a:String;x:String", "a,f;,g")
+    val df1 = dfFrom("a:String;y:String", "a,1;,2")
+    val df2 = dfFrom("a:String;x:String", "a,f;,g")
 
     val res = df1.smvJoinByKey(df2, Seq("a"), SmvJoinType.Inner, isNullSafe = true)
     assert(res.columns === Seq("a", "y", "x"))
