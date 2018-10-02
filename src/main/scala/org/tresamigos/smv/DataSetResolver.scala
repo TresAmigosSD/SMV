@@ -53,8 +53,7 @@ class DataSetResolver(val repos: Seq[DataSetRepo],
       urn2res.get(urn).getOrElse {
         val ds = urn match {
           case lUrn: LinkURN =>
-            val dsFound = loadDataSet(lUrn.toModURN).head
-            new SmvModuleLink(dsFound.asInstanceOf[SmvOutput])
+            throw new SmvRuntimeException(s"""LinkURN ${lUrn} is not supported any more""")
           case mUrn: ModURN =>
             findDataSetInRepo(mUrn)
         }
@@ -83,24 +82,8 @@ class DataSetResolver(val repos: Seq[DataSetRepo],
         resolvedDs.setTimestamp(transactionTime)
         urn2res = urn2res + (ds.urn -> resolvedDs)
         resolveStack = resolveStack.tail
-        validateDependencies(resolvedDs)
         resolvedDs
       }
-  }
-
-  /**
-   * Check dependency rules and report all violations. If there are violations
-   * and SMV isn't configured to ignore dependency violations, throw exception.
-   */
-  def validateDependencies(ds: SmvDataSet): Unit = {
-    if (!ds.isInstanceOf[SmvModuleLink]) {
-      val dsStage = ds.parentStage.get
-      ds.resolvedRequiresDS collect {
-        case l: SmvModuleLink =>
-          if (dsStage == l.smvModule.parentStage.get)
-            throw new SmvRuntimeException(msg.sameStageLink(ds.urn, dsStage))
-      }
-    }
   }
 
   /**
@@ -125,8 +108,6 @@ class DataSetResolver(val repos: Seq[DataSetRepo],
    */
   object msg {
     def dsNotFound(urn: URN): String = s"SmvDataSet ${urn} not found"
-    def sameStageLink(linkUrn: URN, stage: String): String =
-      s"SmvModuleLink ${linkUrn} cannot link to ${linkUrn.toModURN} because they belong to the same stage"
     def dependencyCycle(ds: SmvDataSet, s: Seq[URN]): String =
       s"Cycle found while resolving ${ds.urn}: " + s.foldLeft("")((acc, urn) => s"${acc},${urn}")
   }

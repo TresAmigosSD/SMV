@@ -198,15 +198,11 @@ class SmvApp(private val cmdLineArgs: Seq[String], _spark: SparkSession) {
   private def dryRun(): Boolean = {
     if (smvConfig.cmdLine.dryRun()) {
 
-      // find all ancestors inclusive, and in case of SmvModuleLink, resolve its target module.
+      // find all ancestors inclusive,
       // filter the modules that are not yet persisted and not ephemeral.
       // this yields all the modules that will need to be run with the given command
       val modsNotPersisted = modulesToRun.flatMap( m =>
         m +: m.ancestors
-      ).map(_ match {
-          case l: SmvModuleLink => l.smvModule
-          case m => m
-        }
       ).filterNot(m =>
         m.isPersisted || m.isEphemeral
       ).distinct
@@ -303,11 +299,7 @@ class SmvApp(private val cmdLineArgs: Seq[String], _spark: SparkSession) {
     coll.addRunInfo(ds.fqn, ds.runInfo)
 
     ds.resolvedRequiresDS foreach { dep =>
-      val depTarget = dep match {
-        case link: SmvModuleLink => link.smvModule
-        case _                   => dep
-      }
-      getRunInfo(depTarget, coll)
+      getRunInfo(dep, coll)
     }
 
     coll

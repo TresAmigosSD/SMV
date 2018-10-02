@@ -333,9 +333,6 @@ class SmvPyClient(val j_smvApp: SmvApp) {
     }
   }
 
-  def linkToModule(link: SmvModuleLink): SmvDataSet =
-    link.smvModule
-
   //Scare folding for moving all SmvDataSet framework to python #1338
   def deleteModuleOutput(m: SmvDataSet) = 
     m.deleteOutputs(m.versionedOutputFiles)
