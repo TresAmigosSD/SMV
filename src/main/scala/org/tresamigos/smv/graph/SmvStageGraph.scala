@@ -27,21 +27,14 @@ private[smv] class SmvDSGraph(app: SmvApp,
                               pstages: Seq[String] = Nil,
                               targetDSs: Seq[SmvDataSet] = Nil) {
   val stages = if (pstages.isEmpty) app.smvConfig.stageNames else pstages
-  private val _nodes =
+  val nodes =
     if (targetDSs.isEmpty) app.dsm.dataSetsForStageWithLink(stages: _*)
     else
       (targetDSs.flatMap(_.ancestors) ++ targetDSs).distinct
 
-  private def followLink(ds: SmvDataSet) = ds match {
-    case _ds: SmvModuleLink => _ds.smvModule
-    case _                  => ds
-  }
-
-  val nodes: Seq[SmvDataSet] = _nodes.map(followLink).distinct
-
   val edges: Seq[(SmvDataSet, SmvDataSet)] = nodes.flatMap { ds =>
     val fromDSs = ds.resolvedRequiresDS
-    fromDSs.map { followLink }.filter { nodes contains _ }.map { _ -> ds }
+    fromDSs.filter { nodes contains _ }.map { _ -> ds }
   }
 
   val clusters: Seq[(String, Seq[SmvDataSet])] =
@@ -58,45 +51,6 @@ private[smv] class SmvDSGraph(app: SmvApp,
   ): Seq[String] = nodes.map { ds =>
     if (ds.dsType == "Input") dsToInputNodeStr(ds)
     else dsToNodeStr(ds)
-  }
-}
-
-/**
- * There could be multiple SmvModuleLinks in between of stages, which with the
- * two stages define an "interface" between the 2 stages
- **/
-private[smv] case class SmvStageInterface(fromStage: String,
-                                          toStage: String,
-                                          links: Seq[SmvModuleLink])
-
-/**
- * Arbitrary Stage graph
- * Nodes are Stages or Stage-Interfaces
- * Edges are stage dependency
- **/
-private[smv] class SmvStageGraph(app: SmvApp, pstages: Seq[String] = Nil) {
-  val stages                  = if (pstages.isEmpty) app.smvConfig.stageNames else pstages
-  val stageNodes: Seq[String] = stages
-  val interfaceNodes: Seq[SmvStageInterface] = stageNodes.flatMap { s =>
-    val allLinks = app.dsm.dataSetsForStageWithLink(s).filter(_.isInstanceOf[SmvModuleLink])
-    allLinks.map(_.asInstanceOf[SmvModuleLink]).groupBy(l => l.smvModule.parentStage).collect {
-      case (Some(upStage), links) => SmvStageInterface(upStage, s, links)
-    }
-  }
-
-  def nodeString(
-      stageToString: String => String,
-      interfaceToString: SmvStageInterface => String
-  ) = stageNodes.map { stageToString(_) } ++ interfaceNodes.map { interfaceToString(_) }
-
-  def edgeStringPair(
-      stageToString: String => String,
-      interfaceToString: SmvStageInterface => String
-  ) = interfaceNodes.flatMap { i =>
-    i match {
-      case SmvStageInterface(s1, s2, links) =>
-        Seq(stageToString(s1) -> interfaceToString(i), interfaceToString(i) -> stageToString(s2))
-    }
   }
 }
 

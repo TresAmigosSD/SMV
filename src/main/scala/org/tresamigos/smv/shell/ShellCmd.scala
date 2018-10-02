@@ -53,9 +53,6 @@ object ShellCmd {
       |* lsDead(stageName: String)
       |* lsDeadLeaf
       |* lsDeadLeaf(stageName: String)
-      |* graph
-      |* graph(ds: SmvDataSet)
-      |* graph(stageName: String)
       |* ancestors(dsName: String)
       |* descendants(dsName: String)
       |* peek(df: DataFrame, pos: Int = 1)
