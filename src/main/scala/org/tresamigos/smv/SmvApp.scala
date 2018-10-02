@@ -190,34 +190,6 @@ class SmvApp(private val cmdLineArgs: Seq[String], _spark: SparkSession) {
   }
 
   /**
-   * execute as dry-run if the dry-run flag is specified.
-   * This will show which modules are not yet persisted that need to run, without
-   * actually running the modules.
-   * @return true if dry-run option was specified, otherwise false
-   */
-  private[smv] def dryRun(): Boolean = {
-    if (smvConfig.cmdLine.dryRun()) {
-
-      // find all ancestors inclusive,
-      // filter the modules that are not yet persisted and not ephemeral.
-      // this yields all the modules that will need to be run with the given command
-      val modsNotPersisted = modulesToRun.flatMap( m =>
-        m +: m.ancestors
-      ).filterNot(m =>
-        m.isPersisted || m.isEphemeral
-      ).distinct
-
-      println("Dry run - modules not persisted:")
-      println("----------------------")
-      println(modsNotPersisted.mkString("\n"))
-      println("----------------------")
-      true
-    } else {
-      false
-    }
-  }
-
-  /**
    * if the publish to hive flag is setn, the publish
    */
   def publishModulesToHive(collector: SmvRunInfoCollector): Boolean = {
