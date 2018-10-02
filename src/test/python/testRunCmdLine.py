@@ -31,11 +31,19 @@ class RunModuleFromCmdLineTest(RunCmdLineBaseTest):
         return ['-m', "modules.A"]
 
     def test_can_run_module_from_cmdline(self):
-        self.smvApp.j_smvApp.run()
+        self.smvApp.run()
         a = self.df("runstage.stage1.modules.A")
         expected = self.createDF("k:String;v:Integer", "a,;b,2")
         self.should_be_same(a, expected)
 
+class DryRunTest(RunCmdLineBaseTest):
+    @classmethod
+    def whatToRun(cls):
+        return ["-m", "modules.A", "--dry-run"]
+
+    def test_dry_run_just_print(self):
+        self.smvApp.run()
+        self.assertFalse(self.load("runstage.stage1.modules.A")[0].isPersisted())
 
 class RunStageFromCmdLineTest(RunCmdLineBaseTest):
     @classmethod
@@ -43,7 +51,7 @@ class RunStageFromCmdLineTest(RunCmdLineBaseTest):
         return ['-s', "runstage.stage1"]
 
     def test_can_run_stage_from_cmdline(self):
-        self.smvApp.j_smvApp.run()
+        self.smvApp.run()
         a = self.df("runstage.stage1.modules.A")
         self.should_be_same(a, self.createDF("k:String;v:Integer", "a,;b,2"))
         b = self.df("runstage.stage1.modules.B")

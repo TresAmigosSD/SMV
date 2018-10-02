@@ -452,6 +452,12 @@ class SmvApp(object):
         """Returns a Scala None value"""
         return self.scalaOption(None)
 
+    def _scala_seq_to_list(self, j_seq):
+        """Convert Scala Seq to Python list
+        """
+        j_list = self._jvm.scala.collection.JavaConversions.seqAsJavaList(j_seq)
+        return [x for x in j_list]
+
     def createDFWithLogger(self, schema, data, readerLogger):
         return DataFrame(self._jvm.DfCreator.createDFWithLogger(
             self.sparkSession._jsparkSession,
@@ -498,5 +504,55 @@ class SmvApp(object):
             # added to the sys.path
             pass
 
+    def _cmd_line(self):
+        return self.config().cmdLine()
+        
+    def _modules_to_run(self):
+        return self._scala_seq_to_list(self.j_smvApp.modulesToRun())
+
+    def _dry_run(self):
+        """Execute as dry-run if the dry-run flag is specified.
+            This will show which modules are not yet persisted that need to run, without
+            actually running the modules.
+        """
+        
+        if(self._cmd_line().dryRun()):
+            # Find all ancestors inclusive,
+            # filter the modules that are not yet persisted and not ephemeral.
+            # this yields all the modules that will need to be run with the given command
+            mods_with_ancestors = self._scala_seq_to_list(self.j_smvApp.modulesToRunWithAncestors())
+            mods_not_persisted = [ m for m in mods_with_ancestors if not (m.isPersisted() or m.isEphemeral()) ]
+
+            print("Dry run - modules not persisted:")
+            print("----------------------")
+            print("\n".join([m.fqn() for m in mods_not_persisted]))
+            print("----------------------")
+            return True
+        else:
+            return False
+
     def run(self):
-        self.j_smvApp.run()
+        self.j_smvApp.purgeCurrentOutputFiles()
+        self.j_smvApp.purgeOldOutputFiles()
+
+        mods = self._modules_to_run()
+
+        if (len(mods) > 0):
+            print("Modules to run/publish")
+            print("----------------------")
+            print("\n".join([m.fqn() for m in mods]))
+            print("----------------------")
+
+        collector = self._jvm.SmvRunInfoCollector()
+
+        #either generate graphs, publish modules, or run output modules (only one will occur)
+        self.j_smvApp.printDeadModules() \
+        or self._dry_run() \
+        or self.j_smvApp.compareEddResults() \
+        or self.j_smvApp.generateDotDependencyGraph() \
+        or self.j_smvApp.generateJsonDependencyGraph() \
+        or self.j_smvApp.publishModulesToHive(collector) \
+        or self.j_smvApp.publishOutputModules(collector) \
+        or self.j_smvApp.publishOutputModulesThroughJDBC(collector)  \
+        or self.j_smvApp.publishOutputModulesLocally(collector) \
+        or self.j_smvApp.generateOutputModules(collector)
