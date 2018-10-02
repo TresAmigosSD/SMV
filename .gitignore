@@ -17,12 +17,6 @@ venv
 .tox
 Pipfile
 Pipfile.lock
-/R/lib
-/R/smvR/man
-.Rproj.user
-.Rapp.history
-.Rhistory
-.RData
 .vscode
 .sync-config.cson
 *.pyc
