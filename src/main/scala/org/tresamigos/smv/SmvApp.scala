@@ -131,7 +131,7 @@ class SmvApp(private val cmdLineArgs: Seq[String], _spark: SparkSession) {
    * generate dependency graphs if "-g" flag was specified on command line.
    * @return true if graph were generated otherwise return false.
    */
-  private def generateDotDependencyGraph() : Boolean = {
+  private[smv] def generateDotDependencyGraph() : Boolean = {
     if (smvConfig.cmdLine.graph()) {
       val pathName = s"${smvConfig.appName}.dot"
       SmvReportIO.saveLocalReport(dependencyGraphDotString(stages), pathName)
@@ -150,7 +150,7 @@ class SmvApp(private val cmdLineArgs: Seq[String], _spark: SparkSession) {
    * generate JSON dependency graphs if "--json" flag was specified on command line.
    * @return true if json graph were generated otherwise return false.
    */
-  private def generateJsonDependencyGraph() : Boolean = {
+  private[smv] def generateJsonDependencyGraph() : Boolean = {
     if (smvConfig.cmdLine.jsonGraph()) {
       val pathName = s"${smvConfig.appName}.json"
       SmvReportIO.saveLocalReport(dependencyGraphJsonString(), pathName)
@@ -172,7 +172,7 @@ class SmvApp(private val cmdLineArgs: Seq[String], _spark: SparkSession) {
    * compare EDD results if the --edd-compare flag was specified with edd files to compare.
    * @return true if edd files were compared, otherwise false.
    */
-  private def compareEddResults(): Boolean = {
+  private[smv] def compareEddResults(): Boolean = {
     smvConfig.cmdLine.compareEdd
       .map { eddsToCompare =>
         val edd1          = eddsToCompare(0)
@@ -195,7 +195,7 @@ class SmvApp(private val cmdLineArgs: Seq[String], _spark: SparkSession) {
    * actually running the modules.
    * @return true if dry-run option was specified, otherwise false
    */
-  private def dryRun(): Boolean = {
+  private[smv] def dryRun(): Boolean = {
     if (smvConfig.cmdLine.dryRun()) {
 
       // find all ancestors inclusive,
@@ -265,7 +265,7 @@ class SmvApp(private val cmdLineArgs: Seq[String], _spark: SparkSession) {
    * Publish the specified modules if the "--publish" flag was specified on command line.
    * @return true if modules were published, otherwise return false.
    */
-  private def publishOutputModules(collector: SmvRunInfoCollector): Boolean = {
+  private[smv] def publishOutputModules(collector: SmvRunInfoCollector): Boolean = {
     if (smvConfig.cmdLine.publish.isDefined) {
       modulesToRun foreach { module =>
         module.publish(collector=collector)
@@ -280,7 +280,7 @@ class SmvApp(private val cmdLineArgs: Seq[String], _spark: SparkSession) {
    * run the specified output modules.
    * @return true if modules were generated, otherwise false.
    */
-  private def generateOutputModules(collector: SmvRunInfoCollector): Boolean = {
+  private[smv] def generateOutputModules(collector: SmvRunInfoCollector): Boolean = {
     modulesToRun foreach (_.rdd(collector=collector))
     modulesToRun.nonEmpty
   }
@@ -325,33 +325,6 @@ class SmvApp(private val cmdLineArgs: Seq[String], _spark: SparkSession) {
   lazy val modulesToRunWithAncestors: Seq[SmvDataSet] = {
     val ancestors = modulesToRun flatMap (_.ancestors)
     (modulesToRun ++ ancestors).distinct
-  }
-
-  /**
-   * The main entry point into the app.  This will parse the command line arguments
-   * to determine which modules should be run/graphed/etc.
-   */
-  def run() = {
-    purgeCurrentOutputFiles()
-    purgeOldOutputFiles()
-
-    val mods = modulesToRun
-
-    if (mods.nonEmpty) {
-      println("Modules to run/publish")
-      println("----------------------")
-      println(mods.map(_.fqn).mkString("\n"))
-      println("----------------------")
-    }
-
-    val collector = new SmvRunInfoCollector
-
-    // either generate graphs, publish modules, or run output modules (only one will occur)
-    printDeadModules || dryRun() || compareEddResults() ||
-      generateDotDependencyGraph() || generateJsonDependencyGraph() ||
-      publishModulesToHive(collector) ||  publishOutputModules(collector) ||
-      publishOutputModulesThroughJDBC(collector) || publishOutputModulesLocally(collector) ||
-      generateOutputModules(collector)
   }
 }
 

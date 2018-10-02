@@ -452,6 +452,12 @@ class SmvApp(object):
         """Returns a Scala None value"""
         return self.scalaOption(None)
 
+    def _scala_seq_to_list(self, j_seq):
+        """Convert Scala Seq to Python list
+        """
+        j_list = self._jvm.scala.collection.JavaConversions.seqAsJavaList(j_seq)
+        return [x for x in j_list]
+
     def createDFWithLogger(self, schema, data, readerLogger):
         return DataFrame(self._jvm.DfCreator.createDFWithLogger(
             self.sparkSession._jsparkSession,
@@ -499,4 +505,27 @@ class SmvApp(object):
             pass
 
     def run(self):
-        self.j_smvApp.run()
+        self.j_smvApp.purgeCurrentOutputFiles()
+        self.j_smvApp.purgeOldOutputFiles()
+
+        mods = self._scala_seq_to_list(self.j_smvApp.modulesToRun())
+
+        if (len(mods) > 0):
+            print("Modules to run/publish")
+            print("----------------------")
+            print("\n".join([m.fqn() for m in mods]))
+            print("----------------------")
+
+        collector = self._jvm.SmvRunInfoCollector()
+
+        #either generate graphs, publish modules, or run output modules (only one will occur)
+        self.j_smvApp.printDeadModules() \
+        or self.j_smvApp.dryRun() \
+        or self.j_smvApp.compareEddResults() \
+        or self.j_smvApp.generateDotDependencyGraph() \
+        or self.j_smvApp.generateJsonDependencyGraph() \
+        or self.j_smvApp.publishModulesToHive(collector) \
+        or self.j_smvApp.publishOutputModules(collector) \
+        or self.j_smvApp.publishOutputModulesThroughJDBC(collector)  \
+        or self.j_smvApp.publishOutputModulesLocally(collector) \
+        or self.j_smvApp.generateOutputModules(collector)
