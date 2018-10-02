@@ -688,51 +688,11 @@ class SmvModuleLink(object):
         return 'link:' + self.target.fqn()
 
 
-class SmvExtDataSet(object):
-    """An SmvDataSet representing an external (Scala) SmvDataSet
-
-        E.g. MyExtMod = SmvExtDataSet("the.scala.mod")
-
-        Args:
-            fqn (str): fqn of the Scala SmvDataSet
-
-        Returns:
-            (SmvExtDataSet): external dataset with given fqn
-    """
-    def __init__(self, fqn):
-        self._fqn = fqn
-
-    def df2result(self, df):
-        # non-DataFrame results are only supported for Python SmvResultModule
-        return df
-
-    def urn(self):
-        return 'mod:' + self._fqn
-
-    def fqn(self):
-        return self._fqn
-
-
-def SmvExtModuleLink(refname):
-    """Creates a link to an external (Scala) SmvDataSet
-
-        SmvExtModuleLink(fqn) is equivalent to SmvModuleLink(SmvExtDataSet(fqn))
-
-        Args:
-            fqn (str): fqn of the the Scala SmvDataSet
-
-        Returns:
-            (SmvModuleLink): link to the Scala SmvDataSet
-    """
-    return SmvModuleLink(SmvExtDataSet(refname))
-
-
 __all__ = [
     'SmvOutput',
     'SmvModule',
     'SmvSqlModule',
     'SmvModel',
     'SmvModelExec',
-    'SmvModuleLink',
-    'SmvExtModuleLink'
+    'SmvModuleLink'
 ]
