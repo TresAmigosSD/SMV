@@ -243,7 +243,7 @@ class SmvApp(object):
         return self.config().inputDir()
 
     def getFileNamesByType(self, ftype):
-        all_files = self._jvm.SmvHDFS.dirList(self.inputDir()).array()
+        all_files = self._jvm.SmvPythonHelper.getDirList(self.inputDir())
         return [str(f) for f in all_files if f.endswith(ftype)]
 
     def create_smv_pyclient(self, arglist):

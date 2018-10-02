@@ -185,6 +185,11 @@ object SmvPythonHelper {
   def getTerminateParserLogger() = 
     dqm.TerminateParserLogger
 
+  //Since SmvHDFS.dirList returns a Seq, which is hard to use on python side directly
+  //and some case dirList(...).array() works, some other case doesn't, so convert 
+  //here to java.util.List
+  def getDirList(dirPath: String): java.util.List[String] = SmvHDFS.dirList(dirPath)
+
   def dsmLoad(dsm: DataSetMgr, urns: Array[String]): java.util.List[SmvDataSet] = {
     val urnObjs = urns.map{URN(_)}
     dsm.load(urnObjs: _*)
