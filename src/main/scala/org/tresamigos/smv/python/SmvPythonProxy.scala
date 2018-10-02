@@ -184,6 +184,22 @@ object SmvPythonHelper {
 
   def getTerminateParserLogger() = 
     dqm.TerminateParserLogger
+
+  //Since SmvHDFS.dirList returns a Seq, which is hard to use on python side directly
+  //and some case dirList(...).array() works, some other case doesn't, so convert 
+  //here to java.util.List
+  def getDirList(dirPath: String): java.util.List[String] = SmvHDFS.dirList(dirPath)
+
+  def dsmLoad(dsm: DataSetMgr, urns: Array[String]): java.util.List[SmvDataSet] = {
+    val urnObjs = urns.map{URN(_)}
+    dsm.load(urnObjs: _*)
+  }
+
+  def dsmInferDS(dsm: DataSetMgr, names: Array[String]): java.util.List[SmvDataSet] =
+    dsm.inferDS(names: _*)
+
+  def dsmDataSetsForStage(dsm: DataSetMgr, stage: String): java.util.List[SmvDataSet] = 
+    dsm.dataSetsForStage(stage)
 }
 
 class SmvGroupedDataAdaptor(grouped: SmvGroupedData) {
@@ -270,43 +286,7 @@ class SmvPyClient(val j_smvApp: SmvApp) {
 
   def userLibs: Array[String] = j_smvApp.userLibs.toArray
 
-  def inferDS(name: String): SmvDataSet =
-    j_smvApp.dsm.inferDS(name).head
-
-  /** Used to create small dataframes for testing */
-  def dfFrom(schema: String, data: String): DataFrame =
-    j_smvApp.createDF(schema, data)
-
   def urn2fqn(modUrn: String): String = org.tresamigos.smv.urn2fqn(modUrn)
-
-  def getDsHash(name: String): String =
-    j_smvApp.getDsHash(name)
-
-  def publishModuleToHiveByName(name: String) = {
-      val collector = new SmvRunInfoCollector
-      j_smvApp.publishModuleToHiveByName(name, collector)
-  }
-
-  /**
-   * Returns the run information of a dataset and all its dependencies
-   * from the last run.
-   */
-  def getRunInfo(urn: String): SmvRunInfoCollector =
-    j_smvApp.getRunInfo(URN(urn))
-
-  def getRunInfoByPartialName(partialName: String): SmvRunInfoCollector =
-    j_smvApp.getRunInfo(partialName)
-
-  def copyToHdfs(in: IAnyInputStream, dest: String): Unit =
-    SmvHDFS.writeToFile(in, dest)
-
-  /** Returns metadata for a given urn*/
-  def getMetadataJson(urn: String): String =
-    j_smvApp.getMetadataJson(URN(urn))
-
-  /** Returns metadata history for a given urn*/
-  def getMetadataHistoryJson(urn: String): String =
-    j_smvApp.getMetadataHistoryJson(URN(urn))
 
   // TODO: The following method should be removed when Scala side can
   // handle publish-hive SmvOutput tables
@@ -316,37 +296,9 @@ class SmvPyClient(val j_smvApp: SmvApp) {
     directMods
   }
 
-  /**
-   * Returns the lock file status, if any, for a given module in a
-   * java.util.Map.  The file modification time will be a String
-   * representation of the datetime in milliseconds, under the key
-   * 'lockTime'.
-   *
-   * Returns an empty map if the lock is not found for the module.
-   *
-   * If the module is not found, the call to inferDS() would throw an
-   * SmvRuntimeException.
-   *
-   * @param modName a name that uniquely identifies a module, typically its FQN
-   * @return a map with the key "lockTime" and the file modification time in milliseconds
-   */
-  def getLockfileStatusForModule(modName: String): java.util.Map[String, String] = {
-    j_smvApp.dsm.inferDS(modName) match {
-      case Nil => java.util.Collections.emptyMap()
-      case ds::_ =>
-        ds.lockfileStatus match {
-          case None => java.util.Collections.emptyMap()
-          case Some(fs) => Map("lockTime" -> fs.getModificationTime.toString)
-        }
-    }
-  }
-
   // ---- User Run Configuration Parameters proxy funcs.
   def getRunConfig(key: String): String = j_smvApp.smvConfig.getRunConfig(key)
   def getRunConfigHash()                = j_smvApp.smvConfig.getRunConfigHash()
-
-  def registerRepoFactory(id: String, iRepoFactory: IDataSetRepoFactoryPy4J): Unit =
-    j_smvApp.registerRepoFactory(new DataSetRepoFactoryPython(iRepoFactory, j_smvApp.smvConfig))
 
   def javaMapToImmutableMap(javaMap: java.util.Map[String, String]): Map[String, String] =
     if (javaMap == null) Map.empty else mapAsScalaMap(javaMap).toMap
@@ -381,18 +333,6 @@ class SmvPyClient(val j_smvApp: SmvApp) {
     }
   }
 
-  def getDirList(dirPath: String): java.util.List[String] = SmvHDFS.dirList(dirPath)
-
-  //Scare folding for moving all SmvDataSet framework to python #1338
-  def loadUrns(urns: Array[String]): java.util.List[SmvDataSet] = {
-    val urnObjs = urns.map{URN(_)}
-    j_smvApp.dsm.load(urnObjs: _*)
-  }
-
-  def dataSetsForStage(stage: String): java.util.List[SmvDataSet] = 
-    j_smvApp.dsm.dataSetsForStage(stage)
-
-
   def linkToModule(link: SmvModuleLink): SmvDataSet =
     link.smvModule
 
@@ -406,7 +346,7 @@ object SmvPyClientFactory {
   def init(sparkSession: SparkSession): SmvPyClient = init(Array("-m", "None"), sparkSession)
 
   def init(args: Array[String], sparkSession: SparkSession): SmvPyClient =
-    new SmvPyClient(SmvApp.init(args, Option(sparkSession)))
+    new SmvPyClient(SmvApp.init(args, sparkSession))
 }
 
 

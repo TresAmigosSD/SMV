@@ -14,6 +14,7 @@
 from test_support.smvbasetest import SmvBaseTest
 import smv.smvshell as smvshell
 import os
+import json
 
 class SmvShellTest(SmvBaseTest):
     @classmethod
@@ -83,3 +84,24 @@ stage2:
     def test_app_createDF_to_create_empty_df(self):
         res = self.smvApp.createDF("a:String")
         self.assertEqual(res.count(), 0)
+
+    def test_app_getFileNamesByType(self):
+        self.createTempInputFile("check_file.csv")
+        self.createTempInputFile("check_file.schema")
+        self.assertEqual(self.smvApp.getFileNamesByType("csv"), ['check_file.csv'])
+
+    def test_app_getMetadataJson(self):
+        fqn = "stage.modules.CsvStr"
+        self.df(fqn)
+        meta = json.loads(self.smvApp.getMetadataJson("mod:" + fqn))
+        self.assertEqual(meta['_fqn'], fqn)
+
+    def test_app_getMetadataHistoryJson(self):
+        fqn = "stage.modules.CsvStr"
+        self.df(fqn)
+        metahist = json.loads(self.smvApp.getMetadataHistoryJson("mod:" + fqn))
+        self.assertEqual(metahist['history'][0]['_fqn'], fqn)
+
+    def test_app_getDsHash(self):
+        fqn = "stage.modules.CsvStr"
+        print(self.smvApp.getDsHash(fqn, None))

@@ -54,7 +54,7 @@ class SmvRunInfoTest(SmvBaseTest):
     def test_get_run_info_should_return_info_from_last_run(self):
         self.smvApp.runModule(self.R4Urn, forceRun=True)
         self.smvApp.runModule(self.R4Urn, forceRun=False)
-        coll = self.smvApp.getRunInfo(self.R4Urn)
+        coll = self.smvApp.getRunInfoByPartialName('R4', None)
         for fqn in coll.fqns():
             if 'R2' not in fqn:  # R2 module does not have validation
                 assert len(coll.dqm_validation(fqn)) > 0

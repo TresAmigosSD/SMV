@@ -227,28 +227,23 @@ trait SmvTestUtil extends SparkTestUtil {
     "--data-dir",
     testcaseTempDir
   )
-  var app: SmvApp = _
 
   override def beforeAll() = {
     super.beforeAll()
-    SmvApp.init(appArgs.toArray, Option(sparkSession))
-    app = SmvApp.app
+    SmvApp.init(appArgs.toArray, sparkSession)
   }
 
   override def afterAll() = {
-    app = null
     super.afterAll()
   }
 
   def open(path: String, csvAttr: CsvAttributes = CsvAttributes.defaultCsv) = {
-    val handler = new FileIOHandler(app.sparkSession, path, None, dqm.TerminateParserLogger)
+    val handler = new FileIOHandler(sparkSession, path, None, dqm.TerminateParserLogger)
     handler.csvFileWithSchema(csvAttr, None)
   }
 
-  def dfFrom(schemaStr: String, data: String): DataFrame = app.createDF(schemaStr, data)
+  def dfFrom(schemaStr: String, data: String): DataFrame = DfCreator.createDF(sparkSession, schemaStr, data)
 
-  def load(mod: SmvDataSet): SmvDataSet = app.dsm.load(mod.urn).head
-  def loadM(mods: SmvDataSet*): Seq[SmvDataSet] = app.dsm.load(mods.map(_.urn):_*)
 }
 
 /** Base trait for unit tests that do not need a Spark test environment */

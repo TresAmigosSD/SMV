@@ -12,6 +12,7 @@
 # limitations under the License.
 
 from test_support.smvbasetest import SmvBaseTest
+import smv.smvshell
 
 class HiveTest(SmvBaseTest):
     @classmethod
@@ -40,6 +41,13 @@ class PublishModuleToHiveTest(HiveTest):
         mDf = self.df("stage.modules.M")
         hiveDf = self.smvApp.sqlContext.sql("select * from " + "M")
         self.should_be_same(mDf, hiveDf)
+
+    def test_publish_to_hive_shell_cmd(self):
+        fqn = "stage.modules.M"
+        mDF = self.df(fqn)
+        smv.smvshell.exportToHive(fqn)
+        hiveDF = self.smvApp.sqlContext.sql("select * from " + "M")
+        self.should_be_same(hiveDF, mDF)
 
 class AdvancedPublishModuleToHiveTest(HiveTest):
     """Use the advanced hive publish option of overriding the publishHiveSql method

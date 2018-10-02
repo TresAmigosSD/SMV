@@ -90,7 +90,7 @@ class DoubleBinHistogramTest extends SmvTestUtil {
   test("smvDoubleBinHistogram with min is not zero") {
     val ssc = sqlContext; import ssc.implicits._
 
-    val df = app.createDF("id:String;age:Integer", "1,60;1,56;1,63;1,36;1,41;1,43;1,69")
+    val df = dfFrom("id:String;age:Integer", "1,60;1,56;1,63;1,36;1,41;1,43;1,69")
     val res = df
       .smvDoubleBinHistogram(Seq("id"), "age", 30)
       .select($"age_bin".smvBinPercentile(50.0) as "age_med")

@@ -14,6 +14,9 @@
 
 package org.tresamigos.smv
 
+import org.apache.spark.sql.DataFrame
+import scala.collection.mutable
+
 /**
  * DataSetMgr (DSM) is the entrypoint for SmvApp to load the SmvDataSets in a project.
  * Every DSM method to load SmvDataSets creates a new transaction within which
@@ -31,6 +34,14 @@ class DataSetMgr(smvConfig: SmvConfig) {
   def register(newRepoFactory: DataSetRepoFactory): Unit = {
     dsRepoFactories = dsRepoFactories :+ newRepoFactory
   }
+
+  /**
+   * Get the DataFrame associated with data set. The DataFrame plan (not data) is cached in
+   * dfCache to ensure only a single DataFrame exists for a given data set
+   * (file/module).
+   * Note: this keyed by the "versioned" dataset FQN.
+   */
+  var dfCache: mutable.Map[String, DataFrame] = mutable.Map.empty[String, DataFrame]
 
   /**
    * Creates a new transaction and passes it to the function given as an argument

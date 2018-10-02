@@ -26,6 +26,7 @@ from pyspark import SparkContext
 from pyspark.sql import SparkSession, DataFrame
 
 
+from smv.datasetmgr import DataSetMgr
 from smv.datasetrepo import DataSetRepoFactory
 from smv.utils import smv_copy_array, check_socket
 from smv.error import SmvRuntimeError, SmvDqmValidationError
@@ -96,12 +97,15 @@ class SmvApp(object):
         java_import(self._jvm, "org.tresamigos.smv.python.SmvPythonHelper")
         java_import(self._jvm, "org.tresamigos.smv.SmvRunInfoCollector")
         java_import(self._jvm, "org.tresamigos.smv.SmvHDFS")
+        java_import(self._jvm, "org.tresamigos.smv.URN")
+        java_import(self._jvm, "org.tresamigos.smv.DfCreator")
 
         self.j_smvPyClient = self.create_smv_pyclient(arglist)
 
         # shortcut is meant for internal use only
         self.j_smvApp = self.j_smvPyClient.j_smvApp()
         self.log = self.j_smvApp.log()
+        self.dsm = DataSetMgr(self.sc, self.j_smvApp.dsm())
 
         # AFTER app is available but BEFORE stages,
         # use the dynamically configured app dir to set the source path, library path
@@ -139,7 +143,7 @@ class SmvApp(object):
             gw.jvm.SmvPythonHelper.updatePythonGatewayPort(jgws, gw._python_proxy_port)
 
         self.repoFactory = DataSetRepoFactory(self)
-        self.j_smvPyClient.registerRepoFactory('Python', self.repoFactory)
+        self.dsm.register(self.repoFactory)
 
         # Initialize DataFrame and Column with helper methods
         smv.helpers.init_helpers()
@@ -173,14 +177,14 @@ class SmvApp(object):
         self.remove_source(self.SRC_PROJECT_PATH)
         self.remove_source(self.SRC_LIB_PATH)
 
-    def appName(self):
-        return self.j_smvApp.smvConfig().appName()
-
-    def maxCbsPortRetries(self):
-        return self.j_smvApp.smvConfig().maxCbsPortRetries()
-
     def config(self):
         return self.j_smvApp.smvConfig()
+
+    def appName(self):
+        return self.config().appName()
+
+    def maxCbsPortRetries(self):
+        return self.config().maxCbsPortRetries()
 
     def getConf(self, key):
         return self.j_smvPyClient.getRunConfig(key)
@@ -239,17 +243,8 @@ class SmvApp(object):
         return self.config().inputDir()
 
     def getFileNamesByType(self, ftype):
-        return self.j_smvApp.getFileNamesByType(self.inputDir(), ftype)
-
-    def getLockStatusForModule(self, name):
-        """Returns a dictionary that, if the lock exists for a given module,
-        contains the lock file modification time as a datetime object
-        under the key 'lockTime'
-        """
-        retval = dict(self.j_smvPyClient.getLockfileStatusForModule(name))
-        if retval.get('lockTime') is not None:
-            retval['lockTime'] = datetime.fromtimestamp(long(retva['lockTime'])/1000.0)
-        return retval
+        all_files = self._jvm.SmvPythonHelper.getDirList(self.inputDir())
+        return [str(f) for f in all_files if f.endswith(ftype)]
 
     def create_smv_pyclient(self, arglist):
         '''
@@ -272,6 +267,10 @@ class SmvApp(object):
         ds = self.repoFactory.createRepo().loadDataSet(fqn)
         df, collector = self.runModule(urn, forceRun, version)
         return ds.df2result(df)
+
+    def loadSingleDS(self, urn):
+        """Return j_ds from urn"""
+        return self.dsm.load(urn)[0]
 
     @exception_handling
     def runModule(self, urn, forceRun=False, version=None, runConfig=None, quickRun=False):
@@ -301,7 +300,7 @@ class SmvApp(object):
         """
         self.setDynamicRunConfig(runConfig)
         collector = self._jvm.SmvRunInfoCollector()
-        j_ds = self.j_smvPyClient.loadUrns(smv_copy_array(self.sc, urn))[0]
+        j_ds = self.loadSingleDS(urn)
         if (forceRun):
             self.j_smvPyClient.deleteModuleOutput(j_ds)
 
@@ -328,7 +327,7 @@ class SmvApp(object):
             - SmvRunInfoCollector contains additional information
               about the run, such as validation results.
         """
-        urn = self.inferUrn(name)
+        urn = self.dsm.inferUrn(name)
         return self.runModule(urn, forceRun, version, runConfig, quickRun)
 
     def getRunInfo(self, urn, runConfig=None):
@@ -356,7 +355,7 @@ class SmvApp(object):
 
         """
         self.setDynamicRunConfig(runConfig)
-        java_result = self.j_smvPyClient.getRunInfo(urn)
+        java_result = self.j_smvApp.getRunInfo(self._jvm.URN.apply(urn))
         return SmvRunInfoCollector(java_result)
 
     def getRunInfoByPartialName(self, name, runConfig):
@@ -382,27 +381,26 @@ class SmvApp(object):
         Returns:
             SmvRunInfoCollector
         """
-        self.setDynamicRunConfig(runConfig)
-        java_result = self.j_smvPyClient.getRunInfoByPartialName(name)
-        return SmvRunInfoCollector(java_result)
+        urn = self.dsm.inferUrn(name)
+        return self.getRunInfo(urn)
 
     @exception_handling
     def publishModuleToHiveByName(self, name, runConfig=None):
         """Publish an SmvModule to Hive by its name (can be partial FQN)
         """
         self.setDynamicRunConfig(runConfig)
-        return self.j_smvPyClient.publishModuleToHiveByName(name)
+        collector = self._jvm.SmvRunInfoCollector()
+        return self.dsm.inferDS(name)[0].exportToHive(collector)
 
     def getMetadataJson(self, urn):
         """Returns the metadata for a given urn"""
-        return self.j_smvPyClient.getMetadataJson(urn)
+        j_ds = self.loadSingleDS(urn)
+        return j_ds.getMetadata().toJson()
 
     def getMetadataHistoryJson(self, urn):
         """Returns the metadata history for a given urn"""
-        return self.j_smvPyClient.getMetadataHistoryJson(urn)
-
-    def inferUrn(self, name):
-        return self.j_smvPyClient.inferDS(name).urn().toString()
+        j_ds = self.loadSingleDS(urn)
+        return j_ds.getMetadataHistory().toJson()
 
     def getDsHash(self, name, runConfig):
         """The current hashOfHash for the named module as a hex string
@@ -417,7 +415,7 @@ class SmvApp(object):
                 (str): The hashOfHash of the named module
         """
         self.setDynamicRunConfig(runConfig)
-        return self.j_smvPyClient.getDsHash(name)
+        return self.dsm.inferDS(name)[0].verHex()
 
     def copyToHdfs(self, fileobj, destination):
         """Copies the content of a file object to an HDFS location.
@@ -432,7 +430,7 @@ class SmvApp(object):
         The file object is closed when this function completes.
         """
         src = FileObjInputStream(fileobj)
-        self.j_smvPyClient.copyToHdfs(src, destination)
+        self._jvm.SmvHDFS.writeToFile(src, destination)
 
     def urn2fqn(self, urnOrFqn):
         """Extracts the SMV module FQN portion from its URN; if it's already an FQN return it unchanged
@@ -454,8 +452,17 @@ class SmvApp(object):
         """Returns a Scala None value"""
         return self.scalaOption(None)
 
+    def createDFWithLogger(self, schema, data, readerLogger):
+        return DataFrame(self._jvm.DfCreator.createDFWithLogger(
+            self.sparkSession._jsparkSession,
+            schema,
+            data,
+            readerLogger
+        ), self.sqlContext)
+    
     def createDF(self, schema, data = None):
-        return DataFrame(self.j_smvPyClient.dfFrom(schema, data), self.sqlContext)
+        readerLogger = self._jvm.SmvPythonHelper.getTerminateParserLogger()
+        return self.createDFWithLogger(schema, data, readerLogger)
 
     def _mkCsvAttr(self, delimiter=',', quotechar='"', hasHeader=False):
         """Factory method for creating instances of Scala case class CsvAttributes"""
@@ -472,7 +479,7 @@ class SmvApp(object):
 
     def abs_path_for_project_path(self, project_path):
         # Load dynamic app dir from scala
-        smvAppDir = self.j_smvApp.smvConfig().appDir()
+        smvAppDir = self.config().appDir()
         return os.path.abspath(os.path.join(smvAppDir, project_path))
 
     def prepend_source(self, project_path):

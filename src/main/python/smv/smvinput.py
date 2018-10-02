@@ -333,7 +333,7 @@ class SmvMultiCsvFiles(SmvCsvFile):
         return self.dir()
 
     def readAsDF(self, readerLogger):
-        flist = self.smvApp.j_smvPyClient.getDirList(self.fullPath())
+        flist = self.smvApp._jvm.SmvHDFS.dirList(self.fullPath()).array()
         # ignore all hidden files in the data dir
         filesInDir = ["{}/{}".format(self.fullPath(), n) for n in flist if not n.startswith(".")]
 
@@ -373,9 +373,7 @@ class SmvCsvStringData(WithParser):
         return smvSchemaObj.fromString(self.schemaStr())
 
     def readAsDF(self, readerLogger):
-        return DataFrame(self.smvApp.j_smvApp.createDFWithLogger(
-            self.schemaStr(), self.dataStr(), readerLogger
-        ), self.smvApp.sqlContext)
+        return self.smvApp.createDFWithLogger(self.schemaStr(), self.dataStr(), readerLogger)
 
     def dataSrcHash(self):
         return _smvhash(self.dataStr())

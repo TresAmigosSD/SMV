@@ -27,15 +27,13 @@ import org.apache.spark.{SparkContext, SparkConf}
 import org.joda.time.DateTime
 
 import org.tresamigos.smv.util.Edd
-import org.tresamigos.smv.dqm.{ParserLogger, TerminateParserLogger}
-
 
 
 /**
  * Driver for SMV applications.  Most apps do not need to override this class and should just be
  * launched using the SmvApp object (defined below)
  */
-class SmvApp(private val cmdLineArgs: Seq[String], _spark: Option[SparkSession] = None) {
+class SmvApp(private val cmdLineArgs: Seq[String], _spark: SparkSession) {
   val log         = LogManager.getLogger("smv")
   val smvConfig   = new SmvConfig(cmdLineArgs)
   val genEdd      = smvConfig.cmdLine.genEdd()
@@ -45,8 +43,6 @@ class SmvApp(private val cmdLineArgs: Seq[String], _spark: Option[SparkSession] 
   def stages      = smvConfig.stageNames
   def userLibs    = smvConfig.userLibs
 
-  val sparkConf   = new SparkConf().setAppName(smvConfig.appName)
-
   lazy val smvVersion  = {
     val smvHome = sys.env("SMV_HOME")
     val versionFile = Source.fromFile(f"${smvHome}/.smv_version")
@@ -55,19 +51,13 @@ class SmvApp(private val cmdLineArgs: Seq[String], _spark: Option[SparkSession] 
     nextLine
   }
 
-  val sparkSession = _spark getOrElse (SparkSession
-    .builder()
-    .appName(smvConfig.appName)
-    .enableHiveSupport()
-    .getOrCreate())
+  val sparkSession = _spark 
 
   val sc         = sparkSession.sparkContext
   val sqlContext = sparkSession.sqlContext
 
   // dsm should be private but will be temporarily public to accomodate outside invocations
   val dsm = new DataSetMgr(smvConfig)
-  def registerRepoFactory(factory: DataSetRepoFactory): Unit =
-    dsm.register(factory)
 
   // Since OldVersionHelper will be used by executors, need to inject the version from the driver
   OldVersionHelper.version = sc.version
@@ -75,34 +65,11 @@ class SmvApp(private val cmdLineArgs: Seq[String], _spark: Option[SparkSession] 
   // configure spark sql params and inject app here rather in run method so that it would be done even if we use the shell.
   setSparkSqlConfigParams()
 
-  // Used by smvApp.createDF (both scala and python)
-  private[smv] def createDFWithLogger(schemaStr: String, data: String, parserLogger: ParserLogger) = {
-    val schema    = SmvSchema.fromString(schemaStr)
-    val dataArray = if (null == data) Array.empty[String] else data.split(";").map(_.trim)
-    val handler = new FileIOHandler(sparkSession, null, None, parserLogger)
-    handler.csvStringRDDToDF(sc.makeRDD(dataArray), schema, schema.extractCsvAttributes())
-  }
-
-    /**
-   * Create a DataFrame from string for temporary use (in test or shell)
-   * By default, don't persist validation result
-   *
-   * Passing null for data will create an empty dataframe with a specified schema.
-   **/
-  def createDF(schemaStr: String, data: String = null) =
-    createDFWithLogger(schemaStr, data, TerminateParserLogger)
-
   lazy val allDataSets = dsm.allDataSets
 
   /** list of all current valid output files in the output directory. All other files in output dir can be purged. */
   private[smv] def validFilesInOutputDir(): Seq[String] =
     allDataSets.flatMap(_.allOutputFiles).map(SmvHDFS.baseName(_))
-
-  /**
-   * list of all the files with specific suffix in the given directory
-   **/
-  def getFileNamesByType(dirName: String, suffix: String): List[String] =
-    SmvHDFS.dirList(dirName).filter(f => f.endsWith(suffix)).asJava
 
   /** remove all non-current files in the output directory */
   private[smv] def purgeOldOutputFiles() = {
@@ -125,14 +92,6 @@ class SmvApp(private val cmdLineArgs: Seq[String], _spark: Option[SparkSession] 
     if (smvConfig.cmdLine.forceRunAll())
       deletePersistedResults(modulesToRunWithAncestors)
   }
-
-  /**
-   * Get the DataFrame associated with data set. The DataFrame plan (not data) is cached in
-   * dfCache the to ensure only a single DataFrame exists for a given data set
-   * (file/module).
-   * Note: this keyed by the "versioned" dataset FQN.
-   */
-  var dfCache: mutable.Map[String, DataFrame] = mutable.Map.empty[String, DataFrame]
 
   /**
    * pass on the spark sql props set in the smv config file(s) to spark.
@@ -330,19 +289,6 @@ class SmvApp(private val cmdLineArgs: Seq[String], _spark: Option[SparkSession] 
     modulesToRun.nonEmpty
   }
 
-  def publishModuleToHiveByName(modName: String,
-                                collector: SmvRunInfoCollector): Unit = {
-      dsm.inferDS(modName).head.exportToHive(collector)
-  }
-
-  def getDsHash(name: String): String = {
-    dsm.inferDS(name).head.verHex
-  }
-
-  def getRunInfo(partialName: String): SmvRunInfoCollector = {
-    getRunInfo(dsm.inferDS(partialName).head)
-  }
-
   def getRunInfo(urn: URN): SmvRunInfoCollector = {
     getRunInfo(dsm.load(urn).head)
   }
@@ -365,22 +311,6 @@ class SmvApp(private val cmdLineArgs: Seq[String], _spark: Option[SparkSession] 
     }
 
     coll
-  }
-
-  /**
-   * Returns metadata for a given urn
-   */
-  def getMetadataJson(urn: URN): String = {
-    val ds = dsm.load(urn).head
-    ds.getMetadata().toJson
-  }
-
-  /**
-   * Returns metadata history for a given urn
-   */
-  def getMetadataHistoryJson(urn: URN): String = {
-    val ds = dsm.load(urn).head
-    ds.getMetadataHistory().toJson
   }
 
   /**
@@ -439,7 +369,7 @@ class SmvApp(private val cmdLineArgs: Seq[String], _spark: Option[SparkSession] 
 object SmvApp {
   var app: SmvApp = _
 
-  def init(args: Array[String], _spark: Option[SparkSession] = None) = {
+  def init(args: Array[String], _spark: SparkSession) = {
     app = new SmvApp(args, _spark)
     app
   }
@@ -448,12 +378,7 @@ object SmvApp {
    * Creates a new app instances from a sql context.  This is used by SparkR to create a new app.
    */
   def newApp(sparkSession: SparkSession, appPath: String): SmvApp = {
-    SmvApp.init(Seq("-m", "None", "--smv-app-dir", appPath).toArray, Option(sparkSession))
+    SmvApp.init(Seq("-m", "None", "--smv-app-dir", appPath).toArray, sparkSession)
     SmvApp.app
-  }
-
-  def main(args: Array[String]) {
-    init(args)
-    app.run()
   }
 }
