@@ -32,6 +32,7 @@ class SmvShellTest(SmvBaseTest):
 
     def test_shell_cmds(self):
         cmd = smvshell._jvmShellCmd()
+
         self.assertEqual(cmd.ls(),
             """
 stage:
@@ -39,7 +40,7 @@ stage:
   (O) stage.modules.M1
 
 stage2:
-  (L) stage.modules.M1
+  (O) stage.modules.M1
   (I) stage2.modules.CsvStr2
   (M) stage2.modules.M2""")
         self.assertEqual(cmd.lsStage(),
@@ -51,7 +52,7 @@ stage2""")
 stage:
 
 stage2:
-  (L) stage.modules.M1
+  (O) stage.modules.M1
   (I) stage2.modules.CsvStr2
   (M) stage2.modules.M2""")
         
@@ -64,7 +65,7 @@ stage2:
 
         self.assertEqual(cmd.ancestors("M2"),
         """(I) stage2.modules.CsvStr2
-(L) stage.modules.M1
+(O) stage.modules.M1
 (I) stage.modules.CsvStr""")
 
         self.assertEqual(cmd.descendants("CsvStr"),

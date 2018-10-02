@@ -55,11 +55,3 @@ class SmvDataSetMgrTest(SmvBaseTest):
     def test_dsmgr_does_not_find_link_in_stage(self):
         dfForStage = self.smvApp.dsm.dataSetsForStage("stage4")
         self.assertEqual(len(dfForStage), 0)
-
-    def test_resolved_link_does_not_duplicate_singleton(self):
-        mods = self.load("stage2.modules.X", "stage3.modules.Y")
-        z1 = mods[0].resolvedRequiresDS().array()[0]
-        z2 = self.smvApp.j_smvPyClient.linkToModule(
-            mods[1].resolvedRequiresDS().array()[0]
-        )
-        self.assertEqual(z1, z2)
