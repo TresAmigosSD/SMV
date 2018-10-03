@@ -123,24 +123,6 @@ class SmvApp(private val cmdLineArgs: Seq[String], _spark: SparkSession) {
     }
   }
 
-  /** Returns the app-level dependency graph as a dot string */
-  def dependencyGraphDotString(stageNames: Seq[String] = stages): String =
-    new graph.SmvGraphUtil(this, stageNames).createGraphvisCode(modulesToRun)
-
-  /**
-   * generate dependency graphs if "-g" flag was specified on command line.
-   * @return true if graph were generated otherwise return false.
-   */
-  private[smv] def generateDotDependencyGraph() : Boolean = {
-    if (smvConfig.cmdLine.graph()) {
-      val pathName = s"${smvConfig.appName}.dot"
-      SmvReportIO.saveLocalReport(dependencyGraphDotString(stages), pathName)
-      true
-    } else {
-      false
-    }
-  }
-
   /**
    * compare EDD results if the --edd-compare flag was specified with edd files to compare.
    * @return true if edd files were compared, otherwise false.
