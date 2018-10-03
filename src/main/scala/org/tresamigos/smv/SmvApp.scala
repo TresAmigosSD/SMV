@@ -141,33 +141,6 @@ class SmvApp(private val cmdLineArgs: Seq[String], _spark: SparkSession) {
     }
   }
 
-  /** Returns the app-level dependency graph as a json string */
-  def dependencyGraphJsonString(stageNames: Seq[String] = stages): String = {
-    new graph.SmvGraphUtil(this, stageNames).createGraphJSON()
-  }
-
-  /**
-   * generate JSON dependency graphs if "--json" flag was specified on command line.
-   * @return true if json graph were generated otherwise return false.
-   */
-  private[smv] def generateJsonDependencyGraph() : Boolean = {
-    if (smvConfig.cmdLine.jsonGraph()) {
-      val pathName = s"${smvConfig.appName}.json"
-      SmvReportIO.saveLocalReport(dependencyGraphJsonString(), pathName)
-      true
-    } else {
-      false
-    }
-  }
-
-  /**
-   * zero parameter wrapper around dependencyGraphJsonString that can be called from python directly.
-   * TODO: remove this once we pass args to dependencyGraphJsonString
-   */
-  def generateAllGraphJSON() = {
-    dependencyGraphJsonString()
-  }
-
   /**
    * compare EDD results if the --edd-compare flag was specified with edd files to compare.
    * @return true if edd files were compared, otherwise false.

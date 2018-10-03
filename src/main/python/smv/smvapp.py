@@ -545,7 +545,6 @@ class SmvApp(object):
         or self._dry_run() \
         or self.j_smvApp.compareEddResults() \
         or self.j_smvApp.generateDotDependencyGraph() \
-        or self.j_smvApp.generateJsonDependencyGraph() \
         or self.j_smvApp.publishModulesToHive(collector) \
         or self.j_smvApp.publishOutputModules(collector) \
         or self.j_smvApp.publishOutputModulesThroughJDBC(collector)  \
