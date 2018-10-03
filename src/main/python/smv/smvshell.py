@@ -118,15 +118,6 @@ def openCsv(path, validate=False):
     validator = None if validate else app._jvm.DQMValidator(dqm.SmvDQM(), False)
     return DataFrame(TmpCsv(app).doRun(validator, None), app.sqlContext)
 
-def smvExportCsv(name, path):
-    """Export the result of a module to a CSV file at a local path
-
-        Args:
-            fqn (str): the name of the module
-            path (str): a path on the local file system
-    """
-    _jvmShellCmd().smvExportCsv(name, path, None)
-
 def help():
     """Print a list of the SMV helper functions available in the shell
     """
@@ -212,15 +203,6 @@ def smvDiscoverSchemaToFile(path, n=100000, ca=None):
             ca (CsvAttributes): Defaults to CsvWithHeader
     """
     SmvApp.getInstance()._jvm.SmvPythonHelper.smvDiscoverSchemaToFile(path, n, ca or SmvApp.getInstance().defaultCsvWithHeader())
-
-def edd(ds_name):
-    """Print edd report for the result of an SmvDataSet
-
-        Args:
-            ds_name (str): name of an SmvDataSet
-    """
-    report = _jvmShellCmd()._edd(ds_name)
-    print(report)
 
 def run_test(test_name):
     """Run a test with the given name without creating new Spark context
