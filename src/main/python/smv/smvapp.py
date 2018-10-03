@@ -538,6 +538,16 @@ class SmvApp(object):
         else:
             return False
 
+    def _print_dead_modules(self):
+        """Print dead modules: 
+        Modules which do not contribute to any output modules are considered dead
+        """
+        if(self._cmd_line().printDeadModules().apply()):
+            SmvAppInfo(self).ls_dead()
+            return True
+        else:
+            return False
+
     def run(self):
         self.j_smvApp.purgeCurrentOutputFiles()
         self.j_smvApp.purgeOldOutputFiles()
@@ -553,7 +563,7 @@ class SmvApp(object):
         collector = self._jvm.SmvRunInfoCollector()
 
         #either generate graphs, publish modules, or run output modules (only one will occur)
-        self.j_smvApp.printDeadModules() \
+        self._print_dead_modules() \
         or self._dry_run() \
         or self.j_smvApp.compareEddResults() \
         or self._generate_dot_graph() \

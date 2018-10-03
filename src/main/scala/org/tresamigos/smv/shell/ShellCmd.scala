@@ -29,9 +29,6 @@ import org.joda.time.format.DateTimeFormat
  * }}}
  **/
 object ShellCmd {
-  import org.tresamigos.smv.graph._
-
-  private val appGU = new SmvGraphUtil(SmvApp.app)
   private val dsm   = SmvApp.app.dsm
 
   /** Resolve the ds, since user's input might not be resolved yet */
@@ -64,71 +61,6 @@ object ShellCmd {
       |* ddf(fqn: String)
       |* smvDiscoverSchemaToFile(path: String, n: Int = 100000, ca: CsvAttributes = CsvWithHeader)
       """.stripMargin
-
-  /**
-   * list all the stages
-   **/
-  def lsStage = SmvApp.app.stages.mkString("\n")
-
-  /**
-   * list all datasets in a stage
-   * @param stageName could be the FQN or just the basename
-   **/
-  def ls(stageName: String) = appGU.createDSList(dsm.inferStageFullName(stageName))
-
-  /**
-   * list all the datasets in the entire project
-   **/
-  def ls = appGU.createDSList()
-
-  /**
-   * list `dead` datasets in a stage
-   * `dead` dataset is defined as "no contribution to the Output modules of the stage"
-   * @param stageName could be the FQN or the basename
-   **/
-  def lsDead(stageName: String) = appGU.createDeadDSList(dsm.inferStageFullName(stageName))
-
-  /**
-   * list `dead` datasets in the entire project
-   **/
-  def lsDead = appGU.createDeadDSList()
-
-  /**
-   * list `deadLeaf` datasets in a stage
-   * `deadLeaf` dataset is defined as "no modules in the stage depend on it, excluding Output modules"
-   * Note: a `deadLeaf` dataset must be `dead`, but some `dead` datasets are Not `leaf`s
-   * @param stageName could be the FQN or the basename
-   */
-  def lsDeadLeaf(stageName: String) = appGU.createDeadLeafDSList(dsm.inferStageFullName(stageName))
-
-  /**
-   * list `leaf` datasets in the entire project
-   **/
-  def lsDeadLeaf = appGU.createDeadLeafDSList()
-
-  /**
-   * list all `ancestors` of a dataset
-   * `ancestors` are datasets current dataset depends on, directly or in-directly,
-   * even include datasets from other stages
-   **/
-  def ancestors(ds: SmvDataSet) = appGU.createAncestorDSList(load(ds))
-  def ancestors(dsName: String) = appGU.createAncestorDSList(dsm.inferDS(dsName).head)
-
-  /**
-   * list all `descendants` of a dataset
-   * `descendants` are datasets which depend on the current dataset directly or in-directly,
-   * even include datasets from other stages
-   **/
-  def descendants(ds: SmvDataSet) = appGU.createDescendantDSList(ds)
-  def descendants(dsName: String) = appGU.createDescendantDSList(dsm.inferDS(dsName).head)
-
-  /**
-   * Print current time
-   **/
-  def now() = {
-    val fmt = DateTimeFormat.forPattern("HH:mm:ss")
-    fmt.print(DateTime.now())
-  }
 
   def _edd(name: String, collector: SmvRunInfoCollector=new SmvRunInfoCollector): String =
     dsm.inferDS(name).head.getEdd(collector=collector)

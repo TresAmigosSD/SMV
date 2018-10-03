@@ -111,18 +111,6 @@ class SmvApp(private val cmdLineArgs: Seq[String], _spark: SparkSession) {
   private[smv] def deletePersistedResults(dsList: Seq[SmvDataSet]) =
     dsList foreach (ds => ds.deleteOutputs(ds.versionedOutputFiles))
 
-  def printDeadModules = {
-    if(smvConfig.cmdLine.printDeadModules()) {
-      val gu = new graph.SmvGraphUtil(this)
-      println("Dead modules by stage:")
-      println(gu.createDeadDSList())
-      println()
-      true
-    } else {
-      false
-    }
-  }
-
   /**
    * compare EDD results if the --edd-compare flag was specified with edd files to compare.
    * @return true if edd files were compared, otherwise false.
