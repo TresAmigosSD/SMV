@@ -28,7 +28,7 @@ from pyspark.sql import SparkSession, DataFrame
 
 from smv.datasetmgr import DataSetMgr
 from smv.datasetrepo import DataSetRepoFactory
-from smv.utils import smv_copy_array, check_socket
+from smv.utils import smv_copy_array, check_socket, scala_seq_to_list
 from smv.error import SmvRuntimeError, SmvDqmValidationError
 import smv.helpers
 from smv.utils import FileObjInputStream
@@ -452,12 +452,6 @@ class SmvApp(object):
         """Returns a Scala None value"""
         return self.scalaOption(None)
 
-    def _scala_seq_to_list(self, j_seq):
-        """Convert Scala Seq to Python list
-        """
-        j_list = self._jvm.scala.collection.JavaConversions.seqAsJavaList(j_seq)
-        return [x for x in j_list]
-
     def createDFWithLogger(self, schema, data, readerLogger):
         return DataFrame(self._jvm.DfCreator.createDFWithLogger(
             self.sparkSession._jsparkSession,
@@ -508,7 +502,7 @@ class SmvApp(object):
         return self.config().cmdLine()
         
     def _modules_to_run(self):
-        return self._scala_seq_to_list(self.j_smvApp.modulesToRun())
+        return scala_seq_to_list(self._jvm, self.j_smvApp.modulesToRun())
 
     def _dry_run(self):
         """Execute as dry-run if the dry-run flag is specified.
@@ -521,7 +515,7 @@ class SmvApp(object):
             # Find all ancestors inclusive,
             # filter the modules that are not yet persisted and not ephemeral.
             # this yields all the modules that will need to be run with the given command
-            mods_with_ancestors = self._scala_seq_to_list(self.j_smvApp.modulesToRunWithAncestors())
+            mods_with_ancestors = scala_seq_to_list(self._jvm, self.j_smvApp.modulesToRunWithAncestors())
             mods_not_persisted = [ m for m in mods_with_ancestors if not (m.isPersisted() or m.isEphemeral()) ]
 
             print("Dry run - modules not persisted:")

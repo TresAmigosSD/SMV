@@ -15,7 +15,7 @@
 This module provides the python entry point to DataSetMgr on scala side
 """
 
-from smv.utils import smv_copy_array
+from smv.utils import smv_copy_array, scala_seq_to_list
 
 class DataSetMgr(object):
     """The Python representation of DataSetMgr.
@@ -29,8 +29,14 @@ class DataSetMgr(object):
         from py4j.java_gateway import java_import
         java_import(self._jvm, "org.tresamigos.smv.python.SmvPythonHelper")
         java_import(self._jvm, "org.tresamigos.smv.DataSetRepoFactoryPython")
+        java_import(self._jvm, "scala.collection.JavaConversions")
 
         self.helper = self._jvm.SmvPythonHelper
+
+    def _scala_seq_to_list(self, j_seq):
+        """Convert a Scala Seq, j_seq, to Python list
+        """
+        return [x for x in self._jvm.JavaConversions.seqAsJavaList(j_seq)]
 
     def load(self, *urns):
         """Load SmvDataSets for specified URNs
@@ -69,3 +75,9 @@ class DataSetMgr(object):
         """
         j_rfact = self._jvm.DataSetRepoFactoryPython(repo_factory)
         self.j_dsm.register(j_rfact)
+
+    def allDataSets(self):
+        """Return all the SmvDataSets in the app
+        """
+        j_dss = self.j_dsm.allDataSets()
+        return scala_seq_to_list(self._jvm, j_dss)
