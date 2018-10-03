@@ -258,7 +258,7 @@ class SmvApp(object):
     def get_graph_json(self):
         """Generate a json string representing the dependency graph.
         """
-        return SmvAppInfo(self).get_graph_json()
+        return SmvAppInfo(self).create_graph_json()
 
     def getModuleResult(self, urn, forceRun=False, version=None):
         """Run module and get its result, which may not be a DataFrame
@@ -529,7 +529,7 @@ class SmvApp(object):
     def _generate_dot_graph(self):
         """Genrate app level graphviz dot file
         """
-        dot_graph_str = SmvAppInfo(self).create_dot_graph()
+        dot_graph_str = SmvAppInfo(self).create_graph_dot()
         if(self._cmd_line().graph().apply()):
             path = "{}.dot".format(self.config().appName())
             with open(path, "w") as f:

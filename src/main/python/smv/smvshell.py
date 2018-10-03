@@ -16,6 +16,7 @@ from inspect import formatargspec, getargspec
 import sys
 
 from smv import SmvApp, SmvHiveTable, SmvCsvFile, dqm
+from smv.smvappinfo import SmvAppInfo
 from test_support.test_runner import SmvTestRunner
 from test_support.testconfig import TestConfig
 
@@ -24,6 +25,9 @@ from pyspark.sql import DataFrame
 
 def _jvmShellCmd():
     return SmvApp.getInstance()._jvm.org.tresamigos.smv.shell.ShellCmd
+
+def _appInfo():
+    return SmvAppInfo(SmvApp.getInstance())
 
 def df(name, forceRun=False, version=None, runConfig=None, quickRun=False):
     """The DataFrame result of running the named module
@@ -143,7 +147,7 @@ def help():
 def lsStage():
     """List all the stages
     """
-    print(_jvmShellCmd().lsStage())
+    print(_appInfo().ls_stage())
 
 def ls(stageName = None):
     """List all datasets in a stage
@@ -151,10 +155,7 @@ def ls(stageName = None):
         Args:
             stageName (str): The name of the stage. Defaults to None, in which ase all datasets in all stages will be listed.
     """
-    if(stageName is None):
-        print(_jvmShellCmd().ls())
-    else:
-        print(_jvmShellCmd().ls(stageName))
+    print(_appInfo().ls(stageName))
 
 def lsDead(stageName = None):
     """List dead datasets in a stage
@@ -162,10 +163,7 @@ def lsDead(stageName = None):
         Args:
             stageName (str): The name of the stage. Defaults to None, in which ase all datasets in all stages will be listed.
     """
-    if(stageName is None):
-        print(_jvmShellCmd().lsDead())
-    else:
-        print(_jvmShellCmd().lsDead(stageName))
+    print(_appInfo().ls_dead(stageName))
 
 def lsDeadLeaf(stageName = None):
     """List 'deadLeaf' datasets in a stage
@@ -201,7 +199,7 @@ def ancestors(dsname):
         Args:
             dsname (str): The name of an SmvDataSet
     """
-    print(_jvmShellCmd().ancestors(dsname))
+    print(_appInfo().ls_ancestors(dsname))
 
 def descendants(dsname):
     """List all descendants of a dataset
@@ -212,7 +210,7 @@ def descendants(dsname):
         Args:
             dsname (str): The name of an SmvDataSet
     """
-    print(_jvmShellCmd().descendants(dsname))
+    print(_appInfo().ls_descendants(dsname))
 
 def now():
     """Print current time

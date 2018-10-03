@@ -57,7 +57,7 @@ class SmvAppInfo(object):
         else:
             return fqn
 
-    def get_graph_json(self):
+    def create_graph_json(self):
         """Create dependency graph Json string
         """
         (nodes, edges) = self._graph()
@@ -85,7 +85,7 @@ class SmvAppInfo(object):
             "edges": [edge_pair(p[0], p[1]) for p in edges]
         })
 
-    def create_dot_graph(self):
+    def create_graph_dot(self):
         """Create graphviz dot graph string for the whole app
         """
         (nodes, edges) = self._graph()
@@ -96,7 +96,7 @@ class SmvAppInfo(object):
             clusters.update({s: n_in_s})
 
         def _node_str(ds): 
-            if (ds.dsType == "Input"):
+            if (ds.dsType() == "Input"):
                 return '  "{}" [shape=box, color="pink"]'.format(self._base_name(ds))
             else:
                 return '  "{}"'.format(self._base_name(ds))
@@ -129,3 +129,74 @@ class SmvAppInfo(object):
             + '{}\n{}\n{}\n'.format(all_nodes, all_clusters, all_links)\
             + '}'
 
+    def _ds_ancestors(self, m):
+        """return the module's ancestors as python list"""
+        return scala_seq_to_list(self.smvApp._jvm, m.ancestors())
+
+    def _dead_nodes(self):
+        """return all the dead nodes"""
+        nodes = self.dsm.allDataSets()
+        outputs = [n for n in nodes if n.dsType() == "Output"]
+        in_flow = set([n for o in outputs for n in self._ds_ancestors(o)])
+        return [n for n in nodes if n not in in_flow and n not in outputs]
+
+    def _list_dataset(self, dss, withprefix=False):
+        """list ds names, return: list(str)"""
+        prefix_map = {
+            "Output": "O",
+            "Input" : "I",
+            "Module": "M",
+            "Model":  "m",
+            "ModelExec": "x"
+        }
+
+        def _node_str(n):
+            t = n.dsType()
+            bn = self._base_name(n)
+            if(withprefix):
+                return '({}) {}'.format(prefix_map[t], bn)
+            else:
+                return bn
+
+        return [_node_str(n) for n in dss]
+
+    def ls_stage(self):
+        """list all stage names"""
+        "\n".join(self.stages)
+
+    def _ls_in_stage(self, s, nodes, indentation=""):
+        """list modules in a stage"""
+        out_list = self._list_dataset([
+            n for n in nodes if n.parentStage().getOrElse(None) == s
+        ], True)
+        return "\n".join([indentation + ns for ns in out_list])
+
+    def _ls(self, stage, nodes):
+        """For given nodes, list the node names under their stages"""
+        if(stage is None):
+            return "\n".join([
+                "{}:\n".format(s) + self._ls_in_stage(s, nodes, "  ") + "\n" 
+                for s in self.stages
+            ])
+        else:
+            return self._ls_in_stage(stage, nodes)
+
+    def ls(self, stage=None):
+        """List all modules, under their stages"""
+        return self._ls(stage, self.dsm.allDataSets())
+
+    def ls_dead(self, stage=None):
+        """List all dead modules, under their stages"""
+        return self._ls(stage, self._dead_nodes())
+
+    def ls_ancestors(self, mname):
+        """List given module's ancestors, under their stages"""
+        m = self.dsm.inferDS(mname)[0]
+        return self._ls(None, self._ds_ancestors(m))
+
+    def ls_descendants(self, mname):
+        """List given module's descendants, under their stages"""
+        m = self.dsm.inferDS(mname)[0]
+        nodes = self.dsm.allDataSets()
+        descendants = [n for n in nodes if m.fqn() in [a.fqn() for a in self._ds_ancestors(n)]]
+        return self._ls(None, descendants)
