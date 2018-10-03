@@ -56,13 +56,6 @@ stage2:
   (I) stage2.modules.CsvStr2
   (M) stage2.modules.M2""")
         
-        self.assertEqual(cmd.lsDeadLeaf(),
-        """
-stage:
-
-stage2:
-  (M) stage2.modules.M2""")
-
         self.assertEqual(cmd.ancestors("M2"),
         """(I) stage2.modules.CsvStr2
 (O) stage.modules.M1

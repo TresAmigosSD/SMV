@@ -165,23 +165,6 @@ def lsDead(stageName = None):
     """
     print(_appInfo().ls_dead(stageName))
 
-def lsDeadLeaf(stageName = None):
-    """List 'deadLeaf' datasets in a stage
-
-        A 'deadLeaf' dataset is dataset for which "no modules in the stage depend
-        on it, excluding Output modules"
-
-        Note: a `deadLeaf` dataset must be `dead`, but some `dead` datasets aren't
-        `leaves`.
-
-        Args:
-            stageName (str): The name of the stage. Defaults to None, in which ase all datasets in all stages will be listed.
-    """
-    if(stageName is None):
-        print(_jvmShellCmd().lsDeadLeaf())
-    else:
-        print(_jvmShellCmd().lsDeadLeaf(stageName))
-
 def exportToHive(dsname, runConfig=None):
     """Export dataset's running result to a Hive table
 
