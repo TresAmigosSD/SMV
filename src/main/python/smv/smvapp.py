@@ -516,10 +516,8 @@ class SmvApp(object):
             actually running the modules.
         """
         
-        # cmdLine.dryRun() returns an Scala Option, the first get() convert it 
-        # to its value, and get() get the containt of it
-        # TODO: need to handle cmd_line on python side
-        if(self._cmd_line().dryRun().get().get()):
+        # cmdLine.dryRun() returns an ScallopOption, .apply gets the value
+        if(self._cmd_line().dryRun().apply()):
             # Find all ancestors inclusive,
             # filter the modules that are not yet persisted and not ephemeral.
             # this yields all the modules that will need to be run with the given command
