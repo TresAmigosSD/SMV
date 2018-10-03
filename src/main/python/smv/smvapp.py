@@ -27,6 +27,7 @@ from pyspark.sql import SparkSession, DataFrame
 
 
 from smv.datasetmgr import DataSetMgr
+from smv.smvappinfo import SmvAppInfo
 from smv.datasetrepo import DataSetRepoFactory
 from smv.utils import smv_copy_array, check_socket, scala_seq_to_list
 from smv.error import SmvRuntimeError, SmvDqmValidationError
@@ -256,9 +257,8 @@ class SmvApp(object):
 
     def get_graph_json(self):
         """Generate a json string representing the dependency graph.
-           TODO: need to add a stageName parameter to limit it to a single stage.
         """
-        return self.j_smvApp.generateAllGraphJSON()
+        return SmvAppInfo(self).get_graph_json()
 
     def getModuleResult(self, urn, forceRun=False, version=None):
         """Run module and get its result, which may not be a DataFrame

@@ -13,12 +13,19 @@
 
 from smv import *
 
-class X(SmvModule):
+class X(SmvCsvStringData):
     """This is the test DS X's docstring
         It is multi lines.
         with "double" quotes and 'single' quote
     """
+    def schemaStr(self):
+        return "k:String;v:Integer"
+    def dataStr(self):
+        return "a,1;b,2"
+
+class Y(SmvModule):
     def requiresDS(self):
-        return []
+        return [X]
     def run(self, i):
         return None
+    
