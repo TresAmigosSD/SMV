@@ -33,19 +33,20 @@ class SmvAppInfo(object):
         
         return (nodes, edges)
 
-    def _common_prefix(self, str_list):
-        """Given a list of strings, return the longest common prefix (LCP)
+    def _common_prefix(self, fqn_list):
+        """Given a list of fqns, return the longest common prefix
         """
-        if not str_list: return ''
+        if not fqn_list: return ''
 
-        # The algorithm depends on the ordering of strings, so LCP
+        parsed = [s.split(".") for s in fqn_list]
+        # The algorithm depends on the ordering of list(str), so LCP
         # of min and max in the group is the LCP of the entire group
-        s1 = min(str_list)
-        s2 = max(str_list)
+        s1 = min(parsed)
+        s2 = max(parsed)
         for i, c in enumerate(s1):
             if c != s2[i]:
-                return s1[:i]
-        return s1
+                return ".".join(s1[:i])
+        return ".".join(s1)
 
     def _base_name(self, ds):
         """Return DS's fqn with common prefix removed
@@ -162,7 +163,7 @@ class SmvAppInfo(object):
 
     def ls_stage(self):
         """list all stage names"""
-        "\n".join(self.stages)
+        return "\n".join(self.stages)
 
     def _ls_in_stage(self, s, nodes, indentation=""):
         """list modules in a stage"""
@@ -174,7 +175,7 @@ class SmvAppInfo(object):
     def _ls(self, stage, nodes):
         """For given nodes, list the node names under their stages"""
         if(stage is None):
-            return "\n".join([
+            return "\n" + "\n".join([
                 "{}:\n".format(s) + self._ls_in_stage(s, nodes, "  ") + "\n" 
                 for s in self.stages
             ])

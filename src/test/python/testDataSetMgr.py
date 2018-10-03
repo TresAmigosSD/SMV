@@ -25,7 +25,7 @@ class SmvDataSetMgrTest(SmvBaseTest):
 
     def assertDSListMatch(self, jds_list, urn_list):
         jds_urns = [str(x.urn().toString()) for x in jds_list]
-        self.assertEqual(jds_urns.sort(), urn_list.sort())
+        self.assertEqual(sorted(jds_urns), sorted(urn_list))
 
     def test_dsmgr_can_load_module(self):
         fqn = "stage1.modules.B"

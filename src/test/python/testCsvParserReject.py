@@ -69,12 +69,12 @@ class CsvParserRejectTest(SmvBaseTest):
         )
     
         self.assertEqual(
-            e.dqmValidationResult["checkLog"].sort(),
-            [
+            sorted(e.dqmValidationResult["checkLog"]),
+            sorted([
                 "java.text.ParseException: Unparseable date: \"130109130619\" @RECORD: 123,12.50  ,130109130619,12102012",
                 "java.text.ParseException: Unparseable date: \"109130619\" @RECORD: 123,12.50  ,109130619,12102012",
                 "java.text.ParseException: Unparseable date: \"201309130619\" @RECORD: 123,12.50  ,201309130619,12102012",
                 "java.lang.IllegalArgumentException: requirement failed @RECORD: 123,12.50  ,12102012",
                 "java.lang.NumberFormatException: For input string: \"001x\" @RECORD: 123,001x  ,20130109130619,12102012"
-            ].sort()
+            ])
         )

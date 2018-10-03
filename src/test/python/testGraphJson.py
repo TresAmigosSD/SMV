@@ -39,7 +39,7 @@ class SmvGraphJsonTest(SmvBaseTest):
         n_fqns = [n['fqn'] for n in j_obj['nodes']]
 
         exp = ['stage.modules.X', 'stage.modules.Y']
-        assert (n_fqns.sort() == exp.sort())
+        assert (sorted(n_fqns) == sorted(exp))
 
     def test_graph_edges(self):
         j_str = self.smvApp.get_graph_json()
@@ -47,5 +47,5 @@ class SmvGraphJsonTest(SmvBaseTest):
 
         res = j_obj['edges'][0]
         exp = ['stage.modules.X', 'stage.modules.Y']
-        assert (res.sort(), exp.sort())
+        assert (sorted(res), sorted(exp))
     
