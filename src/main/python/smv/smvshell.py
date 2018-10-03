@@ -24,9 +24,6 @@ from test_support.testconfig import TestConfig
 from pyspark.sql import DataFrame
 
 
-def _jvmShellCmd():
-    return SmvApp.getInstance()._jvm.org.tresamigos.smv.shell.ShellCmd
-
 def _appInfo():
     return SmvAppInfo(SmvApp.getInstance())
 
