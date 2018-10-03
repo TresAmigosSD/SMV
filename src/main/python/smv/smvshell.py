@@ -14,6 +14,7 @@
 """
 from inspect import formatargspec, getargspec
 import sys
+import datetime
 
 from smv import SmvApp, SmvHiveTable, SmvCsvFile, dqm
 from smv.smvappinfo import SmvAppInfo
@@ -198,7 +199,7 @@ def descendants(dsname):
 def now():
     """Print current time
     """
-    print(_jvmShellCmd().now())
+    print(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
 
 def smvDiscoverSchemaToFile(path, n=100000, ca=None):
     """Try best to discover Schema from raw Csv file
