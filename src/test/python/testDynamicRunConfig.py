@@ -25,13 +25,13 @@ class RunModuleWithRunConfigTest(SmvBaseTest):
                 '-m', "modules.A"]
 
     def test_run_module_with_cmd_run_config(self):
-        self.smvApp.j_smvApp.run()
+        self.smvApp.run()
         res = self.smvApp.runModule(self.modUrn)[0]
         expected = self.createDF('src:String', 'cmd')
         self.should_be_same(expected, res)
 
     def test_run_module_with_dynamic_run_config(self):
-        self.smvApp.j_smvApp.run()
+        self.smvApp.run()
         a = self.smvApp.runModule(self.modUrn, runConfig = {'src': 'dynamic_a'})[0]
         self.should_be_same(self.createDF('src:String', 'dynamic_a'), a)
         b = self.smvApp.runModule(self.modUrn, runConfig = {'src': 'dynamic_b'})[0]

@@ -37,7 +37,7 @@ class PublishModuleToHiveTest(HiveTest):
         return super(PublishModuleToHiveTest, cls).smvAppInitArgs() + ['--publish-hive', '-m', "stage.modules.M"]
 
     def test_publish_module_to_hive(self):
-        self.smvApp.j_smvApp.run()
+        self.smvApp.run()
         mDf = self.df("stage.modules.M")
         hiveDf = self.smvApp.sqlContext.sql("select * from " + "M")
         self.should_be_same(mDf, hiveDf)
@@ -60,7 +60,7 @@ class AdvancedPublishModuleToHiveTest(HiveTest):
 
     def test_publish_module_to_hive(self):
         # generate the M module output on hive here and then should overwrite it when MAdv is published.
-        self.smvApp.j_smvApp.run()
+        self.smvApp.run()
 
         # Verify that the M in hive now has the same output as MAdv.
         madvDf = self.df("stage.modules.MAdv")
@@ -75,7 +75,7 @@ class ReadHiveTableTest(HiveTest):
     @classmethod
     def setUpClass(cls):
         super(ReadHiveTableTest, cls).setUpClass()
-        cls.smvApp.j_smvApp.run()
+        cls.smvApp.run()
 
     def test_smv_hive_table_can_read_hive_table(self):
         mDf = self.df("stage.modules.M")

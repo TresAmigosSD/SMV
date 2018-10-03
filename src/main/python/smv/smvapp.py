@@ -516,7 +516,8 @@ class SmvApp(object):
             actually running the modules.
         """
         
-        if(self._cmd_line().dryRun()):
+        # cmdLine.dryRun() returns an ScallopOption, .apply gets the value
+        if(self._cmd_line().dryRun().apply()):
             # Find all ancestors inclusive,
             # filter the modules that are not yet persisted and not ephemeral.
             # this yields all the modules that will need to be run with the given command
