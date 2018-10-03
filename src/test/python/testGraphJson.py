@@ -14,6 +14,7 @@
 import json
 
 from test_support.smvbasetest import SmvBaseTest
+import smv.smvappinfo
 from smv import *
 
 class SmvGraphJsonTest(SmvBaseTest):

@@ -526,6 +526,18 @@ class SmvApp(object):
         else:
             return False
 
+    def _generate_dot_graph(self):
+        """Genrate app level graphviz dot file
+        """
+        dot_graph_str = SmvAppInfo(self).create_dot_graph()
+        if(self._cmd_line().graph().apply()):
+            path = "{}.dot".format(self.config().appName())
+            with open(path, "w") as f:
+                f.write(dot_graph_str)
+            return True
+        else:
+            return False
+
     def run(self):
         self.j_smvApp.purgeCurrentOutputFiles()
         self.j_smvApp.purgeOldOutputFiles()
@@ -544,7 +556,7 @@ class SmvApp(object):
         self.j_smvApp.printDeadModules() \
         or self._dry_run() \
         or self.j_smvApp.compareEddResults() \
-        or self.j_smvApp.generateDotDependencyGraph() \
+        or self._generate_dot_graph() \
         or self.j_smvApp.publishModulesToHive(collector) \
         or self.j_smvApp.publishOutputModules(collector) \
         or self.j_smvApp.publishOutputModulesThroughJDBC(collector)  \
