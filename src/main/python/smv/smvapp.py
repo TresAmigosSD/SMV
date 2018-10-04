@@ -34,6 +34,7 @@ from smv.error import SmvRuntimeError, SmvDqmValidationError
 import smv.helpers
 from smv.utils import FileObjInputStream
 from smv.runinfo import SmvRunInfoCollector
+from smv.smvconfig import SmvConfig
 from py4j.protocol import Py4JJavaError
 
 class SmvApp(object):
@@ -102,6 +103,8 @@ class SmvApp(object):
         java_import(self._jvm, "org.tresamigos.smv.DfCreator")
 
         self.j_smvPyClient = self.create_smv_pyclient(arglist)
+
+        self.py_smvconf = SmvConfig(arglist, self._jvm)
 
         # shortcut is meant for internal use only
         self.j_smvApp = self.j_smvPyClient.j_smvApp()
@@ -499,7 +502,9 @@ class SmvApp(object):
             pass
 
     def _cmd_line(self):
-        return self.config().cmdLine()
+        from collections import namedtuple
+        cl = self.py_smvconf.cmdline
+        return namedtuple("CmdLine", cl.keys())(*cl.values())
         
     def _modules_to_run(self):
         return scala_seq_to_list(self._jvm, self.j_smvApp.modulesToRun())
@@ -511,7 +516,7 @@ class SmvApp(object):
         """
         
         # cmdLine.dryRun() returns an ScallopOption, .apply gets the value
-        if(self._cmd_line().dryRun().apply()):
+        if(self._cmd_line().dryRun):
             # Find all ancestors inclusive,
             # filter the modules that are not yet persisted and not ephemeral.
             # this yields all the modules that will need to be run with the given command
@@ -530,7 +535,7 @@ class SmvApp(object):
         """Genrate app level graphviz dot file
         """
         dot_graph_str = SmvAppInfo(self).create_graph_dot()
-        if(self._cmd_line().graph().apply()):
+        if(self._cmd_line().graph):
             path = "{}.dot".format(self.config().appName())
             with open(path, "w") as f:
                 f.write(dot_graph_str)
@@ -542,7 +547,7 @@ class SmvApp(object):
         """Print dead modules: 
         Modules which do not contribute to any output modules are considered dead
         """
-        if(self._cmd_line().printDeadModules().apply()):
+        if(self._cmd_line().printDeadModules):
             SmvAppInfo(self).ls_dead()
             return True
         else:
