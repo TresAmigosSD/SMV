@@ -84,10 +84,6 @@ private[smv] class CmdLineArgsConf(args: Seq[String]) extends ScallopConf(args) 
     descr = "publish|export given modules/stage/app to a CSV file at the given path on the local file system"
   )
 
-  val compareEdd = opt[List[String]]("edd-compare",
-                                     noshort = true,
-                                     default = None,
-                                     descr = "compare two edd result files")
   val genEdd = toggle(
     "edd",
     default = Some(false),
@@ -144,12 +140,6 @@ private[smv] class CmdLineArgsConf(args: Seq[String]) extends ScallopConf(args) 
                       noshort = true,
                       default = Some(false),
                       descrYes = "determine which modules do not have persisted data and will need to be run.")
-
-  // if user specified "edd-compare" command line, user should have supplied two file names.
-  validateOpt(compareEdd) {
-    case (Some(edds)) if edds.length != 2 => Left("edd-compare param requires two EDD file names")
-    case _                                => Right(Unit)
-  }
 
   // override default error message handler that does a sys.exit(1) which makes it difficult to debug.
   printedName = "SmvApp"

@@ -565,7 +565,6 @@ class SmvApp(object):
         #either generate graphs, publish modules, or run output modules (only one will occur)
         self._print_dead_modules() \
         or self._dry_run() \
-        or self.j_smvApp.compareEddResults() \
         or self._generate_dot_graph() \
         or self.j_smvApp.publishModulesToHive(collector) \
         or self.j_smvApp.publishOutputModules(collector) \
