@@ -13,7 +13,7 @@
 
 """Provides SmvApp module list, dependency graph etc.
 """
-from utils import scala_seq_to_list
+from smv.utils import scala_seq_to_list
 import json
 
 class SmvAppInfo(object):
