@@ -33,11 +33,6 @@ class DataSetMgr(object):
 
         self.helper = self._jvm.SmvPythonHelper
 
-    def _scala_seq_to_list(self, j_seq):
-        """Convert a Scala Seq, j_seq, to Python list
-        """
-        return [x for x in self._jvm.JavaConversions.seqAsJavaList(j_seq)]
-
     def load(self, *urns):
         """Load SmvDataSets for specified URNs
         
