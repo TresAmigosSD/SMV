@@ -108,11 +108,6 @@ private[smv] class CmdLineArgsConf(args: Seq[String]) extends ScallopConf(args) 
     descrNo = "do not generate a json dependency graph"
   )
 
-  val runConfObj = opt[String]("run-conf-obj",
-                               noshort = true,
-                               default = None,
-                               descr = "load and instantiate the configuration object by its fqn")
-
   // --- data directories override
   val dataDir =
     opt[String]("data-dir", noshort = true, descr = "specify the top level data directory")
@@ -170,7 +165,6 @@ private[smv] class CmdLineArgsConf(args: Seq[String]) extends ScallopConf(args) 
  */
 class SmvConfig(cmdLineArgs: Seq[String]) {
   import java.nio.file.Paths
-  import SmvConfig._
 
   /*pathJoin has the following behavior:
    *pathJoin("/a/b", "c/d") -> "/a/b/c/d"
@@ -242,8 +236,6 @@ class SmvConfig(cmdLineArgs: Seq[String]) {
   // --- user libraries are dynamic as well
   private[smv] def userLibs = { splitProp("smv.user_libraries").toSeq }
 
-  val classDir = mergedProps("smv.class_dir")
-
   val sparkSqlProps = mergedProps.filterKeys(k => k.startsWith("spark.sql."))
 
   def jdbcUrl: String =
@@ -258,9 +250,6 @@ class SmvConfig(cmdLineArgs: Seq[String]) {
     case None => throw new SmvRuntimeException("JDBC driver is not specified in SMV config")
     case Some(ret) => ret
   }
-
-  /** The FQN of configuration object for a particular run.  See github issue #319 */
-  val runConfObj: Option[String] = cmdLine.runConfObj.get.orElse(mergedProps.get(RunConfObjKey))
 
   // ---------- User Run Config Parameters key/values ----------
   def getRunConfig(key: String): String = dynamicRunConfig.getOrElse(key, getRunConfigFromConf(key))
@@ -361,8 +350,4 @@ class SmvConfig(cmdLineArgs: Seq[String]) {
       Try(s.toInt).toOption
     }
   }
-}
-
-object SmvConfig {
-  val RunConfObjKey: String = "smv.runConfObj"
 }
