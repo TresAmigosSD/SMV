@@ -17,7 +17,7 @@ package org.tresamigos.smv
 import scala.util.Try
 
 import java.io.{IOException, InputStreamReader, FileInputStream, File}
-import java.util.Properties
+import java.util.{Properties, ArrayList}
 
 import org.rogach.scallop.ScallopConf
 
@@ -349,5 +349,29 @@ class SmvConfig(cmdLineArgs: Seq[String]) {
     mergedProps.get(propName).flatMap { s: String =>
       Try(s.toInt).toOption
     }
+  }
+}
+
+class SmvConfig2(
+  val modsToRun: ArrayList[String],
+  val stagesToRun: ArrayList[String],
+  val cmdLine: java.util.Map[String, String],
+  var props: java.util.Map[String, String],
+  var dataDirs: java.util.Map[String, String]
+){
+  def printall() = {
+    println(modsToRun)
+    println(stagesToRun)
+    println(cmdLine)
+    println(props)
+    println(dataDirs)
+  }
+
+  def reset(
+    _props: java.util.Map[String, String], 
+    _dataDirs: java.util.Map[String, String]
+  ) {
+    props = _props
+    dataDirs = _dataDirs
   }
 }

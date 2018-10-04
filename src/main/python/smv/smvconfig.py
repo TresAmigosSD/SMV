@@ -17,11 +17,12 @@ import os.path
 import argparse
 import uuid
 import smv.jprops as jprops
+from smv.error import SmvRuntimeError
 
 class SmvConfig(object):
-    def __init__(self, arglist):
+    def __init__(self, arglist, _jvm):
+        self._jvm = _jvm
         self.cmdline = self._create_cmdline_conf(arglist)
-        self.run_app_flags = _run_app_flags
         
         DEFAULT_SMV_HOME_CONF_FILE = os.getenv('HOME', '') + "/.smv/smv-user-conf.props"
 
@@ -34,7 +35,23 @@ class SmvConfig(object):
         self.user_conf_path = self.cmdline.pop('smvUserConfFile')
         self.cmdline_props = dict(self.cmdline.pop('smvProps'))
 
-        self.read_props_from_app_dir(self.cmdline['smvAppDir'])
+        self.read_props_from_app_dir(self.app_dir)
+
+        self.mods_to_run = self.cmdline.pop('modsToRun')
+        self.stages_to_run = self.cmdline.pop('stagesToRun')
+
+        from py4j.java_gateway import java_import
+        java_import(self._jvm, "org.tresamigos.smv.SmvConfig2")
+        self.j_smvconf = self._jvm.SmvConfig2(
+            self.mods_to_run,
+            self.stages_to_run,
+            self.cmdline, 
+            self.merged_props(), 
+            self.all_data_dirs()
+        )
+
+    def reset_j_smvconf():
+        self.j_smvconf.reset(self.j_merged_props(), self.j_all_data_dirs())
 
     def read_props_from_app_dir(self, _app_dir):
         self.app_dir = _app_dir
@@ -45,11 +62,40 @@ class SmvConfig(object):
         res.update(self.dynamic_props)
         return res
 
+    def all_data_dirs(self):
+        props = self.merged_props()
+        if (self.cmdline.get('dataDir')):
+            data_dir = self.cmdline.get('dataDir')
+        elif (props.get('smv.dataDir')):
+            data_dir = props.get('smv.dataDir')
+        elif(os.getenv('DATA_DIR', None)):
+            data_dir = os.getenv('DATA_DIR')
+            print("WARNING: use of DATA_DIR environment variable is deprecated. use smv.dataDir instead!!!")
+        else:
+            raise SmvRuntimeError("Must specify a data-dir either on command line or in conf.")
+
+        def get_sub_dir(name, default):
+            res = "{}/{}".format(data_dir, default)
+            if (self.cmdline.get(name)):
+                res = self.cmdline.get(name)
+            elif (props.get('smv.' + name)):
+                res = props.get('smv.' + name)
+            return res
+
+        return {
+            'dataDir': data_dir,
+            'inputDir': get_sub_dir('inputDir', "input"),
+            'outputDir': get_sub_dir('outputDir', "output"),
+            'historyDir': get_sub_dir('historyDir', "history"),
+            'publishDir': get_sub_dir('publishDir', 'publish')
+        }
+
+
     def print_conf(self):
         print(self.cmdline)
         print(self.merged_props())
 
-    def _create_cmdline_conf(self):
+    def _create_cmdline_conf(self, arglist):
         """Parse arglist to a config dictionary"""
         parser = argparse.ArgumentParser(
             usage="smv-run -m ModuleToRun\n       smv-run --run-app",
@@ -97,13 +143,7 @@ class SmvConfig(object):
         # command line props override
         parser.add_argument('--smv-props', dest="smvProps", nargs='+', type=parse_props, default=[], help="key=value command line props override")
 
-        res = vars(parser.parse_args(self.arglist))
-        app_run_flag_keys = [
-            'forceRunAll', 'publishJDBC', 'publishHive', 'printDeadModules', 'graph', 'purgeOldOutput', 'dryRun', 
-            'publish', 'exportCsv',
-            'runAllApp', 'modsToRun', 'stagesToRun'
-        ]
-        app_run_flags = {k: res[k] for k in app_run_flag_keys}
+        res = vars(parser.parse_args(arglist))
         return res
 
 
@@ -114,18 +154,20 @@ class SmvConfig(object):
         full_app_conf_path = os.path.join(self.app_dir, self.app_conf_path)
         full_user_conf_path = os.path.join(self.app_dir, self.user_conf_path)
 
-        with open(full_app_conf_path) as fp:
-            app_conf_props = jprops.load_properties(fp)
+        def load(path):
+            if os.path.exists(path):
+                with open(path) as fp:
+                    return jprops.load_properties(fp)
+            else: 
+                return {}
 
-        with open(self.home_conf_path) as fp:
-            home_conf_props = jprops.load_properties(fp)
-    
-        with open(full_user_conf_path) as fp:
-            user_conf_props = jprops.load_properties(fp)
+        app_conf_props = load(full_app_conf_path)
+        home_conf_props = load(self.home_conf_path)
+        user_conf_props = load(full_user_conf_path)
 
         default_props = {
             "smv.appName"            : "Smv Application",
-            "smv.appId"              : str(uuid.uuid4())
+            "smv.appId"              : str(uuid.uuid4()),
             "smv.stages"             : "",
             "smv.config.keys"        : "",
             "smv.class_dir"          : "./target/classes",
