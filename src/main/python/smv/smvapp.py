@@ -212,6 +212,7 @@ class SmvApp(object):
         # this call sets the scala side's picture of app dir and forces
         # the app properties to be read from disk and reevaluated
         self.j_smvPyClient.setAppDir(appDir)
+        self.py_smvconf.set_app_dir(appDir)
 
         # this call will use the dynamic appDir that we just set ^
         # to change sys.path, allowing py modules, UDL's to be discovered by python
@@ -219,6 +220,7 @@ class SmvApp(object):
 
     def setDynamicRunConfig(self, runConfig):
         self.j_smvPyClient.setDynamicRunConfig(runConfig)
+        self.py_smvconf.set_dynamic_props(runConfig)
 
     def getCurrentProperties(self, raw = False):
         """ Python dict of current megred props

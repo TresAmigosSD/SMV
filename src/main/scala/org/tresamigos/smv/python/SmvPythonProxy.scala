@@ -268,8 +268,6 @@ class SmvMultiJoinAdaptor(joiner: SmvMultiJoin) {
 class SmvPyClient(val j_smvApp: SmvApp) {
   val config      = j_smvApp.smvConfig
 
-  def publishVersion: Option[String] = config.cmdLine.publish.get
-
   def mergedPropsJSON: String = Serialization.write(j_smvApp.smvConfig.mergedProps)(org.json4s.DefaultFormats)
 
   def setDynamicRunConfig(runConfig: java.util.Map[String, String]): Unit = {
@@ -283,11 +281,6 @@ class SmvPyClient(val j_smvApp: SmvApp) {
 
     j_smvApp.smvConfig.setAppDir(appDir)
   }
-
-  /** Output directory for files */
-  def outputDir: String = j_smvApp.smvConfig.outputDir
-
-  def stages: Array[String] = j_smvApp.stages.toArray
 
   def userLibs: Array[String] = j_smvApp.userLibs.toArray
 

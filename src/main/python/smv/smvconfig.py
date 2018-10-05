@@ -63,7 +63,7 @@ class SmvConfig(object):
     def reset_j_smvconf():
         """Reset scala side conf - for dynamic conf
         """
-        self.j_smvconf.reset(self.j_merged_props(), self.j_all_data_dirs())
+        self.j_smvconf.reset(self.merged_props(), self.all_data_dirs())
 
     def read_props_from_app_dir(self, _app_dir):
         """For a given app dir, read in the prop files
@@ -77,6 +77,17 @@ class SmvConfig(object):
         res = self.static_props.copy()
         res.update(self.dynamic_props)
         return res
+
+    def set_dynamic_props(self, new_d_props):
+        if(new_d_props):
+            self.dynamic_props = new_d_props.copy()
+            self.reset_j_smvconf()
+
+    def set_app_dir(self, new_app_dir):
+        if(new_app_dir):
+            self.app_dir = new_app_dir
+            self.read_props_from_app_dir(self.app_dir)
+            self.reset_j_smvconf()
 
     def all_data_dirs(self):
         """Create all the data dir configs
