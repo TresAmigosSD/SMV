@@ -284,8 +284,6 @@ class SmvPyClient(val j_smvApp: SmvApp) {
 
   def userLibs: Array[String] = j_smvApp.userLibs.toArray
 
-  def urn2fqn(modUrn: String): String = org.tresamigos.smv.urn2fqn(modUrn)
-
   // TODO: The following method should be removed when Scala side can
   // handle publish-hive SmvOutput tables
   def moduleNames: java.util.List[String] = {

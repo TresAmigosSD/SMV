@@ -449,11 +449,6 @@ class SmvApp(object):
         src = FileObjInputStream(fileobj)
         self._jvm.SmvHDFS.writeToFile(src, destination)
 
-    def urn2fqn(self, urnOrFqn):
-        """Extracts the SMV module FQN portion from its URN; if it's already an FQN return it unchanged
-        """
-        return self.j_smvPyClient.urn2fqn(urnOrFqn)
-
     def getStageFromModuleFqn(self, fqn):
         """Returns the stage name for a given fqn"""
         return self._jvm.org.tresamigos.smv.ModURN(fqn).getStage().get()
