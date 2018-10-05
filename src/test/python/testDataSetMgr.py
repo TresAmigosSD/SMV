@@ -25,7 +25,7 @@ class SmvDataSetMgrTest(SmvBaseTest):
 
     def assertDSListMatch(self, jds_list, urn_list):
         jds_urns = [str(x.urn().toString()) for x in jds_list]
-        self.assertEqual(jds_urns.sort(), urn_list.sort())
+        self.assertEqual(sorted(jds_urns), sorted(urn_list))
 
     def test_dsmgr_can_load_module(self):
         fqn = "stage1.modules.B"
@@ -50,6 +50,17 @@ class SmvDataSetMgrTest(SmvBaseTest):
             'mod:stage1.modules.A', 
             'mod:stage1.modules.B', 
             'mod:stage1.modules.C'
+        ])
+
+    def test_allDataSets(self):
+        allDs = self.smvApp.dsm.allDataSets()
+        self.assertDSListMatch(allDs, [
+            'mod:stage1.modules.A', 
+            'mod:stage1.modules.B', 
+            'mod:stage1.modules.C',
+            'mod:stage2.modules.X',
+            'mod:stage2.modules.Z',
+            'mod:stage3.modules.Y'
         ])
 
     def test_dsmgr_does_not_find_link_in_stage(self):

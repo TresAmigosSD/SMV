@@ -14,16 +14,18 @@
 """
 from inspect import formatargspec, getargspec
 import sys
+import datetime
 
 from smv import SmvApp, SmvHiveTable, SmvCsvFile, dqm
+from smv.smvappinfo import SmvAppInfo
 from test_support.test_runner import SmvTestRunner
 from test_support.testconfig import TestConfig
 
 from pyspark.sql import DataFrame
 
 
-def _jvmShellCmd():
-    return SmvApp.getInstance()._jvm.org.tresamigos.smv.shell.ShellCmd
+def _appInfo():
+    return SmvAppInfo(SmvApp.getInstance())
 
 def df(name, forceRun=False, version=None, runConfig=None, quickRun=False):
     """The DataFrame result of running the named module
@@ -113,15 +115,6 @@ def openCsv(path, validate=False):
     validator = None if validate else app._jvm.DQMValidator(dqm.SmvDQM(), False)
     return DataFrame(TmpCsv(app).doRun(validator, None), app.sqlContext)
 
-def smvExportCsv(name, path):
-    """Export the result of a module to a CSV file at a local path
-
-        Args:
-            fqn (str): the name of the module
-            path (str): a path on the local file system
-    """
-    _jvmShellCmd().smvExportCsv(name, path, None)
-
 def help():
     """Print a list of the SMV helper functions available in the shell
     """
@@ -143,7 +136,7 @@ def help():
 def lsStage():
     """List all the stages
     """
-    print(_jvmShellCmd().lsStage())
+    print(_appInfo().ls_stage())
 
 def ls(stageName = None):
     """List all datasets in a stage
@@ -151,10 +144,7 @@ def ls(stageName = None):
         Args:
             stageName (str): The name of the stage. Defaults to None, in which ase all datasets in all stages will be listed.
     """
-    if(stageName is None):
-        print(_jvmShellCmd().ls())
-    else:
-        print(_jvmShellCmd().ls(stageName))
+    print(_appInfo().ls(stageName))
 
 def lsDead(stageName = None):
     """List dead datasets in a stage
@@ -162,27 +152,7 @@ def lsDead(stageName = None):
         Args:
             stageName (str): The name of the stage. Defaults to None, in which ase all datasets in all stages will be listed.
     """
-    if(stageName is None):
-        print(_jvmShellCmd().lsDead())
-    else:
-        print(_jvmShellCmd().lsDead(stageName))
-
-def lsDeadLeaf(stageName = None):
-    """List 'deadLeaf' datasets in a stage
-
-        A 'deadLeaf' dataset is dataset for which "no modules in the stage depend
-        on it, excluding Output modules"
-
-        Note: a `deadLeaf` dataset must be `dead`, but some `dead` datasets aren't
-        `leaves`.
-
-        Args:
-            stageName (str): The name of the stage. Defaults to None, in which ase all datasets in all stages will be listed.
-    """
-    if(stageName is None):
-        print(_jvmShellCmd().lsDeadLeaf())
-    else:
-        print(_jvmShellCmd().lsDeadLeaf(stageName))
+    print(_appInfo().ls_dead(stageName))
 
 def exportToHive(dsname, runConfig=None):
     """Export dataset's running result to a Hive table
@@ -201,7 +171,7 @@ def ancestors(dsname):
         Args:
             dsname (str): The name of an SmvDataSet
     """
-    print(_jvmShellCmd().ancestors(dsname))
+    print(_appInfo().ls_ancestors(dsname))
 
 def descendants(dsname):
     """List all descendants of a dataset
@@ -212,12 +182,12 @@ def descendants(dsname):
         Args:
             dsname (str): The name of an SmvDataSet
     """
-    print(_jvmShellCmd().descendants(dsname))
+    print(_appInfo().ls_descendants(dsname))
 
 def now():
     """Print current time
     """
-    print(_jvmShellCmd().now())
+    print(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
 
 def smvDiscoverSchemaToFile(path, n=100000, ca=None):
     """Try best to discover Schema from raw Csv file
@@ -230,15 +200,6 @@ def smvDiscoverSchemaToFile(path, n=100000, ca=None):
             ca (CsvAttributes): Defaults to CsvWithHeader
     """
     SmvApp.getInstance()._jvm.SmvPythonHelper.smvDiscoverSchemaToFile(path, n, ca or SmvApp.getInstance().defaultCsvWithHeader())
-
-def edd(ds_name):
-    """Print edd report for the result of an SmvDataSet
-
-        Args:
-            ds_name (str): name of an SmvDataSet
-    """
-    report = _jvmShellCmd()._edd(ds_name)
-    print(report)
 
 def run_test(test_name):
     """Run a test with the given name without creating new Spark context
@@ -292,19 +253,16 @@ __all__ = [
     'getModel',
     'openHive',
     'openCsv',
-    'smvExportCsv',
     'help',
     'lsStage',
     'ls',
     'lsDead',
-    'lsDeadLeaf',
     'props',
     'exportToHive',
     'ancestors',
     'descendants',
     'now',
     'smvDiscoverSchemaToFile',
-    'edd',
     'run_test',
     'show_run_info',
     'get_run_info'

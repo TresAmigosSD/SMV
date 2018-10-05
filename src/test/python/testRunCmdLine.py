@@ -109,3 +109,15 @@ class SmvAppPurgeTest(SmvBaseTest):
             os.listdir(self.tmpOutputDir())
         )
 
+
+class CreateDot(RunCmdLineBaseTest):
+    @classmethod
+    def whatToRun(cls):
+        return ['-s', "runstage.stage1", '--graph']
+    def test_create_dot_graph_file(self):
+        import os
+        self.smvApp.run()
+
+        dot_file = "{}.dot".format(self.smvApp.config().appName())
+        assert (os.path.isfile(dot_file) )
+        os.remove(dot_file)

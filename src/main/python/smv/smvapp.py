@@ -27,8 +27,9 @@ from pyspark.sql import SparkSession, DataFrame
 
 
 from smv.datasetmgr import DataSetMgr
+from smv.smvappinfo import SmvAppInfo
 from smv.datasetrepo import DataSetRepoFactory
-from smv.utils import smv_copy_array, check_socket
+from smv.utils import smv_copy_array, check_socket, scala_seq_to_list
 from smv.error import SmvRuntimeError, SmvDqmValidationError
 import smv.helpers
 from smv.utils import FileObjInputStream
@@ -256,9 +257,8 @@ class SmvApp(object):
 
     def get_graph_json(self):
         """Generate a json string representing the dependency graph.
-           TODO: need to add a stageName parameter to limit it to a single stage.
         """
-        return self.j_smvApp.generateAllGraphJSON()
+        return SmvAppInfo(self).create_graph_json()
 
     def getModuleResult(self, urn, forceRun=False, version=None):
         """Run module and get its result, which may not be a DataFrame
@@ -452,12 +452,6 @@ class SmvApp(object):
         """Returns a Scala None value"""
         return self.scalaOption(None)
 
-    def _scala_seq_to_list(self, j_seq):
-        """Convert Scala Seq to Python list
-        """
-        j_list = self._jvm.scala.collection.JavaConversions.seqAsJavaList(j_seq)
-        return [x for x in j_list]
-
     def createDFWithLogger(self, schema, data, readerLogger):
         return DataFrame(self._jvm.DfCreator.createDFWithLogger(
             self.sparkSession._jsparkSession,
@@ -508,7 +502,7 @@ class SmvApp(object):
         return self.config().cmdLine()
         
     def _modules_to_run(self):
-        return self._scala_seq_to_list(self.j_smvApp.modulesToRun())
+        return scala_seq_to_list(self._jvm, self.j_smvApp.modulesToRun())
 
     def _dry_run(self):
         """Execute as dry-run if the dry-run flag is specified.
@@ -521,13 +515,35 @@ class SmvApp(object):
             # Find all ancestors inclusive,
             # filter the modules that are not yet persisted and not ephemeral.
             # this yields all the modules that will need to be run with the given command
-            mods_with_ancestors = self._scala_seq_to_list(self.j_smvApp.modulesToRunWithAncestors())
+            mods_with_ancestors = scala_seq_to_list(self._jvm, self.j_smvApp.modulesToRunWithAncestors())
             mods_not_persisted = [ m for m in mods_with_ancestors if not (m.isPersisted() or m.isEphemeral()) ]
 
             print("Dry run - modules not persisted:")
             print("----------------------")
             print("\n".join([m.fqn() for m in mods_not_persisted]))
             print("----------------------")
+            return True
+        else:
+            return False
+
+    def _generate_dot_graph(self):
+        """Genrate app level graphviz dot file
+        """
+        dot_graph_str = SmvAppInfo(self).create_graph_dot()
+        if(self._cmd_line().graph().apply()):
+            path = "{}.dot".format(self.config().appName())
+            with open(path, "w") as f:
+                f.write(dot_graph_str)
+            return True
+        else:
+            return False
+
+    def _print_dead_modules(self):
+        """Print dead modules: 
+        Modules which do not contribute to any output modules are considered dead
+        """
+        if(self._cmd_line().printDeadModules().apply()):
+            SmvAppInfo(self).ls_dead()
             return True
         else:
             return False
@@ -547,11 +563,10 @@ class SmvApp(object):
         collector = self._jvm.SmvRunInfoCollector()
 
         #either generate graphs, publish modules, or run output modules (only one will occur)
-        self.j_smvApp.printDeadModules() \
+        self._print_dead_modules() \
         or self._dry_run() \
         or self.j_smvApp.compareEddResults() \
-        or self.j_smvApp.generateDotDependencyGraph() \
-        or self.j_smvApp.generateJsonDependencyGraph() \
+        or self._generate_dot_graph() \
         or self.j_smvApp.publishModulesToHive(collector) \
         or self.j_smvApp.publishOutputModules(collector) \
         or self.j_smvApp.publishOutputModulesThroughJDBC(collector)  \

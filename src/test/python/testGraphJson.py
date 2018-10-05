@@ -14,6 +14,7 @@
 import json
 
 from test_support.smvbasetest import SmvBaseTest
+import smv.smvappinfo
 from smv import *
 
 class SmvGraphJsonTest(SmvBaseTest):
@@ -31,3 +32,20 @@ class SmvGraphJsonTest(SmvBaseTest):
         with "double" quotes and 'single' quote
     """
         assert (res == exp)
+
+    def test_graph_fqns(self):
+        j_str = self.smvApp.get_graph_json()
+        j_obj = json.loads(j_str)
+        n_fqns = [n['fqn'] for n in j_obj['nodes']]
+
+        exp = ['stage.modules.X', 'stage.modules.Y']
+        assert (sorted(n_fqns) == sorted(exp))
+
+    def test_graph_edges(self):
+        j_str = self.smvApp.get_graph_json()
+        j_obj = json.loads(j_str)
+
+        res = j_obj['edges'][0]
+        exp = ['stage.modules.X', 'stage.modules.Y']
+        assert (sorted(res), sorted(exp))
+    

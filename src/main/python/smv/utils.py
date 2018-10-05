@@ -55,6 +55,12 @@ def smv_copy_array(sc, *cols):
 
     return jcols
 
+def scala_seq_to_list(_jvm, j_seq):
+    """Convert Scala Seq to Python list
+    """
+    j_list = _jvm.scala.collection.JavaConversions.seqAsJavaList(j_seq)
+    return [x for x in j_list]
+
 def check_socket(port):
     """Check whether the given port is open to bind"""
     import socket
