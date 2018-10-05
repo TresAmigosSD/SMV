@@ -267,7 +267,6 @@ class SmvMultiJoinAdaptor(joiner: SmvMultiJoin) {
  */
 class SmvPyClient(val j_smvApp: SmvApp) {
   val config      = j_smvApp.smvConfig
-  val publishHive = j_smvApp.publishHive
 
   def callbackServerPort: Option[Int] = config.cmdLine.cbsPort.get
 

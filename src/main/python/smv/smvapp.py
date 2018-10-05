@@ -526,26 +526,28 @@ class SmvApp(object):
                 else:
                     print("... Unable to delete {}".format(r.fn()))
     
+    def _modules_with_ancestors(self, mods):
+        ancestors = [a for m in mods for a in scala_seq_to_list(self._jvm, m.ancestors())]
+        ancestors.extend(mods)
+        return ancestors
 
     def _purge_current_output_files(self, mods):
         if(self._cmd_line.forceRunAll):
-            ancestors = [a for m in mods for a in scala_seq_to_list(self._jvm, m.ancestors())]
-            ancestors.extend(mods)
+            ancestors = self._modules_with_ancestors(mods)
             for m in set(ancestors):
                 m.deleteOutputs(m.versionedOutputFiles())
         
-    def _dry_run(self):
+    def _dry_run(self, mods):
         """Execute as dry-run if the dry-run flag is specified.
             This will show which modules are not yet persisted that need to run, without
             actually running the modules.
         """
         
-        # cmdLine.dryRun() returns an ScallopOption, .apply gets the value
         if(self._cmd_line.dryRun):
             # Find all ancestors inclusive,
             # filter the modules that are not yet persisted and not ephemeral.
             # this yields all the modules that will need to be run with the given command
-            mods_with_ancestors = scala_seq_to_list(self._jvm, self.j_smvApp.modulesToRunWithAncestors())
+            mods_with_ancestors = self._modules_with_ancestors(mods)
             mods_not_persisted = [ m for m in mods_with_ancestors if not (m.isPersisted() or m.isEphemeral()) ]
 
             print("Dry run - modules not persisted:")
@@ -648,7 +650,7 @@ class SmvApp(object):
 
         #either generate graphs, publish modules, or run output modules (only one will occur)
         self._print_dead_modules() \
-        or self._dry_run() \
+        or self._dry_run(mods) \
         or self._generate_dot_graph() \
         or self._publish_modules_to_hive(mods, collector) \
         or self._publish_modules(mods, collector) \
