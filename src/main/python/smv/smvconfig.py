@@ -111,7 +111,7 @@ class SmvConfig(object):
     def stage_names(self):
         return self._split_prop("smv.stages")
 
-    def infer_stage_full_name(self, part_name):
+    def infer_full_stage_name(self, part_name):
         all_stages = self.stage_names()
         candidates = [s for s in all_stages if s.endswith(part_name)]
 
