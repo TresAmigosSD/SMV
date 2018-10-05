@@ -197,10 +197,10 @@ class SmvApp(object):
         return self.j_smvApp.smvConfig()
 
     def appName(self):
-        return self.config().appName()
+        return self.py_smvconf.app_name()
 
     def maxCbsPortRetries(self):
-        return self.config().maxCbsPortRetries()
+        return self.py_smvconf.merged_props.get('smv.maxCbsPortRetries')
 
     def getConf(self, key):
         return self.j_smvPyClient.getRunConfig(key)
@@ -236,10 +236,10 @@ class SmvApp(object):
 
     def userLibs(self):
         """Return dynamically set smv.user_libraries from conf"""
-        return self.j_smvPyClient.userLibs()
+        return self.py_smvconf.user_libs()
 
     def appId(self):
-        return self.config().appId()
+        return self.py_smvconf.app_id()
 
     def discoverSchemaAsSmvSchema(self, path, csvAttributes, n=100000):
         """Discovers the schema of a .csv file and returns a Scala SmvSchema instance
@@ -491,7 +491,7 @@ class SmvApp(object):
 
     def abs_path_for_project_path(self, project_path):
         # Load dynamic app dir from scala
-        smvAppDir = self.config().appDir()
+        smvAppDir = self.py_smvconf.app_dir
         return os.path.abspath(os.path.join(smvAppDir, project_path))
 
     def prepend_source(self, project_path):
@@ -565,7 +565,7 @@ class SmvApp(object):
         """
         dot_graph_str = SmvAppInfo(self).create_graph_dot()
         if(self.cmd_line.graph):
-            path = "{}.dot".format(self.config().appName())
+            path = "{}.dot".format(self.appName())
             with open(path, "w") as f:
                 f.write(dot_graph_str)
             return True

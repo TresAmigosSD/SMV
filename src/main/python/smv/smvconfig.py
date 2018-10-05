@@ -119,6 +119,15 @@ class SmvConfig(object):
             'publishDir': get_sub_dir('publishDir', 'publish')
         }
 
+    def app_id(self):
+        return self.merged_props().get("smv.appId")
+    
+    def app_name(self):
+        return self.merged_props().get("smv.appName")
+    
+    def user_libs(self):
+        return self._split_prop("smv.user_libraries")
+
     def stage_names(self):
         return self._split_prop("smv.stages")
 
