@@ -11,12 +11,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Provides SmvApp module list, dependency graph etc.
-"""
 from smv.utils import scala_seq_to_list
 import json
 
 class SmvAppInfo(object):
+    """Provides SmvApp module list, dependency graph etc. for shell and plot.
+        This class is mainly for CLI and GUI. The functions are not core to
+        SmvApp.
+    """
+
     def __init__(self, smvApp):
         self.smvApp = smvApp
         self.dsm = smvApp.dsm
