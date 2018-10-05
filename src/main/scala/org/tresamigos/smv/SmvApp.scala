@@ -55,7 +55,7 @@ class SmvApp(private val cmdLineArgs: Seq[String], _spark: SparkSession) {
   val sqlContext = sparkSession.sqlContext
 
   // dsm should be private but will be temporarily public to accomodate outside invocations
-  val dsm = new DataSetMgr(smvConfig)
+  val dsm = new DataSetMgr(stages)
 
   // Since OldVersionHelper will be used by executors, need to inject the version from the driver
   OldVersionHelper.version = sc.version
