@@ -506,9 +506,6 @@ class SmvApp(object):
         cl = self.py_smvconf.cmdline
         return namedtuple("CmdLine", cl.keys())(*cl.values())
         
-    def _modules_to_run(self):
-        return scala_seq_to_list(self._jvm, self.j_smvApp.modulesToRun())
-
     def _dry_run(self):
         """Execute as dry-run if the dry-run flag is specified.
             This will show which modules are not yet persisted that need to run, without
@@ -552,6 +549,12 @@ class SmvApp(object):
             return True
         else:
             return False
+
+    def _modules_to_run(self):
+        modPartialNames = self.py_smvconf.mods_to_run
+        stageNames      = [self.py_smvconf.inferStageFullName(f) for f in self.py_smvconf.stages_to_run]
+
+        return self.dsm.modulesToRun(modPartialNames, stageNames, self._cmd_line().runAllApp)
 
     def run(self):
         self.j_smvApp.purgeCurrentOutputFiles()

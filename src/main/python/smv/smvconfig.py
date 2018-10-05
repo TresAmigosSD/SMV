@@ -14,6 +14,7 @@
 Handle command line args and props files
 """
 import os.path
+import re
 import argparse
 import uuid
 import smv.jprops as jprops
@@ -107,6 +108,28 @@ class SmvConfig(object):
             'publishDir': get_sub_dir('publishDir', 'publish')
         }
 
+    def stage_names(self):
+        return self._split_prop("smv.stages")
+
+    def infer_full_stage_name(self, part_name):
+        all_stages = self.stage_names()
+        candidates = [s for s in all_stages if s.endswith(part_name)]
+
+        if (len(candidates) == 0):
+            raise SmvRuntimeError("Can't find stage {}".format(part_name))
+        elif(len(candidates) == 1):
+            return candidates[0]
+        else:
+            raise SmvRuntimeError("Stage name {} is ambiguous".format(part_name))
+
+    def print_conf(self):
+        print(self.cmdline)
+        print(self.merged_props())
+
+    def _split_prop(self, prop_name):
+        prop_val = self.merged_props().get(prop_name)
+        return [f.strip() for f in re.split("[:,]", prop_val)]
+
     def _create_cmdline_conf(self, arglist):
         """Parse arglist to a config dictionary
         """
@@ -147,8 +170,8 @@ class SmvConfig(object):
 
         # What modules to run
         parser.add_argument('--run-app', dest='runAllApp', action='store_true', help="run all output modules in all stages in app")
-        parser.add_argument('-m', '--run-module', dest='modsToRun', nargs='+', help="run specified list of module FQNs")
-        parser.add_argument('-s', '--run-stage', dest='stagesToRun', nargs='+', help="run all output modules in specified stages")
+        parser.add_argument('-m', '--run-module', dest='modsToRun', nargs='+', default=[], help="run specified list of module FQNs")
+        parser.add_argument('-s', '--run-stage', dest='stagesToRun', nargs='+', default=[], help="run all output modules in specified stages")
 
         def parse_props(prop):
             return prop.split("=")

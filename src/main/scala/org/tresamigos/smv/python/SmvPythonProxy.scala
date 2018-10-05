@@ -200,6 +200,9 @@ object SmvPythonHelper {
 
   def dsmDataSetsForStage(dsm: DataSetMgr, stage: String): java.util.List[SmvDataSet] = 
     dsm.dataSetsForStage(stage)
+
+  def dsmModulesToRun(dsm: DataSetMgr, modPartialNames: Array[String], stageNames: Array[String], allMods: Boolean): java.util.List[SmvDataSet] =
+    dsm.modulesToRun(modPartialNames, stageNames, allMods)
 }
 
 class SmvGroupedDataAdaptor(grouped: SmvGroupedData) {
