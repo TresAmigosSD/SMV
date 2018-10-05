@@ -7,7 +7,7 @@ class CustomDriver(SmvDriver):
         assert driver_args == expected_args, "Expected driver args {} but got {}".format(expected_args, driver_args)
         # verify that smv args are parsed correctly
         config_key = "smv.config.custom_key"
-        config_value = smvApp.config().mergedProps().apply(config_key)
+        config_value = smvApp.py_smvconf.merged_props().get(config_key)
         expected_value = "custom_value"
         assert config_value == expected_value, \
             "Expected config value for {} to be {} but got {}".format(config_key, config_value, expected_value) 

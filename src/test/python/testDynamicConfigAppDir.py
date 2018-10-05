@@ -39,7 +39,7 @@ class RunModuleWithDynamicConfigAppDirTest(SmvBaseTest):
 
         # capture the initial default app dir before each test. When the first test from this class
         # is run, this will be
-        self.initial_app_dir = self.smvApp.config().appDir()
+        self.initial_app_dir = self.smvApp.appDir()
 
     def tearDown(self):
         """ Reset the app dir to what it was initially after EACH test. Should be '.' '"""

@@ -193,14 +193,17 @@ class SmvApp(object):
         dds = self.py_smvconf.all_data_dirs()
         return namedtuple("DataDirs", dds.keys())(*dds.values())
 
-    def config(self):
-        return self.j_smvApp.smvConfig()
-
     def appName(self):
         return self.py_smvconf.app_name()
 
+    def appDir(self):
+        return self.py_smvconf.app_dir
+
     def maxCbsPortRetries(self):
-        return self.py_smvconf.merged_props.get('smv.maxCbsPortRetries')
+        return self.py_smvconf.merged_props().get('smv.maxCbsPortRetries')
+
+    def jdbcUrl(self):
+        return self.py_smvconf.merged_props().get('smv.jdbc.url')
 
     def getConf(self, key):
         return self.j_smvPyClient.getRunConfig(key)
@@ -491,8 +494,7 @@ class SmvApp(object):
 
     def abs_path_for_project_path(self, project_path):
         # Load dynamic app dir from scala
-        smvAppDir = self.py_smvconf.app_dir
-        return os.path.abspath(os.path.join(smvAppDir, project_path))
+        return os.path.abspath(os.path.join(self.appDir(), project_path))
 
     def prepend_source(self, project_path):
         abs_path = self.abs_path_for_project_path(project_path)

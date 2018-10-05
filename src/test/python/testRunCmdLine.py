@@ -125,6 +125,6 @@ class CreateDot(RunCmdLineBaseTest):
         import os
         self.smvApp.run()
 
-        dot_file = "{}.dot".format(self.smvApp.config().appName())
+        dot_file = "{}.dot".format(self.smvApp.appName())
         assert (os.path.isfile(dot_file) )
         os.remove(dot_file)
