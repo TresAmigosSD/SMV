@@ -20,6 +20,7 @@ import os
 import sys
 import traceback
 import json
+from collections import namedtuple
 
 from py4j.java_gateway import java_import, JavaObject
 from pyspark import SparkContext
@@ -105,6 +106,9 @@ class SmvApp(object):
         self.j_smvPyClient = self.create_smv_pyclient(arglist)
 
         self.py_smvconf = SmvConfig(arglist, self._jvm)
+
+        cl = self.py_smvconf.cmdline
+        self._cmd_line = namedtuple("CmdLine", cl.keys())(*cl.values())
 
         # shortcut is meant for internal use only
         self.j_smvApp = self.j_smvPyClient.j_smvApp()
@@ -501,10 +505,6 @@ class SmvApp(object):
             # added to the sys.path
             pass
 
-    def _cmd_line(self):
-        from collections import namedtuple
-        cl = self.py_smvconf.cmdline
-        return namedtuple("CmdLine", cl.keys())(*cl.values())
         
     def _dry_run(self):
         """Execute as dry-run if the dry-run flag is specified.
@@ -513,7 +513,7 @@ class SmvApp(object):
         """
         
         # cmdLine.dryRun() returns an ScallopOption, .apply gets the value
-        if(self._cmd_line().dryRun):
+        if(self._cmd_line.dryRun):
             # Find all ancestors inclusive,
             # filter the modules that are not yet persisted and not ephemeral.
             # this yields all the modules that will need to be run with the given command
@@ -532,7 +532,7 @@ class SmvApp(object):
         """Genrate app level graphviz dot file
         """
         dot_graph_str = SmvAppInfo(self).create_graph_dot()
-        if(self._cmd_line().graph):
+        if(self._cmd_line.graph):
             path = "{}.dot".format(self.config().appName())
             with open(path, "w") as f:
                 f.write(dot_graph_str)
@@ -544,7 +544,7 @@ class SmvApp(object):
         """Print dead modules: 
         Modules which do not contribute to any output modules are considered dead
         """
-        if(self._cmd_line().printDeadModules):
+        if(self._cmd_line.printDeadModules):
             SmvAppInfo(self).ls_dead()
             return True
         else:
@@ -552,9 +552,57 @@ class SmvApp(object):
 
     def _modules_to_run(self):
         modPartialNames = self.py_smvconf.mods_to_run
-        stageNames      = [self.py_smvconf.inferStageFullName(f) for f in self.py_smvconf.stages_to_run]
+        stageNames      = [self.py_smvconf.infer_stage_full_name(f) for f in self.py_smvconf.stages_to_run]
 
-        return self.dsm.modulesToRun(modPartialNames, stageNames, self._cmd_line().runAllApp)
+        return self.dsm.modulesToRun(modPartialNames, stageNames, self._cmd_line.runAllApp)
+
+    def _module_rdd(self, m, collector):
+        return m.rdd(
+            False, # force_run
+            self._cmd_line.genEdd,
+            collector,
+            False # quick run
+        )
+
+    def _publish_modules(self, mods, collector):
+        if(self._cmd_line.publish):
+            for m in mods:
+                m.publish(collector)
+            return True
+        else:
+            return False
+
+  
+    def _publish_modules_to_hive(self, mods, collector):
+        if(self._cmd_line.publishHive):
+            for m in mods:
+                m.exportToHive(collector)
+            return True
+        else:
+            return False
+
+    def _publish_modules_through_jdbc(self, mods, collector):
+        if(self._cmd_line.publishJDBC):
+            for m in mods:
+                m.publishThroughJDBC(collector)
+            return True
+        else:
+            return False
+
+    def _publish_modules_locally(self, mods, collector):
+        if(self._cmd_line.exportCsv):
+            local_dir = self._cmd_line.exportCsv
+            for m in mods:
+                csv_path = "{}/{}".format(local_dir, m.versionedFqn())
+                self._module_rdd(m, collector).smvExportCsv(csv_path)
+            return True
+        else:
+            return False
+
+    def _generate_output_modules(self, mods, collector):
+        for m in mods:
+            self._module_rdd(m, collector)
+        return len(mods) > 0
 
     def run(self):
         self.j_smvApp.purgeCurrentOutputFiles()
@@ -574,8 +622,8 @@ class SmvApp(object):
         self._print_dead_modules() \
         or self._dry_run() \
         or self._generate_dot_graph() \
-        or self.j_smvApp.publishModulesToHive(collector) \
-        or self.j_smvApp.publishOutputModules(collector) \
-        or self.j_smvApp.publishOutputModulesThroughJDBC(collector)  \
-        or self.j_smvApp.publishOutputModulesLocally(collector) \
-        or self.j_smvApp.generateOutputModules(collector)
+        or self._publish_modules_to_hive(mods, collector) \
+        or self._publish_modules(mods, collector) \
+        or self._publish_modules_through_jdbc(mods, collector)  \
+        or self._publish_modules_locally(mods, collector) \
+        or self._generate_output_modules(mods, collector)
