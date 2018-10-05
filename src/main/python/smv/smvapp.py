@@ -107,9 +107,7 @@ class SmvApp(object):
 
         self.py_smvconf = SmvConfig(arglist, self._jvm)
 
-        dds = self.py_smvconf.all_data_dirs()
-        self.all_data_dirs = namedtuple("DataDirs", dds.keys())(*dds.values())
-
+        # CmdLine is static, so can be an attribute
         cl = self.py_smvconf.cmdline
         self.cmd_line = namedtuple("CmdLine", cl.keys())(*cl.values())
 
@@ -188,6 +186,13 @@ class SmvApp(object):
         self.remove_source(self.SRC_PROJECT_PATH)
         self.remove_source(self.SRC_LIB_PATH)
 
+    def all_data_dirs(self):
+        """ All the config data dirs as an object. 
+            Could be dynamic, so calculate each time when use
+        """
+        dds = self.py_smvconf.all_data_dirs()
+        return namedtuple("DataDirs", dds.keys())(*dds.values())
+
     def config(self):
         return self.j_smvApp.smvConfig()
 
@@ -225,7 +230,7 @@ class SmvApp(object):
 
     def stages(self):
         """Stages is a function as they can be set dynamically on an SmvApp instance"""
-        return self.j_smvPyClient.stages()
+        return self.py_smvconf.stage_names()
 
     def userLibs(self):
         """Return dynamically set smv.user_libraries from conf"""
@@ -251,7 +256,7 @@ class SmvApp(object):
         return self.j_smvPyClient.readSchemaFromDataPathAsSmvSchema(data_file_path)
 
     def inputDir(self):
-        return self.config().inputDir()
+        return self.all_data_dirs().inputDir
 
     def getFileNamesByType(self, ftype):
         all_files = self._jvm.SmvPythonHelper.getDirList(self.inputDir())
@@ -452,7 +457,7 @@ class SmvApp(object):
         return self._jvm.org.tresamigos.smv.ModURN(fqn).getStage().get()
 
     def outputDir(self):
-        return self.j_smvPyClient.outputDir()
+        return self.all_data_dirs().outputDir
 
     def scalaOption(self, val):
         """Returns a Scala Option containing the value"""
@@ -517,7 +522,7 @@ class SmvApp(object):
                 for f in scala_seq_to_list(self._jvm, m.allOutputFiles())
             ]
             res = self._jvm.SmvPythonHelper.purgeDirectory(
-                self.all_data_dirs.outputDir, 
+                self.all_data_dirs().outputDir, 
                 smv_copy_array(self.sc, valid_files_in_output_dir)
             )
             for r in scala_seq_to_list(self._jvm, res):

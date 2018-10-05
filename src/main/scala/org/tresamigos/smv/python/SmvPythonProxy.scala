@@ -268,8 +268,6 @@ class SmvMultiJoinAdaptor(joiner: SmvMultiJoin) {
 class SmvPyClient(val j_smvApp: SmvApp) {
   val config      = j_smvApp.smvConfig
 
-  def callbackServerPort: Option[Int] = config.cmdLine.cbsPort.get
-
   def publishVersion: Option[String] = config.cmdLine.publish.get
 
   def mergedPropsJSON: String = Serialization.write(j_smvApp.smvConfig.mergedProps)(org.json4s.DefaultFormats)
