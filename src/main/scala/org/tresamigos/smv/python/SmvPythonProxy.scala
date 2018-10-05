@@ -190,6 +190,11 @@ object SmvPythonHelper {
   //here to java.util.List
   def getDirList(dirPath: String): java.util.List[String] = SmvHDFS.dirList(dirPath)
 
+  private[smv] case class PurgeResult(fn: String, success: Boolean)
+  def purgeDirectory(dirName: String, keepFiles: ArrayList[String]): Seq[PurgeResult] = {
+    SmvHDFS.purgeDirectory(dirName, keepFiles.toSeq).map(r => PurgeResult(r._1, r._2))
+  }
+
   def dsmLoad(dsm: DataSetMgr, urns: Array[String]): java.util.List[SmvDataSet] = {
     val urnObjs = urns.map{URN(_)}
     dsm.load(urnObjs: _*)

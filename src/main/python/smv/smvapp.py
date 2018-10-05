@@ -107,6 +107,9 @@ class SmvApp(object):
 
         self.py_smvconf = SmvConfig(arglist, self._jvm)
 
+        dds = self.py_smvconf.all_data_dirs()
+        self.all_data_dirs = namedtuple("DataDirs", dds.keys())(*dds.values())
+
         cl = self.py_smvconf.cmdline
         self._cmd_line = namedtuple("CmdLine", cl.keys())(*cl.values())
 
@@ -505,6 +508,31 @@ class SmvApp(object):
             # added to the sys.path
             pass
 
+
+    def _purge_old_output_files(self):
+        if (self._cmd_line.purgeOldOutput):
+            valid_files_in_output_dir = [
+                self._jvm.SmvHDFS.baseName(f) 
+                for m in self.dsm.allDataSets() 
+                for f in scala_seq_to_list(self._jvm, m.allOutputFiles())
+            ]
+            res = self._jvm.SmvPythonHelper.purgeDirectory(
+                self.all_data_dirs.outputDir, 
+                smv_copy_array(self.sc, valid_files_in_output_dir)
+            )
+            for r in scala_seq_to_list(self._jvm, res):
+                if (r.success()):
+                    print("... Deleted {}".format(r.fn()))
+                else:
+                    print("... Unable to delete {}".format(r.fn()))
+    
+
+    def _purge_current_output_files(self, mods):
+        if(self._cmd_line.forceRunAll):
+            ancestors = [a for m in mods for a in scala_seq_to_list(self._jvm, m.ancestors())]
+            ancestors.extend(mods)
+            for m in set(ancestors):
+                m.deleteOutputs(m.versionedOutputFiles())
         
     def _dry_run(self):
         """Execute as dry-run if the dry-run flag is specified.
@@ -605,10 +633,10 @@ class SmvApp(object):
         return len(mods) > 0
 
     def run(self):
-        self.j_smvApp.purgeCurrentOutputFiles()
-        self.j_smvApp.purgeOldOutputFiles()
-
         mods = self._modules_to_run()
+
+        self._purge_current_output_files(mods)
+        self._purge_old_output_files()
 
         if (len(mods) > 0):
             print("Modules to run/publish")
