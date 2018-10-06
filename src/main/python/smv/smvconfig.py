@@ -53,6 +53,7 @@ class SmvConfig(object):
         java_import(self._jvm, "org.tresamigos.smv.SmvConfig2")
 
         self.j_smvconf = self._jvm.SmvConfig2(
+            self.cmdline.get('genEdd'),
             self.merged_props(), 
             self.all_data_dirs()
         )
@@ -113,7 +114,8 @@ class SmvConfig(object):
             'inputDir': get_sub_dir('inputDir', "input"),
             'outputDir': get_sub_dir('outputDir', "output"),
             'historyDir': get_sub_dir('historyDir', "history"),
-            'publishDir': get_sub_dir('publishDir', 'publish')
+            'publishDir': get_sub_dir('publishDir', 'publish'),
+            'publishVersion': self.cmdline.get('publish')
         }
 
     def app_id(self):

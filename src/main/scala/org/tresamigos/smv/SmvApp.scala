@@ -33,10 +33,9 @@ import org.tresamigos.smv.util.Edd
  * Driver for SMV applications.  Most apps do not need to override this class and should just be
  * launched using the SmvApp object (defined below)
  */
-class SmvApp(private val cmdLineArgs: Seq[String], _spark: SparkSession) {
+class SmvApp(val smvConfig: SmvConfig2, _spark: SparkSession) {
   val log         = LogManager.getLogger("smv")
-  val smvConfig   = new SmvConfig(cmdLineArgs)
-  val genEdd      = smvConfig.cmdLine.genEdd()
+  val genEdd      = smvConfig.genEdd
 
   def stages      = smvConfig.stageNames
 
@@ -102,8 +101,8 @@ class SmvApp(private val cmdLineArgs: Seq[String], _spark: SparkSession) {
 object SmvApp {
   var app: SmvApp = _
 
-  def init(args: Array[String], _spark: SparkSession) = {
-    app = new SmvApp(args, _spark)
+  def init(smvConf: SmvConfig2, _spark: SparkSession) = {
+    app = new SmvApp(smvConf, _spark)
     app
   }
 }

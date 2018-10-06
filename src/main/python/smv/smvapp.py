@@ -103,9 +103,8 @@ class SmvApp(object):
         java_import(self._jvm, "org.tresamigos.smv.URN")
         java_import(self._jvm, "org.tresamigos.smv.DfCreator")
 
-        self.j_smvPyClient = self.create_smv_pyclient(arglist)
-
         self.py_smvconf = SmvConfig(arglist, self._jvm)
+        self.j_smvPyClient = self.create_smv_pyclient(self.py_smvconf.j_smvconf)
 
         # CmdLine is static, so can be an attribute
         cl = self.py_smvconf.cmdline
@@ -214,7 +213,6 @@ class SmvApp(object):
 
         # this call sets the scala side's picture of app dir and forces
         # the app properties to be read from disk and reevaluated
-        self.j_smvPyClient.setAppDir(appDir)
         self.py_smvconf.set_app_dir(appDir)
 
         # this call will use the dynamic appDir that we just set ^
@@ -222,7 +220,6 @@ class SmvApp(object):
         self.prependDefaultDirs()
 
     def setDynamicRunConfig(self, runConfig):
-        self.j_smvPyClient.setDynamicRunConfig(runConfig)
         self.py_smvconf.set_dynamic_props(runConfig)
 
     def getCurrentProperties(self, raw = False):
@@ -267,13 +264,12 @@ class SmvApp(object):
         all_files = self._jvm.SmvPythonHelper.getDirList(self.inputDir())
         return [str(f) for f in all_files if f.endswith(ftype)]
 
-    def create_smv_pyclient(self, arglist):
+    def create_smv_pyclient(self, j_smvconf):
         '''
         return a smvPyClient instance
         '''
         # convert python arglist to java String array
-        java_args =  smv_copy_array(self.sc, *arglist)
-        return self._jvm.org.tresamigos.smv.python.SmvPyClientFactory.init(java_args, self.sparkSession._jsparkSession)
+        return self._jvm.org.tresamigos.smv.python.SmvPyClientFactory.init(j_smvconf, self.sparkSession._jsparkSession)
 
     def get_graph_json(self):
         """Generate a json string representing the dependency graph.

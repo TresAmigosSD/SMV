@@ -623,7 +623,7 @@ abstract class SmvDataSet {
    */
   private[smv] def publish(collector: SmvRunInfoCollector) = {
     val df      = rdd(collector=collector)
-    val version = app.smvConfig.cmdLine.publish()
+    val version = app.smvConfig.publishVersion
     val handler = new FileIOHandler(app.sparkSession, publishCsvPath(version))
     //Same as in persist, publish null string as a special value with assumption that it's not
     //a valid data value
