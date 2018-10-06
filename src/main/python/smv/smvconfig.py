@@ -53,9 +53,6 @@ class SmvConfig(object):
         java_import(self._jvm, "org.tresamigos.smv.SmvConfig2")
 
         self.j_smvconf = self._jvm.SmvConfig2(
-            self.mods_to_run,
-            self.stages_to_run,
-            self.cmdline, 
             self.merged_props(), 
             self.all_data_dirs()
         )

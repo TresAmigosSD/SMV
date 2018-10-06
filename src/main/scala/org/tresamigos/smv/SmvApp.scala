@@ -39,7 +39,6 @@ class SmvApp(private val cmdLineArgs: Seq[String], _spark: SparkSession) {
   val genEdd      = smvConfig.cmdLine.genEdd()
 
   def stages      = smvConfig.stageNames
-  def userLibs    = smvConfig.userLibs
 
   lazy val smvVersion  = {
     val smvHome = sys.env("SMV_HOME")

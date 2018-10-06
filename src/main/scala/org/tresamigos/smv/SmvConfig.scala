@@ -346,16 +346,10 @@ class SmvConfig(cmdLineArgs: Seq[String]) {
  *  Target interface for future SmvConfig class
  **/
 class SmvConfig2(
-  val modsToRun: ArrayList[String],
-  val stagesToRun: ArrayList[String],
-  val cmdLine: java.util.Map[String, String],
   var props: java.util.Map[String, String],
   var dataDirs: java.util.Map[String, String]
 ){
   def printall() = {
-    println(modsToRun)
-    println(stagesToRun)
-    println(cmdLine)
     println(props)
     println(dataDirs)
   }

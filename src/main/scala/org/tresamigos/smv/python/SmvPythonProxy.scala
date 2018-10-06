@@ -282,8 +282,6 @@ class SmvPyClient(val j_smvApp: SmvApp) {
     j_smvApp.smvConfig.setAppDir(appDir)
   }
 
-  def userLibs: Array[String] = j_smvApp.userLibs.toArray
-
   // TODO: The following method should be removed when Scala side can
   // handle publish-hive SmvOutput tables
   def moduleNames: java.util.List[String] = {
