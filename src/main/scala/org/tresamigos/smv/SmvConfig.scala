@@ -342,6 +342,9 @@ class SmvConfig(cmdLineArgs: Seq[String]) {
   }
 }
 
+/** Scaffolding: for python side to test passing in configs.
+ *  Target interface for future SmvConfig class
+ **/
 class SmvConfig2(
   val modsToRun: ArrayList[String],
   val stagesToRun: ArrayList[String],

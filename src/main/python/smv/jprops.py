@@ -23,6 +23,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 # Copied from https://github.com/mgood/jprops
+# For java properties file loading
 
 import io
 import re

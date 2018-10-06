@@ -20,6 +20,12 @@ import smv.jprops as jprops
 from smv.error import SmvRuntimeError
 
 class SmvConfig(object):
+    """Smv configurations 
+        Including:
+            - command line parsing
+            - read in property files
+            - dynamic configuration handling
+    """
     def __init__(self, arglist, _jvm):
         self._jvm = _jvm
         self.cmdline = self._create_cmdline_conf(arglist)
@@ -40,8 +46,11 @@ class SmvConfig(object):
         self.mods_to_run = self.cmdline.pop('modsToRun')
         self.stages_to_run = self.cmdline.pop('stagesToRun')
 
+        # Scaffolding: SmvConfig2 is a dummy Scala class to test the 
+        # approach of passing in conf to scala side
         from py4j.java_gateway import java_import
         java_import(self._jvm, "org.tresamigos.smv.SmvConfig2")
+
         self.j_smvconf = self._jvm.SmvConfig2(
             self.mods_to_run,
             self.stages_to_run,
@@ -51,18 +60,26 @@ class SmvConfig(object):
         )
 
     def reset_j_smvconf():
+        """Reset scala side conf - for dynamic conf
+        """
         self.j_smvconf.reset(self.j_merged_props(), self.j_all_data_dirs())
 
     def read_props_from_app_dir(self, _app_dir):
+        """For a given app dir, read in the prop files
+        """
         self.app_dir = _app_dir
         self.static_props = self._read_props()
 
     def merged_props(self):
+        """All the props (static + dynamic)
+        """
         res = self.static_props.copy()
         res.update(self.dynamic_props)
         return res
 
     def all_data_dirs(self):
+        """Create all the data dir configs
+        """
         props = self.merged_props()
         if (self.cmdline.get('dataDir')):
             data_dir = self.cmdline.get('dataDir')
@@ -90,13 +107,9 @@ class SmvConfig(object):
             'publishDir': get_sub_dir('publishDir', 'publish')
         }
 
-
-    def print_conf(self):
-        print(self.cmdline)
-        print(self.merged_props())
-
     def _create_cmdline_conf(self, arglist):
-        """Parse arglist to a config dictionary"""
+        """Parse arglist to a config dictionary
+        """
         parser = argparse.ArgumentParser(
             usage="smv-run -m ModuleToRun\n       smv-run --run-app",
             description="For additional usage information, please refer to the user guide and API docs at: \nhttp://tresamigossd.github.io/SMV"
@@ -148,6 +161,8 @@ class SmvConfig(object):
 
 
     def _read_props(self):
+        """Read property files
+        """
         # os.path.join has the following behavior:
         # ("/a/b", "c/d") -> "/a/b/c/d"
         # ("/a/b", "/c/d") -> "/c/d"

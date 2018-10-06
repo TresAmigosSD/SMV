@@ -102,6 +102,11 @@ package org.tresamigos.smv {
       assertUnorderedSeqEqual(ss, Seq("com.myproj.s1pkg", "com.myproj.s2pkg"))
     }
 
+    test("test EDD args") {
+      val conf = mkconfig("--edd")
+      assert(conf.cmdLine.genEdd() === true)
+    }
+  
     test("test input/output/data dir command line override") {
       import java.io.File
       val conf = mkconfig("--smv-props",
