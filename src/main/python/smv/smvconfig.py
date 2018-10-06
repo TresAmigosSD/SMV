@@ -60,7 +60,7 @@ class SmvConfig(object):
             self.all_data_dirs()
         )
 
-    def reset_j_smvconf():
+    def reset_j_smvconf(self):
         """Reset scala side conf - for dynamic conf
         """
         self.j_smvconf.reset(self.merged_props(), self.all_data_dirs())
@@ -131,7 +131,7 @@ class SmvConfig(object):
     def stage_names(self):
         return self._split_prop("smv.stages")
 
-    def infer_full_stage_name(self, part_name):
+    def infer_stage_full_name(self, part_name):
         all_stages = self.stage_names()
         candidates = [s for s in all_stages if s.endswith(part_name)]
 
