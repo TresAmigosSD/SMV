@@ -205,7 +205,7 @@ class SmvApp(object):
         return self.py_smvconf.merged_props().get('smv.jdbc.url')
 
     def getConf(self, key):
-        return self.j_smvPyClient.getRunConfig(key)
+        return self.py_smvconf.get_run_config(key)
 
     def setAppDir(self, appDir):
         """ SMV's equivalent of 'cd' for app dirs. """

@@ -77,9 +77,11 @@ class SmvConfig(object):
         return res
 
     def set_dynamic_props(self, new_d_props):
-        if(new_d_props):
+        if(new_d_props is None):
+            self.dynamic_props = {}
+        else:
             self.dynamic_props = new_d_props.copy()
-            self.reset_j_smvconf()
+        self.reset_j_smvconf()
 
     def set_app_dir(self, new_app_dir):
         if(new_app_dir):
@@ -129,6 +131,12 @@ class SmvConfig(object):
 
     def stage_names(self):
         return self._split_prop("smv.stages")
+
+    def get_run_config(self, key):
+        if (key in self.dynamic_props):
+            return self.dynamic_props.get(key).strip()
+        else:
+            return self.merged_props().get("smv.config." + key, None)
 
     def infer_stage_full_name(self, part_name):
         all_stages = self.stage_names()
