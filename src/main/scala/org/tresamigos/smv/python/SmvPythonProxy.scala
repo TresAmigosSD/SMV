@@ -271,10 +271,6 @@ class SmvPyClient(val j_smvApp: SmvApp) {
 
   def mergedPropsJSON: String = Serialization.write(j_smvApp.smvConfig.mergedProps)(org.json4s.DefaultFormats)
 
-  // ---- User Run Configuration Parameters proxy funcs.
-  // def getRunConfig(key: String): String = j_smvApp.smvConfig.getRunConfig(key)
-  // def getRunConfigHash()                = j_smvApp.smvConfig.getRunConfigHash()
-
   def javaMapToImmutableMap(javaMap: java.util.Map[String, String]): Map[String, String] =
     if (javaMap == null) Map.empty else mapAsScalaMap(javaMap).toMap
 
