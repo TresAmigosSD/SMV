@@ -106,6 +106,10 @@ class SmvApp(object):
         self.py_smvconf = SmvConfig(arglist, self._jvm)
         self.j_smvPyClient = self.create_smv_pyclient(self.py_smvconf.j_smvconf)
 
+        # configure spark sql params 
+        for k, v in self.py_smvconf.spark_sql_props().items():
+            self.sqlContext.setConf(k, v)
+
         # CmdLine is static, so can be an attribute
         cl = self.py_smvconf.cmdline
         self.cmd_line = namedtuple("CmdLine", cl.keys())(*cl.values())
@@ -260,6 +264,8 @@ class SmvApp(object):
         return self.all_data_dirs().inputDir
 
     def getFileNamesByType(self, ftype):
+        """Return a list of file names which has the postfix ftype
+        """
         all_files = self._jvm.SmvPythonHelper.getDirList(self.inputDir())
         return [str(f) for f in all_files if f.endswith(ftype)]
 
@@ -283,7 +289,7 @@ class SmvApp(object):
         df, collector = self.runModule(urn, forceRun, version)
         return ds.df2result(df)
 
-    def loadSingleDS(self, urn):
+    def load_single_ds(self, urn):
         """Return j_ds from urn"""
         return self.dsm.load(urn)[0]
 
@@ -315,7 +321,7 @@ class SmvApp(object):
         """
         self.setDynamicRunConfig(runConfig)
         collector = self._jvm.SmvRunInfoCollector()
-        j_ds = self.loadSingleDS(urn)
+        j_ds = self.load_single_ds(urn)
         if (forceRun):
             self.j_smvPyClient.deleteModuleOutput(j_ds)
 
@@ -409,12 +415,12 @@ class SmvApp(object):
 
     def getMetadataJson(self, urn):
         """Returns the metadata for a given urn"""
-        j_ds = self.loadSingleDS(urn)
+        j_ds = self.load_single_ds(urn)
         return j_ds.getMetadata().toJson()
 
     def getMetadataHistoryJson(self, urn):
         """Returns the metadata history for a given urn"""
-        j_ds = self.loadSingleDS(urn)
+        j_ds = self.load_single_ds(urn)
         return j_ds.getMetadataHistory().toJson()
 
     def getDsHash(self, name, runConfig):

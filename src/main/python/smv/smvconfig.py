@@ -75,6 +75,12 @@ class SmvConfig(object):
         res.update(self.dynamic_props)
         return res
 
+    def spark_sql_props(self):
+        return {k:v 
+            for k, v in self.merged_props().items()
+            if k.startswith("spark.sql")
+        }
+
     def set_dynamic_props(self, new_d_props):
         """Reset dynamic props
             Overwrite entire dynamic props fully each reset

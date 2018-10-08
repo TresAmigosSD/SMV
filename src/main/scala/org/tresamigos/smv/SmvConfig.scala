@@ -49,7 +49,6 @@ class SmvConfig(
 
   private[smv] def stageNames = { splitProp("smv.stages").toSeq }
 
-  def sparkSqlProps = mergedProps.filterKeys(k => k.startsWith("spark.sql."))
   val outputDir = dataDirs("outputDir")
   val historyDir = dataDirs("historyDir")
   val publishDir = dataDirs("publishDir")

@@ -58,20 +58,7 @@ class SmvApp(val smvConfig: SmvConfig, _spark: SparkSession) {
   // Since OldVersionHelper will be used by executors, need to inject the version from the driver
   OldVersionHelper.version = sc.version
 
-  // configure spark sql params and inject app here rather in run method so that it would be done even if we use the shell.
-  setSparkSqlConfigParams()
-
   lazy val allDataSets = dsm.allDataSets
-
-  /**
-   * pass on the spark sql props set in the smv config file(s) to spark.
-   * This is just for convenience so user can manage both smv/spark props in a single file.
-   */
-  private def setSparkSqlConfigParams() = {
-    for ((key, value) <- smvConfig.sparkSqlProps) {
-      sqlContext.setConf(key, value)
-    }
-  }
 
   def getRunInfo(urn: URN): SmvRunInfoCollector = {
     getRunInfo(dsm.load(urn).head)
