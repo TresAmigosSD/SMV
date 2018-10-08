@@ -44,14 +44,6 @@ class SmvDataSetMgrTest(SmvBaseTest):
         b2 = mods[1].resolvedRequiresDS().array()[0]
         self.assertEqual(b1, b2)
 
-    def test_dsmgr_finds_all_ds_in_stage(self):
-        dfForStage = self.smvApp.dsm.dataSetsForStage("stage1")
-        self.assertDSListMatch(dfForStage, [
-            'mod:stage1.modules.A', 
-            'mod:stage1.modules.B', 
-            'mod:stage1.modules.C'
-        ])
-
     def test_allDataSets(self):
         allDs = self.smvApp.dsm.allDataSets()
         self.assertDSListMatch(allDs, [
@@ -62,7 +54,3 @@ class SmvDataSetMgrTest(SmvBaseTest):
             'mod:stage2.modules.Z',
             'mod:stage3.modules.Y'
         ])
-
-    def test_dsmgr_does_not_find_link_in_stage(self):
-        dfForStage = self.smvApp.dsm.dataSetsForStage("stage4")
-        self.assertEqual(len(dfForStage), 0)

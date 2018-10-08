@@ -64,21 +64,8 @@ class DataSetMgr(stageNames: Seq[String]) {
       (namedMods ++ stageMods ++ appMods).distinct
     }
 
-  def dataSetsForStage(stageNames: String*): Seq[SmvDataSet] =
-    withTX ( _.dataSetsForStage(stageNames: _*) )
-
-  def dataSetsForStageWithLink(stageNames: String*): Seq[SmvDataSet] =
-    withTX (
-      _.dataSetsForStage(stageNames: _*).flatMap { ds =>
-        ds.resolvedRequiresDS :+ ds
-      }.distinct
-    )
-
   def allDataSets(): Seq[SmvDataSet] =
     withTX ( _.allDataSets )
-
-  def outputModulesForStage(stageNames: String*): Seq[SmvDataSet] =
-    withTX ( _.outputModulesForStage(stageNames: _*) )
 
   def inferDS(partialNames: String*): Seq[SmvDataSet] =
     withTX( _.inferDS(partialNames: _*) )

@@ -204,9 +204,6 @@ object SmvPythonHelper {
   def dsmInferDS(dsm: DataSetMgr, names: Array[String]): java.util.List[SmvDataSet] =
     dsm.inferDS(names: _*)
 
-  def dsmDataSetsForStage(dsm: DataSetMgr, stage: String): java.util.List[SmvDataSet] = 
-    dsm.dataSetsForStage(stage)
-
   def dsmModulesToRun(dsm: DataSetMgr, modPartialNames: Array[String], stageNames: Array[String], allMods: Boolean): java.util.List[SmvDataSet] =
     dsm.modulesToRun(modPartialNames, stageNames, allMods)
 }

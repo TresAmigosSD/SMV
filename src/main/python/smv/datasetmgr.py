@@ -59,11 +59,6 @@ class DataSetMgr(object):
         """
         return self.inferDS(partial_name)[0].urn().toString()
 
-    def dataSetsForStage(self, stage):
-        """Return all SmvDataSets in a stage
-        """
-        return self.helper.dsmDataSetsForStage(self.j_dsm, stage)
-
     def register(self, repo_factory):
         """Register python repo factory
         """
