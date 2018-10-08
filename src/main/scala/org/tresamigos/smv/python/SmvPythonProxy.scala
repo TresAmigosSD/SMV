@@ -206,6 +206,9 @@ object SmvPythonHelper {
 
   def dsmModulesToRun(dsm: DataSetMgr, modPartialNames: Array[String], stageNames: Array[String], allMods: Boolean): java.util.List[SmvDataSet] =
     dsm.modulesToRun(modPartialNames, stageNames, allMods)
+
+  def createTX(repoFactories: ArrayList[DataSetRepoFactory], stageNames: ArrayList[String]): TX =
+    new TX(repoFactories.toSeq, stageNames.toSeq)
 }
 
 class SmvGroupedDataAdaptor(grouped: SmvGroupedData) {
