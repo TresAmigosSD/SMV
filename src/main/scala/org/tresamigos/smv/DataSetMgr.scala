@@ -83,18 +83,4 @@ class DataSetMgr(stageNames: Seq[String]) {
   def inferDS(partialNames: String*): Seq[SmvDataSet] =
     withTX( _.inferDS(partialNames: _*) )
 
-  /**
-   * Infer full stageName from a partial name
-   */
-  def inferStageFullName(partialStageName: String): String = {
-    val candidates = allStageNames filter (_.endsWith(partialStageName))
-
-    val fullName = candidates.size match {
-      case 0 => throw new SmvRuntimeException(s"Can't find stage ${partialStageName}")
-      case 1 => candidates.head
-      case _ => throw new SmvRuntimeException(s"Stage name ${partialStageName} is ambiguous")
-    }
-
-    fullName
-  }
 }
