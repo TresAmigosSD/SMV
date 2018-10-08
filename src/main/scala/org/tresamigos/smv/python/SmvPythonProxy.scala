@@ -26,7 +26,7 @@ import org.apache.spark.sql.{Column, DataFrame, SQLContext, SparkSession}
 import org.apache.spark.sql.types.{DataType, Metadata}
 import matcher._
 import org.tresamigos.smv.dqm.ParserLogger
-import org.tresamigos.smv.SmvConfig2
+import org.tresamigos.smv.SmvConfig
 
 // Serialize scala map to json w/o reinventing any wheels
 import org.json4s.jackson.Serialization
@@ -269,8 +269,6 @@ class SmvMultiJoinAdaptor(joiner: SmvMultiJoin) {
 class SmvPyClient(val j_smvApp: SmvApp) {
   val config      = j_smvApp.smvConfig
 
-  def mergedPropsJSON: String = Serialization.write(j_smvApp.smvConfig.mergedProps)(org.json4s.DefaultFormats)
-
   def javaMapToImmutableMap(javaMap: java.util.Map[String, String]): Map[String, String] =
     if (javaMap == null) Map.empty else mapAsScalaMap(javaMap).toMap
 
@@ -311,7 +309,7 @@ class SmvPyClient(val j_smvApp: SmvApp) {
 
 /** Not a companion object because we need to access it from Python */
 object SmvPyClientFactory {
-  def init(smvConf: SmvConfig2, sparkSession: SparkSession): SmvPyClient =
+  def init(smvConf: SmvConfig, sparkSession: SparkSession): SmvPyClient =
     new SmvPyClient(SmvApp.init(smvConf, sparkSession))
 }
 

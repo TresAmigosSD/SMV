@@ -137,7 +137,7 @@ class SmvMetadata(val builder: MetadataBuilder = new MetadataBuilder) {
   /**
    * Add SmvConfig as Json object of KVs
    */
-  def addSmvConfig(config: SmvConfig2) = {
+  def addSmvConfig(config: SmvConfig) = {
     val tuples = config.mergedProps.toSeq
     addConfig("_smvConfig", tuples)
   }

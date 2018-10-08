@@ -25,7 +25,7 @@ import java.util.Collections
 /** Scaffolding: for python side to test passing in configs.
  *  Target interface for future SmvConfig class
  **/
-class SmvConfig2(
+class SmvConfig(
   val genEdd: Boolean,
   var _mergedProps: java.util.Map[String, String],
   var _dataDirs: java.util.Map[String, String]
@@ -81,8 +81,8 @@ class SmvConfig2(
   }
 }
 
-object SmvConfig2 {
-  def defaultConf(dataDir: String) = new SmvConfig2(
+object SmvConfig {
+  def defaultConf(dataDir: String) = new SmvConfig(
     false,
     Collections.emptyMap(),
     mapAsJavaMap(Map(

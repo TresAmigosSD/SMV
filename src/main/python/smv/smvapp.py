@@ -222,13 +222,12 @@ class SmvApp(object):
     def setDynamicRunConfig(self, runConfig):
         self.py_smvconf.set_dynamic_props(runConfig)
 
-    def getCurrentProperties(self, raw = False):
+    def getCurrentProperties(self):
         """ Python dict of current megred props
             defaultProps ++ appConfProps ++ homeConfProps ++ usrConfProps ++ cmdLineProps ++ dynamicRunConfig
-            Where right wins out in map merge. Pass optional raw param = True to get json string instead
+            Where right wins out in map merge. 
         """
-        merged_json = self.j_smvPyClient.mergedPropsJSON()
-        return merged_json if raw else json.loads(merged_json)
+        return self.py_smvconf.merged_props()
 
     def stages(self):
         """Stages is a function as they can be set dynamically on an SmvApp instance"""

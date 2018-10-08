@@ -47,12 +47,10 @@ class SmvConfig(object):
         self.mods_to_run = self.cmdline.pop('modsToRun')
         self.stages_to_run = self.cmdline.pop('stagesToRun')
 
-        # Scaffolding: SmvConfig2 is a dummy Scala class to test the 
-        # approach of passing in conf to scala side
         from py4j.java_gateway import java_import
-        java_import(self._jvm, "org.tresamigos.smv.SmvConfig2")
+        java_import(self._jvm, "org.tresamigos.smv.SmvConfig")
 
-        self.j_smvconf = self._jvm.SmvConfig2(
+        self.j_smvconf = self._jvm.SmvConfig(
             self.cmdline.get('genEdd'),
             self.merged_props(), 
             self.all_data_dirs()
