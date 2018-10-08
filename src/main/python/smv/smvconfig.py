@@ -50,6 +50,7 @@ class SmvConfig(object):
         from py4j.java_gateway import java_import
         java_import(self._jvm, "org.tresamigos.smv.SmvConfig")
 
+        # Send conf result to Scala side
         self.j_smvconf = self._jvm.SmvConfig(
             self.cmdline.get('genEdd'),
             self.merged_props(), 
@@ -75,6 +76,9 @@ class SmvConfig(object):
         return res
 
     def set_dynamic_props(self, new_d_props):
+        """Reset dynamic props
+            Overwrite entire dynamic props fully each reset
+        """
         if(new_d_props is None):
             self.dynamic_props = {}
         else:
@@ -82,6 +86,9 @@ class SmvConfig(object):
         self.reset_j_smvconf()
 
     def set_app_dir(self, new_app_dir):
+        """Dynamic reset of app dir, so that the location of app and user
+            conf files. Re-read the props files
+        """
         if(new_app_dir):
             self.app_dir = new_app_dir
             self.read_props_from_app_dir(self.app_dir)
@@ -131,12 +138,23 @@ class SmvConfig(object):
         return self._split_prop("smv.stages")
 
     def get_run_config(self, key):
+        """Run config will be accessed within client modules. Return 
+            run-config value of the given key.
+
+            2 possible sources of run-config:
+                - dynamic_props (which passed in by client code)
+                - props files/command-line parameters
+        """
         if (key in self.dynamic_props):
+            # when seting run-config in dynamic props, use the key directly
             return self.dynamic_props.get(key).strip()
         else:
+            # when seting run-config in props, use smv.config.+key as key
             return self.merged_props().get("smv.config." + key, None)
 
     def infer_stage_full_name(self, part_name):
+        """For a given partial stage name, infer full stage name
+        """
         all_stages = self.stage_names()
         candidates = [s for s in all_stages if s.endswith(part_name)]
 
@@ -147,11 +165,10 @@ class SmvConfig(object):
         else:
             raise SmvRuntimeError("Stage name {} is ambiguous".format(part_name))
 
-    def print_conf(self):
-        print(self.cmdline)
-        print(self.merged_props())
 
     def _split_prop(self, prop_name):
+        """Split multi-value prop to a list
+        """
         prop_val = self.merged_props().get(prop_name)
         return [f.strip() for f in re.split("[:,]", prop_val)]
 
@@ -240,6 +257,12 @@ class SmvConfig(object):
             "smv.maxCbsPortRetries"  : "10"
         }
 
+        # Priority: Low to High
+        #   - default 
+        #   - conf/smv-app-conf.props
+        #   - ${HOME}/.smv/smv-user-conf.props
+        #   - conf/smv-user-conf.props
+        #   - command-line
         res = {}
         res.update(default_props)
         res.update(app_conf_props)

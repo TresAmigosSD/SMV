@@ -22,20 +22,20 @@ import java.util.{Properties, ArrayList}
 import scala.collection.JavaConversions._
 import java.util.Collections
 
-/** Scaffolding: for python side to test passing in configs.
- *  Target interface for future SmvConfig class
+/** Scala side replicate of python side SmvConfig
+ *  Command line parsing and props file reading are process on Python
+ *  side. The conf result set is passed to Scala side for Scala functions.
  **/
 class SmvConfig(
   val genEdd: Boolean,
   var _mergedProps: java.util.Map[String, String],
   var _dataDirs: java.util.Map[String, String]
 ){
-  def printall() = {
-    println(genEdd)
-    println(_mergedProps)
-    println(_dataDirs)
-  }
 
+  /**For dynamic config to reset SmvConfig
+   * Since genEdd will only be passed in from command line, not part 
+   * of dynamic changes, no need to update
+   **/
   def reset(
     _props: java.util.Map[String, String], 
     _data_dirs: java.util.Map[String, String]
@@ -82,6 +82,11 @@ class SmvConfig(
 }
 
 object SmvConfig {
+  /** Purely for Scala side testing
+   *  Some scala tests need an instance of SmvApp, which need a 
+   *  SmvConfig. Since Scala test will run without Python, have to
+   *  create a default SmvConfig without Python
+   **/
   def defaultConf(dataDir: String) = new SmvConfig(
     false,
     Collections.emptyMap(),
