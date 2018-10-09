@@ -15,7 +15,7 @@
 This module provides the python entry point to DataSetMgr on scala side
 """
 
-from smv.utils import smv_copy_array, scala_seq_to_list
+from smv.utils import smv_copy_array, scala_seq_to_list, list_distinct
 
 class DataSetMgr(object):
     """The Python representation of DataSetMgr.
@@ -47,7 +47,7 @@ class DataSetMgr(object):
             list(SmvDataSet): list of Scala SmvDataSets (j_ds)
         """
         with self.tx() as tx:
-            return scala_seq_to_list(self._jvm, tx.load(urns))
+            return tx.load(urns)
 
     def inferDS(self, *partial_names):
         """Return DSs from a list of partial names
@@ -59,7 +59,7 @@ class DataSetMgr(object):
             list(SmvDataSet): list of Scala SmvDataSets (j_ds)
         """
         with self.tx() as tx:
-            return scala_seq_to_list(self._jvm, tx.inferDS(partial_names))
+            return tx.inferDS(partial_names)
 
     def inferUrn(self, partial_name):
         """Return URN string from partial name
@@ -76,18 +76,23 @@ class DataSetMgr(object):
         """Return all the SmvDataSets in the app
         """
         with self.tx() as tx:
-            return scala_seq_to_list(self._jvm, tx.allDataSets())
+            return tx.allDataSets()
 
     def modulesToRun(self, modPartialNames, stageNames, allMods):
+        """Return a modules need to run
+            Combine specified modules, (-m), stages, (-s) and if
+            (--run-app) specified, all output modules
+        """
         with self.tx() as tx:
-            named_mods = scala_seq_to_list(self._jvm, tx.inferDS(modPartialNames))
-            stage_mods = scala_seq_to_list(self._jvm, tx.outputModulesForStage(stageNames))
-            app_mods = scala_seq_to_list(self._jvm, tx.allOutputModules()) if allMods else []
+            named_mods = tx.inferDS(modPartialNames)
+            stage_mods = tx.outputModulesForStage(stageNames)
+            app_mods = tx.allOutputModules() if allMods else []
             res = []
             res.extend(named_mods)
             res.extend(stage_mods)
             res.extend(app_mods)
-            return list(set(res))
+            # Need to perserve the ordering
+            return list_distinct(res)
 
 class TX(object):
     def __init__(self, _jvm, resourceFactories, stages):

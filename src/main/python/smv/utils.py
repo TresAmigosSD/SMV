@@ -87,6 +87,15 @@ def is_string(obj):
     except:
         return isinstance(obj, str)
 
+def list_distinct(l):
+    """Return a the distinct version of the input list, perserve order
+    """
+    uniq_list = []
+    for x in l:
+        if x not in uniq_list:
+            uniq_list.append(x)
+    return uniq_list
+
 class FileObjInputStream(object):
     """Wraps a Python binary file object to be used like a java.io.InputStream."""
 
