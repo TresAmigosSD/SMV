@@ -27,6 +27,9 @@ import org.apache.log4j.{LogManager, Level}
  * to run modules from the previous TX.
  */
 
+import scala.collection.JavaConversions._
+import java.util.ArrayList
+
 class TX(repoFactories: Seq[DataSetRepoFactory], stageNames: Seq[String]) {
   val repos: Seq[DataSetRepo] = repoFactories map (_.createRepo)
   val resolver                = new DataSetResolver(repos)
@@ -34,6 +37,9 @@ class TX(repoFactories: Seq[DataSetRepoFactory], stageNames: Seq[String]) {
 
   def load(urns: URN*): Seq[SmvDataSet] =
     resolver.loadDataSet(urns: _*)
+
+  def load(urnStrs: ArrayList[String]): Seq[SmvDataSet] = 
+    load(urnStrs.map(s => URN(s)): _*)
 
   def urnsForStage(stageNames: String*): Seq[URN] =
     repos flatMap (repo => stageNames flatMap (repo.urnsForStage(_)))
@@ -56,12 +62,18 @@ class TX(repoFactories: Seq[DataSetRepoFactory], stageNames: Seq[String]) {
   def outputModulesForStage(stageNames: String*): Seq[SmvDataSet] =
     filterOutput(dataSetsForStage(stageNames: _*))
 
+  def outputModulesForStage(stageNames: ArrayList[String]): Seq[SmvDataSet] =
+    outputModulesForStage(stageNames: _*)
+
   /**
    * Infer which SmvDataSet corresponds to a partial name. Used e.g. to identify
    * modules specified via smv-run -m.
    */
   def inferDS(partialNames: String*): Seq[SmvDataSet] =
     load( inferUrn(partialNames: _*): _*)
+
+  def inferDS(partialNames: ArrayList[String]): Seq[SmvDataSet] =
+    inferDS(partialNames: _*)
 
   def inferUrn(partialNames: String*): Seq[URN] = {
     if (partialNames.isEmpty)
