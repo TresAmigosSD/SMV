@@ -17,10 +17,6 @@ import org.tresamigos.smv.dqm._
 import org.apache.spark.sql.functions._
 
 class DQMTest extends SmvTestUtil {
-  override def appArgs = super.appArgs ++ Seq(
-    "--smv-props", "smv.stages=org.tresamigos.smv.stage1"
-  )
-
   test("test DQMState functions") {
     val state = new DQMState(sc, Seq("rule1", "rule2"), Seq("fix1"))
 

@@ -26,6 +26,7 @@ import org.apache.spark.sql.{Column, DataFrame, SQLContext, SparkSession}
 import org.apache.spark.sql.types.{DataType, Metadata}
 import matcher._
 import org.tresamigos.smv.dqm.ParserLogger
+import org.tresamigos.smv.SmvConfig
 
 // Serialize scala map to json w/o reinventing any wheels
 import org.json4s.jackson.Serialization
@@ -203,9 +204,6 @@ object SmvPythonHelper {
   def dsmInferDS(dsm: DataSetMgr, names: Array[String]): java.util.List[SmvDataSet] =
     dsm.inferDS(names: _*)
 
-  def dsmDataSetsForStage(dsm: DataSetMgr, stage: String): java.util.List[SmvDataSet] = 
-    dsm.dataSetsForStage(stage)
-
   def dsmModulesToRun(dsm: DataSetMgr, modPartialNames: Array[String], stageNames: Array[String], allMods: Boolean): java.util.List[SmvDataSet] =
     dsm.modulesToRun(modPartialNames, stageNames, allMods)
 }
@@ -268,32 +266,6 @@ class SmvMultiJoinAdaptor(joiner: SmvMultiJoin) {
 class SmvPyClient(val j_smvApp: SmvApp) {
   val config      = j_smvApp.smvConfig
 
-  def mergedPropsJSON: String = Serialization.write(j_smvApp.smvConfig.mergedProps)(org.json4s.DefaultFormats)
-
-  def setDynamicRunConfig(runConfig: java.util.Map[String, String]): Unit = {
-    val dynamicRunConfig: Map[String, String] = if (null == runConfig) Map.empty else mapAsScalaMap(runConfig).toMap
-    j_smvApp.smvConfig.dynamicRunConfig = dynamicRunConfig
-  }
-
-  def setAppDir(appDir: String): Unit = {
-    // set the scala smv app's app dir, will cause conf for that app to be loaded + reevaluated
-    // effectively changing SMV's working app directory
-
-    j_smvApp.smvConfig.setAppDir(appDir)
-  }
-
-  // TODO: The following method should be removed when Scala side can
-  // handle publish-hive SmvOutput tables
-  def moduleNames: java.util.List[String] = {
-    val cl                      = j_smvApp.smvConfig.cmdLine
-    val directMods: Seq[String] = cl.modsToRun()
-    directMods
-  }
-
-  // ---- User Run Configuration Parameters proxy funcs.
-  def getRunConfig(key: String): String = j_smvApp.smvConfig.getRunConfig(key)
-  def getRunConfigHash()                = j_smvApp.smvConfig.getRunConfigHash()
-
   def javaMapToImmutableMap(javaMap: java.util.Map[String, String]): Map[String, String] =
     if (javaMap == null) Map.empty else mapAsScalaMap(javaMap).toMap
 
@@ -334,10 +306,8 @@ class SmvPyClient(val j_smvApp: SmvApp) {
 
 /** Not a companion object because we need to access it from Python */
 object SmvPyClientFactory {
-  def init(sparkSession: SparkSession): SmvPyClient = init(Array("-m", "None"), sparkSession)
-
-  def init(args: Array[String], sparkSession: SparkSession): SmvPyClient =
-    new SmvPyClient(SmvApp.init(args, sparkSession))
+  def init(smvConf: SmvConfig, sparkSession: SparkSession): SmvPyClient =
+    new SmvPyClient(SmvApp.init(smvConf, sparkSession))
 }
 
 

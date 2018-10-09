@@ -230,7 +230,8 @@ trait SmvTestUtil extends SparkTestUtil {
 
   override def beforeAll() = {
     super.beforeAll()
-    SmvApp.init(appArgs.toArray, sparkSession)
+    val conf = SmvConfig.defaultConf(testcaseTempDir)
+    SmvApp.init(conf, sparkSession)
   }
 
   override def afterAll() = {

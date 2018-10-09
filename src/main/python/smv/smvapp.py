@@ -103,9 +103,12 @@ class SmvApp(object):
         java_import(self._jvm, "org.tresamigos.smv.URN")
         java_import(self._jvm, "org.tresamigos.smv.DfCreator")
 
-        self.j_smvPyClient = self.create_smv_pyclient(arglist)
-
         self.py_smvconf = SmvConfig(arglist, self._jvm)
+        self.j_smvPyClient = self.create_smv_pyclient(self.py_smvconf.j_smvconf)
+
+        # configure spark sql params 
+        for k, v in self.py_smvconf.spark_sql_props().items():
+            self.sqlContext.setConf(k, v)
 
         # CmdLine is static, so can be an attribute
         cl = self.py_smvconf.cmdline
@@ -206,7 +209,7 @@ class SmvApp(object):
         return self.py_smvconf.merged_props().get('smv.jdbc.url')
 
     def getConf(self, key):
-        return self.j_smvPyClient.getRunConfig(key)
+        return self.py_smvconf.get_run_config(key)
 
     def setAppDir(self, appDir):
         """ SMV's equivalent of 'cd' for app dirs. """
@@ -214,7 +217,6 @@ class SmvApp(object):
 
         # this call sets the scala side's picture of app dir and forces
         # the app properties to be read from disk and reevaluated
-        self.j_smvPyClient.setAppDir(appDir)
         self.py_smvconf.set_app_dir(appDir)
 
         # this call will use the dynamic appDir that we just set ^
@@ -222,16 +224,14 @@ class SmvApp(object):
         self.prependDefaultDirs()
 
     def setDynamicRunConfig(self, runConfig):
-        self.j_smvPyClient.setDynamicRunConfig(runConfig)
         self.py_smvconf.set_dynamic_props(runConfig)
 
-    def getCurrentProperties(self, raw = False):
+    def getCurrentProperties(self):
         """ Python dict of current megred props
             defaultProps ++ appConfProps ++ homeConfProps ++ usrConfProps ++ cmdLineProps ++ dynamicRunConfig
-            Where right wins out in map merge. Pass optional raw param = True to get json string instead
+            Where right wins out in map merge. 
         """
-        merged_json = self.j_smvPyClient.mergedPropsJSON()
-        return merged_json if raw else json.loads(merged_json)
+        return self.py_smvconf.merged_props()
 
     def stages(self):
         """Stages is a function as they can be set dynamically on an SmvApp instance"""
@@ -264,16 +264,17 @@ class SmvApp(object):
         return self.all_data_dirs().inputDir
 
     def getFileNamesByType(self, ftype):
+        """Return a list of file names which has the postfix ftype
+        """
         all_files = self._jvm.SmvPythonHelper.getDirList(self.inputDir())
         return [str(f) for f in all_files if f.endswith(ftype)]
 
-    def create_smv_pyclient(self, arglist):
+    def create_smv_pyclient(self, j_smvconf):
         '''
         return a smvPyClient instance
         '''
         # convert python arglist to java String array
-        java_args =  smv_copy_array(self.sc, *arglist)
-        return self._jvm.org.tresamigos.smv.python.SmvPyClientFactory.init(java_args, self.sparkSession._jsparkSession)
+        return self._jvm.org.tresamigos.smv.python.SmvPyClientFactory.init(j_smvconf, self.sparkSession._jsparkSession)
 
     def get_graph_json(self):
         """Generate a json string representing the dependency graph.
@@ -288,7 +289,7 @@ class SmvApp(object):
         df, collector = self.runModule(urn, forceRun, version)
         return ds.df2result(df)
 
-    def loadSingleDS(self, urn):
+    def load_single_ds(self, urn):
         """Return j_ds from urn"""
         return self.dsm.load(urn)[0]
 
@@ -320,7 +321,7 @@ class SmvApp(object):
         """
         self.setDynamicRunConfig(runConfig)
         collector = self._jvm.SmvRunInfoCollector()
-        j_ds = self.loadSingleDS(urn)
+        j_ds = self.load_single_ds(urn)
         if (forceRun):
             self.j_smvPyClient.deleteModuleOutput(j_ds)
 
@@ -414,12 +415,12 @@ class SmvApp(object):
 
     def getMetadataJson(self, urn):
         """Returns the metadata for a given urn"""
-        j_ds = self.loadSingleDS(urn)
+        j_ds = self.load_single_ds(urn)
         return j_ds.getMetadata().toJson()
 
     def getMetadataHistoryJson(self, urn):
         """Returns the metadata history for a given urn"""
-        j_ds = self.loadSingleDS(urn)
+        j_ds = self.load_single_ds(urn)
         return j_ds.getMetadataHistory().toJson()
 
     def getDsHash(self, name, runConfig):
