@@ -196,9 +196,6 @@ object SmvPythonHelper {
     SmvHDFS.purgeDirectory(dirName, keepFiles.toSeq).map(r => PurgeResult(r._1, r._2))
   }
 
-  def createTX(repoFactories: ArrayList[DataSetRepoFactory], stageNames: ArrayList[String]): TX =
-    new TX(repoFactories.toSeq, stageNames.toSeq)
-
   def createDsResolver(repos: ArrayList[DataSetRepo]): DataSetResolver =
     new DataSetResolver(repos.toSeq)
 }

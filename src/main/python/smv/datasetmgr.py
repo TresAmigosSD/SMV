@@ -35,6 +35,8 @@ class DataSetMgr(object):
         self.helper = self._jvm.SmvPythonHelper
 
     def tx(self):
+        """Create a TXContext for multiple places, avoid the long TXContext line
+        """
         return TXContext(self._jvm, self.dsRepoFactories, self.stages)
 
     def load(self, *urns):
@@ -95,6 +97,8 @@ class DataSetMgr(object):
             return list_distinct(res)
 
 class TXContext(object):
+    """Create a TX context for "with tx() as tx" syntax
+    """
     def __init__(self, _jvm, resourceFactories, stages):
         self._jvm = _jvm
         self.resourceFactories = resourceFactories
@@ -108,6 +112,17 @@ class TXContext(object):
 
 
 class TX(object):
+    """Abstraction of the transaction boundary for loading SmvDataSets. 
+        A TX object
+
+        * will instantiate a set of repos when itself instantiated and will
+        * reuse the same repos for all queries. This means that each new TX object will
+        * reload the SmvDataSet from source **once** during its lifetime.
+
+        NOTE: Once a new TX is created, the well-formedness of the SmvDataSets provided
+        by the previous TX is not guaranteed. Particularly it may become impossible
+        to run modules from the previous TX.
+    """
     def __init__(self, _jvm, resourceFactories, stages):
         self._jvm = _jvm
         self.repos = [rf.createRepo() for rf in resourceFactories]
