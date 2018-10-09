@@ -27,9 +27,9 @@ import scala.collection.mutable
  * arbitrary number of names so that all the target SmvDataSets
  * are loaded within the same transaction (which is much faster).
  */
-class DataSetMgr(smvConfig: SmvConfig) {
+class DataSetMgr(stageNames: Seq[String]) {
   private var dsRepoFactories: Seq[DataSetRepoFactory] = Seq.empty[DataSetRepoFactory]
-  private var allStageNames                            = smvConfig.stageNames
+  private var allStageNames                            = stageNames
 
   def register(newRepoFactory: DataSetRepoFactory): Unit = {
     dsRepoFactories = dsRepoFactories :+ newRepoFactory
@@ -51,7 +51,7 @@ class DataSetMgr(smvConfig: SmvConfig) {
    * every time
    */
   private[this] def withTX[T](func: TX => T): T =
-    func(new TX(dsRepoFactories, smvConfig))
+    func(new TX(dsRepoFactories, allStageNames))
 
   def load(urns: URN*): Seq[SmvDataSet] =
     withTX ( _.load(urns: _*) )

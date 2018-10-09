@@ -407,7 +407,7 @@ class SmvJdbcTable(SmvInputBase):
 
     def jdbcUrl(self):
         """User can override this, default use the jdbcUrl setting in smvConfig"""
-        return self.smvApp.config().jdbcUrl()
+        return self.smvApp.jdbcUrl()
 
     def readAsDF(self, readerLogger):
         if (self.tableQuery() is None):

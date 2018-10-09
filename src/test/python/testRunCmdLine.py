@@ -75,7 +75,14 @@ class RunModuleAmbiguousTest(RunCmdLineBaseTest):
         with self.assertRaisesRegexp(Py4JJavaError, r"Module name \[A\] is not specific enough"):
             self.smvApp.run()
 
+class SmvAppForceAllTest(RunCmdLineBaseTest):
+    @classmethod
+    def whatToRun(cls):
+        return ['-m', 'modules.A', '--force-run-all']
 
+    def test_should_force_run(self):
+        self.smvApp.run()
+    
 class SmvAppPurgeTest(SmvBaseTest):
     @classmethod
     def smvAppInitArgs(cls):
@@ -118,6 +125,6 @@ class CreateDot(RunCmdLineBaseTest):
         import os
         self.smvApp.run()
 
-        dot_file = "{}.dot".format(self.smvApp.config().appName())
+        dot_file = "{}.dot".format(self.smvApp.appName())
         assert (os.path.isfile(dot_file) )
         os.remove(dot_file)

@@ -190,6 +190,11 @@ object SmvPythonHelper {
   //here to java.util.List
   def getDirList(dirPath: String): java.util.List[String] = SmvHDFS.dirList(dirPath)
 
+  private[smv] case class PurgeResult(fn: String, success: Boolean)
+  def purgeDirectory(dirName: String, keepFiles: ArrayList[String]): Seq[PurgeResult] = {
+    SmvHDFS.purgeDirectory(dirName, keepFiles.toSeq).map(r => PurgeResult(r._1, r._2))
+  }
+
   def dsmLoad(dsm: DataSetMgr, urns: Array[String]): java.util.List[SmvDataSet] = {
     val urnObjs = urns.map{URN(_)}
     dsm.load(urnObjs: _*)
@@ -262,11 +267,6 @@ class SmvMultiJoinAdaptor(joiner: SmvMultiJoin) {
  */
 class SmvPyClient(val j_smvApp: SmvApp) {
   val config      = j_smvApp.smvConfig
-  val publishHive = j_smvApp.publishHive
-
-  def callbackServerPort: Option[Int] = config.cmdLine.cbsPort.get
-
-  def publishVersion: Option[String] = config.cmdLine.publish.get
 
   def mergedPropsJSON: String = Serialization.write(j_smvApp.smvConfig.mergedProps)(org.json4s.DefaultFormats)
 
@@ -281,15 +281,6 @@ class SmvPyClient(val j_smvApp: SmvApp) {
 
     j_smvApp.smvConfig.setAppDir(appDir)
   }
-
-  /** Output directory for files */
-  def outputDir: String = j_smvApp.smvConfig.outputDir
-
-  def stages: Array[String] = j_smvApp.stages.toArray
-
-  def userLibs: Array[String] = j_smvApp.userLibs.toArray
-
-  def urn2fqn(modUrn: String): String = org.tresamigos.smv.urn2fqn(modUrn)
 
   // TODO: The following method should be removed when Scala side can
   // handle publish-hive SmvOutput tables

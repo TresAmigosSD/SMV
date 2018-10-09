@@ -28,8 +28,7 @@ import org.joda.time.DateTime
  * dependencies. DSR caches the SmvDataSets it has already resolved to ensure that
  * any SmvDataSet is only resolved once.
  */
-class DataSetResolver(val repos: Seq[DataSetRepo],
-                      smvConfig: SmvConfig) {
+class DataSetResolver(val repos: Seq[DataSetRepo]) {
   /**
    * Timestamp which will be injected into the resolved SmvDataSets
    */

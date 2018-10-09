@@ -24,7 +24,7 @@ package org.tresamigos.smv
 sealed abstract class URN(prefix: String) {
   def fqn: String
   def getStage: Option[String] = {
-    val allStageNames = SmvApp.app.smvConfig.stageNames
+    val allStageNames = SmvApp.app.stages
 
     allStageNames.find { stageName =>
       fqn.startsWith(stageName + ".")

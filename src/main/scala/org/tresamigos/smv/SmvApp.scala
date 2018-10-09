@@ -37,11 +37,8 @@ class SmvApp(private val cmdLineArgs: Seq[String], _spark: SparkSession) {
   val log         = LogManager.getLogger("smv")
   val smvConfig   = new SmvConfig(cmdLineArgs)
   val genEdd      = smvConfig.cmdLine.genEdd()
-  val publishHive = smvConfig.cmdLine.publishHive()
-  val publishJDBC = smvConfig.cmdLine.publishJDBC()
 
   def stages      = smvConfig.stageNames
-  def userLibs    = smvConfig.userLibs
 
   lazy val smvVersion  = {
     val smvHome = sys.env("SMV_HOME")
@@ -57,7 +54,7 @@ class SmvApp(private val cmdLineArgs: Seq[String], _spark: SparkSession) {
   val sqlContext = sparkSession.sqlContext
 
   // dsm should be private but will be temporarily public to accomodate outside invocations
-  val dsm = new DataSetMgr(smvConfig)
+  val dsm = new DataSetMgr(stages)
 
   // Since OldVersionHelper will be used by executors, need to inject the version from the driver
   OldVersionHelper.version = sc.version
@@ -67,32 +64,6 @@ class SmvApp(private val cmdLineArgs: Seq[String], _spark: SparkSession) {
 
   lazy val allDataSets = dsm.allDataSets
 
-  /** list of all current valid output files in the output directory. All other files in output dir can be purged. */
-  private[smv] def validFilesInOutputDir(): Seq[String] =
-    allDataSets.flatMap(_.allOutputFiles).map(SmvHDFS.baseName(_))
-
-  /** remove all non-current files in the output directory */
-  private[smv] def purgeOldOutputFiles() = {
-    if (smvConfig.cmdLine.purgeOldOutput()) {
-      SmvHDFS.purgeDirectory(smvConfig.outputDir, validFilesInOutputDir()) foreach {
-        case (fn, success) =>
-          println(
-            if (success) s"... Deleted ${fn}"
-            else s"... Unabled to delete ${fn}"
-          )
-      }
-    }
-  }
-
-  /**
-   * Remove all current files (if any) in the output directory if --force-run-all
-   * argument was specified at the commandline
-   */
-  private[smv] def purgeCurrentOutputFiles() = {
-    if (smvConfig.cmdLine.forceRunAll())
-      deletePersistedResults(modulesToRunWithAncestors)
-  }
-
   /**
    * pass on the spark sql props set in the smv config file(s) to spark.
    * This is just for convenience so user can manage both smv/spark props in a single file.
@@ -101,82 +72,6 @@ class SmvApp(private val cmdLineArgs: Seq[String], _spark: SparkSession) {
     for ((key, value) <- smvConfig.sparkSqlProps) {
       sqlContext.setConf(key, value)
     }
-  }
-
-  /**
-   * For each module, delete its persisted csv and schema (if any) with the
-   * modules current hash
-   */
-
-  private[smv] def deletePersistedResults(dsList: Seq[SmvDataSet]) =
-    dsList foreach (ds => ds.deleteOutputs(ds.versionedOutputFiles))
-
-  /**
-   * if the publish to hive flag is setn, the publish
-   */
-  def publishModulesToHive(collector: SmvRunInfoCollector): Boolean = {
-    if (publishHive) {
-      // filter out the outout modules and publish them
-      modulesToRun flatMap {
-        case m: SmvOutput => Some(m)
-        case _            => None
-      } foreach (
-          m => m.exportToHive(collector)
-      )
-    }
-
-    publishHive
-  }
-
-  /**
-   * if the export-csv option is specified, then publish locally
-   */
-  def publishOutputModulesLocally(collector: SmvRunInfoCollector): Boolean = {
-    if (smvConfig.cmdLine.exportCsv.isSupplied) {
-      val localDir = smvConfig.cmdLine.exportCsv()
-      modulesToRun foreach { m =>
-        val csvPath = s"${localDir}/${m.versionedFqn}.csv"
-        m.rdd(collector=collector).smvExportCsv(csvPath)
-      }
-    }
-
-    smvConfig.cmdLine.exportCsv.isSupplied
-  }
-
-  /**
-   * Publish through JDBC if the --publish-jdbc flag is set
-   */
-  def publishOutputModulesThroughJDBC(collector: SmvRunInfoCollector): Boolean = {
-    if (publishJDBC) {
-      modulesToRun foreach (_.publishThroughJDBC(collector))
-      true
-    } else {
-      false
-    }
-  }
-
-  /**
-   * Publish the specified modules if the "--publish" flag was specified on command line.
-   * @return true if modules were published, otherwise return false.
-   */
-  private[smv] def publishOutputModules(collector: SmvRunInfoCollector): Boolean = {
-    if (smvConfig.cmdLine.publish.isDefined) {
-      modulesToRun foreach { module =>
-        module.publish(collector=collector)
-      }
-      true
-    } else {
-      false
-    }
-  }
-
-  /**
-   * run the specified output modules.
-   * @return true if modules were generated, otherwise false.
-   */
-  private[smv] def generateOutputModules(collector: SmvRunInfoCollector): Boolean = {
-    modulesToRun foreach (_.rdd(collector=collector))
-    modulesToRun.nonEmpty
   }
 
   def getRunInfo(urn: URN): SmvRunInfoCollector = {
@@ -199,27 +94,6 @@ class SmvApp(private val cmdLineArgs: Seq[String], _spark: SparkSession) {
     coll
   }
 
-  /**
-   * sequence of SmvModules to run based on the command line arguments.
-   * Returns the union of -a/-m/-s command line flags.
-   */
-  lazy val modulesToRun: Seq[SmvDataSet] = {
-    val cmdline = smvConfig.cmdLine
-    val empty   = Some(Seq.empty[String])
-
-    val modPartialNames = cmdline.modsToRun.orElse(empty)()
-    val stageNames      = cmdline.stagesToRun.orElse(empty)() map (dsm.inferStageFullName(_))
-
-    dsm.modulesToRun(modPartialNames, stageNames, cmdline.runAllApp())
-  }
-
-  /**
-   * Sequence of SmvModules to run + all of their ancestors
-   */
-  lazy val modulesToRunWithAncestors: Seq[SmvDataSet] = {
-    val ancestors = modulesToRun flatMap (_.ancestors)
-    (modulesToRun ++ ancestors).distinct
-  }
 }
 
 /**

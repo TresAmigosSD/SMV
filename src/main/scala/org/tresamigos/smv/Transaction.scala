@@ -27,9 +27,9 @@ import org.apache.log4j.{LogManager, Level}
  * to run modules from the previous TX.
  */
 
-class TX(repoFactories: Seq[DataSetRepoFactory], smvConfig: SmvConfig) {
+class TX(repoFactories: Seq[DataSetRepoFactory], stageNames: Seq[String]) {
   val repos: Seq[DataSetRepo] = repoFactories map (_.createRepo)
-  val resolver                = new DataSetResolver(repos, smvConfig)
+  val resolver                = new DataSetResolver(repos)
   val log                     = LogManager.getLogger("smv")
 
   def load(urns: URN*): Seq[SmvDataSet] =
@@ -39,9 +39,9 @@ class TX(repoFactories: Seq[DataSetRepoFactory], smvConfig: SmvConfig) {
     repos flatMap (repo => stageNames flatMap (repo.urnsForStage(_)))
 
   def allUrns(): Seq[URN] = {
-    if (smvConfig.stageNames.isEmpty)
+    if (stageNames.isEmpty)
       log.warn("No stage names configured. Unable to discover any modules.")
-    urnsForStage(smvConfig.stageNames: _*)
+    urnsForStage(stageNames: _*)
   }
 
   def dataSetsForStage(stageNames: String*): Seq[SmvDataSet] =
