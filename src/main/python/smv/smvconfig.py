@@ -157,6 +157,15 @@ class SmvConfig(object):
             # when seting run-config in props, use smv.config.+key as key
             return self.merged_props().get("smv.config." + key, None)
 
+    def get_run_config_keys(self):
+        """Return all the run-config keys
+        """
+        pref = "smv.config."
+        pref_len = len(pref)
+        from_props = [k[pref_len:] for k in self.merged_props().keys() if k.startswith(pref)]
+        from_dynamic = self.dynamic_props.keys()
+        return from_props + from_dynamic
+
     def infer_stage_full_name(self, part_name):
         """For a given partial stage name, infer full stage name
         """

@@ -16,9 +16,7 @@ This module defined the SmvRunConfig class which can be mixed-in into an
 SmvModule to get user configuration parameters at run-time.
 """
 
-import traceback
-
-from smv.smvapp import SmvApp
+from smv.utils import scala_seq_to_list
 
 class SmvRunConfig(object):
     """DEPRECATED
@@ -29,25 +27,6 @@ class SmvRunConfig(object):
         config to influence the dataset hash.
     """
 
-    def smvGetRunConfig(self, key):
-        """return the current user run configuration value for the given key."""
-        return self.smvApp.getConf(key)
-    
-    def smvGetRunConfigAsInt(self, key):
-        runConfig = self.smvGetRunConfig(key);
-        if runConfig is None:
-            return None
-        return int(runConfig)
-
-    def smvGetRunConfigAsBool(self, key):
-        runConfig = self.smvGetRunConfig(key);
-        if runConfig is None:
-            return None
-        sval = runConfig.strip().lower()
-        return (sval == "1" or sval == "true")
-
-    def _smvGetRunConfigHash(self):
-        """return the app level hash of the all the current user config values"""
-        app = SmvApp.getInstance()
-        app.warn("SmvRunConfig is deprecated. Accessors like smvGetRunConfig are now available directly on SmvDataSet.")
-        return app.j_smvPyClient.getRunConfigHash()
+    def _all_run_conf_keys(self):
+        """Return all possible run conf keys"""
+        return self.smvApp.py_smvconf.get_run_config_keys()
