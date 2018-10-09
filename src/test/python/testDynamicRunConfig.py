@@ -13,6 +13,7 @@
 
 from test_support.smvbasetest import SmvBaseTest
 from smv import SmvApp
+from py4j.protocol import Py4JJavaError
 
 class RunModuleWithRunConfigTest(SmvBaseTest):
     modUrn = 'mod:stage.modules.A'
@@ -44,3 +45,7 @@ class RunModuleWithRunConfigTest(SmvBaseTest):
         df, collector = self.smvApp.runModuleByName(self.modName)
         expected = self.createDF('src:String', 'cmd')
         self.should_be_same(expected, df)
+
+    def test_use_without_requiresConfig_should_error_out(self):
+        with self.assertRaisesRegexp(Py4JJavaError, "RunConfig key .* was not specified"):
+            self.df("stage.modules.RunConfWithError")
