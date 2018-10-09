@@ -19,6 +19,8 @@ import scala.collection.mutable
 
 import org.joda.time.DateTime
 
+import scala.collection.JavaConversions._
+import java.util.ArrayList
 /**
  * DataSetResolver (DSR) is the entrypoint through which the DataSetMgr acquires
  * SmvDataSets. A DSR object represent a single transaction. Each DSR creates a
@@ -41,7 +43,7 @@ class DataSetResolver(val repos: Seq[DataSetRepo]) {
    * Given URN, return cached resolved version SmvDataSet if it exists, or
    * otherwise load unresolved version from source and resolve it.
    */
-  def loadDataSet(urns: URN*): Seq[SmvDataSet] =
+  def loadDataSet(urns: Seq[URN]): Seq[SmvDataSet] =
     urns map { urn =>
 
       val found = urn.getStage.isDefined
@@ -59,6 +61,13 @@ class DataSetResolver(val repos: Seq[DataSetRepo]) {
         resolveDataSet(ds)
       }
     }
+
+  def loadDataSet(urn: URN): SmvDataSet = 
+    loadDataSet(Seq(urn)).head
+
+  def loadDataSet(urnStrs: ArrayList[String]): java.util.List[SmvDataSet] =
+    loadDataSet(urnStrs.toSeq.map(URN(_)))
+
 
   /*
    * Track which SmvDataSets is currently being resolved. Used to check for
