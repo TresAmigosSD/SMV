@@ -13,6 +13,7 @@
 
 from test_support.smvbasetest import SmvBaseTest
 from py4j.protocol import Py4JJavaError
+from smv.error import SmvRuntimeError
 
 class RunCmdLineBaseTest(SmvBaseTest):
     @classmethod
@@ -63,7 +64,7 @@ class RunNotExistModuleTest(RunCmdLineBaseTest):
         return ['-m', 'tooth-fary']
 
     def test_should_report_non_existing_module(self):
-        with self.assertRaisesRegexp(Py4JJavaError, "Cannot find module"):
+        with self.assertRaisesRegexp(SmvRuntimeError, "Can't find name tooth-fary"):
             self.smvApp.run()
 
 class RunModuleAmbiguousTest(RunCmdLineBaseTest):
@@ -72,7 +73,7 @@ class RunModuleAmbiguousTest(RunCmdLineBaseTest):
         return ['-m', 'A']
     
     def test_should_report_ambiguous_modules(self):
-        with self.assertRaisesRegexp(Py4JJavaError, r"Module name \[A\] is not specific enough"):
+        with self.assertRaisesRegexp(SmvRuntimeError, r"Partial name A is ambiguous"):
             self.smvApp.run()
 
 class SmvAppForceAllTest(RunCmdLineBaseTest):

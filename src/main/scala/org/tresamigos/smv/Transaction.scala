@@ -35,11 +35,11 @@ class TX(repoFactories: Seq[DataSetRepoFactory], stageNames: Seq[String]) {
   val resolver                = new DataSetResolver(repos)
   val log                     = LogManager.getLogger("smv")
 
-  private def load(urns: URN*): Seq[SmvDataSet] =
-    resolver.loadDataSet(urns: _*)
+  private def load(urns: Seq[URN]): Seq[SmvDataSet] =
+    resolver.loadDataSet(urns)
 
   def load(urnStrs: ArrayList[String]): java.util.List[SmvDataSet] =
-    load(urnStrs.map(s => URN(s)): _*)
+    load(urnStrs.map(s => URN(s)))
 
   private def urnsForStage(stageNames: String*): Seq[URN] =
     repos flatMap (repo => stageNames flatMap (repo.urnsForStage(_)))
@@ -51,10 +51,10 @@ class TX(repoFactories: Seq[DataSetRepoFactory], stageNames: Seq[String]) {
   }
 
   private def dataSetsForStage(stageNames: String*): Seq[SmvDataSet] =
-    load(urnsForStage(stageNames: _*): _*)
+    load(urnsForStage(stageNames: _*))
 
   def allDataSets(): java.util.List[SmvDataSet] =
-    load(allUrns: _*)
+    load(allUrns)
 
   def allOutputModules: java.util.List[SmvDataSet] =
     filterOutput(allDataSets)
@@ -67,7 +67,7 @@ class TX(repoFactories: Seq[DataSetRepoFactory], stageNames: Seq[String]) {
    * modules specified via smv-run -m.
    */
   def inferDS(partialNames: ArrayList[String]): java.util.List[SmvDataSet] =
-    load( inferUrn(partialNames: _*): _*)
+    load( inferUrn(partialNames: _*))
 
   private def inferUrn(partialNames: String*): Seq[URN] = {
     if (partialNames.isEmpty)

@@ -198,6 +198,9 @@ object SmvPythonHelper {
 
   def createTX(repoFactories: ArrayList[DataSetRepoFactory], stageNames: ArrayList[String]): TX =
     new TX(repoFactories.toSeq, stageNames.toSeq)
+
+  def createDsResolver(repos: ArrayList[DataSetRepo]): DataSetResolver =
+    new DataSetResolver(repos.toSeq)
 }
 
 class SmvGroupedDataAdaptor(grouped: SmvGroupedData) {

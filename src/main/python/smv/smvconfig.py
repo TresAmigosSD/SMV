@@ -19,6 +19,7 @@ import argparse
 import uuid
 import smv.jprops as jprops
 from smv.error import SmvRuntimeError
+from smv.utils import infer_full_name_from_part
 
 class SmvConfig(object):
     """Smv configurations 
@@ -161,16 +162,7 @@ class SmvConfig(object):
     def infer_stage_full_name(self, part_name):
         """For a given partial stage name, infer full stage name
         """
-        all_stages = self.stage_names()
-        candidates = [s for s in all_stages if s.endswith(part_name)]
-
-        if (len(candidates) == 0):
-            raise SmvRuntimeError("Can't find stage {}".format(part_name))
-        elif(len(candidates) == 1):
-            return candidates[0]
-        else:
-            raise SmvRuntimeError("Stage name {} is ambiguous".format(part_name))
-
+        return infer_full_name_from_part(self.stage_names(), part_name)
 
     def _split_prop(self, prop_name):
         """Split multi-value prop to a list

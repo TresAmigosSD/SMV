@@ -748,7 +748,7 @@ class SmvExtModulePython(target: ISmvModule) extends SmvDataSet with python.Inte
 
   override def resolve(resolver: DataSetResolver): SmvDataSet = {
     val urns = getPy4JResult(target.getDependencyUrns)
-    resolvedRequiresDS = urns map (urn => resolver.loadDataSet(URN(urn)).head)
+    resolvedRequiresDS = urns map (urn => resolver.loadDataSet(URN(urn)))
     this
   }
 
