@@ -52,29 +52,32 @@ class SmvApp(val smvConfig: SmvConfig, _spark: SparkSession) {
   val sc         = sparkSession.sparkContext
   val sqlContext = sparkSession.sqlContext
 
-  // dsm should be private but will be temporarily public to accomodate outside invocations
-  val dsm = new DataSetMgr(stages)
+  /**
+   * Get the DataFrame associated with data set. The DataFrame plan (not data) is cached in
+   * dfCache to ensure only a single DataFrame exists for a given data set
+   * (file/module).
+   * Note: this keyed by the "versioned" dataset FQN.
+   */
+  var dfCache: mutable.Map[String, DataFrame] = mutable.Map.empty[String, DataFrame]
+
 
   // Since OldVersionHelper will be used by executors, need to inject the version from the driver
   OldVersionHelper.version = sc.version
 
-  lazy val allDataSets = dsm.allDataSets
-
-  def getRunInfo(urn: URN): SmvRunInfoCollector = {
-    getRunInfo(dsm.load(urn).head)
-  }
+  def getRunInfo(ds: SmvDataSet): SmvRunInfoCollector = 
+    _getRunInfo(ds)
 
   /**
    * Returns the run information for a given dataset and all its
    * dependencies (including transitive dependencies), from the last run
    */
-  def getRunInfo(ds: SmvDataSet,
+  private def _getRunInfo(ds: SmvDataSet,
     coll: SmvRunInfoCollector=new SmvRunInfoCollector()): SmvRunInfoCollector = {
     // get fqn from urn, because if ds is a link we want the fqn of its target
     coll.addRunInfo(ds.fqn, ds.runInfo)
 
     ds.resolvedRequiresDS foreach { dep =>
-      getRunInfo(dep, coll)
+      _getRunInfo(dep, coll)
     }
 
     coll

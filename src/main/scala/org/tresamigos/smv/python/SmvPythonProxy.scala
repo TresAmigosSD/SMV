@@ -207,6 +207,9 @@ object SmvPythonHelper {
   def dsmModulesToRun(dsm: DataSetMgr, modPartialNames: Array[String], stageNames: Array[String], allMods: Boolean): java.util.List[SmvDataSet] =
     dsm.modulesToRun(modPartialNames, stageNames, allMods)
 
+  def createDataSetMgr(stages: ArrayList[String]) = 
+    new DataSetMgr(stages.toSeq)
+
   def createTX(repoFactories: ArrayList[DataSetRepoFactory], stageNames: ArrayList[String]): TX =
     new TX(repoFactories.toSeq, stageNames.toSeq)
 }
