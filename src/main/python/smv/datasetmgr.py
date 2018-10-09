@@ -21,10 +21,9 @@ class DataSetMgr(object):
     """The Python representation of DataSetMgr.
     """
 
-    def __init__(self, sc, j_dsm, stages):
+    def __init__(self, sc, stages):
         self.sc = sc
         self._jvm = sc._jvm
-        self.j_dsm = j_dsm
 
         self.stages = stages
         self.dsRepoFactories = []
@@ -35,6 +34,9 @@ class DataSetMgr(object):
 
         self.helper = self._jvm.SmvPythonHelper
 
+    def tx(self):
+        return TX(self._jvm, self.dsRepoFactories, self.stages)
+
     def load(self, *urns):
         """Load SmvDataSets for specified URNs
         
@@ -44,7 +46,8 @@ class DataSetMgr(object):
         Returns:
             list(SmvDataSet): list of Scala SmvDataSets (j_ds)
         """
-        return self.helper.dsmLoad(self.j_dsm, smv_copy_array(self.sc, *urns))
+        with self.tx() as tx:
+            return scala_seq_to_list(self._jvm, tx.load(urns))
 
     def inferDS(self, *partial_names):
         """Return DSs from a list of partial names
@@ -55,7 +58,8 @@ class DataSetMgr(object):
         Returns:
             list(SmvDataSet): list of Scala SmvDataSets (j_ds)
         """
-        return self.helper.dsmInferDS(self.j_dsm, smv_copy_array(self.sc, *partial_names))
+        with self.tx() as tx:
+            return scala_seq_to_list(self._jvm, tx.inferDS(partial_names))
 
     def inferUrn(self, partial_name):
         """Return URN string from partial name
@@ -67,29 +71,33 @@ class DataSetMgr(object):
         """
         j_rfact = self._jvm.DataSetRepoFactoryPython(repo_factory)
         self.dsRepoFactories.append(j_rfact)
-        self.j_dsm.register(j_rfact)
 
     def allDataSets(self):
         """Return all the SmvDataSets in the app
         """
-        j_dss = self.j_dsm.allDataSets()
-        return scala_seq_to_list(self._jvm, j_dss)
+        with self.tx() as tx:
+            return scala_seq_to_list(self._jvm, tx.allDataSets())
 
     def modulesToRun(self, modPartialNames, stageNames, allMods):
-        return self.helper.dsmModulesToRun(
-            self.j_dsm,
-            smv_copy_array(self.sc, *modPartialNames), 
-            smv_copy_array(self.sc, *stageNames), 
-            allMods
-        )
+        with self.tx() as tx:
+            named_mods = scala_seq_to_list(self._jvm, tx.inferDS(modPartialNames))
+            stage_mods = scala_seq_to_list(self._jvm, tx.outputModulesForStage(stageNames))
+            app_mods = scala_seq_to_list(self._jvm, tx.allOutputModules()) if allMods else []
+            res = []
+            res.extend(named_mods)
+            res.extend(stage_mods)
+            res.extend(app_mods)
+            return list(set(res))
 
 class TX(object):
     def __init__(self, _jvm, resourceFactories, stages):
         self._jvm = _jvm
+        self.resourceFactories = resourceFactories
+        self.stages = stages
 
     def __enter__(self):
         return self._jvm.org.tresamigos.smv.python.SmvPythonHelper.createTX(
-            resourceFactories, stages
+            self.resourceFactories, self.stages
         )
 
     def __exit__(self, type, value, traceback):

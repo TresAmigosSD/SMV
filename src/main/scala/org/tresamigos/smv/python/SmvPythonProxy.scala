@@ -196,20 +196,6 @@ object SmvPythonHelper {
     SmvHDFS.purgeDirectory(dirName, keepFiles.toSeq).map(r => PurgeResult(r._1, r._2))
   }
 
-  def dsmLoad(dsm: DataSetMgr, urns: Array[String]): java.util.List[SmvDataSet] = {
-    val urnObjs = urns.map{URN(_)}
-    dsm.load(urnObjs: _*)
-  }
-
-  def dsmInferDS(dsm: DataSetMgr, names: Array[String]): java.util.List[SmvDataSet] =
-    dsm.inferDS(names: _*)
-
-  def dsmModulesToRun(dsm: DataSetMgr, modPartialNames: Array[String], stageNames: Array[String], allMods: Boolean): java.util.List[SmvDataSet] =
-    dsm.modulesToRun(modPartialNames, stageNames, allMods)
-
-  def createDataSetMgr(stages: ArrayList[String]) = 
-    new DataSetMgr(stages.toSeq)
-
   def createTX(repoFactories: ArrayList[DataSetRepoFactory], stageNames: ArrayList[String]): TX =
     new TX(repoFactories.toSeq, stageNames.toSeq)
 }
