@@ -112,27 +112,6 @@ class SmvApp(private val cmdLineArgs: Seq[String], _spark: SparkSession) {
     dsList foreach (ds => ds.deleteOutputs(ds.versionedOutputFiles))
 
   /**
-   * compare EDD results if the --edd-compare flag was specified with edd files to compare.
-   * @return true if edd files were compared, otherwise false.
-   */
-  private[smv] def compareEddResults(): Boolean = {
-    smvConfig.cmdLine.compareEdd
-      .map { eddsToCompare =>
-        val edd1          = eddsToCompare(0)
-        val edd2          = eddsToCompare(1)
-        val (passed, log) = util.Edd.compareFiles(edd1, edd2)
-        if (passed) {
-          println("EDD Results are the same")
-        } else {
-          println("EDD Results differ:")
-          println(log)
-        }
-        true
-      }
-      .orElse(Some(false))()
-  }
-
-  /**
    * if the publish to hive flag is setn, the publish
    */
   def publishModulesToHive(collector: SmvRunInfoCollector): Boolean = {

@@ -17,7 +17,7 @@ package org.tresamigos.smv
 import scala.util.Try
 
 import java.io.{IOException, InputStreamReader, FileInputStream, File}
-import java.util.Properties
+import java.util.{Properties, ArrayList}
 
 import org.rogach.scallop.ScallopConf
 
@@ -84,10 +84,6 @@ private[smv] class CmdLineArgsConf(args: Seq[String]) extends ScallopConf(args) 
     descr = "publish|export given modules/stage/app to a CSV file at the given path on the local file system"
   )
 
-  val compareEdd = opt[List[String]]("edd-compare",
-                                     noshort = true,
-                                     default = None,
-                                     descr = "compare two edd result files")
   val genEdd = toggle(
     "edd",
     default = Some(false),
@@ -107,11 +103,6 @@ private[smv] class CmdLineArgsConf(args: Seq[String]) extends ScallopConf(args) 
     descrYes = "generate a json dependency graph of the given modules (modules are not run)",
     descrNo = "do not generate a json dependency graph"
   )
-
-  val runConfObj = opt[String]("run-conf-obj",
-                               noshort = true,
-                               default = None,
-                               descr = "load and instantiate the configuration object by its fqn")
 
   // --- data directories override
   val dataDir =
@@ -150,12 +141,6 @@ private[smv] class CmdLineArgsConf(args: Seq[String]) extends ScallopConf(args) 
                       default = Some(false),
                       descrYes = "determine which modules do not have persisted data and will need to be run.")
 
-  // if user specified "edd-compare" command line, user should have supplied two file names.
-  validateOpt(compareEdd) {
-    case (Some(edds)) if edds.length != 2 => Left("edd-compare param requires two EDD file names")
-    case _                                => Right(Unit)
-  }
-
   // override default error message handler that does a sys.exit(1) which makes it difficult to debug.
   printedName = "SmvApp"
   errorMessageHandler = { errMsg =>
@@ -170,7 +155,6 @@ private[smv] class CmdLineArgsConf(args: Seq[String]) extends ScallopConf(args) 
  */
 class SmvConfig(cmdLineArgs: Seq[String]) {
   import java.nio.file.Paths
-  import SmvConfig._
 
   /*pathJoin has the following behavior:
    *pathJoin("/a/b", "c/d") -> "/a/b/c/d"
@@ -242,8 +226,6 @@ class SmvConfig(cmdLineArgs: Seq[String]) {
   // --- user libraries are dynamic as well
   private[smv] def userLibs = { splitProp("smv.user_libraries").toSeq }
 
-  val classDir = mergedProps("smv.class_dir")
-
   val sparkSqlProps = mergedProps.filterKeys(k => k.startsWith("spark.sql."))
 
   def jdbcUrl: String =
@@ -258,9 +240,6 @@ class SmvConfig(cmdLineArgs: Seq[String]) {
     case None => throw new SmvRuntimeException("JDBC driver is not specified in SMV config")
     case Some(ret) => ret
   }
-
-  /** The FQN of configuration object for a particular run.  See github issue #319 */
-  val runConfObj: Option[String] = cmdLine.runConfObj.get.orElse(mergedProps.get(RunConfObjKey))
 
   // ---------- User Run Config Parameters key/values ----------
   def getRunConfig(key: String): String = dynamicRunConfig.getOrElse(key, getRunConfigFromConf(key))
@@ -363,6 +342,29 @@ class SmvConfig(cmdLineArgs: Seq[String]) {
   }
 }
 
-object SmvConfig {
-  val RunConfObjKey: String = "smv.runConfObj"
+/** Scaffolding: for python side to test passing in configs.
+ *  Target interface for future SmvConfig class
+ **/
+class SmvConfig2(
+  val modsToRun: ArrayList[String],
+  val stagesToRun: ArrayList[String],
+  val cmdLine: java.util.Map[String, String],
+  var props: java.util.Map[String, String],
+  var dataDirs: java.util.Map[String, String]
+){
+  def printall() = {
+    println(modsToRun)
+    println(stagesToRun)
+    println(cmdLine)
+    println(props)
+    println(dataDirs)
+  }
+
+  def reset(
+    _props: java.util.Map[String, String], 
+    _dataDirs: java.util.Map[String, String]
+  ) {
+    props = _props
+    dataDirs = _dataDirs
+  }
 }

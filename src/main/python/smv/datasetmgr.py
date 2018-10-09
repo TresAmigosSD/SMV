@@ -75,3 +75,11 @@ class DataSetMgr(object):
         """
         j_dss = self.j_dsm.allDataSets()
         return scala_seq_to_list(self._jvm, j_dss)
+
+    def modulesToRun(self, modPartialNames, stageNames, allMods):
+        return self.helper.dsmModulesToRun(
+            self.j_dsm,
+            smv_copy_array(self.sc, *modPartialNames), 
+            smv_copy_array(self.sc, *stageNames), 
+            allMods
+        )

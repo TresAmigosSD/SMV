@@ -103,11 +103,10 @@ package org.tresamigos.smv {
     }
 
     test("test EDD args") {
-      val conf = mkconfig("--edd", "--edd-compare", "/tmp/file1.edd", "/tmp/file2.edd")
+      val conf = mkconfig("--edd")
       assert(conf.cmdLine.genEdd() === true)
-      assert(conf.cmdLine.compareEdd() === List("/tmp/file1.edd", "/tmp/file2.edd"))
     }
-
+  
     test("test input/output/data dir command line override") {
       import java.io.File
       val conf = mkconfig("--smv-props",
