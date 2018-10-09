@@ -35,47 +35,41 @@ class TX(repoFactories: Seq[DataSetRepoFactory], stageNames: Seq[String]) {
   val resolver                = new DataSetResolver(repos)
   val log                     = LogManager.getLogger("smv")
 
-  def load(urns: URN*): Seq[SmvDataSet] =
+  private def load(urns: URN*): Seq[SmvDataSet] =
     resolver.loadDataSet(urns: _*)
 
-  def load(urnStrs: ArrayList[String]): Seq[SmvDataSet] = 
+  def load(urnStrs: ArrayList[String]): java.util.List[SmvDataSet] =
     load(urnStrs.map(s => URN(s)): _*)
 
-  def urnsForStage(stageNames: String*): Seq[URN] =
+  private def urnsForStage(stageNames: String*): Seq[URN] =
     repos flatMap (repo => stageNames flatMap (repo.urnsForStage(_)))
 
-  def allUrns(): Seq[URN] = {
+  private def allUrns(): Seq[URN] = {
     if (stageNames.isEmpty)
       log.warn("No stage names configured. Unable to discover any modules.")
     urnsForStage(stageNames: _*)
   }
 
-  def dataSetsForStage(stageNames: String*): Seq[SmvDataSet] =
+  private def dataSetsForStage(stageNames: String*): Seq[SmvDataSet] =
     load(urnsForStage(stageNames: _*): _*)
 
-  def allDataSets(): Seq[SmvDataSet] =
+  def allDataSets(): java.util.List[SmvDataSet] =
     load(allUrns: _*)
 
-  def allOutputModules: Seq[SmvDataSet] =
+  def allOutputModules: java.util.List[SmvDataSet] =
     filterOutput(allDataSets)
 
-  def outputModulesForStage(stageNames: String*): Seq[SmvDataSet] =
+  def outputModulesForStage(stageNames: ArrayList[String]): java.util.List[SmvDataSet] =
     filterOutput(dataSetsForStage(stageNames: _*))
-
-  def outputModulesForStage(stageNames: ArrayList[String]): Seq[SmvDataSet] =
-    outputModulesForStage(stageNames: _*)
 
   /**
    * Infer which SmvDataSet corresponds to a partial name. Used e.g. to identify
    * modules specified via smv-run -m.
    */
-  def inferDS(partialNames: String*): Seq[SmvDataSet] =
+  def inferDS(partialNames: ArrayList[String]): java.util.List[SmvDataSet] =
     load( inferUrn(partialNames: _*): _*)
 
-  def inferDS(partialNames: ArrayList[String]): Seq[SmvDataSet] =
-    inferDS(partialNames: _*)
-
-  def inferUrn(partialNames: String*): Seq[URN] = {
+  private def inferUrn(partialNames: String*): Seq[URN] = {
     if (partialNames.isEmpty)
       Seq.empty
     else {
