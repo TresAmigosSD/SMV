@@ -21,10 +21,13 @@ class DataSetMgr(object):
     """The Python representation of DataSetMgr.
     """
 
-    def __init__(self, sc, j_dsm):
+    def __init__(self, sc, j_dsm, stages):
         self.sc = sc
         self._jvm = sc._jvm
         self.j_dsm = j_dsm
+
+        self.stages = stages
+        self.dsRepoFactories = []
 
         from py4j.java_gateway import java_import
         java_import(self._jvm, "org.tresamigos.smv.python.SmvPythonHelper")
@@ -63,6 +66,7 @@ class DataSetMgr(object):
         """Register python repo factory
         """
         j_rfact = self._jvm.DataSetRepoFactoryPython(repo_factory)
+        self.dsRepoFactories.append(j_rfact)
         self.j_dsm.register(j_rfact)
 
     def allDataSets(self):
@@ -78,3 +82,16 @@ class DataSetMgr(object):
             smv_copy_array(self.sc, *stageNames), 
             allMods
         )
+
+class TX(object):
+    def __init__(self, _jvm, resourceFactories, stages):
+        self._jvm = _jvm
+
+    def __enter__(self):
+        return self._jvm.org.tresamigos.smv.python.SmvPythonHelper.createTX(
+            resourceFactories, stages
+        )
+
+    def __exit__(self, type, value, traceback):
+        pass
+

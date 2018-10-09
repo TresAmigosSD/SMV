@@ -118,7 +118,7 @@ class SmvApp(object):
         self.j_smvApp = self.j_smvPyClient.j_smvApp()
         self.log = self.j_smvApp.log()
         j_dsm = self._jvm.SmvPythonHelper.createDataSetMgr(self.stages())
-        self.dsm = DataSetMgr(self.sc, j_dsm)
+        self.dsm = DataSetMgr(self.sc, j_dsm, self.stages())
 
         # AFTER app is available but BEFORE stages,
         # use the dynamically configured app dir to set the source path, library path
