@@ -566,8 +566,8 @@ class SmvApp(object):
     def _generate_dot_graph(self):
         """Genrate app level graphviz dot file
         """
-        dot_graph_str = SmvAppInfo(self).create_graph_dot()
         if(self.cmd_line.graph):
+            dot_graph_str = SmvAppInfo(self).create_graph_dot()
             path = "{}.dot".format(self.appName())
             with open(path, "w") as f:
                 f.write(dot_graph_str)
