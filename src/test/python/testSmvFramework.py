@@ -110,26 +110,8 @@ b: String[,_SmvStrNull_]
 
     #TODO: add other SmvDataSet unittests
 
-class SmvRunConfigTest1(SmvBaseTest):
 
-    @classmethod
-    def smvAppInitArgs(cls):
-        return ['--smv-props', 'smv.config.s=s1', 'smv.config.i=1', 'smv.config.b=True', 'smv.stages=stage',
-                '-m', "None"]
-
-    def test_SmvCsvStringData_with_SmvRunConfig(self):
-        fqn = "stage.modules.D4"
-        df = self.df(fqn)
-        expect = self.createDF("a: String;b: Integer",
-            """test1_s1,1;
-                test2_not_i2,4;
-                test3_b,5;
-                test4_undefined_c,7;
-                test5_undefined_one,9;
-                test6_undefined_bool,11""")
-        self.should_be_same(expect, df)
-
-class SmvRunConfigTest2(SmvBaseTest):
+class SmvRunConfigTest(SmvBaseTest):
 
     @classmethod
     def smvAppInitArgs(cls):
