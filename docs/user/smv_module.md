@@ -6,13 +6,6 @@ An SMV Module is a collection of transformation operations and validation rules.
 Each module **must** define its input dependency by overriding the `requiresDS` method. The `requiresDS` method should return a sequence of `SmvDataSet`s required as input for this module.
 The dependent datasets can be defined in the same or a different stage as this module (see [SmvStage](smv_stages.md) for details).
 
-### Scala
-```scala
-object MyModule extends SmvModule("mod description") {
- override def requiresDS() = Seq(Mod1, Mod2)
- ...
-```
-### Python
 ```Python
 class MyModule(smv.SmvModule):
   def requiresDS(self):
@@ -21,13 +14,6 @@ class MyModule(smv.SmvModule):
 
 Note that `requiresDS` returns a sequence of the actual `SmvDataSet` objects that the module depends on, **not** the name. The dependency can be on any combination of `SmvDataSet`s which may be files, Hive tables, modules, etc. It is not limited to other `SmvModules`.
 
-### Scala
-```scala
-object MyModule extends SmvModule("mod description") {
- override def requiresDS() = Seq(File1, File2, Mod1)
- ...
-```
-### Python
 ```python
 class MyModule(smv.SmvModule):
   def requiresDS(self):
@@ -37,20 +23,6 @@ class MyModule(smv.SmvModule):
 ## Module Transformation Definition (run)
 The module **must** also provide a `run()` method that performs the transformations on the inputs to produce the module output.  The `run` method will be provided with the results (DataFrame) of running the dependent input modules as a map keyed by the dependent module.
 
-### Scala
-```scala
-object MyModule extends SmvModule("mod description") {
- override def requiresDS() = Seq(Mod1, Mod2)
-
- override def run(inputs: runParams) = {
-   val M1df = inputs(Mod1) // DataFrame result of running Mod1 (done by framework automatically)
-   val M2df = inputs(Mod2)
-
-   M1df.join(M2df, ...)
-       .select("col1", "col2", ...)
- }
-```
-### Python
 ```Python
 class MyModule(smv.SmvModule):
   def requiresDS(self):
@@ -75,15 +47,6 @@ On a large development team, this makes it very easy to "pull" the latest code c
 
 However, for trivial modules (e.g. filter), it might be too expensive to persist/read the module output.  In these cases, the module may override the default persist behaviour by setting the `isEphemeral` flag to true.  In that case, the module output will not be persisted (unless the module was run explicitly).
 
-### Scala
-```scala
-object MyModule extends SmvModule("mod description") {
-  override val isEphemeral = true
-  override def run(inputs: runParams) = {
-     inputs(Mod1).where($"a" > 100)
-  }
-}
-```
 ### Python
 ```python
 class MyModule(smv.SmvModule):
@@ -105,15 +68,6 @@ See [Smv Stages](smv_stages.md) for details on how to configure multiple stages.
 ## Simple Publish To Hive
 If you would like to publish the module to a Hive table, include a `tableName`, and use `--publish-hive` command line parameter to publish/export the output to the specified Hive table (For advanced use case, see section below).  For example:
 
-### Scala
-```scala
-object MyModule extends SmvModule("this is my module") with SmvOutput {
-  def tableName = "hiveschema.hivetable"
-...
-}
-object MyFile extends SmvCsvFile("path/to/file/data.csv", CA.ca) with SmvOutput
-```
-### Python
 ```python
 class MyModule(smv.SmvModule, smv.SmvOutput):
   def tableName(self):
@@ -126,14 +80,6 @@ class MyFile(smv.SmvCsvFile, smv.SmvOutput):
 ## Advanced Publish To Hive
 A more advanced alternative to the `tableName` method described above is to provide a `publishHiveSql` method that returns a sql statement to do the actual publishing.  This could be any valid HQL query such as `insert overwrite` or `create table from...`.  The result of running the module is provided as a temporary table named `dftable`.
 
-### Scala
-```scala
-object MyModule extends SmvModule("this is my module") with SmvOutput {
-  def publishHiveSql = Some("insert overwrite table foo ... select * from dftable")
-...
-}
-```
-### Python
 ```python
 class MyModule(smv.SmvModule, smv.SmvOutput):
   def publishHiveSql(self):

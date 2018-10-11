@@ -13,7 +13,7 @@ Currently, there are 2 types of validations implemented,
 * Data Quality Management validations
 
 ## Parsing Validation
-When we load a Csv or Frl (Fix Record Length) file, there are always potential parsing
+When we load a Csv file, there are always potential parsing
 issues.
 
 Typically 2 types of issues,
@@ -56,14 +56,6 @@ By default, any parser error will cause validation fail (`passed: false`). This 
 by the `failAtParsingError` attribute of `SmvFile`. The default value is `true`. To change that we
 can override it
 
-**Scala**
-```scala
-object myfile extends SmvCsvFile("accounts/acct_demo.csv") {
-  override val failAtParsingError = false
-}
-```
-
-**Python**
 ```python
 class Myfile(smv.SmvCsvFile):
     def path(self):
@@ -80,17 +72,6 @@ console and persisted in the `SmvModule` persisted data path with postfix `.vali
 Sometimes we need more flexibility on specifying the terminate criterial. For example, I can tolerate
 less than 10 parser errors, if more than that, terminate. Here is an example of how to specify that,
 
-**Scala**
-```scala
-import org.tresamigos.smv.dqm._
-...
-object myfile extends SmvCsvFile("accounts/acct_demo.csv") {
-  override val failAtParsingError = false
-  override def dqm() = SmvDQM().add(FailParserCountPolicy(10))
-}
-```
-
-**Python**
 ```python
 import smv.dqm
 ...
@@ -120,12 +101,6 @@ The `SmvDQM` framework provides `Rule`s and `Fix`es to address them.
 ### DQMRule & DQMFix
 
 Since `dqm` is a sub-package, to use it one need to
-**Scala**
-```scala
-import org.tresamigos.smv.dqm._
-```
-
-**Python**
 ```python
 import smv.dqm
 ```
@@ -133,18 +108,6 @@ import smv.dqm
 Since both `SmvFile` and `SmvModule` provide a `dqm` method to define the rules, one can override
 it to add rules.
 
-**Scala**
-```scala
-object MyModule extends SmvModule("example module with dqm") {
-  ...
-  override def run(i:runParams) { ... }
-  override def dqm() = SmvDQM().
-      add(DQMRule($"Price" < 1000000.0, "rule1", FailAny)).
-      add(DQMFix($"age" > 120, lit(120) as "age", "fix1"))
-}
-```
-
-**Python**
 ```python
 class MyModule(smv.SmvModule):
     """example module with dqm"""
@@ -184,16 +147,6 @@ The rules and fixes defined in the `dqm` method will be applied to the result `D
 A `DQMPolicy` defines a requirement on the entire `DataFrame`. As in above example we can add
 a policy
 
-**Scala**
-```scala
-override def dqm() = SmvDQM().
-    add(DQMRule($"Price" < 1000000.0, "rule1")).
-    add(DQMRule($"Price" > 0.0, "rule2")).
-    add(DQMFix($"age" > 120, lit(120) as "age", "fix1")).
-    add(FailTotalRuleCountPolicy(100))
-```
-
-**Python**
 ```python
 def dqm() = dqm.SmvDQM().add(
     dqm.DQMRule(F.col("Price") < 1000000.0, "rule1")).add(

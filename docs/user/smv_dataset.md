@@ -2,7 +2,7 @@
 
 We call our library **Spark Modularized View** is because the core of it is to put
 the data application development to a Modularized framework. This Module concept is captured in
-`SmvDataSet` (in *Scala* or `SmvDataSet` as in *Python*)
+`SmvDataSet`
 
 An `SmvDataSet` is
 > A group of Spark DataFrame operations which takes multiple input DataFrames and generates a SINGLE
@@ -20,17 +20,17 @@ directly, instead, they will use all the detailed types of `SmvDataSet`.
 
 In this document we will cover the following basic `SmvDataSet`s,
 
-|                     | Scala              | Python             |
-|---------------------|--------------------|--------------------|
-| **Input**           | `SmvCsvFile`       | `SmvCsvFile`       |
-|                     | `SmvMultiCsvFiles` | `SmvMultiCsvFiles` |
-|                     | `SmvCsvStringData` | `SmvCsvStringData` |
-|                     | `SmvHiveTable`     | `SmvHiveTable`     |
-| **Intermediate**    | `SmvModule`        | `SmvModule`        |
-| **Output (mix in)** | `SmvOutput`        | `SmvOutput`        |
-|                     |                    |                    |
+| Type                | Name               |
+|---------------------|--------------------|
+| **Input**           | `SmvCsvFile`       |
+|                     | `SmvMultiCsvFiles` |
+|                     | `SmvCsvStringData` |
+|                     | `SmvHiveTable`     |
+| **Intermediate**    | `SmvModule`        |
+| **Output (mix in)** | `SmvOutput`        |
+|                     |                    |
 
-### External Code Dependency (python only)
+### External Code Dependency 
 
 Any of the classes listed above can implement a `requiresLib()` function to define code that isn't SMV DataSets (like an external or user-defined library) that should be considered like it is part of the source of the DataSet itself.
 
@@ -43,8 +43,6 @@ There are two steps to setting this up for your project:
 1. Add the `smv.user_libraries` prop to your [app configuration](./app_config.md).
 
 2. Import the library in all files that depend on it (like `import udl as lib`) and then in the class defs of DataSets that depend on it, implement the `requiresLib()` method and make it return an array of the libraries that that DataSet depends on (for the first example, `requiresLib()` would return `[lib]`).
-
-**Python**
 
 ```py
 # in smv-app-conf.props:
@@ -85,14 +83,6 @@ An `SmvCsvFile` is an input `SmvDataSet`, which user can point it to some Csv fi
 file. Please refer [Csv File handling](smv_input.md) for details about the storage of the file,
 associated schema file and CsvAttributes.
 
-**Scala**
-```scala
-object AcctDemo extends SmvCsvFile("accounts/acct_demo.csv", CA.caBar) {
-  override def run(df: DataFrame) : DataFrame = ... // optional
-  override def dqm = SmvDQM().add(DQMRule($"amt" < 1000000.0, "rule1", FailAny)) //optional
-```
-
-**Python**
 ```python
 class AcctDemo(smv.SmvCsvFile):
     def path(self):
@@ -114,14 +104,6 @@ The data is in `acct_demo.csv` file, and the schema is in `acct_demo.schema`.
 In case there are multiple data (Csv) files have exactly the same format (schema) and represent
 the same input table, we need to use `SmvMultiCsvFiles` to point to the data dir and the schema file.
 
-**Scala**
-```scala
-object AcctDemo extends SmvMultiCsvFiles("accounts/acct_demo"){
-  //same as SmvCsvFile
-}
-```
-
-**Python**
 ```python
 class AcctDemo(smv.SmvMultiCsvFiles):
     def dir(self):
@@ -135,11 +117,6 @@ is a sister file to `acct_demo` and with name `acct_demo.schema`.
 Sometimes people need to create some small data in the code and use as input data. `SmvCsvStringData`
 allow using to specify the data schema and content as strings.
 
-**Scala**
-```scala
-object MyTmpDS extends SmvCsvStringData("a:String;b:Double;c:String", "aa,1.0,cc;aa2,3.5,CC")
-```
-**Python**
 ```python
 class MyTmpDS(smv.SmvCsvStringData):
     def schemaStr(self):
@@ -154,12 +131,6 @@ class MyTmpDS(smv.SmvCsvStringData):
 For a Hive table in some Hive schema which the Spark environment can access, user can
 define a `SmvHiveTable` to get input data from it.
 
-**Scala**
-```scala
-object FooHiveTable extends SmvHiveTable("hiveschema.foo")
-```
-
-**Python**
 ```python
 class FooHiveTable(smv.SmvHiveTable):
     def tableName(self):
@@ -167,16 +138,6 @@ class FooHiveTable(smv.SmvHiveTable):
 ```
 
 ## SmvModule
-**Scala**
-```scala
-object MyModule extends SmvModule("mod description") {
-  override def requiresDS() = Seq(Mod1, Mod2)
-  override val isEphemeral = true //Optional, defalut = false
-  override def run(inputs: runParams) = ...
-  override def dqm = SmvDQM().add(DQMRule($"amt" < 1000000.0, "rule1", FailAny)) //optional
-}
-```
-**Python**
 ```python
 class MyModule(smv.SmvModule):
     """mod description"""
@@ -192,16 +153,6 @@ class MyModule(smv.SmvModule):
 ```
 
 ## SmvOutput (Mix in)
-**Scala**
-```scala
-object MyModule extends SmvModule("this is my module") with SmvOutput {
-  override val tableName = "hiveschema.hivetable"
-  override def requiresDS() = ...
-  override def run(i: runParams) = ...
-}
-```
-
-**Python**
 ```python
 class MyModule(smv.SmvModule, smv.SmvOutput):
     """
