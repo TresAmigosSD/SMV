@@ -147,7 +147,6 @@ The rules and fixes defined in the `dqm` method will be applied to the result `D
 A `DQMPolicy` defines a requirement on the entire `DataFrame`. As in above example we can add
 a policy
 
-**Python**
 ```python
 def dqm() = dqm.SmvDQM().add(
     dqm.DQMRule(F.col("Price") < 1000000.0, "rule1")).add(
