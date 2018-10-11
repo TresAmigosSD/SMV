@@ -255,13 +255,6 @@ class SmvPublishTest(SmvBaseTest):
 
          # Read from the file
          res = smv.smvshell.openCsv(self.tmpDataDir() + "/publish/v1/" + fqn + ".csv")
-
-         # Using DS interface to readback
-         readback = DataFrame(
-             j_m.readPublishedData(self.smvApp.scalaOption('v1')).get(),
-             self.smvApp.sqlContext
-         )
          expected = self.createDF("col1: String", "a;b")
 
          self.should_be_same(res, expected)
-         self.should_be_same(readback, expected)

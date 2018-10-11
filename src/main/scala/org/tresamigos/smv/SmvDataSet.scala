@@ -675,16 +675,6 @@ abstract class SmvDataSet {
 
   private[smv] def parentStage: Option[String] = urn.getStage
 
-  /**
-   * Read the published data of this module
-   * @return Some(DataFrame) if the module has a version specified, None otherwise.
-   */
-  private[smv] def readPublishedData(version: Option[String]): Option[DataFrame] = {
-    version.map { v =>
-      val handler = new FileIOHandler(app.sparkSession, publishCsvPath(v))
-      handler.csvFileWithSchema(null)
-    }
-  }
 }
 
 
