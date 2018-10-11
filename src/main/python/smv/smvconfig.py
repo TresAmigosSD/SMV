@@ -53,6 +53,7 @@ class SmvConfig(object):
 
         # Send conf result to Scala side
         self.j_smvconf = self._jvm.SmvConfig(
+            self.app_dir,
             self.cmdline.get('genEdd'),
             self.merged_props(), 
             self.all_data_dirs()
@@ -61,7 +62,7 @@ class SmvConfig(object):
     def reset_j_smvconf(self):
         """Reset scala side conf - for dynamic conf
         """
-        self.j_smvconf.reset(self.merged_props(), self.all_data_dirs())
+        self.j_smvconf.reset(self.app_dir, self.merged_props(), self.all_data_dirs())
 
     def read_props_from_app_dir(self, _app_dir):
         """For a given app dir, read in the prop files
