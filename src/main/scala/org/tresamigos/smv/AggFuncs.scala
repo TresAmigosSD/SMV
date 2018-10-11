@@ -52,6 +52,13 @@ private[smv] class Histogram(inputDT: DataType) extends UserDefinedAggregateFunc
     val m2 = buffer2.getMap(0).asInstanceOf[Map[Any, Long]]
     val m  = (m1 /: m2) { case (map, (k, v)) => map + (k -> ((map.getOrElse(k, 0L) + v))) }
     buffer1.update(0, m)
+    // Set interal threhold 1000 for Histogram function in case system hangs or OOM issue occurs
+    if (buffer1.getMap(0).size > 1000) {
+      val err_msg = """Too many values in target column.
+                       |Please try `smvBinHist` for numeric column or filter column values first.
+                    """.stripMargin.replaceAll("\n", " ")
+      throw new SmvRuntimeException(err_msg)
+    }    
   }
 
   def evaluate(buffer: Row) = OldVersionHelper.dataCV150(buffer.getMap(0), dataType)

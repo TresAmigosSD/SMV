@@ -173,6 +173,18 @@ private[smv] case class BinNumericHistogram(col: Column, bin: Double) extends Ed
   override val statOp   = histDouble(col.cast(DoubleType).smvCoarseGrain(bin))
 }
 
+private[smv] case class NumericByKeyHistogram(col: Column) extends EddHistTask {
+  override val taskName = "nkh"
+  override val taskDesc = "Numeric sort by Key"
+  override val statOp   = histDouble(col.cast(DoubleType))
+}
+ private[smv] case class NumericByFreqHistogram(col: Column) extends EddHistTask {
+  override val taskName = "nfh"
+  override val taskDesc = "Numeric sort by Frequency"
+  override def sortByFreq = true
+  override val statOp   = histDouble(col.cast(DoubleType))
+}
+
 private[smv] case class YearHistogram(col: Column) extends EddHistTask {
   override val taskName = "yea"
   override val taskDesc = "Year"
