@@ -128,15 +128,12 @@ abstract class SmvDataSet {
   /** Hash computed from the dataset, could be overridden to include things other than CRC */
   def datasetHash(): Int = {
     val _instanceValHash = instanceValHash
-    app.log.debug(f"${fqn}.instanceValHash = ${instanceValHash}")
-    
+    app.log.debug(f"${fqn}.instanceValHash = ${_instanceValHash}")
+
     val _sourceCodeHash = sourceCodeHash
-    app.log.debug(f"${fqn}.sourceCodeHash = ${sourceCodeHash}")
-    
-    val res = instanceValHash + sourceCodeHash
-    app.log.debug(f"${fqn}.datasetHash = ${instanceValHash} + ${sourceCodeHash} = ${res}")
-    
-    res
+    app.log.debug(f"${fqn}.sourceCodeHash = ${_sourceCodeHash}")
+
+    _instanceValHash + _sourceCodeHash
   }
   /** Hash computed based on instance values of the dataset, such as the timestamp of an input file **/
   def instanceValHash(): Int = 0
@@ -151,11 +148,10 @@ abstract class SmvDataSet {
    * TODO: need to add requiresAnc dependency here
    */
   private[smv] lazy val hashOfHash: Int = {
-    val upstreamHoh = resolvedRequiresDS.map(req => req.fqn -> req.hashOfHash).toMap
-    val hashComponents = upstreamHoh ++ Map("version" -> version, "datasetHash" -> datasetHash)
-    app.log.debug(f"${fqn} hashOfHash components: ${hashComponents.mkString(" ; ")}")
-
-    val res = hashComponents.values.toSeq.hashCode()
+    val _datasetHash = datasetHash
+    app.log.debug(f"${fqn}.datasetHash = ${_datasetHash}")
+    
+    val res = (resolvedRequiresDS.map(_.hashOfHash) ++ Seq(version, datasetHash)).hashCode()
     app.log.debug(f"${fqn}.hashOfHash = ${res}")
     
     res

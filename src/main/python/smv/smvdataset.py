@@ -207,12 +207,12 @@ class SmvDataSet(ABC):
     def sourceCodeHash(self):
         """Hash computed based on the source code of the dataset's class
         """
-        hash_components = {}
+        res = 0
 
         cls = self.__class__
         # get hash of module's source code text
         try:
-            hash_components["sourceHash"] = _sourceHash(cls)
+            sourceHash = _sourceHash(cls)
         except Exception as err:  # `inspect` will raise error for classes defined in the REPL
             # Instead of handle the case that module defined in REPL, just raise Exception here
             # res = _smvhash(_disassemble(cls))
@@ -223,6 +223,8 @@ class SmvDataSet(ABC):
                 self.urn() + " defined in shell can't be persisted"
             )
 
+        self.smvApp.log.debug("{} sourceHash: {}".format(self.fqn(), sourceHash))
+        res += sourceHash
 
         # incorporate source code hash of module's parent classes
         for m in inspect.getmro(cls):
@@ -230,7 +232,7 @@ class SmvDataSet(ABC):
                 # TODO: it probably shouldn't matter if the upstream class is an SmvDataSet - it could be a mixin
                 # whose behavior matters but which doesn't inherit from SmvDataSet
                 if m.IsSmvDataSet and m != cls and not m.fqn().startswith("smv."):
-                    hash_components[m.fqn()] = m(self.smvApp).sourceCodeHash()
+                    res = m(self.smvApp).sourceCodeHash()
             except: 
                 pass
 
@@ -240,17 +242,19 @@ class SmvDataSet(ABC):
         # TODO: Is the config really a component of the "source code"? This method is called `sourceCodeHash`, after all.
 
         # incorporate hash of KVs for config keys listed in requiresConfig
-        hash_components["config_hash"] = self.config_hash()
-        
+        config_hash = self.config_hash()
+        self.smvApp.log.debug("{} config_hash: {}".format(self.fqn(), config_hash))
+        res += config_hash
 
         # iterate through libs/modules that this DataSet depends on and use their source towards hash as well
         for lib in self.requiresLib():
             lib_src_hash = _sourceHash(lib)
-            hash_components[lib.__name__] = lib_src_hash
+            self.smvApp.log.debug("{} sourceHash: {}".format(lib.__name__, lib_src_hash))
+            res += lib_src_hash
 
         # if module inherits from SmvRunConfig, then add hash of all config values to module hash
         try:
-            hash_components["old_run_config_hash"] = self._smvGetRunConfigHash()
+            res += self._smvGetRunConfigHash()
         except: 
             pass
 
@@ -258,11 +262,9 @@ class SmvDataSet(ABC):
         # they key() of a validator should change if its parameters change.
         if hasattr(cls, "_smvHistoricalValidatorsList"):
             keys_hash = [_smvhash(v._key()) for v in cls._smvHistoricalValidatorsList]
-            hash_components["historical_validator_keys"] = sum(keys_hash)
-
-        self.smvApp.log.debug("{}.sourceCodeHash components: {}".format(self.fqn(), hash_components))
-
-        res = sum(hash_components.values())
+            historical_keys_hash = sum(keys_hash)
+            self.smvApp.log.debug("{} historical keys hash: {}".format(historical_keys_hash))
+            res += historical_keys_hash
 
         # ensure python's numeric type can fit in a java.lang.Integer
         return res & 0x7fffffff
