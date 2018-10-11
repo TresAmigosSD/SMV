@@ -3,7 +3,7 @@
 ### Synopsis
 Start the shell with
 ```shell
-$ smv-pyshell [smv-options] -- [standard spark-shell-options]
+$ smv-shell [smv-options] -- [standard spark-shell-options]
 ```
 **Note:**  The above command should be run from your project's top level directory.
 
@@ -15,15 +15,9 @@ $ smv-pyshell [smv-options] -- [standard spark-shell-options]
 * `ls()`: list all the SmvDataSet in the project, organized by stages
 * `lsDead()`: list `dead` datasets in the project, `dead` dataset is defined as "no contribution to any Output module"
 * `lsDead(stage_name)`: list `dead` datasets in the stage
-* `lsDeadLead()`: list `dead leaf` datasets in the project, `dead leaf` is `dead` dataset with no module depends on it
-* `lsDeadLead(stage_name)`: list `dead leaf` datasets in the stage
 * `props()`: Dump json of the final configuration properties used by the running app (includes dynamic runConfig)
 * `exportToHive(dataset_name)`: export the running result of the dataset to a hive table
 * `ancestors(dataset_name)`: list `ancestors` of the dataset, `ancestors` are all the datasets current dataset depends
-* `descendants(datasetName)`: list `descendants` of the dataset, `descendants` are all the datasets depend on the current dataset
-* `graphStage()`: print dependency graph of stages and inter-stage links
-* `graph(stage_name)`: print dependency graph of all DS in this stage
-* `graph()`: print dependency graph of all DS in the app
 * `now()`: current system time
 * `smvDiscoverSchemaToFile(path, n, csvAttr)` : use the first `n` (default 100000) rows of csv file at given path to discover the schema of the file based on heuristic rules.  The discovered schema is saved to the current path with postfix ".schema.toBeReviewed"
 
@@ -52,7 +46,7 @@ root
 
 ### Resolve existing SmvModule
 ```python
->>> s2res=df(StageEmpCategory)
+>>> s2res=df("StageEmpCategory")
 >>> s2res.printSchema()
 root
  |-- ST: string (nullable = true)
@@ -114,90 +108,11 @@ Please see [SMV Introduction](smv_intro.md) for details of the 4 types.
 (I) stage1.inputdata.Employment
 ```
 
-### List descendants of a given DataSet
-```python
->>> descendants("Employment")
-(O) stage1.employment.EmploymentByState
-(O) stage2.category.EmploymentByStateCategory
-```
-
 ### List ancestors of a given DataSet
 ```python
 >>> ancestors("EmploymentByState")
 (I) stage1.inputdata.Employment
 ```
-
-### Plot stage level dependency graph
-```python
->>> graphStage()
-                 ┌──────┐
-                 │stage1│
-                 └───┬──┘
-                     │
-                     v
- ┌───────────────────────────────────────┐
- │(L) stage1.employment.EmploymentByState│
- └───────────────────┬───────────────────┘
-                     │
-                     v
-                 ┌──────┐
-                 │stage2│
-                 └──────┘
-```
-
-### Plot DataSets dependency graph in a stage
-```python
->>> graph("stage2")
- ┌────────────┐
- │(O) stage1.e│
- │mployment.Em│
- │ploymentBySt│
- │    ate     │
- └──────┬─────┘
-        │
-        v
- ┌────────────┐
- │(O) category│
- │.EmploymentB│
- │yStateCatego│
- │     ry     │
- └────────────┘
-```
-
-### Plot DataSets dependency graph of the project
-```python
->>> graph()
- ┌────────────┐
- │(I) stage1.i│
- │nputdata.Emp│
- │  loyment   │
- └──────┬─────┘
-        │
-        v
- ┌────────────┐
- │(O) stage1.e│
- │mployment.Em│
- │ploymentBySt│
- │    ate     │
- └──────┬─────┘
-        │
-        v
- ┌────────────┐
- │(O) stage2.c│
- │ategory.Empl│
- │oymentByStat│
- │ eCategory  │
- └────────────┘
-```
-
-# Run SMV App using Scala smv-shell
-
-### Synopsis
-```shell
-$ smv-shell [smv-options] -- [standard spark-shell-options]
-```
-
-**Note:**  The above command should be run from the project top level directory.
 
 ### Options
 By default, the `smv-shell` command will use the latest "fat" jar in the target directory to use with Spark Shell.

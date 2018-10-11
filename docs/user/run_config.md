@@ -32,26 +32,3 @@ The above is available on all `SmvModules`. For backwards compatibility, SMV sti
 The user can change the current value of any config parameter on a per run basis.  This can be done in one of two ways:
 * modify the `conf/smv-user-conf.props` or `~/.smv/smv-user-conf.props` to set the appropriate `smv.config.key=value` line.
 * Override the property value from the command line.  For example, to set the sampling rate to 1pct for a run, add the following to the end of the `smv-run` command: `--smv-props smv.config.sample=1pct`
-
-## 4. File Type example
-It is often necessary to use Hive tables on the cluster and CSV files on development machines.  SMV run configuration can be used to facilitate this use case.  Both the Hive table and CSV file should be defined in the `inputdata.py` file.  Only the require method of the module needs to decide which to depend on at run time.  For example:
-```python
-# stage1/inputdata.py
-class EmpCSV(SmvCsvFile):
-    def path(self):
-        return "input/employment/CB1200CZ11.csv"
-class EmpHive(SmvHiveTable):
-    def tableName(self):
-        return "schema.tablename"
-```
-
-```python
-import * from inputdata
-
-class Employment(SmvModule, SmvRunConfig):
-  def requireDS(self):
-    if self.smvGetRunConfig("filetype") == "hive":
-      return [ EmpHive ]
-    else:
-      return [ EmvCsv ]
-```

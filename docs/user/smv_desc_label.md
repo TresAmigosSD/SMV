@@ -1,7 +1,5 @@
 # SmvDesc and SmvLabel
 
-**These features have been moved from Scala to Python SMV**
-
 Both `SmvDesc` and `SmvLabel` are `metadata` components of `DataFrame`'s schema and with a
 group of helper methods for user convenience. However they are designed to support different
 use cases.
