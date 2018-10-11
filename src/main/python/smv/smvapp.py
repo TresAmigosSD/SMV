@@ -219,6 +219,9 @@ class SmvApp(object):
         # the app properties to be read from disk and reevaluated
         self.py_smvconf.set_app_dir(appDir)
 
+        self.log.info("Set app dir to " + appDir)
+        self.log.debug("Current SMV configuration: {}".format(self.py_smvconf.merged_props()))
+
         # this call will use the dynamic appDir that we just set ^
         # to change sys.path, allowing py modules, UDL's to be discovered by python
         self.prependDefaultDirs()
