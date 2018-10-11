@@ -126,7 +126,18 @@ abstract class SmvDataSet {
   val isObjectInShell: Boolean = this.getClass.getName matches """\$.*"""
 
   /** Hash computed from the dataset, could be overridden to include things other than CRC */
-  def datasetHash(): Int = instanceValHash + sourceCodeHash
+  def datasetHash(): Int = {
+    val _instanceValHash = instanceValHash
+    app.log.debug(f"${fqn}.instanceValHash = ${instanceValHash}")
+    
+    val _sourceCodeHash = sourceCodeHash
+    app.log.debug(f"${fqn}.sourceCodeHash = ${sourceCodeHash}")
+    
+    val res = instanceValHash + sourceCodeHash
+    app.log.debug(f"${fqn}.datasetHash = ${instanceValHash} + ${sourceCodeHash} = ${res}")
+    
+    res
+  }
   /** Hash computed based on instance values of the dataset, such as the timestamp of an input file **/
   def instanceValHash(): Int = 0
   /** Hash computed based on the source code of the dataset's class **/
@@ -140,7 +151,14 @@ abstract class SmvDataSet {
    * TODO: need to add requiresAnc dependency here
    */
   private[smv] lazy val hashOfHash: Int = {
-    (resolvedRequiresDS.map(_.hashOfHash) ++ Seq(version, datasetHash)).hashCode()
+    val upstreamHoh = resolvedRequiresDS.map(req => req.fqn -> req.hashOfHash).toMap
+    val hashComponents = upstreamHoh ++ Map("version" -> version, "datasetHash" -> datasetHash)
+    app.log.debug(f"${fqn} hashOfHash components: ${hashComponents.mkString(" ; ")}")
+
+    val res = hashComponents.values.toSeq.hashCode()
+    app.log.debug(f"${fqn}.hashOfHash = ${res}")
+    
+    res
   }
 
   /**
@@ -380,8 +398,16 @@ abstract class SmvDataSet {
     Try { app.sqlContext.read.json(moduleEddPath(prefix)) }
 
   /** Has the result of this data set been persisted? */
-  private[smv] def isPersisted: Boolean =
-    Try(new FileIOHandler(app.sparkSession, moduleCsvPath()).readSchema()).isSuccess
+  private[smv] def isPersisted: Boolean = {
+    val csvPath = moduleCsvPath()
+    val ioHandler = new FileIOHandler(app.sparkSession, csvPath)
+    val res = Try(ioHandler.readSchema()).isSuccess
+
+    if (res) 
+      app.log.debug("Couldn't find ${ioHandler.fullSchemaPath} - ${fqn} not persisted")
+
+    res
+  }
 
   /**
    * #560
