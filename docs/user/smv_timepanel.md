@@ -11,7 +11,7 @@ There are 2 concepts in this type of use cases,
 In SMV, we have a base class `PartialTime` to represent the "time period" concept, and
 `TimePanel` to represent the "consecutive sequence of time periods" concept.
 
-A package, `smv.panel` in Python or `org.tresamigos.smv.panel` in Scala, contains above 2 classes.
+A package, `smv.panel` contains above 2 classes.
 
 ## Types of PartialTime's
 
@@ -44,8 +44,8 @@ created, a column `smvTime` will be added as `StringType` with the `smvTime` val
 
 ### Day
 
-Instructor of both Scala and Python takes year, month, and day of month as integers,
-```scala
+Instructor takes year, month, and day of month as integers,
+```py
 Day(2012, 1, 2)
 ```
 
@@ -58,7 +58,7 @@ Attributes:
 ### Month
 
 Instructor takes year and month as integers,
-```scala
+```py
 Month(2012, 1)
 ```
 
@@ -71,7 +71,7 @@ Attributes:
 ### Quarter
 
 Instructor takes year and quarter number (1-4) as integers,
-```scala
+```py
 Quarter(2012, 1)
 ```
 
@@ -88,7 +88,7 @@ of week, which we want the week starts on. The last parameter has default value
 "Monday".
 
 In the default case,
-```scala
+```py
 Week(2012, 1, 2)
 ```
 
@@ -99,7 +99,7 @@ Attributes:
 * `timeLabel` - "Week of 2012-01-02"
 
 In the custom start of week case,
-```scala
+```py
 Week(2012, 1, 2, "Sunday")
 ```
 
@@ -117,16 +117,9 @@ and an ending point.
 
 Some examples:
 
-**Python**
 ```python
 tp1 = TimePanel(Day(2012, 1, 1), Day(2012, 12, 31))
 tp2 = TimePanel(Week(2012, 1, 1, "Sunday"), Week(2012, 12, 31, "Sunday"))
-```
-
-**Scala**
-```scala
-val tp1 = TimePanel(Day(2012, 1, 1), Day(2012, 12, 31))
-val tp2 = TimePanel(Week(2012, 1, 1, "Sunday"), Week(2012, 12, 31, "Sunday"))
 ```
 
 Please note that the start and end parameters should have the same `timeType`.
@@ -209,14 +202,6 @@ Example:
 res = df.smvGroupBy("sku").smvTimePanelAgg("time", Day(2012, 1, 1), Day(2012,12,31))(
   F.sum("amt").alias("amt"),
   F.sum("qty").alias("qty")
-)
-```
-
-**Scala**
-```scala
-val res = df.smvGroupBy("sku").smvTimePanelAgg("time", Day(2012, 1, 1), Day(2012,12,31))(
-  sum("amt").as("amt"),
-  sum("qty").as("qty")
 )
 ```
 

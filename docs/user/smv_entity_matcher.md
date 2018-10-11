@@ -78,19 +78,6 @@ The following is a piece of sample matching code which has
 * An `ExactLogic` - if the 2 records have the same first name, we call it a `First_Name_Match`
 * A `FuzzyLogic` - if the 2 records's city names' normalized Levenshtein similarity larger than `0.9`, we call it a `Levenshtein_City` match
 
-#### Scala
-```scala
-val resultDF = SmvEntityMatcher("id", "_id",
-  ExactMatchPreFilter("Full_Name_Match", $"full_name" === $"_full_name"),
-  GroupCondition(soundex($"first_name") === soundex($"_first_name")),
-  List(
-    ExactLogic("First_Name_Match", $"first_name" === $"_first_name"),
-    FuzzyLogic("Levenshtein_City", null, normlevenshtein($"city",$"_city"), 0.9f)
-  )
-).doMatch(df1, df2, false)
-```
-
-#### Python
 ```python
 resultDF = SmvEntityMatcher("id", "_id",
   ExactMatchPreFilter("Full_Name_Match", col("full_name") == col("_full_name")),
@@ -150,12 +137,6 @@ All of them normalized from 0 to 1 (0 is no match, 1 is full match).
 
 ### Import Library
 
-#### Scala
-```scala
-import org.tresamigos.smv.matcher._
-```
-
-#### Python
 ```python
 from smv.matcher import *
 ```
@@ -176,11 +157,6 @@ Please avoid using the 2 NoOp objects togethers unless the datasets are both ver
 The expression parameter of `GroupCondition` has to be a `EqualTo` expression. Since
 we need to use it as a join condition, and join on `EqualTo` can be optimized by grouping.
 Other expression can't help.
-**Scala**
-```scala
-GroupCondition(soundex($"first_name") === soundex($"_first_name"))
-```
-**Python**
 ```python
 GroupCondition(soundex(col("first_name")) == soundex(col("_first_name")))
 ```

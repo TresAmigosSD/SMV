@@ -15,8 +15,7 @@ Smv provides a group of `DataFrame` helper methods, as summarized bellow
 * `df.smvConcatHist("k1", "k2")` - print joint histogram on `k1` and `k2` with values concatenated with `_` in between
 * `df.smvCountHist("k")` - print histogram of `k`'s frequency
 
-Above functions in **Scala** and **Python** are exactly the same, except the parameter of
-`smvConcatHist`, which is a list in Python as `[a, b]`, and a sequence in Scala as `Seq(a, b)`.
+Please refer SMV API doc for more up-to-date list.
 
 ### smvEdd
 
