@@ -49,10 +49,10 @@ class SmvConfig(
 
   private[smv] def stageNames = { splitProp("smv.stages").toSeq }
 
-  val outputDir = dataDirs("outputDir")
-  val historyDir = dataDirs("historyDir")
-  val publishDir = dataDirs("publishDir")
-  val publishVersion = dataDirs("publishVersion")
+  def outputDir = dataDirs("outputDir")
+  def historyDir = dataDirs("historyDir")
+  def publishDir = dataDirs("publishDir")
+  def publishVersion = dataDirs("publishVersion")
 
   def jdbcUrl: String =
     mergedProps.get("smv.jdbc.url") match {
