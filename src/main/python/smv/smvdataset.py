@@ -232,7 +232,7 @@ class SmvDataSet(ABC):
                 # TODO: it probably shouldn't matter if the upstream class is an SmvDataSet - it could be a mixin
                 # whose behavior matters but which doesn't inherit from SmvDataSet
                 if m.IsSmvDataSet and m != cls and not m.fqn().startswith("smv."):
-                    res = m(self.smvApp).sourceCodeHash()
+                    res += m(self.smvApp).sourceCodeHash()
             except: 
                 pass
 
