@@ -27,6 +27,6 @@ class SmvRunConfig(object):
         config to influence the dataset hash.
     """
 
-    def _all_run_conf_keys(self):
-        """Return all possible run conf keys"""
-        return self.smvApp.py_smvconf.get_run_config_keys()
+    def _is_smv_run_config(self):
+        """A flag method to let SmvDataSet class know SmvRunConfig is mixed-in"""
+        pass

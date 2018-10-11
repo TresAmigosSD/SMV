@@ -165,7 +165,11 @@ class SmvConfig(object):
         pref_len = len(pref)
         from_props = [k[pref_len:] for k in self.merged_props().keys() if k.startswith(pref)]
         from_dynamic = self.dynamic_props.keys()
-        return from_props + from_dynamic
+        # dict_keys objects are not add-able, have to copy them to a new list
+        res = []
+        res.extend(from_props)
+        res.extend(from_dynamic)
+        return res
 
     def infer_stage_full_name(self, part_name):
         """For a given partial stage name, infer full stage name

@@ -146,8 +146,14 @@ class SmvDataSet(ABC):
             The given keys and their values will influence the dataset hash
         """
         try:
-            return self._all_run_conf_keys()
+            self._is_smv_run_config()
+            is_run_conf = True
         except:
+            is_run_conf = False
+
+        if (is_run_conf):
+            return self.smvApp.py_smvconf.get_run_config_keys()
+        else:
             return []
     
     def requiresLib(self):
