@@ -117,7 +117,7 @@ class SmvApp(object):
         # shortcut is meant for internal use only
         self.j_smvApp = self.j_smvPyClient.j_smvApp()
         self.log = self.j_smvApp.log()
-        self.dsm = DataSetMgr(self.sc, self.stages())
+        self.dsm = DataSetMgr(self.sc, self.py_smvconf)
 
         # AFTER app is available but BEFORE stages,
         # use the dynamically configured app dir to set the source path, library path

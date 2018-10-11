@@ -21,11 +21,11 @@ class DataSetMgr(object):
     """The Python representation of DataSetMgr.
     """
 
-    def __init__(self, sc, stages):
+    def __init__(self, sc, smvconfig):
         self.sc = sc
         self._jvm = sc._jvm
 
-        self.stages = stages
+        self.smvconfig = smvconfig
         self.dsRepoFactories = []
 
         from py4j.java_gateway import java_import
@@ -34,10 +34,13 @@ class DataSetMgr(object):
 
         self.helper = self._jvm.SmvPythonHelper
 
+    def stages(self):
+        return self.smvconfig.stage_names()
+
     def tx(self):
         """Create a TXContext for multiple places, avoid the long TXContext line
         """
-        return TXContext(self._jvm, self.dsRepoFactories, self.stages)
+        return TXContext(self._jvm, self.dsRepoFactories, self.stages())
 
     def load(self, *urns):
         """Load SmvDataSets for specified URNs
