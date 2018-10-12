@@ -151,7 +151,7 @@ abstract class SmvDataSet {
   /**
    * Since hashOfHash is lazy, persistStgy also lazy
    **/
-  private lazy val persistStgy = new DfCsvOnHdfsStgy(
+  private[smv] lazy val persistStgy = new DfCsvOnHdfsStgy(
     app, fqn, hashOfHash
   )
 
@@ -572,10 +572,7 @@ abstract class SmvDataSet {
   private[smv] def publish(collector: SmvRunInfoCollector) = {
     val df      = rdd(collector=collector)
     val version = app.smvConfig.publishVersion
-    val handler = new FileIOHandler(app.sparkSession, publishCsvPath(version))
-    //Same as in persist, publish null string as a special value with assumption that it's not
-    //a valid data value
-    handler.saveAsCsvWithSchema(df, strNullValue = "_SmvStrNull_")
+    persistStgy.publish(df, version)
     // Read persisted metadata and metadata history, and publish it with the output.
     // Note that the metadata will have been persisted, because either
     // 1. the metadata was persisted before publish was started

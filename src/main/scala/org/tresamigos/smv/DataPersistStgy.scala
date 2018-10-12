@@ -29,6 +29,8 @@ abstract class DataPersistStgy {
 
   def persist(df: DataFrame): Double
 
+  def publish(df: DataFrame, version: String): Unit
+
   def unPersist(): Try[DataFrame]
 
   def rmPersisted(): Unit
@@ -81,6 +83,14 @@ class DfCsvOnHdfsStgy(
     val n       = counter.value
     smvApp.log.info(f"N: ${n}")
     elapsed
+  }
+
+  override def publish(df: DataFrame, version: String): Unit = {
+    val path = s"${smvApp.smvConfig.publishDir}/${version}/${name}.csv"
+    val handler = new FileIOHandler(smvApp.sparkSession, path)
+    //Same as in persist, publish null string as a special value with assumption that it's not
+    //a valid data value
+    handler.saveAsCsvWithSchema(df, strNullValue = "_SmvStrNull_")
   }
 
   override def unPersist(): Try[DataFrame] =
