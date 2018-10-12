@@ -128,7 +128,7 @@ abstract class SmvDataSet {
     _instanceValHash + _sourceCodeHash
   }
   /** Hash computed based on instance values of the dataset, such as the timestamp of an input file **/
-  def instanceValHash(): Int
+  def instanceValHash(): Int = 0
   /** Hash computed based on the source code of the dataset's class **/
   def sourceCodeHash(): Int
 
@@ -149,7 +149,10 @@ abstract class SmvDataSet {
     res
   }
 
-  private val persistStgy = new DfCsvOnHdfsStgy(
+  /**
+   * Since hashOfHash is lazy, persistStgy also lazy
+   **/
+  private lazy val persistStgy = new DfCsvOnHdfsStgy(
     app, fqn, hashOfHash
   )
 

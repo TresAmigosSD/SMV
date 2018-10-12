@@ -73,7 +73,7 @@ class SmvFrameworkTest(SmvBaseTest):
         fqn = "stage.modules.CsvStrWithNullData"
         df = self.df(fqn, True)
         j_m = self.load(fqn)[0]
-        f = open(j_m.moduleCsvPath("") + "/part-00000", "r")
+        f = open(j_m.moduleCsvPath() + "/part-00000", "r")
         res = f.read()
         expect = """"1",""
 "_SmvStrNull_",""
@@ -81,7 +81,7 @@ class SmvFrameworkTest(SmvBaseTest):
 """
         self.assertEqual(res, expect)
 
-        s_f = open(j_m.moduleSchemaPath("") + "/part-00000", "r")
+        s_f = open(j_m.moduleSchemaPath() + "/part-00000", "r")
         s_res = s_f.read()
         s_expect = """@delimiter = ,
 @has-header = false
