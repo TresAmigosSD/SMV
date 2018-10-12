@@ -331,32 +331,13 @@ abstract class SmvDataSet {
   /**
    * Perform an action and log the amount of time it took
    */
-  private def doAction[T](desc: String)(action: => T): (T, Double)= {
-    val fullDesc = f"${desc}: ${fqn}"
-    app.log.info(f"STARTING ${fullDesc}")
-    app.sc.setJobGroup(groupId=fqn, description=desc)
-    val before  = DateTime.now()
-
-    val res: T = action
-
-    val after   = DateTime.now()
-    val duration = new Duration(before, after)
-    val secondsElapsed = duration.getMillis() / 1000.0
-
-    val runTimeStr = PeriodFormat.getDefault().print(duration.toPeriod)
-    app.sc.clearJobGroup()
-    app.log.info(s"COMPLETED ${fullDesc}")
-    app.log.info(s"RunTime: ${runTimeStr}")
-
-    (res, secondsElapsed)
-  }
+  private def doAction[T](desc: String)(action: => T): (T, Double) = 
+      app.doAction(desc, fqn)(action)
 
   private def persist(dataframe: DataFrame): Unit = {
     val path = moduleCsvPath()
-    val fmt = DateTimeFormat.forPattern("HH:mm:ss")
 
     val counter = app.sparkSession.sparkContext.longAccumulator
-    val before  = DateTime.now()
 
     val df      = dataframe.smvPipeCount(counter)
     val handler = new FileIOHandler(app.sparkSession, path)
