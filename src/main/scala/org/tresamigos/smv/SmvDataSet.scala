@@ -399,7 +399,7 @@ abstract class SmvDataSet {
     val ioHandler = new FileIOHandler(app.sparkSession, csvPath)
     val res = Try(ioHandler.readSchema()).isSuccess
 
-    if (res) 
+    if (!res) 
       app.log.debug("Couldn't find ${ioHandler.fullSchemaPath} - ${fqn} not persisted")
 
     res
