@@ -149,6 +149,10 @@ abstract class SmvDataSet {
     res
   }
 
+  private val persistStgy = new DfCsvOnHdfsStgy(
+    app, fqn, hashOfHash
+  )
+
   /**
    * flag if this module is ephemeral or short lived so that it will not be persisted when a graph is executed.
    * This is quite handy for "filter" or "map" type modules so that we don't force an extra I/O step when it
@@ -284,14 +288,18 @@ abstract class SmvDataSet {
    * delete the output(s) associated with this module (csv file and schema).
    * TODO: replace with df.write.mode(Overwrite) once we move to spark 1.4
    */
-  private[smv] def deleteOutputs(files: Seq[String]) =
+  private def deleteFiles(files: Seq[String]) =
      files foreach {SmvHDFS.deleteFile}
+
+  /* TODO: use persistStrg */
+  private[smv] def deleteOutputs() =
+    deleteFiles(versionedOutputFiles)
 
   /**
    * Delete just the metadata output
    */
   private def deleteMetadataOutputs() =
-    deleteOutputs(metadataOutputFiles)
+    deleteFiles(metadataOutputFiles)
 
   /**
    * Files related to metadata
@@ -309,46 +317,15 @@ abstract class SmvDataSet {
   /**
    * Returns current versioned outputs produced by this module. Excludes metadata history
    */
-  private[smv] def versionedOutputFiles(): Seq[String] = {
+  private def versionedOutputFiles(): Seq[String] = {
     Seq(moduleCsvPath(), moduleSchemaPath(), moduleEddPath(), moduleValidPath(), moduleMetaPath())
   }
-
-  /**
-   * Read a dataframe from a persisted file path, that is usually an
-   * input data set or the output of an upstream SmvModule.
-   *
-   * The default format is headerless CSV with '"' as the quote
-   * character
-   */
-  private def readFile(path: String,
-               attr: CsvAttributes = CsvAttributes.defaultCsv): DataFrame =
-    new FileIOHandler(app.sparkSession, path).csvFileWithSchema(attr)
 
   /**
    * Perform an action and log the amount of time it took
    */
   private def doAction[T](desc: String)(action: => T): (T, Double) = 
       app.doAction(desc, fqn)(action)
-
-  private def persist(dataframe: DataFrame): Unit = {
-    val path = moduleCsvPath()
-
-    val counter = app.sparkSession.sparkContext.longAccumulator
-
-    val df      = dataframe.smvPipeCount(counter)
-    val handler = new FileIOHandler(app.sparkSession, path)
-
-    val (_, elapsed) =
-      doAction("PERSIST OUTPUT"){handler.saveAsCsvWithSchema(df, strNullValue = "_SmvStrNull_")}
-    app.log.info(f"Output path: ${path}")
-    persistingTimeElapsed = Some(elapsed)
-
-    val n       = counter.value
-    app.log.info(f"N: ${n}")
-  }
-
-  private def readPersistedFile(): Try[DataFrame] =
-    Try(readFile(moduleCsvPath()))
 
   private def readPersistedMetadata(): Try[SmvMetadata] =
     Try {
@@ -365,18 +342,6 @@ abstract class SmvDataSet {
   private def readPersistedEdd(): Try[DataFrame] =
     Try { app.sqlContext.read.json(moduleEddPath()) }
 
-  /** Has the result of this data set been persisted? */
-  private[smv] def isPersisted: Boolean = {
-    val csvPath = moduleCsvPath()
-    val ioHandler = new FileIOHandler(app.sparkSession, csvPath)
-    val res = Try(ioHandler.readSchema()).isSuccess
-
-    if (!res) 
-      app.log.debug("Couldn't find ${ioHandler.fullSchemaPath} - ${fqn} not persisted")
-
-    res
-  }
-
   /**
    * #560
    *
@@ -390,7 +355,7 @@ abstract class SmvDataSet {
     else if (isEphemeral)
       false
     else
-      !isPersisted
+      !persistStgy.isPersisted
   }
 
   /**
@@ -533,7 +498,7 @@ abstract class SmvDataSet {
       validationRes foreach {msg => throw new SmvMetadataValidationError(msg)}
       
 
-      deleteOutputs(metadataOutputFiles)
+      deleteFiles(metadataOutputFiles)
       persistMetadata(metadata)
       persistMetadataHistory(metadata, metadataHistory)
 
@@ -549,7 +514,7 @@ abstract class SmvDataSet {
       runDqmAndMeta(df, false) // no action before this point
       df
     } else {
-      readPersistedFile() match {
+      persistStgy.unPersist() match {
         // Output was persisted, so return a DF which consists of reading from
         // that persisted result
         case Success(df) =>
@@ -562,7 +527,7 @@ abstract class SmvDataSet {
           SmvLock.withLock(lockfilePath()) {
             // Another process may have persisted the data while we
             // waited for the lock. So we read again before computing.
-            readPersistedFile() match {
+            persistStgy.unPersist() match {
               case Success(df) =>
                 app.log.info(f"Relying on cached result ${moduleCsvPath()} for ${fqn} found after lock acquired")
                 df
@@ -570,8 +535,8 @@ abstract class SmvDataSet {
                 app.log.info(f"No cached result found for ${fqn}. Caching result at ${moduleCsvPath()}")
                 val df = dqmValidator.attachTasks(doRun(dqmValidator, collector, quickRun))
                 // Delete outputs in case data was partially written previously
-                deleteOutputs(versionedOutputFiles)
-                persist(df)
+                persistStgy.rmPersisted()
+                persistStgy.persist(df)
 
                 runDqmAndMeta(df, true) // has already had action (from persist)
 
@@ -579,7 +544,7 @@ abstract class SmvDataSet {
                 // a possibly expensive action on the result from before persisting.
                 if(genEdd)
                   persistEdd(df)
-                readPersistedFile().get
+                persistStgy.unPersist().get
             }
           }
       }

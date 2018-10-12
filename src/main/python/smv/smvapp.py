@@ -544,7 +544,7 @@ class SmvApp(object):
         if(self.cmd_line.forceRunAll):
             ancestors = self._modules_with_ancestors(mods)
             for m in set(ancestors):
-                m.deleteOutputs(m.versionedOutputFiles())
+                self.j_smvPyClient.deleteModuleOutput(m)
         
     def _dry_run(self, mods):
         """Execute as dry-run if the dry-run flag is specified.

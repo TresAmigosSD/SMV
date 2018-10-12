@@ -47,9 +47,6 @@ class DfCsvOnHdfsStgy(
 
   private def moduleSchemaPath(): String = versionedBasePath() + ".schema"
 
-  private[smv] def deleteOutputs(files: Seq[String]) =
-     files foreach {SmvHDFS.deleteFile}
-
   /**
    * Read a dataframe from a persisted file path, that is usually an
    * input data set or the output of an upstream SmvModule.
@@ -82,8 +79,16 @@ class DfCsvOnHdfsStgy(
     Try(readFile(moduleCsvPath()))
 
   /** Has the result of this data set been persisted? */
-  override def isPersisted: Boolean =
-    Try(new FileIOHandler(smvApp.sparkSession, moduleCsvPath()).readSchema()).isSuccess
+  override def isPersisted: Boolean = {
+    val csvPath = moduleCsvPath()
+    val ioHandler = new FileIOHandler(smvApp.sparkSession, csvPath)
+    val res = Try(ioHandler.readSchema()).isSuccess
+
+    if (!res) 
+      smvApp.log.debug("Couldn't find ${ioHandler.fullSchemaPath} - ${fqn} not persisted")
+
+    res
+  }
 
   override def rmPersisted(): Unit = {
     SmvHDFS.deleteFile(moduleCsvPath())
