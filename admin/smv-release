@@ -61,7 +61,7 @@ function parse_args()
   # version specific vars
   LOGFILE="${BUILD_DIR}/smv-release.log"
   rm -f "${LOGFILE}"
-  TGZ_IMAGE="${BUILD_DIR}/smv_${SMV_VERSION}.tgz"
+  TGZ_IMAGE="${BUILD_DIR}/smv_v${SMV_VERSION}.tgz"
   DOCS_DIR="${BUILD_DIR}/docs"
 
   # release specific vars
@@ -204,6 +204,7 @@ function retrieve_tar()
 
   cd ${SMV_DIR}
   make release_bundle >> ${LOGFILE} || error "Unable to retrieve archive from ${BASE_DOCKER_IMAGE}"
+  cp $(basename ${TGZ_IMAGE}) ${TGZ_IMAGE}
 }
 
 # This only creates the release and does NOT attach the zip asset to it.
