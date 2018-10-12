@@ -240,16 +240,16 @@ abstract class SmvDataSet {
   def versionedFqn   = s"${fqn}_${verHex}"
 
   /** The "versioned" module file base name. */
-  private def versionedBasePath(prefix: String): String = {
-    s"""${app.smvConfig.outputDir}/${prefix}${versionedFqn}"""
+  private def versionedBasePath(): String = {
+    s"""${app.smvConfig.outputDir}/${versionedFqn}"""
   }
 
   /** Returns the path for the module's csv output */
-  def moduleCsvPath(prefix: String = ""): String =
-    versionedBasePath(prefix) + ".csv"
+  def moduleCsvPath(): String =
+    versionedBasePath() + ".csv"
 
-  private def lockfilePath(prefix: String = ""): String =
-    moduleCsvPath(prefix) + ".lock"
+  private def lockfilePath(): String =
+    moduleCsvPath() + ".lock"
 
   /** Returns the file status for the lockfile if found */
   private[smv] def lockfileStatus: Option[FileStatus] =
@@ -262,24 +262,24 @@ abstract class SmvDataSet {
     }
 
   /** Returns the path for the module's schema file */
-  private[smv] def moduleSchemaPath(prefix: String = ""): String =
-    versionedBasePath(prefix) + ".schema"
+  private[smv] def moduleSchemaPath(): String =
+    versionedBasePath() + ".schema"
 
   /** Returns the path for the module's edd report output */
-  private def moduleEddPath(prefix: String = ""): String =
-    versionedBasePath(prefix) + ".edd"
+  private def moduleEddPath(): String =
+    versionedBasePath() + ".edd"
 
   /** Returns the path for the module's reject report output */
-  private def moduleValidPath(prefix: String = ""): String =
-    versionedBasePath(prefix) + ".valid"
+  private def moduleValidPath(): String =
+    versionedBasePath() + ".valid"
 
   /** Returns the path for the module's metadata output */
-  private[smv] def moduleMetaPath(prefix: String = ""): String =
-    versionedBasePath(prefix) + ".meta"
+  private[smv] def moduleMetaPath(): String =
+    versionedBasePath() + ".meta"
 
   /** Returns the path for the module's metadata history */
-  private def moduleMetaHistoryPath(prefix: String = ""): String =
-    s"""${app.smvConfig.historyDir}/${prefix}${fqn}.hist"""
+  private def moduleMetaHistoryPath(): String =
+    s"""${app.smvConfig.historyDir}/${fqn}.hist"""
 
   /** perform the actual run of this module to get the generated SRDD result. */
   private[smv] def doRun(dqmValidator: DQMValidator, collector: SmvRunInfoCollector, quickRun: Boolean): DataFrame
@@ -351,9 +351,8 @@ abstract class SmvDataSet {
     (res, secondsElapsed)
   }
 
-  private def persist(dataframe: DataFrame,
-              prefix: String = ""): Unit = {
-    val path = moduleCsvPath(prefix)
+  private def persist(dataframe: DataFrame): Unit = {
+    val path = moduleCsvPath()
     val fmt = DateTimeFormat.forPattern("HH:mm:ss")
 
     val counter = app.sparkSession.sparkContext.longAccumulator
@@ -371,23 +370,23 @@ abstract class SmvDataSet {
     app.log.info(f"N: ${n}")
   }
 
-  private def readPersistedFile(prefix: String = ""): Try[DataFrame] =
-    Try(readFile(moduleCsvPath(prefix)))
+  private def readPersistedFile(): Try[DataFrame] =
+    Try(readFile(moduleCsvPath()))
 
-  private def readPersistedMetadata(prefix: String = ""): Try[SmvMetadata] =
+  private def readPersistedMetadata(): Try[SmvMetadata] =
     Try {
-      val json = app.sc.textFile(moduleMetaPath(prefix)).collect.head
+      val json = app.sc.textFile(moduleMetaPath()).collect.head
       SmvMetadata.fromJson(json)
     }
 
-  private def readMetadataHistory(prefix: String = ""): Try[SmvMetadataHistory] =
+  private def readMetadataHistory(): Try[SmvMetadataHistory] =
     Try {
-      val json = app.sc.textFile(moduleMetaHistoryPath(prefix)).collect.head
+      val json = app.sc.textFile(moduleMetaHistoryPath()).collect.head
       SmvMetadataHistory.fromJson(json)
     }
 
-  private def readPersistedEdd(prefix: String = ""): Try[DataFrame] =
-    Try { app.sqlContext.read.json(moduleEddPath(prefix)) }
+  private def readPersistedEdd(): Try[DataFrame] =
+    Try { app.sqlContext.read.json(moduleEddPath()) }
 
   /** Has the result of this data set been persisted? */
   private[smv] def isPersisted: Boolean = {
