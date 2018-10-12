@@ -19,7 +19,6 @@ function define_vars()
   PKG_TO_DOC="$SMV_TOOLS/../src/main/python/smv"
   PKG_DIR=$(dirname $PKG_TO_DOC)
   PYDOC_DIR="$OUTPUT_DIR/pythondocs"
-  SCALADOC_DIR="$OUTPUT_DIR/scaladocs"
 
   # This will be used by sphinx-conf.py
   export SMV_VERSION=$(cat "$SMV_TOOLS/../.smv_version")
@@ -48,17 +47,8 @@ function  build_pydocs()
   (cd $PYDOC_DIR; make html)
 }
 
-function build_scaladocs()
-{
-  # build the scala docs
-  echo "-- building scaladocs..."
-  sbt doc
-  mkdir -p $SCALADOC_DIR
-  cp -R ${SMV_TOOLS}/../target/scala-*/api/* $SCALADOC_DIR
-}
-
+# Scala API is depricated. No need to build anymore
 
 
 define_vars
 build_pydocs
-build_scaladocs

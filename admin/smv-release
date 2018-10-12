@@ -293,18 +293,6 @@ function gen_pydocs()
     ${LOGFILE} 2>&1 || error "python doc generation failed"
 }
 
-function gen_scaladocs()
-{
-  info "generating scala docs"
-  mkdir -p ${DOCS_DIR}/scala
-
-  docker run --rm -it \
-    -v ${DOCS_DIR}/scala:/usr/lib/SMV/docs/scala \
-    ${BASE_DOCKER_IMAGE} \
-    bash -c "cd /usr/lib/SMV && make scala-doc" \
-    >> ${LOGFILE} 2>&1 || error "scala doc generation failed"
-}
-
 # the gh-pages branch contains the static site docs.
 # the gh-pages branch will be cloned/pulled into ~/.smv/ghpages/SMV
 function get_latest_ghpages()
@@ -324,7 +312,7 @@ function get_latest_ghpages()
   fi
 }
 
-# copy the generated py/scala docs to the ghpages dir under the current version.
+# copy the generated py docs to the ghpages dir under the current version.
 # update the links on the main index page to point to current version.
 function update_ghpages_docs()
 {
@@ -334,11 +322,6 @@ function update_ghpages_docs()
   local py_ver_dir="pythondocs/${SMV_VERSION}"
   mkdir -p $py_ver_dir
   cp -R ${DOCS_DIR}/python/_build/html/* $py_ver_dir
-
-  info "copying scaladocs to ~/.smv/ghpages/SMV/scaladocs"
-  local scala_ver_dir="scaladocs/${SMV_VERSION}"
-  mkdir -p $scala_ver_dir
-  cp -R ${DOCS_DIR}/scala/* $scala_ver_dir
 
   # do not update the index.html docs if this is the first branch release
   # user will need to update the ghpages index to add the new entry.
@@ -380,7 +363,6 @@ test_smv
 retrieve_tar
 create_smv_docker_image
 gen_pydocs
-gen_scaladocs
 tag_release
 create_github_release
 attach_tar_to_github_release
