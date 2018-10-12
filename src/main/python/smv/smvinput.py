@@ -99,7 +99,12 @@ class SmvInputBase(SmvDataSet, ABC):
         """Hash computed based on instance values of the dataset
             Default to dataSrcHash + schemaHash
         """
-        res = self.dataSrcHash() + self.schemaHash()
+        schema_hash = self.schemaHash()
+        data_src_hash = self.dataSrcHash()
+        res = data_src_hash + schema_hash
+
+        self.smvApp.log.debug("{}.instanceValHash = {}".format(self.fqn(), res))
+
         # ensure python's numeric type can fit in a java.lang.Integer
         return int(res) & 0x7fffffff
 
@@ -151,15 +156,24 @@ class SmvInputFromFile(SmvInputBase):
         """Hash computed on data source
             Based on file's mtime, and file's full path
         """
-        mTime = self.smvApp._jvm.SmvHDFS.modificationTime(self.fullPath())
-        pathHash = _smvhash(self.fullPath())
-        return mTime + pathHash
+        full_path = self.fullPath()
+        self.smvApp.log.debug("{} input path: {}".format(self.fqn(), full_path))
+
+        path_hash = _smvhash(full_path)
+
+        m_time = self.smvApp._jvm.SmvHDFS.modificationTime(full_path)
+        self.smvApp.log.debug("{} input m_time: {}".format(self.fqn(), m_time))
+        
+        return m_time + path_hash
 
     def schemaHash(self):
         """Hash computed from schema
             Based on input schema as a StructType
         """
-        if (self.schema() is not None):
+        schema = self.schema()
+        self.smvApp.log.debug("{} schema: {}".format(self.fqn(), schema))
+        
+        if schema is not None:
             return _smvhash(self.schema().simpleString())
         else:
             return 0
