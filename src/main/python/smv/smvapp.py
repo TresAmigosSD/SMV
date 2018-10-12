@@ -117,7 +117,7 @@ class SmvApp(object):
         # shortcut is meant for internal use only
         self.j_smvApp = self.j_smvPyClient.j_smvApp()
         self.log = self.j_smvApp.log()
-        self.dsm = DataSetMgr(self.sc, self.j_smvApp.dsm())
+        self.dsm = DataSetMgr(self.sc, self.py_smvconf)
 
         # AFTER app is available but BEFORE stages,
         # use the dynamically configured app dir to set the source path, library path
@@ -218,6 +218,9 @@ class SmvApp(object):
         # this call sets the scala side's picture of app dir and forces
         # the app properties to be read from disk and reevaluated
         self.py_smvconf.set_app_dir(appDir)
+
+        self.log.info("Set app dir to " + appDir)
+        self.log.debug("Current SMV configuration: {}".format(self.py_smvconf.merged_props()))
 
         # this call will use the dynamic appDir that we just set ^
         # to change sys.path, allowing py modules, UDL's to be discovered by python
@@ -376,7 +379,8 @@ class SmvApp(object):
 
         """
         self.setDynamicRunConfig(runConfig)
-        java_result = self.j_smvApp.getRunInfo(self._jvm.URN.apply(urn))
+        j_ds = self.dsm.load(urn)[0]
+        java_result = self.j_smvApp.getRunInfo(j_ds)
         return SmvRunInfoCollector(java_result)
 
     def getRunInfoByPartialName(self, name, runConfig):

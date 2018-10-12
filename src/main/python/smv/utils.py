@@ -15,6 +15,7 @@ from pyspark.sql.column import Column
 from pyspark.sql import DataFrame
 import itertools
 import pkgutil
+from smv.error import SmvRuntimeError
 
 
 def smv_copy_array(sc, *cols):
@@ -86,6 +87,29 @@ def is_string(obj):
         return isinstance(obj, basestring)
     except:
         return isinstance(obj, str)
+
+def list_distinct(l):
+    """Return a the distinct version of the input list, perserve order
+    """
+    uniq_list = []
+    seen = set()
+    for x in l:
+        if x not in seen:
+            seen.add(x)
+            uniq_list.append(x)
+    return uniq_list
+
+def infer_full_name_from_part(full_names, part_name):
+    """For a given partial name (postfix), infer full name from a list
+    """
+    candidates = [s for s in full_names if s.endswith(part_name)]
+
+    if (len(candidates) == 0):
+        raise SmvRuntimeError("Can't find name {}".format(part_name))
+    elif(len(candidates) == 1):
+        return candidates[0]
+    else:
+        raise SmvRuntimeError("Partial name {} is ambiguous".format(part_name))
 
 class FileObjInputStream(object):
     """Wraps a Python binary file object to be used like a java.io.InputStream."""

@@ -50,6 +50,16 @@ class RunModuleWithRunConfigTest(SmvBaseTest):
         expected = self.createDF('src:String', 'cmd')
         self.should_be_same(expected, df)
 
+    def test_dynamic_data_dir_change(self):
+        init_output_python = self.smvApp.outputDir()
+        init_output_scala = self.smvApp.j_smvApp.smvConfig().outputDir()
+        self.smvApp.setDynamicRunConfig({'smv.outputDir': 'dummy'})
+        output_python = self.smvApp.outputDir()
+        output_scala = self.smvApp.j_smvApp.smvConfig().outputDir()
+        self.assertEqual(init_output_python, init_output_scala)
+        self.assertEqual(output_python, output_scala)
+        self.assertEqual(output_python, 'dummy')
+
     def test_explicit_set_dynamic_run_config(self):
         self.smvApp.setDynamicRunConfig({'src': 'dynamic_a'})
         a = self.smvApp.runModule(self.modUrn)[0]

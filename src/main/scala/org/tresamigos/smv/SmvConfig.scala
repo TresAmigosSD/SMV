@@ -27,6 +27,7 @@ import java.util.Collections
  *  side. The conf result set is passed to Scala side for Scala functions.
  **/
 class SmvConfig(
+  var _appDir: String,
   val genEdd: Boolean,
   var _mergedProps: java.util.Map[String, String],
   var _dataDirs: java.util.Map[String, String]
@@ -37,9 +38,11 @@ class SmvConfig(
    * of dynamic changes, no need to update
    **/
   def reset(
+    _app_dir: String,
     _props: java.util.Map[String, String], 
     _data_dirs: java.util.Map[String, String]
   ) {
+    _appDir = _app_dir
     _mergedProps = _props
     _dataDirs = _data_dirs
   }
@@ -47,12 +50,14 @@ class SmvConfig(
   def mergedProps: Map[String, String] = mapAsScalaMap(_mergedProps).toMap
   def dataDirs: Map[String, String] = mapAsScalaMap(_dataDirs).toMap
 
+  def appDir: String = _appDir
+
   private[smv] def stageNames = { splitProp("smv.stages").toSeq }
 
-  val outputDir = dataDirs("outputDir")
-  val historyDir = dataDirs("historyDir")
-  val publishDir = dataDirs("publishDir")
-  val publishVersion = dataDirs("publishVersion")
+  def outputDir = dataDirs("outputDir")
+  def historyDir = dataDirs("historyDir")
+  def publishDir = dataDirs("publishDir")
+  def publishVersion = dataDirs("publishVersion")
 
   def jdbcUrl: String =
     mergedProps.get("smv.jdbc.url") match {
@@ -87,6 +92,7 @@ object SmvConfig {
    *  create a default SmvConfig without Python
    **/
   def defaultConf(dataDir: String) = new SmvConfig(
+    ".",
     false,
     Collections.emptyMap(),
     mapAsJavaMap(Map(
