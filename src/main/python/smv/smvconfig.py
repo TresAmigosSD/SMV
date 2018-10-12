@@ -19,6 +19,7 @@ import argparse
 import uuid
 import smv.jprops as jprops
 from smv.error import SmvRuntimeError
+from smv.utils import infer_full_name_from_part
 
 class SmvConfig(object):
     """Smv configurations 
@@ -52,6 +53,7 @@ class SmvConfig(object):
 
         # Send conf result to Scala side
         self.j_smvconf = self._jvm.SmvConfig(
+            self.app_dir,
             self.cmdline.get('genEdd'),
             self.merged_props(), 
             self.all_data_dirs()
@@ -60,7 +62,7 @@ class SmvConfig(object):
     def reset_j_smvconf(self):
         """Reset scala side conf - for dynamic conf
         """
-        self.j_smvconf.reset(self.merged_props(), self.all_data_dirs())
+        self.j_smvconf.reset(self.app_dir, self.merged_props(), self.all_data_dirs())
 
     def read_props_from_app_dir(self, _app_dir):
         """For a given app dir, read in the prop files
@@ -160,16 +162,7 @@ class SmvConfig(object):
     def infer_stage_full_name(self, part_name):
         """For a given partial stage name, infer full stage name
         """
-        all_stages = self.stage_names()
-        candidates = [s for s in all_stages if s.endswith(part_name)]
-
-        if (len(candidates) == 0):
-            raise SmvRuntimeError("Can't find stage {}".format(part_name))
-        elif(len(candidates) == 1):
-            return candidates[0]
-        else:
-            raise SmvRuntimeError("Stage name {} is ambiguous".format(part_name))
-
+        return infer_full_name_from_part(self.stage_names(), part_name)
 
     def _split_prop(self, prop_name):
         """Split multi-value prop to a list

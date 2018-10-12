@@ -15,22 +15,32 @@
 This module provides the python entry point to DataSetMgr on scala side
 """
 
-from smv.utils import smv_copy_array, scala_seq_to_list
+from smv.utils import smv_copy_array, scala_seq_to_list, list_distinct, infer_full_name_from_part
 
 class DataSetMgr(object):
     """The Python representation of DataSetMgr.
     """
 
-    def __init__(self, sc, j_dsm):
+    def __init__(self, sc, smvconfig):
         self.sc = sc
         self._jvm = sc._jvm
-        self.j_dsm = j_dsm
+
+        self.smvconfig = smvconfig
+        self.dsRepoFactories = []
 
         from py4j.java_gateway import java_import
         java_import(self._jvm, "org.tresamigos.smv.python.SmvPythonHelper")
         java_import(self._jvm, "org.tresamigos.smv.DataSetRepoFactoryPython")
 
         self.helper = self._jvm.SmvPythonHelper
+
+    def stages(self):
+        return self.smvconfig.stage_names()
+
+    def tx(self):
+        """Create a TXContext for multiple places, avoid the long TXContext line
+        """
+        return TXContext(self._jvm, self.dsRepoFactories, self.stages())
 
     def load(self, *urns):
         """Load SmvDataSets for specified URNs
@@ -41,7 +51,8 @@ class DataSetMgr(object):
         Returns:
             list(SmvDataSet): list of Scala SmvDataSets (j_ds)
         """
-        return self.helper.dsmLoad(self.j_dsm, smv_copy_array(self.sc, *urns))
+        with self.tx() as tx:
+            return tx.load(urns)
 
     def inferDS(self, *partial_names):
         """Return DSs from a list of partial names
@@ -52,7 +63,8 @@ class DataSetMgr(object):
         Returns:
             list(SmvDataSet): list of Scala SmvDataSets (j_ds)
         """
-        return self.helper.dsmInferDS(self.j_dsm, smv_copy_array(self.sc, *partial_names))
+        with self.tx() as tx:
+            return tx.inferDS(partial_names)
 
     def inferUrn(self, partial_name):
         """Return URN string from partial name
@@ -63,18 +75,102 @@ class DataSetMgr(object):
         """Register python repo factory
         """
         j_rfact = self._jvm.DataSetRepoFactoryPython(repo_factory)
-        self.j_dsm.register(j_rfact)
+        self.dsRepoFactories.append(j_rfact)
 
     def allDataSets(self):
         """Return all the SmvDataSets in the app
         """
-        j_dss = self.j_dsm.allDataSets()
-        return scala_seq_to_list(self._jvm, j_dss)
+        with self.tx() as tx:
+            return tx.allDataSets()
 
     def modulesToRun(self, modPartialNames, stageNames, allMods):
-        return self.helper.dsmModulesToRun(
-            self.j_dsm,
-            smv_copy_array(self.sc, *modPartialNames), 
-            smv_copy_array(self.sc, *stageNames), 
-            allMods
-        )
+        """Return a modules need to run
+            Combine specified modules, (-m), stages, (-s) and if
+            (--run-app) specified, all output modules
+        """
+        with self.tx() as tx:
+            named_mods = tx.inferDS(modPartialNames)
+            stage_mods = tx.outputModulesForStage(stageNames)
+            app_mods = tx.allOutputModules() if allMods else []
+            res = []
+            res.extend(named_mods)
+            res.extend(stage_mods)
+            res.extend(app_mods)
+            # Need to perserve the ordering
+            return list_distinct(res)
+
+class TXContext(object):
+    """Create a TX context for "with tx() as tx" syntax
+    """
+    def __init__(self, _jvm, resourceFactories, stages):
+        self._jvm = _jvm
+        self.resourceFactories = resourceFactories
+        self.stages = stages
+
+    def __enter__(self):
+        return TX(self._jvm, self.resourceFactories, self.stages)
+
+    def __exit__(self, type, value, traceback):
+        pass
+
+
+class TX(object):
+    """Abstraction of the transaction boundary for loading SmvDataSets. 
+        A TX object
+
+        * will instantiate a set of repos when itself instantiated and will
+        * reuse the same repos for all queries. This means that each new TX object will
+        * reload the SmvDataSet from source **once** during its lifetime.
+
+        NOTE: Once a new TX is created, the well-formedness of the SmvDataSets provided
+        by the previous TX is not guaranteed. Particularly it may become impossible
+        to run modules from the previous TX.
+    """
+    def __init__(self, _jvm, resourceFactories, stages):
+        self._jvm = _jvm
+        self.repos = [rf.createRepo() for rf in resourceFactories]
+        self.stages = stages
+        self.resolver = _jvm.org.tresamigos.smv.python.SmvPythonHelper.createDsResolver(self.repos)
+        self.log = _jvm.org.apache.log4j.LogManager.getLogger("smv")
+
+    def load(self, urn_strs):
+        return self.resolver.loadDataSet(urn_strs)
+
+    def inferDS(self, partial_names):
+        return self.load(self._inferUrn(partial_names))
+
+    def allDataSets(self): 
+        return self.load(self._allUrns())
+
+    def allOutputModules(self):
+        return self._filterOutput(self.allDataSets())
+
+    def outputModulesForStage(self, stageNames):
+        return self._filterOutput(self._dsForStage(stageNames))
+
+    def _dsForStage(self, stageNames):
+        return self.load(self._urnsForStage(stageNames))
+
+    def _urnsForStage(self, stageNames):
+        return [u.toString() 
+            for repo in self.repos 
+            for s in stageNames 
+            for u in scala_seq_to_list(self._jvm, repo.urnsForStage(s))
+        ]
+
+    def _allUrns(self):
+        if (len(self.stages) == 0):
+            log.warn("No stage names configured. Unable to discovr any modules.")
+        return self._urnsForStage(self.stages)
+   
+    def _inferUrn(self, partial_names):
+        def urn_str(pn):
+            return infer_full_name_from_part(
+                self._allUrns(), 
+                pn
+            )
+
+        return [urn_str(pn) for pn in partial_names]
+
+    def _filterOutput(self, dss):
+        return [ds for ds in dss if ds.dsType() == "Output"]

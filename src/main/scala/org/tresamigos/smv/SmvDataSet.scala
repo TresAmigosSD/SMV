@@ -234,10 +234,10 @@ abstract class SmvDataSet {
           genEdd: Boolean = app.genEdd,
           collector: SmvRunInfoCollector,
           quickRun: Boolean = false) = {
-    if (forceRun || !app.dsm.dfCache.contains(versionedFqn)) {
-      app.dsm.dfCache = app.dsm.dfCache + (versionedFqn -> computeDataFrame(genEdd, collector, quickRun))
+    if (forceRun || !app.dfCache.contains(versionedFqn)) {
+      app.dfCache = app.dfCache + (versionedFqn -> computeDataFrame(genEdd, collector, quickRun))
     }
-    app.dsm.dfCache(versionedFqn)
+    app.dfCache(versionedFqn)
   }
 
   def verHex: String = f"${hashOfHash}%08x"
@@ -770,7 +770,7 @@ class SmvExtModulePython(target: ISmvModule) extends SmvDataSet with python.Inte
 
   override def resolve(resolver: DataSetResolver): SmvDataSet = {
     val urns = getPy4JResult(target.getDependencyUrns)
-    resolvedRequiresDS = urns map (urn => resolver.loadDataSet(URN(urn)).head)
+    resolvedRequiresDS = urns map (urn => resolver.loadDataSet(URN(urn)))
     this
   }
 

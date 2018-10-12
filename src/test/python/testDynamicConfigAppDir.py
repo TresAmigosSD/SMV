@@ -50,6 +50,11 @@ class RunModuleWithDynamicConfigAppDirTest(SmvBaseTest):
         # run default class teardown
         super(RunModuleWithDynamicConfigAppDirTest, cls).tearDownClass()
 
+    def test_set_app_dir_basic(self):
+        self.smvApp.setAppDir(self.proj_a_path)
+        self.assertEqual(self.smvApp.appDir(), self.proj_a_path)
+        self.assertEqual(self.smvApp.j_smvApp.smvConfig().appDir(), self.proj_a_path)
+
     def test_mods_available_to_run(self):
         """ verify setting dir makes a module discoverable that wasn't """
         # make sure running the module without setting the app dir fails and raises
