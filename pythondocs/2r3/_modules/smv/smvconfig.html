@@ -1,0 +1,351 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>smv.smvconfig &#8212; Spark Modularized View v2r3 documentation</title>
+    <link rel="stylesheet" href="../../_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Spark Modularized View v2r3 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for smv.smvconfig</h1><div class="highlight"><pre>
+<span></span><span class="c1">#</span>
+<span class="c1"># This file is licensed under the Apache License, Version 2.0</span>
+<span class="c1"># (the &quot;License&quot;); you may not use this file except in compliance with</span>
+<span class="c1"># the License.  You may obtain a copy of the License at</span>
+<span class="c1">#</span>
+<span class="c1">#    http://www.apache.org/licenses/LICENSE-2.0</span>
+<span class="c1">#</span>
+<span class="c1"># Unless required by applicable law or agreed to in writing, software</span>
+<span class="c1"># distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
+<span class="c1"># See the License for the specific language governing permissions and</span>
+<span class="c1"># limitations under the License.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Handle command line args and props files</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">os.path</span>
+<span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">import</span> <span class="nn">argparse</span>
+<span class="kn">import</span> <span class="nn">uuid</span>
+<span class="kn">import</span> <span class="nn">smv.jprops</span> <span class="k">as</span> <span class="nn">jprops</span>
+<span class="kn">from</span> <span class="nn">smv.error</span> <span class="k">import</span> <span class="n">SmvRuntimeError</span>
+<span class="kn">from</span> <span class="nn">smv.utils</span> <span class="k">import</span> <span class="n">infer_full_name_from_part</span>
+
+<div class="viewcode-block" id="SmvConfig"><a class="viewcode-back" href="../../smv.html#smv.smvconfig.SmvConfig">[docs]</a><span class="k">class</span> <span class="nc">SmvConfig</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Smv configurations </span>
+<span class="sd">        Including:</span>
+<span class="sd">            - command line parsing</span>
+<span class="sd">            - read in property files</span>
+<span class="sd">            - dynamic configuration handling</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">arglist</span><span class="p">,</span> <span class="n">_jvm</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_jvm</span> <span class="o">=</span> <span class="n">_jvm</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cmdline</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_cmdline_conf</span><span class="p">(</span><span class="n">arglist</span><span class="p">)</span>
+        
+        <span class="n">DEFAULT_SMV_HOME_CONF_FILE</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s1">&#39;HOME&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;/.smv/smv-user-conf.props&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">app_dir</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cmdline</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;smvAppDir&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">static_props</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dynamic_props</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">app_conf_path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cmdline</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;smvAppConfFile&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">home_conf_path</span> <span class="o">=</span> <span class="n">DEFAULT_SMV_HOME_CONF_FILE</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">user_conf_path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cmdline</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;smvUserConfFile&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cmdline_props</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cmdline</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;smvProps&#39;</span><span class="p">))</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">read_props_from_app_dir</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">app_dir</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">mods_to_run</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cmdline</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;modsToRun&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stages_to_run</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cmdline</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;stagesToRun&#39;</span><span class="p">)</span>
+
+        <span class="kn">from</span> <span class="nn">py4j.java_gateway</span> <span class="k">import</span> <span class="n">java_import</span>
+        <span class="n">java_import</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_jvm</span><span class="p">,</span> <span class="s2">&quot;org.tresamigos.smv.SmvConfig&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Send conf result to Scala side</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">j_smvconf</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_jvm</span><span class="o">.</span><span class="n">SmvConfig</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">app_dir</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cmdline</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;genEdd&#39;</span><span class="p">),</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">merged_props</span><span class="p">(),</span> 
+            <span class="bp">self</span><span class="o">.</span><span class="n">all_data_dirs</span><span class="p">()</span>
+        <span class="p">)</span>
+
+<div class="viewcode-block" id="SmvConfig.reset_j_smvconf"><a class="viewcode-back" href="../../smv.html#smv.smvconfig.SmvConfig.reset_j_smvconf">[docs]</a>    <span class="k">def</span> <span class="nf">reset_j_smvconf</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Reset scala side conf - for dynamic conf</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">j_smvconf</span><span class="o">.</span><span class="n">reset</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">app_dir</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">merged_props</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">all_data_dirs</span><span class="p">())</span></div>
+
+<div class="viewcode-block" id="SmvConfig.read_props_from_app_dir"><a class="viewcode-back" href="../../smv.html#smv.smvconfig.SmvConfig.read_props_from_app_dir">[docs]</a>    <span class="k">def</span> <span class="nf">read_props_from_app_dir</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">_app_dir</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;For a given app dir, read in the prop files</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">app_dir</span> <span class="o">=</span> <span class="n">_app_dir</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">static_props</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_read_props</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="SmvConfig.merged_props"><a class="viewcode-back" href="../../smv.html#smv.smvconfig.SmvConfig.merged_props">[docs]</a>    <span class="k">def</span> <span class="nf">merged_props</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;All the props (static + dynamic)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">static_props</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">res</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dynamic_props</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">res</span></div>
+
+<div class="viewcode-block" id="SmvConfig.spark_sql_props"><a class="viewcode-back" href="../../smv.html#smv.smvconfig.SmvConfig.spark_sql_props">[docs]</a>    <span class="k">def</span> <span class="nf">spark_sql_props</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span><span class="n">v</span> 
+            <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">merged_props</span><span class="p">()</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">k</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;spark.sql&quot;</span><span class="p">)</span>
+        <span class="p">}</span></div>
+
+<div class="viewcode-block" id="SmvConfig.set_dynamic_props"><a class="viewcode-back" href="../../smv.html#smv.smvconfig.SmvConfig.set_dynamic_props">[docs]</a>    <span class="k">def</span> <span class="nf">set_dynamic_props</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">new_d_props</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Reset dynamic props</span>
+<span class="sd">            Overwrite entire dynamic props fully each reset</span>
+<span class="sd">            Ignore reset if new_d_props is None</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span><span class="p">(</span><span class="n">new_d_props</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">dynamic_props</span> <span class="o">=</span> <span class="n">new_d_props</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">reset_j_smvconf</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="SmvConfig.set_app_dir"><a class="viewcode-back" href="../../smv.html#smv.smvconfig.SmvConfig.set_app_dir">[docs]</a>    <span class="k">def</span> <span class="nf">set_app_dir</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">new_app_dir</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Dynamic reset of app dir, so that the location of app and user</span>
+<span class="sd">            conf files. Re-read the props files</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span><span class="p">(</span><span class="n">new_app_dir</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">app_dir</span> <span class="o">=</span> <span class="n">new_app_dir</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">read_props_from_app_dir</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">app_dir</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">reset_j_smvconf</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="SmvConfig.all_data_dirs"><a class="viewcode-back" href="../../smv.html#smv.smvconfig.SmvConfig.all_data_dirs">[docs]</a>    <span class="k">def</span> <span class="nf">all_data_dirs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Create all the data dir configs</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">props</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">merged_props</span><span class="p">()</span>
+        <span class="k">if</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cmdline</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;dataDir&#39;</span><span class="p">)):</span>
+            <span class="n">data_dir</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cmdline</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;dataDir&#39;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="p">(</span><span class="n">props</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;smv.dataDir&#39;</span><span class="p">)):</span>
+            <span class="n">data_dir</span> <span class="o">=</span> <span class="n">props</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;smv.dataDir&#39;</span><span class="p">)</span>
+        <span class="k">elif</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s1">&#39;DATA_DIR&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)):</span>
+            <span class="n">data_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s1">&#39;DATA_DIR&#39;</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;WARNING: use of DATA_DIR environment variable is deprecated. use smv.dataDir instead!!!&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">SmvRuntimeError</span><span class="p">(</span><span class="s2">&quot;Must specify a data-dir either on command line or in conf.&quot;</span><span class="p">)</span>
+
+        <span class="k">def</span> <span class="nf">get_sub_dir</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">default</span><span class="p">):</span>
+            <span class="n">res</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">/</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">data_dir</span><span class="p">,</span> <span class="n">default</span><span class="p">)</span>
+            <span class="k">if</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cmdline</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">)):</span>
+                <span class="n">res</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cmdline</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="p">(</span><span class="n">props</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;smv.&#39;</span> <span class="o">+</span> <span class="n">name</span><span class="p">)):</span>
+                <span class="n">res</span> <span class="o">=</span> <span class="n">props</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;smv.&#39;</span> <span class="o">+</span> <span class="n">name</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">res</span>
+
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s1">&#39;dataDir&#39;</span><span class="p">:</span> <span class="n">data_dir</span><span class="p">,</span>
+            <span class="s1">&#39;inputDir&#39;</span><span class="p">:</span> <span class="n">get_sub_dir</span><span class="p">(</span><span class="s1">&#39;inputDir&#39;</span><span class="p">,</span> <span class="s2">&quot;input&quot;</span><span class="p">),</span>
+            <span class="s1">&#39;outputDir&#39;</span><span class="p">:</span> <span class="n">get_sub_dir</span><span class="p">(</span><span class="s1">&#39;outputDir&#39;</span><span class="p">,</span> <span class="s2">&quot;output&quot;</span><span class="p">),</span>
+            <span class="s1">&#39;historyDir&#39;</span><span class="p">:</span> <span class="n">get_sub_dir</span><span class="p">(</span><span class="s1">&#39;historyDir&#39;</span><span class="p">,</span> <span class="s2">&quot;history&quot;</span><span class="p">),</span>
+            <span class="s1">&#39;publishDir&#39;</span><span class="p">:</span> <span class="n">get_sub_dir</span><span class="p">(</span><span class="s1">&#39;publishDir&#39;</span><span class="p">,</span> <span class="s1">&#39;publish&#39;</span><span class="p">),</span>
+            <span class="s1">&#39;publishVersion&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">cmdline</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;publish&#39;</span><span class="p">)</span>
+        <span class="p">}</span></div>
+
+<div class="viewcode-block" id="SmvConfig.app_id"><a class="viewcode-back" href="../../smv.html#smv.smvconfig.SmvConfig.app_id">[docs]</a>    <span class="k">def</span> <span class="nf">app_id</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">merged_props</span><span class="p">()</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;smv.appId&quot;</span><span class="p">)</span></div>
+    
+<div class="viewcode-block" id="SmvConfig.app_name"><a class="viewcode-back" href="../../smv.html#smv.smvconfig.SmvConfig.app_name">[docs]</a>    <span class="k">def</span> <span class="nf">app_name</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">merged_props</span><span class="p">()</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;smv.appName&quot;</span><span class="p">)</span></div>
+    
+<div class="viewcode-block" id="SmvConfig.user_libs"><a class="viewcode-back" href="../../smv.html#smv.smvconfig.SmvConfig.user_libs">[docs]</a>    <span class="k">def</span> <span class="nf">user_libs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_split_prop</span><span class="p">(</span><span class="s2">&quot;smv.user_libraries&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SmvConfig.stage_names"><a class="viewcode-back" href="../../smv.html#smv.smvconfig.SmvConfig.stage_names">[docs]</a>    <span class="k">def</span> <span class="nf">stage_names</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_split_prop</span><span class="p">(</span><span class="s2">&quot;smv.stages&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SmvConfig.get_run_config"><a class="viewcode-back" href="../../smv.html#smv.smvconfig.SmvConfig.get_run_config">[docs]</a>    <span class="k">def</span> <span class="nf">get_run_config</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Run config will be accessed within client modules. Return </span>
+<span class="sd">            run-config value of the given key.</span>
+
+<span class="sd">            2 possible sources of run-config:</span>
+<span class="sd">                - dynamic_props (which passed in by client code)</span>
+<span class="sd">                - props files/command-line parameters</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">dynamic_props</span><span class="p">):</span>
+            <span class="c1"># when seting run-config in dynamic props, use the key directly</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">dynamic_props</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># when seting run-config in props, use smv.config.+key as key</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">merged_props</span><span class="p">()</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;smv.config.&quot;</span> <span class="o">+</span> <span class="n">key</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SmvConfig.infer_stage_full_name"><a class="viewcode-back" href="../../smv.html#smv.smvconfig.SmvConfig.infer_stage_full_name">[docs]</a>    <span class="k">def</span> <span class="nf">infer_stage_full_name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">part_name</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;For a given partial stage name, infer full stage name</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">infer_full_name_from_part</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">stage_names</span><span class="p">(),</span> <span class="n">part_name</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">_split_prop</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prop_name</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Split multi-value prop to a list</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">prop_val</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">merged_props</span><span class="p">()</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">prop_name</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">f</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">re</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;[:,]&quot;</span><span class="p">,</span> <span class="n">prop_val</span><span class="p">)]</span>
+
+    <span class="k">def</span> <span class="nf">_create_cmdline_conf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">arglist</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Parse arglist to a config dictionary</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">parser</span> <span class="o">=</span> <span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">(</span>
+            <span class="n">usage</span><span class="o">=</span><span class="s2">&quot;smv-run -m ModuleToRun</span><span class="se">\n</span><span class="s2">       smv-run --run-app&quot;</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;For additional usage information, please refer to the user guide and API docs at: </span><span class="se">\n</span><span class="s2">http://tresamigossd.github.io/SMV&quot;</span>
+        <span class="p">)</span>
+
+        <span class="n">DEFAULT_SMV_APP_CONF_FILE</span>  <span class="o">=</span> <span class="s2">&quot;conf/smv-app-conf.props&quot;</span>
+        <span class="n">DEFAULT_SMV_USER_CONF_FILE</span> <span class="o">=</span> <span class="s2">&quot;conf/smv-user-conf.props&quot;</span>
+    
+        <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--cbs-port&#39;</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s1">&#39;cbsPort&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;python callback server port&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Where to find props files</span>
+        <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--smv-app-dir&#39;</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s1">&#39;smvAppDir&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s2">&quot;.&quot;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;SMV app directory&quot;</span><span class="p">)</span>
+        <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--smv-app-conf&#39;</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s1">&#39;smvAppConfFile&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="n">DEFAULT_SMV_APP_CONF_FILE</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;app level (static) SMV configuration file path&quot;</span><span class="p">)</span>
+        <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--smv-user-conf&#39;</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s1">&#39;smvUserConfFile&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="n">DEFAULT_SMV_USER_CONF_FILE</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;user level (dynamic) SMV configuration file path&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Where to find/store data</span>
+        <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--data-dir&#39;</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s1">&#39;dataDir&#39;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;specify the top level data directory&quot;</span><span class="p">)</span>
+        <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--input-dir&#39;</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s1">&#39;inputDir&#39;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;specify the input directory (default: datadir/input)&quot;</span><span class="p">)</span>
+        <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--output-dir&#39;</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s1">&#39;outputDir&#39;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;specify the output directory (default: datadir/output)&quot;</span><span class="p">)</span>
+        <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--hostory-dir&#39;</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s1">&#39;historyDir&#39;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;specify the history directory (default: datadir/history)&quot;</span><span class="p">)</span>
+        <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--publish-dir&#39;</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s1">&#39;publishDir&#39;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;specify the publish directory (default: datadir/publish)&quot;</span><span class="p">)</span>
+
+        <span class="c1"># All app run flags</span>
+        <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--force-run-all&#39;</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s1">&#39;forceRunAll&#39;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s2">&quot;store_true&quot;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;ignore persisted data and force all modules to run&quot;</span><span class="p">)</span>
+        <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--publish-jdbc&#39;</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s1">&#39;publishJDBC&#39;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s2">&quot;store_true&quot;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;publish the given modules/stage/app through JDBC connection&quot;</span><span class="p">)</span>
+        <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--publish-hive&#39;</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s1">&#39;publishHive&#39;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s2">&quot;store_true&quot;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;publish|export given modules/stage/app to hive tables&quot;</span><span class="p">)</span>
+        <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--dead&#39;</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s1">&#39;printDeadModules&#39;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s2">&quot;store_true&quot;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;print a list of the dead modules in this application&quot;</span><span class="p">)</span>
+        <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--graph&#39;</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s1">&#39;graph&#39;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s2">&quot;store_true&quot;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;generate a dot dependency graph of the given modules (modules are not run)&quot;</span><span class="p">)</span>
+        <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--purge-old-output&#39;</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s1">&#39;purgeOldOutput&#39;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s2">&quot;store_true&quot;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;remove all old output files in output dir&quot;</span><span class="p">)</span>
+        <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--dry-run&#39;</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s1">&#39;dryRun&#39;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s2">&quot;store_true&quot;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;determine which modules do not have persisted data and will need to be run&quot;</span><span class="p">)</span>
+        <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--edd&#39;</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s1">&#39;genEdd&#39;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s2">&quot;store_true&quot;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;summarize data and generate an edd file in the same directory as csv and schema&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Where to output CSVs</span>
+        <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--publish&#39;</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s1">&#39;publish&#39;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;publish the given modules/stage/app as given version&quot;</span><span class="p">)</span>
+        <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--export-csv&#39;</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s1">&#39;exportCsv&#39;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;publish|export given modules/stage/app to a CSV file at the given path on the local file system&quot;</span><span class="p">)</span>
+
+        <span class="c1"># What modules to run</span>
+        <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--run-app&#39;</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s1">&#39;runAllApp&#39;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store_true&#39;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;run all output modules in all stages in app&quot;</span><span class="p">)</span>
+        <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;-m&#39;</span><span class="p">,</span> <span class="s1">&#39;--run-module&#39;</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s1">&#39;modsToRun&#39;</span><span class="p">,</span> <span class="n">nargs</span><span class="o">=</span><span class="s1">&#39;+&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="p">[],</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;run specified list of module FQNs&quot;</span><span class="p">)</span>
+        <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;-s&#39;</span><span class="p">,</span> <span class="s1">&#39;--run-stage&#39;</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s1">&#39;stagesToRun&#39;</span><span class="p">,</span> <span class="n">nargs</span><span class="o">=</span><span class="s1">&#39;+&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="p">[],</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;run all output modules in specified stages&quot;</span><span class="p">)</span>
+
+        <span class="k">def</span> <span class="nf">parse_props</span><span class="p">(</span><span class="n">prop</span><span class="p">):</span>
+            <span class="c1"># str.split([sep[, maxsplit]]): we just need to split the first &quot;=&quot;</span>
+            <span class="k">return</span> <span class="n">prop</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;=&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> 
+
+        <span class="c1"># command line props override</span>
+        <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--smv-props&#39;</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s2">&quot;smvProps&quot;</span><span class="p">,</span> <span class="n">nargs</span><span class="o">=</span><span class="s1">&#39;+&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="n">parse_props</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="p">[],</span> <span class="n">help</span><span class="o">=</span><span class="s2">&quot;key=value command line props override&quot;</span><span class="p">)</span>
+
+        <span class="n">res</span> <span class="o">=</span> <span class="nb">vars</span><span class="p">(</span><span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">(</span><span class="n">arglist</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">res</span>
+
+
+    <span class="k">def</span> <span class="nf">_read_props</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Read property files</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># os.path.join has the following behavior:</span>
+        <span class="c1"># (&quot;/a/b&quot;, &quot;c/d&quot;) -&gt; &quot;/a/b/c/d&quot;</span>
+        <span class="c1"># (&quot;/a/b&quot;, &quot;/c/d&quot;) -&gt; &quot;/c/d&quot;</span>
+        <span class="n">full_app_conf_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">app_dir</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">app_conf_path</span><span class="p">)</span>
+        <span class="n">full_user_conf_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">app_dir</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">user_conf_path</span><span class="p">)</span>
+
+        <span class="k">def</span> <span class="nf">load</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+                <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">)</span> <span class="k">as</span> <span class="n">fp</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="n">jprops</span><span class="o">.</span><span class="n">load_properties</span><span class="p">(</span><span class="n">fp</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span> 
+                <span class="k">return</span> <span class="p">{}</span>
+
+        <span class="n">app_conf_props</span> <span class="o">=</span> <span class="n">load</span><span class="p">(</span><span class="n">full_app_conf_path</span><span class="p">)</span>
+        <span class="n">home_conf_props</span> <span class="o">=</span> <span class="n">load</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">home_conf_path</span><span class="p">)</span>
+        <span class="n">user_conf_props</span> <span class="o">=</span> <span class="n">load</span><span class="p">(</span><span class="n">full_user_conf_path</span><span class="p">)</span>
+
+        <span class="n">default_props</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;smv.appName&quot;</span>            <span class="p">:</span> <span class="s2">&quot;Smv Application&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;smv.appId&quot;</span>              <span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">()),</span>
+            <span class="s2">&quot;smv.stages&quot;</span>             <span class="p">:</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;smv.config.keys&quot;</span>        <span class="p">:</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;smv.class_dir&quot;</span>          <span class="p">:</span> <span class="s2">&quot;./target/classes&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;smv.user_libraries&quot;</span>     <span class="p">:</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;smv.maxCbsPortRetries&quot;</span>  <span class="p">:</span> <span class="s2">&quot;10&quot;</span>
+        <span class="p">}</span>
+
+        <span class="c1"># Priority: Low to High</span>
+        <span class="c1">#   - default </span>
+        <span class="c1">#   - conf/smv-app-conf.props</span>
+        <span class="c1">#   - ${HOME}/.smv/smv-user-conf.props</span>
+        <span class="c1">#   - conf/smv-user-conf.props</span>
+        <span class="c1">#   - command-line</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">res</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">default_props</span><span class="p">)</span>
+        <span class="n">res</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">app_conf_props</span><span class="p">)</span>
+        <span class="n">res</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">home_conf_props</span><span class="p">)</span>
+        <span class="n">res</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">user_conf_props</span><span class="p">)</span>
+        <span class="n">res</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cmdline_props</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">res</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Spark Modularized View v2r3 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2017, TresAmigosSD.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.1.
+    </div>
+  </body>
+</html>

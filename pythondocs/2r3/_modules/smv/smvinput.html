@@ -1,0 +1,587 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>smv.smvinput &#8212; Spark Modularized View v2r3 documentation</title>
+    <link rel="stylesheet" href="../../_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Spark Modularized View v2r3 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for smv.smvinput</h1><div class="highlight"><pre>
+<span></span><span class="c1"># This file is licensed under the Apache License, Version 2.0</span>
+<span class="c1"># (the &quot;License&quot;); you may not use this file except in compliance with</span>
+<span class="c1"># the License.  You may obtain a copy of the License at</span>
+<span class="c1">#</span>
+<span class="c1">#    http://www.apache.org/licenses/LICENSE-2.0</span>
+<span class="c1">#</span>
+<span class="c1"># Unless required by applicable law or agreed to in writing, software</span>
+<span class="c1"># distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
+<span class="c1"># See the License for the specific language governing permissions and</span>
+<span class="c1"># limitations under the License.</span>
+<span class="sd">&quot;&quot;&quot;SMV DataSet Framework&#39;s SmvInputBase interface</span>
+
+<span class="sd">This module defines the abstract classes which formed the SmvDataSet&#39;s</span>
+<span class="sd">input DS Framework for clients&#39; projects</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span> <span class="nn">pyspark.sql</span> <span class="k">import</span> <span class="n">DataFrame</span>
+<span class="kn">from</span> <span class="nn">pyspark.sql.types</span> <span class="k">import</span> <span class="n">StructType</span>
+
+<span class="kn">import</span> <span class="nn">abc</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">re</span>
+
+<span class="kn">from</span> <span class="nn">smv.dqm</span> <span class="k">import</span> <span class="n">FailParserCountPolicy</span>
+<span class="kn">from</span> <span class="nn">smv.error</span> <span class="k">import</span> <span class="n">SmvRuntimeError</span>
+<span class="kn">from</span> <span class="nn">smv.smvdataset</span> <span class="k">import</span> <span class="n">SmvDataSet</span>
+
+<span class="k">if</span> <span class="n">sys</span><span class="o">.</span><span class="n">version_info</span> <span class="o">&gt;=</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">):</span>
+    <span class="n">ABC</span> <span class="o">=</span> <span class="n">abc</span><span class="o">.</span><span class="n">ABC</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="n">ABC</span> <span class="o">=</span> <span class="n">abc</span><span class="o">.</span><span class="n">ABCMeta</span><span class="p">(</span><span class="s1">&#39;ABC&#39;</span><span class="p">,</span> <span class="p">(),</span> <span class="p">{})</span>
+
+
+<span class="k">def</span> <span class="nf">_smvhash</span><span class="p">(</span><span class="n">text</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Python&#39;s hash function will return different numbers from run to</span>
+<span class="sd">    from, starting from 3.  Provide a deterministic hash function for</span>
+<span class="sd">    use to calculate sourceCodeHash.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">import</span> <span class="nn">binascii</span>
+    <span class="k">return</span> <span class="n">binascii</span><span class="o">.</span><span class="n">crc32</span><span class="p">(</span><span class="n">text</span><span class="o">.</span><span class="n">encode</span><span class="p">())</span>
+
+
+<span class="k">class</span> <span class="nc">SmvInputBase</span><span class="p">(</span><span class="n">SmvDataSet</span><span class="p">,</span> <span class="n">ABC</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;SmvDataSet representing external input</span>
+<span class="sd">        Concrete class need to provide:</span>
+<span class="sd">          - readAsDF</span>
+<span class="sd">          - dataSrcHash (optional)</span>
+<span class="sd">          - schemaHash (optional)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">isEphemeral</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">True</span>
+
+    <span class="k">def</span> <span class="nf">dsType</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s2">&quot;Input&quot;</span>
+
+    <span class="k">def</span> <span class="nf">requiresDS</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[]</span>
+
+    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">df</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Post-processing for input data</span>
+
+<span class="sd">            Args:</span>
+<span class="sd">                df (DataFrame): input data</span>
+
+<span class="sd">            Returns:</span>
+<span class="sd">                (DataFrame): processed data</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">df</span>
+
+    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">readAsDF</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">readerLogger</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;User defined data reader</span>
+
+<span class="sd">            Returns:</span>
+<span class="sd">                (DataFrame): data from raw input</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">pass</span>
+
+    <span class="k">def</span> <span class="nf">dataSrcHash</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Hash computed on data source</span>
+
+<span class="sd">            Returns:</span>
+<span class="sd">                (int): user defined hash derived from raw data (default: 0)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="mi">0</span>
+
+    <span class="k">def</span> <span class="nf">schemaHash</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Hash computed from schema</span>
+
+<span class="sd">            Returns:</span>
+<span class="sd">                (int): user defined hash derived from input schema (default: 0)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="mi">0</span>
+
+    <span class="k">def</span> <span class="nf">instanceValHash</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Hash computed based on instance values of the dataset</span>
+<span class="sd">            Default to dataSrcHash + schemaHash</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">schema_hash</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">schemaHash</span><span class="p">()</span>
+        <span class="n">data_src_hash</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataSrcHash</span><span class="p">()</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="n">data_src_hash</span> <span class="o">+</span> <span class="n">schema_hash</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">smvApp</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{}</span><span class="s2">.instanceValHash = </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fqn</span><span class="p">(),</span> <span class="n">res</span><span class="p">))</span>
+
+        <span class="c1"># ensure python&#39;s numeric type can fit in a java.lang.Integer</span>
+        <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">res</span><span class="p">)</span> <span class="o">&amp;</span> <span class="mh">0x7fffffff</span>
+
+    <span class="k">def</span> <span class="nf">doRun</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">validator</span><span class="p">,</span> <span class="n">known</span><span class="p">):</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">validator</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">):</span>
+            <span class="n">readerLogger</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">smvApp</span><span class="o">.</span><span class="n">_jvm</span><span class="o">.</span><span class="n">SmvPythonHelper</span><span class="o">.</span><span class="n">getTerminateParserLogger</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">readerLogger</span> <span class="o">=</span> <span class="n">validator</span><span class="o">.</span><span class="n">createParserValidator</span><span class="p">()</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">readAsDF</span><span class="p">(</span><span class="n">readerLogger</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assert_result_is_dataframe</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">result</span><span class="o">.</span><span class="n">_jdf</span>
+
+
+<div class="viewcode-block" id="SmvInputFromFile"><a class="viewcode-back" href="../../smv.html#smv.smvinput.SmvInputFromFile">[docs]</a><span class="k">class</span> <span class="nc">SmvInputFromFile</span><span class="p">(</span><span class="n">SmvInputBase</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Base class for any input based on files on HDFS or local</span>
+
+<span class="sd">        Concrete class need to provide:</span>
+
+<span class="sd">            * path (str): path relative to smv.inputDir, or</span>
+<span class="sd">            * fullPath (str): file full path with protocol</span>
+<span class="sd">            * fullSchemaPath (str): schema file&#39;s full path, or</span>
+<span class="sd">            * schema (StructType): schema object</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+<div class="viewcode-block" id="SmvInputFromFile.path"><a class="viewcode-back" href="../../smv.html#smv.smvinput.SmvInputFromFile.path">[docs]</a>    <span class="k">def</span> <span class="nf">path</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Relative path to smv.dataDir config parameter&quot;&quot;&quot;</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="SmvInputFromFile.fullPath"><a class="viewcode-back" href="../../smv.html#smv.smvinput.SmvInputFromFile.fullPath">[docs]</a>    <span class="k">def</span> <span class="nf">fullPath</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Full path to the input (file/dir or glob pattern)&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">/</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">smvApp</span><span class="o">.</span><span class="n">inputDir</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">())</span></div>
+
+<div class="viewcode-block" id="SmvInputFromFile.fullSchemaPath"><a class="viewcode-back" href="../../smv.html#smv.smvinput.SmvInputFromFile.fullSchemaPath">[docs]</a>    <span class="k">def</span> <span class="nf">fullSchemaPath</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Full path to the schema file&quot;&quot;&quot;</span>
+        <span class="n">know_types</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;.gz&#39;</span><span class="p">,</span> <span class="s1">&#39;.csv&#39;</span><span class="p">,</span> <span class="s1">&#39;.tsv&#39;</span><span class="p">,</span> <span class="s1">&#39;.xml&#39;</span><span class="p">]</span>
+        <span class="n">base</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fullPath</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">know_types</span><span class="p">:</span>
+            <span class="n">base</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="n">t</span> <span class="o">+</span> <span class="s1">&#39;$&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">base</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">base</span> <span class="o">+</span> <span class="s1">&#39;.schema&#39;</span></div>
+
+<div class="viewcode-block" id="SmvInputFromFile.schema"><a class="viewcode-back" href="../../smv.html#smv.smvinput.SmvInputFromFile.schema">[docs]</a>    <span class="k">def</span> <span class="nf">schema</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;User specified schema</span>
+<span class="sd">            Returns:</span>
+<span class="sd">                (StructType): input data&#39;s schema</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="kc">None</span></div>
+
+<div class="viewcode-block" id="SmvInputFromFile.dataSrcHash"><a class="viewcode-back" href="../../smv.html#smv.smvinput.SmvInputFromFile.dataSrcHash">[docs]</a>    <span class="k">def</span> <span class="nf">dataSrcHash</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Hash computed on data source</span>
+<span class="sd">            Based on file&#39;s mtime, and file&#39;s full path</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">full_path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fullPath</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">smvApp</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{}</span><span class="s2"> input path: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fqn</span><span class="p">(),</span> <span class="n">full_path</span><span class="p">))</span>
+
+        <span class="n">path_hash</span> <span class="o">=</span> <span class="n">_smvhash</span><span class="p">(</span><span class="n">full_path</span><span class="p">)</span>
+
+        <span class="n">m_time</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">smvApp</span><span class="o">.</span><span class="n">_jvm</span><span class="o">.</span><span class="n">SmvHDFS</span><span class="o">.</span><span class="n">modificationTime</span><span class="p">(</span><span class="n">full_path</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">smvApp</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{}</span><span class="s2"> input m_time: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fqn</span><span class="p">(),</span> <span class="n">m_time</span><span class="p">))</span>
+        
+        <span class="k">return</span> <span class="n">m_time</span> <span class="o">+</span> <span class="n">path_hash</span></div>
+
+<div class="viewcode-block" id="SmvInputFromFile.schemaHash"><a class="viewcode-back" href="../../smv.html#smv.smvinput.SmvInputFromFile.schemaHash">[docs]</a>    <span class="k">def</span> <span class="nf">schemaHash</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Hash computed from schema</span>
+<span class="sd">            Based on input schema as a StructType</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">schema</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">schema</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">smvApp</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{}</span><span class="s2"> schema: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fqn</span><span class="p">(),</span> <span class="n">schema</span><span class="p">))</span>
+        
+        <span class="k">if</span> <span class="n">schema</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">_smvhash</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">schema</span><span class="p">()</span><span class="o">.</span><span class="n">simpleString</span><span class="p">())</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="mi">0</span></div></div>
+
+
+<div class="viewcode-block" id="SmvXmlFile"><a class="viewcode-back" href="../../smv.html#smv.smvinput.SmvXmlFile">[docs]</a><span class="k">class</span> <span class="nc">SmvXmlFile</span><span class="p">(</span><span class="n">SmvInputFromFile</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Input from file in XML format</span>
+<span class="sd">        Concrete class need to provide:</span>
+
+<span class="sd">            * rowTag (str): XML tag for identifying a row</span>
+<span class="sd">            * path (str): File path relative to smv.InputDir. Or</span>
+<span class="sd">            * fullPath (str): file full path with protocol</span>
+<span class="sd">            * fullSchemaPath (str): full path of the schema JSON file or None (infer schema)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="SmvXmlFile.rowTag"><a class="viewcode-back" href="../../smv.html#smv.smvinput.SmvXmlFile.rowTag">[docs]</a>    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">rowTag</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;XML tag for identifying a record (row)&quot;&quot;&quot;</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="SmvXmlFile.schema"><a class="viewcode-back" href="../../smv.html#smv.smvinput.SmvXmlFile.schema">[docs]</a>    <span class="k">def</span> <span class="nf">schema</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;load schema from the json file&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fullSchemaPath</span><span class="p">()</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">):</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fullSchemaPath</span><span class="p">(),</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">sj</span><span class="p">:</span>
+                <span class="n">schema_st</span> <span class="o">=</span> <span class="n">sj</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+            <span class="k">return</span> <span class="n">StructType</span><span class="o">.</span><span class="n">fromJson</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">schema_st</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="SmvXmlFile.readAsDF"><a class="viewcode-back" href="../../smv.html#smv.smvinput.SmvXmlFile.readAsDF">[docs]</a>    <span class="k">def</span> <span class="nf">readAsDF</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">readerLogger</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;readin xml data&quot;&quot;&quot;</span>
+
+        <span class="c1"># TODO: look for possibilities to feed to readerLogger</span>
+        <span class="n">reader</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">smvApp</span><span class="o">.</span><span class="n">sqlContext</span>\
+            <span class="o">.</span><span class="n">read</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s1">&#39;com.databricks.spark.xml&#39;</span><span class="p">)</span>\
+            <span class="o">.</span><span class="n">options</span><span class="p">(</span><span class="n">rowTag</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">rowTag</span><span class="p">())</span>
+
+        <span class="c1"># If no schema specified, infer from data</span>
+        <span class="k">if</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">schema</span><span class="p">()</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">reader</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fullPath</span><span class="p">(),</span> <span class="n">schema</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">schema</span><span class="p">())</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">reader</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fullPath</span><span class="p">())</span></div></div>
+
+
+<span class="k">class</span> <span class="nc">WithParser</span><span class="p">(</span><span class="n">SmvInputBase</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Input uses SmvSchema and Csv parser&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">dqmWithTypeSpecificPolicy</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;for parsers we should get the type specific dqm policy from the</span>
+<span class="sd">           concrete scala proxy class that is the actual input (e.g. SmvCsvFile)&quot;&quot;&quot;</span>
+        <span class="n">userDqm</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dqm</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">failAtParsingError</span><span class="p">():</span>
+            <span class="n">res</span> <span class="o">=</span> <span class="n">userDqm</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">FailParserCountPolicy</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">addAction</span><span class="p">()</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">forceParserCheck</span><span class="p">():</span>
+            <span class="n">res</span> <span class="o">=</span> <span class="n">userDqm</span><span class="o">.</span><span class="n">addAction</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">res</span> <span class="o">=</span> <span class="n">userDqm</span>
+        <span class="k">return</span> <span class="n">res</span>
+
+    <span class="k">def</span> <span class="nf">forceParserCheck</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">True</span>
+
+    <span class="k">def</span> <span class="nf">failAtParsingError</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">True</span>
+
+    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">smvSchema</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns SmvSchema, as the Scala SmvSchema class</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">pass</span>
+
+    <span class="k">def</span> <span class="nf">schema</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">j_schema</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">smvSchema</span><span class="p">()</span><span class="o">.</span><span class="n">toStructType</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">StructType</span><span class="o">.</span><span class="n">fromJson</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">j_schema</span><span class="o">.</span><span class="n">json</span><span class="p">()))</span>
+
+    <span class="k">def</span> <span class="nf">csvAttr</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Specifies the csv file format.  Corresponds to the CsvAttributes case class in Scala.</span>
+<span class="sd">            Derive from smvSchema if not specified by user.</span>
+
+<span class="sd">            Override this method if user want to specify CsvAttributes which is different from</span>
+<span class="sd">            the one can be derived from smvSchema</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">smvSchema</span><span class="p">()</span><span class="o">.</span><span class="n">extractCsvAttributes</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">userSchema</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Get user-defined schema</span>
+
+<span class="sd">            Override this method to define your own schema for the target file.</span>
+<span class="sd">            Schema declared in this way take priority over .schema files. Schema</span>
+<span class="sd">            should be specified in the format &quot;colName1:colType1;colName2:colType2&quot;</span>
+
+<span class="sd">            Returns:</span>
+<span class="sd">                (string):</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="k">def</span> <span class="nf">schemaHash</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># when smvSchema is provided, use it to calculate hash, since it also</span>
+        <span class="c1"># includes CsvAttributes info</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">smvSchema</span><span class="p">()</span><span class="o">.</span><span class="n">schemaHash</span><span class="p">()</span>
+
+
+<div class="viewcode-block" id="SmvCsvFile"><a class="viewcode-back" href="../../smv.html#smv.smvinput.SmvCsvFile">[docs]</a><span class="k">class</span> <span class="nc">SmvCsvFile</span><span class="p">(</span><span class="n">WithParser</span><span class="p">,</span> <span class="n">SmvInputFromFile</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Input from a file in CSV format</span>
+<span class="sd">        Base class for CSV file input.</span>
+<span class="sd">        User need to define path method.</span>
+
+<span class="sd">        Example:</span>
+<span class="sd">        &gt;&gt;&gt; class MyCsvFile(SmvCsvFile):</span>
+<span class="sd">        &gt;&gt;&gt;     def path(self):</span>
+<span class="sd">        &gt;&gt;&gt;         return &quot;path/relative/to/smvInputDir/file.csv&quot;</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="SmvCsvFile.smvSchema"><a class="viewcode-back" href="../../smv.html#smv.smvinput.SmvCsvFile.smvSchema">[docs]</a>    <span class="k">def</span> <span class="nf">smvSchema</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">smvSchemaObj</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">smvApp</span><span class="o">.</span><span class="n">j_smvPyClient</span><span class="o">.</span><span class="n">getSmvSchema</span><span class="p">()</span>
+        <span class="k">if</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">userSchema</span><span class="p">()</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">smvSchemaObj</span><span class="o">.</span><span class="n">fromString</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">userSchema</span><span class="p">())</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">smvSchemaObj</span><span class="o">.</span><span class="n">fromFile</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">smvApp</span><span class="o">.</span><span class="n">j_smvApp</span><span class="o">.</span><span class="n">sc</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">fullSchemaPath</span><span class="p">())</span></div>
+
+
+<div class="viewcode-block" id="SmvCsvFile.readAsDF"><a class="viewcode-back" href="../../smv.html#smv.smvinput.SmvCsvFile.readAsDF">[docs]</a>    <span class="k">def</span> <span class="nf">readAsDF</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">readerLogger</span><span class="p">):</span>
+        <span class="n">jdf</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">smvApp</span><span class="o">.</span><span class="n">j_smvPyClient</span><span class="o">.</span><span class="n">readCsvFromFile</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">fullPath</span><span class="p">(),</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">smvSchema</span><span class="p">(),</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">csvAttr</span><span class="p">(),</span>
+            <span class="n">readerLogger</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">DataFrame</span><span class="p">(</span><span class="n">jdf</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">smvApp</span><span class="o">.</span><span class="n">sqlContext</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="SmvSqlCsvFile"><a class="viewcode-back" href="../../smv.html#smv.smvinput.SmvSqlCsvFile">[docs]</a><span class="k">class</span> <span class="nc">SmvSqlCsvFile</span><span class="p">(</span><span class="n">SmvCsvFile</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Input from a file in CSV format and using a SQL query to access it</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># temporary table name</span>
+    <span class="n">tableName</span> <span class="o">=</span> <span class="s2">&quot;df&quot;</span>
+
+<div class="viewcode-block" id="SmvSqlCsvFile.query"><a class="viewcode-back" href="../../smv.html#smv.smvinput.SmvSqlCsvFile.query">[docs]</a>    <span class="k">def</span> <span class="nf">query</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Query used to extract data from the table which reads the CSV file</span>
+
+<span class="sd">            Override this to specify your own query (optional). Default is</span>
+<span class="sd">            equivalent to &#39;select * from &#39; + tableName.</span>
+
+<span class="sd">            Returns:</span>
+<span class="sd">                (str): query</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="s2">&quot;select * from &quot;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">tableName</span></div>
+
+<div class="viewcode-block" id="SmvSqlCsvFile.run"><a class="viewcode-back" href="../../smv.html#smv.smvinput.SmvSqlCsvFile.run">[docs]</a>    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">df</span><span class="p">):</span>
+        <span class="c1"># temporarily register DataFrame of input CSV file as a table</span>
+        <span class="n">df</span><span class="o">.</span><span class="n">registerTempTable</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tableName</span><span class="p">)</span>
+
+        <span class="c1"># execute the table query</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">smvApp</span><span class="o">.</span><span class="n">sqlContext</span><span class="o">.</span><span class="n">sql</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">query</span><span class="p">())</span>
+
+        <span class="c1"># drop the temporary table</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">smvApp</span><span class="o">.</span><span class="n">sqlContext</span><span class="o">.</span><span class="n">sql</span><span class="p">(</span><span class="s2">&quot;drop table &quot;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">tableName</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">res</span></div></div>
+
+
+<div class="viewcode-block" id="SmvMultiCsvFiles"><a class="viewcode-back" href="../../smv.html#smv.smvinput.SmvMultiCsvFiles">[docs]</a><span class="k">class</span> <span class="nc">SmvMultiCsvFiles</span><span class="p">(</span><span class="n">SmvCsvFile</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Raw input from multiple csv files sharing single schema</span>
+
+<span class="sd">        Instead of a single input file, specify a data dir with files which share</span>
+<span class="sd">        the same schema.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+<div class="viewcode-block" id="SmvMultiCsvFiles.path"><a class="viewcode-back" href="../../smv.html#smv.smvinput.SmvMultiCsvFiles.path">[docs]</a>    <span class="k">def</span> <span class="nf">path</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">dir</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="SmvMultiCsvFiles.readAsDF"><a class="viewcode-back" href="../../smv.html#smv.smvinput.SmvMultiCsvFiles.readAsDF">[docs]</a>    <span class="k">def</span> <span class="nf">readAsDF</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">readerLogger</span><span class="p">):</span>
+        <span class="n">flist</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">smvApp</span><span class="o">.</span><span class="n">_jvm</span><span class="o">.</span><span class="n">SmvHDFS</span><span class="o">.</span><span class="n">dirList</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fullPath</span><span class="p">())</span><span class="o">.</span><span class="n">array</span><span class="p">()</span>
+        <span class="c1"># ignore all hidden files in the data dir</span>
+        <span class="n">filesInDir</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;</span><span class="si">{}</span><span class="s2">/</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fullPath</span><span class="p">(),</span> <span class="n">n</span><span class="p">)</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">flist</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">n</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)]</span>
+
+        <span class="k">if</span> <span class="p">(</span><span class="ow">not</span> <span class="n">filesInDir</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">SmvRuntimeError</span><span class="p">(</span><span class="s2">&quot;There are no data files in </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fullPath</span><span class="p">()))</span>
+
+        <span class="n">combinedJdf</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">for</span> <span class="n">filePath</span> <span class="ow">in</span> <span class="n">filesInDir</span><span class="p">:</span>
+            <span class="n">jdf</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">smvApp</span><span class="o">.</span><span class="n">j_smvPyClient</span><span class="o">.</span><span class="n">readCsvFromFile</span><span class="p">(</span>
+                <span class="n">filePath</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">smvSchema</span><span class="p">(),</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">csvAttr</span><span class="p">(),</span>
+                <span class="n">readerLogger</span>
+            <span class="p">)</span>
+            <span class="n">combinedJdf</span> <span class="o">=</span> <span class="n">jdf</span> <span class="k">if</span> <span class="p">(</span><span class="n">combinedJdf</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">)</span> <span class="k">else</span> <span class="n">combinedJdf</span><span class="o">.</span><span class="n">unionAll</span><span class="p">(</span><span class="n">jdf</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">DataFrame</span><span class="p">(</span><span class="n">combinedJdf</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">smvApp</span><span class="o">.</span><span class="n">sqlContext</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SmvMultiCsvFiles.description"><a class="viewcode-back" href="../../smv.html#smv.smvinput.SmvMultiCsvFiles.description">[docs]</a>    <span class="k">def</span> <span class="nf">description</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s2">&quot;Input dir: @&quot;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">dir</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="SmvMultiCsvFiles.dir"><a class="viewcode-back" href="../../smv.html#smv.smvinput.SmvMultiCsvFiles.dir">[docs]</a>    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">dir</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Path to the directory containing the csv files and their schema</span>
+
+<span class="sd">            Returns:</span>
+<span class="sd">                (str): path</span>
+<span class="sd">        &quot;&quot;&quot;</span></div></div>
+
+
+<div class="viewcode-block" id="SmvCsvStringData"><a class="viewcode-back" href="../../smv.html#smv.smvinput.SmvCsvStringData">[docs]</a><span class="k">class</span> <span class="nc">SmvCsvStringData</span><span class="p">(</span><span class="n">WithParser</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Input data defined by a schema string and data string</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="SmvCsvStringData.smvSchema"><a class="viewcode-back" href="../../smv.html#smv.smvinput.SmvCsvStringData.smvSchema">[docs]</a>    <span class="k">def</span> <span class="nf">smvSchema</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">smvSchemaObj</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">smvApp</span><span class="o">.</span><span class="n">j_smvPyClient</span><span class="o">.</span><span class="n">getSmvSchema</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">smvSchemaObj</span><span class="o">.</span><span class="n">fromString</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">schemaStr</span><span class="p">())</span></div>
+
+<div class="viewcode-block" id="SmvCsvStringData.readAsDF"><a class="viewcode-back" href="../../smv.html#smv.smvinput.SmvCsvStringData.readAsDF">[docs]</a>    <span class="k">def</span> <span class="nf">readAsDF</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">readerLogger</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">smvApp</span><span class="o">.</span><span class="n">createDFWithLogger</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">schemaStr</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataStr</span><span class="p">(),</span> <span class="n">readerLogger</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SmvCsvStringData.dataSrcHash"><a class="viewcode-back" href="../../smv.html#smv.smvinput.SmvCsvStringData.dataSrcHash">[docs]</a>    <span class="k">def</span> <span class="nf">dataSrcHash</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">_smvhash</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataStr</span><span class="p">())</span></div>
+
+<div class="viewcode-block" id="SmvCsvStringData.schemaStr"><a class="viewcode-back" href="../../smv.html#smv.smvinput.SmvCsvStringData.schemaStr">[docs]</a>    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">schemaStr</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Smv Schema string.</span>
+
+<span class="sd">            E.g. &quot;id:String; dt:Timestamp&quot;</span>
+
+<span class="sd">            Returns:</span>
+<span class="sd">                (str): schema</span>
+<span class="sd">        &quot;&quot;&quot;</span></div>
+
+<div class="viewcode-block" id="SmvCsvStringData.dataStr"><a class="viewcode-back" href="../../smv.html#smv.smvinput.SmvCsvStringData.dataStr">[docs]</a>    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">dataStr</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Smv data string.</span>
+
+<span class="sd">            E.g. &quot;212,2016-10-03;119,2015-01-07&quot;</span>
+
+<span class="sd">            Returns:</span>
+<span class="sd">                (str): data</span>
+<span class="sd">        &quot;&quot;&quot;</span></div></div>
+
+
+<div class="viewcode-block" id="SmvJdbcTable"><a class="viewcode-back" href="../../smv.html#smv.smvinput.SmvJdbcTable">[docs]</a><span class="k">class</span> <span class="nc">SmvJdbcTable</span><span class="p">(</span><span class="n">SmvInputBase</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Input from a table read through JDBC</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+<div class="viewcode-block" id="SmvJdbcTable.description"><a class="viewcode-back" href="../../smv.html#smv.smvinput.SmvJdbcTable.description">[docs]</a>    <span class="k">def</span> <span class="nf">description</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s2">&quot;JDBC table </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tableName</span><span class="p">())</span></div>
+
+<div class="viewcode-block" id="SmvJdbcTable.jdbcUrl"><a class="viewcode-back" href="../../smv.html#smv.smvinput.SmvJdbcTable.jdbcUrl">[docs]</a>    <span class="k">def</span> <span class="nf">jdbcUrl</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;User can override this, default use the jdbcUrl setting in smvConfig&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">smvApp</span><span class="o">.</span><span class="n">jdbcUrl</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="SmvJdbcTable.readAsDF"><a class="viewcode-back" href="../../smv.html#smv.smvinput.SmvJdbcTable.readAsDF">[docs]</a>    <span class="k">def</span> <span class="nf">readAsDF</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">readerLogger</span><span class="p">):</span>
+        <span class="k">if</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tableQuery</span><span class="p">()</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">):</span>
+            <span class="n">tableNameOrQuery</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">tableName</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">tableNameOrQuery</span> <span class="o">=</span> <span class="s2">&quot;(</span><span class="si">{}</span><span class="s2">) as TMP_</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">tableQuery</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">tableName</span><span class="p">()</span>
+            <span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">smvApp</span><span class="o">.</span><span class="n">sqlContext</span><span class="o">.</span><span class="n">read</span>\
+            <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s1">&#39;jdbc&#39;</span><span class="p">)</span>\
+            <span class="o">.</span><span class="n">option</span><span class="p">(</span><span class="s1">&#39;url&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">jdbcUrl</span><span class="p">())</span>\
+            <span class="o">.</span><span class="n">option</span><span class="p">(</span><span class="s1">&#39;dbtable&#39;</span><span class="p">,</span> <span class="n">tableNameOrQuery</span><span class="p">)</span>\
+            <span class="o">.</span><span class="n">load</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="SmvJdbcTable.tableName"><a class="viewcode-back" href="../../smv.html#smv.smvinput.SmvJdbcTable.tableName">[docs]</a>    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">tableName</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;User-specified name for the table to extract input from</span>
+
+<span class="sd">            Override this to specify your own table name.</span>
+
+<span class="sd">            Returns:</span>
+<span class="sd">                (str): table name</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="SmvJdbcTable.tableQuery"><a class="viewcode-back" href="../../smv.html#smv.smvinput.SmvJdbcTable.tableQuery">[docs]</a>    <span class="k">def</span> <span class="nf">tableQuery</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Query used to extract data from Hive table</span>
+
+<span class="sd">            Override this to specify your own query (optional). Default is</span>
+<span class="sd">            equivalent to &#39;select * from &#39; + tableName().</span>
+
+<span class="sd">            Returns:</span>
+<span class="sd">                (str): query</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="kc">None</span></div></div>
+
+
+<div class="viewcode-block" id="SmvHiveTable"><a class="viewcode-back" href="../../smv.html#smv.smvinput.SmvHiveTable">[docs]</a><span class="k">class</span> <span class="nc">SmvHiveTable</span><span class="p">(</span><span class="n">SmvInputBase</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Input from a Hive table</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="SmvHiveTable.readAsDF"><a class="viewcode-back" href="../../smv.html#smv.smvinput.SmvHiveTable.readAsDF">[docs]</a>    <span class="k">def</span> <span class="nf">readAsDF</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">readerLogger</span><span class="p">):</span>
+        <span class="k">if</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tableQuery</span><span class="p">()</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">):</span>
+            <span class="n">query</span> <span class="o">=</span> <span class="s2">&quot;select * from </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tableName</span><span class="p">())</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">query</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">tableQuery</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">smvApp</span><span class="o">.</span><span class="n">sqlContext</span><span class="o">.</span><span class="n">sql</span><span class="p">(</span><span class="n">query</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SmvHiveTable.tableName"><a class="viewcode-back" href="../../smv.html#smv.smvinput.SmvHiveTable.tableName">[docs]</a>    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">tableName</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;User-specified name Hive hive table to extract input from</span>
+
+<span class="sd">            Override this to specify your own table name.</span>
+
+<span class="sd">            Returns:</span>
+<span class="sd">                (str): table name</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="SmvHiveTable.tableQuery"><a class="viewcode-back" href="../../smv.html#smv.smvinput.SmvHiveTable.tableQuery">[docs]</a>    <span class="k">def</span> <span class="nf">tableQuery</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Query used to extract data from Hive table</span>
+
+<span class="sd">            Override this to specify your own query (optional). Default is</span>
+<span class="sd">            equivalent to &#39;select * from &#39; + tableName().</span>
+
+<span class="sd">            Returns:</span>
+<span class="sd">                (str): query</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="kc">None</span></div></div>
+
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s1">&#39;SmvInputFromFile&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;SmvXmlFile&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;SmvMultiCsvFiles&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;SmvCsvFile&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;SmvSqlCsvFile&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;SmvCsvStringData&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;SmvJdbcTable&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;SmvHiveTable&#39;</span>
+<span class="p">]</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Spark Modularized View v2r3 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2017, TresAmigosSD.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.1.
+    </div>
+  </body>
+</html>
