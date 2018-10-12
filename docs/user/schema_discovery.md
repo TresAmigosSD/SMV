@@ -8,8 +8,6 @@ However, when we just download the data from it's original source, there is no S
 data usable for SMV and Spark, we need to create the Schema file. SMV has a Schema discovery tool to
 help user quickly create it.
 
-Note that this feature is currently only available in the Scala `smv-shell`, but will be implemented in the `smv-pyshell` in the future.
-
 ## Where to put the Csv files
 
 SMV will look for `smv.inputDir` when it load the configuration(see [Application Configuration](app_config.md) for deatails). If multiple places defined the parameter, the order of
@@ -31,12 +29,6 @@ needed to setup the directory structures.
 Within the SMV Spark shell environment (see [Run Spark Shell](run_shell.md) for details), a
 `smvDiscoverSchemaToFile` command is provided.
 
-**Scala**
-```scala
-scala> smvDiscoverSchemaToFile("/path/to/file.csv")
-```
-
-**Python**
 ```python
 > smvDiscoverSchemaToFile("/path/to/file.csv")
 ```
@@ -47,12 +39,6 @@ For above case, the Csv file is assumed to be
 
 You can specify the appropriate CsvAttributes for your file
 
-**Scala**
-```scala
-scala> smvDiscoverSchemaToFile("/path/to/file.csv", ca = new CsvAttributes(delimiter = '|', hasHeader = true))
-```
-
-**python**
 ```python
 > smvDiscoverSchemaToFile("/path/to/file.csv", ca = CsvAttributes(delimiter = '|', hasHeader = True))
 ```
@@ -67,10 +53,10 @@ hinted by the file name, human need to review the schema file.
 
 Using the `CB1200CZ11.csv` file as an example,
 
-**Scala**
-```scala
-scala> smvDiscoverSchemaToFile("data/input/employment/CB1200CZ11.csv", ca = new CsvAttributes(delimiter = '|', hasHeader = true))
+```python
+>>> smvDiscoverSchemaToFile("data/input/employment/CB1200CZ11.csv", ca = CsvAttributes(delimiter = '|', hasHeader = true))
 ```
+
 The path here is relative to the project root dir, where I started the `smv-shell`.
 
 A `CB1200CZ11.schema.toBeReviewed` file is generated. The first a couple of lines are

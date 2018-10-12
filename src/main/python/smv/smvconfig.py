@@ -86,12 +86,11 @@ class SmvConfig(object):
     def set_dynamic_props(self, new_d_props):
         """Reset dynamic props
             Overwrite entire dynamic props fully each reset
+            Ignore reset if new_d_props is None
         """
-        if(new_d_props is None):
-            self.dynamic_props = {}
-        else:
+        if(new_d_props is not None):
             self.dynamic_props = new_d_props.copy()
-        self.reset_j_smvconf()
+            self.reset_j_smvconf()
 
     def set_app_dir(self, new_app_dir):
         """Dynamic reset of app dir, so that the location of app and user

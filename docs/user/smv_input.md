@@ -30,13 +30,6 @@ SMV also provides a tool to [discover schema](schema_discovery.md) from raw CSV 
 The most common way to utilize SMV files is to define objects in the input package of a given stage.
 For example:
 
-### Scala
-```scala
-package com.mycom.myproj.stage1.input
-
-object acct_demo extends SmvCsvFile("accounts/acct_demo.csv")
-```
-### Python
 ```Python
 # In file src/main/python/stage1/inputdata.py
 class acct_demo(smv.SmvCsvFile):
@@ -51,15 +44,6 @@ The file path `accounts/acct_demo.csv` is relative to `smv.inputDir` in the conf
 check [Application Configuration](app_config.md) for details.
 
 Given the above definition, any module in `stage1` will be able to add a dependency to `acct_demo` by using it in `requiresDS`:
-### Scala
-```scala
-package com.mycom.myproj.stage1.etl
-
-object AcctsByZip extends SmvModule("...") {
-  override def requiresDS() = Seq(acct_demo)
-  ...
-```
-### Python
 ```Python
 from stage1.inputdata import acct_demo
 
@@ -70,11 +54,6 @@ class AcctsByZip(smv.SmvModule):
 
 If multiple CSV files in a directory share the same `schema` but with headers in all of the files,
 one can extends `SmvMultiCsvFiles` instead of `SmvCsvFile` to create the data set
-### Scala
-```scala
-object acct_demo extends SmvMultiCsvFiles("accounts/acct_demo")
-```
-### Python
 ```Python
 class acct_demo(smv.SmvMultiCsvFiles):
   def dir(self):
@@ -90,25 +69,6 @@ use comma as the delimiter with header.
 The previous example used a simple definition of an `SmvFile`.  However, SMV files are proper `SmvDataSet` and can therefore implement their own transformations and provide DQM rules.
 For example:
 
-### Scala
-```scala
-package com.mycom.myproj.stage1.input
-
-// define project specific CSV attributes.
-private object CA {
-  val caBar = new CsvAttributes(delimiter = '|', hasHeader = true)
-}
-
-object acct_demo extends SmvCsvFile("accounts/acct_demo.csv", CA.caBar) {
-  override def run(i: DataFrame) : DataFrame = {
-    i.select($"acct_id", $"amt", ...)
-  }
-
-  override def dqm = SmvDQM().
-    add(DQMRule($"amt" < 1000000.0, "rule1", FailAny)).
-    ...
-```
-### Python
 ```Python
 #In file src/main/python/stage1/inputdata.py
 
@@ -194,7 +154,7 @@ format parameter yet.
 
 For `String` type, since both empty value and null value are valid, we sometimes want to distinguish
 them. In that case we have to specify a special string to represent null-string.
-```scala
+```
 store_id: String[,null]
 ```
 Where "null" is used in the data to represent null-value.  
@@ -203,7 +163,7 @@ Since we also use Csv to persist intermediate `SmvDataSet` results, internally w
 
 ### Decimal type
 The `Decimal` type can be used to hold a `BigDecimal` field value.  An optional precision and scale values can also supplied.  They default to 10 and 0 respectively if not defined (same as `BigDecimal`).
-```scala
+```
 income: Decimal;
 amt: Decimal[7,2];
 other: Decimal[10];
@@ -216,7 +176,7 @@ The field format is the standard [`java.text.SimpleDateFormat`](https://docs.ora
 
 If a format string is not specified, it defaults to `"yyyy-MM-dd HH:mm:ss.S"`.
 Please note the difference between `HH`(Hour in day (0-23)) and `hh`(Hour in am/pm (1-12))
-```scala
+```
 std_date: Timestamp;
 evt_time: Timestamp[yyyy-MM-dd HH:mm:ss];
 ```
@@ -225,7 +185,7 @@ evt_time: Timestamp[yyyy-MM-dd HH:mm:ss];
 The `Date` type is similar to `Timestamp` without the time part.
 An optional format string can be used.
 If a format string is not specified, it defaults to `"yyyy-MM-dd"`
-```scala
+```
 std_date: Date
 evt_date: Date[yyyyMMdd]
 ```
@@ -234,90 +194,20 @@ evt_date: Date[yyyyMMdd]
 The `map` type can be used to specify a field that contains a map of key/value pairs.
 The field definition must specify the key and value types.
 Only native types are supported as the key/value types.
-```scala
+```
 str_to_int: map[String, Integer];
 int_to_double: map[Integer, Double];
-```
-
-## Fixed Record Length Files
-Current support for Fixed Record Length file is pretty minimal.
-* No header is allowed in FRL files
-* Record length info are carried in the comment part of the Schema file
-* No gap between fields are allowed
-
-For Example:
-```
-acct_id: String;  # $8
-user_id: String;  # $10
-amt: Double; # $13
-```
-
-The length of each field defined in the format of `$n` in the comment part of each
-line in the schema file. There are no `offset` parameter for each field. If you have
-gap in 2 fields, please create a dummy filler field in the schema file with the
-record length as the gap size.
-
-Access FRL file is similar to Csv File*
-### Scala
-```scala
-object user_demo extends SmvFrlFile("user_demo.frl")
 ```
 
 ## Accessing Raw Files from shell
 With pre-loaded functions, one can access file from Spark shell, see [Run Spark Shell](run_shell.md)
 document for all the pre-defined functions.
 
-### Reading Files in shell
-
-One can use `SmvCsvFile` or `SmvFrlFile` to access files in the shell the same way as from code.
-```scala
-scala> object tmp_acct_demo extends SmvCsvFile("accounts/acct_demo.csv")
-scala> val ad = tmp_acct_demo.rdd
-```
-The path is relative to the `smv.dataDir` for the current project.
-
-For `SmvFile` already defined in the current project, one can simply resolve them and get a `DataFrame`.
-For example, one have `AccountDemo` defined in the project package `com.mycompany.myapp.stage1`, one
-can access it from the shell
-
-### Scala
-```scala
-scala> val ad = df(stage1.AccountDemo)
-```
-### Python
-```python
->>> ad = df("stage1.AccountDemo")
-```
-
-### Saving Files in shell
-
-The following will create a csv file and a schema file with name `result.schema`\*:
-
-### Scala
-```scala
-scala> df.saveAsCsvWithSchema("/outdata/result.csv")
-```
-
-### Schema Discovery
-
-SMV can discover data schema from CSV file and create a schema file.  Manual adjustment might be needed on the discovered schema file.  Example of using the Schema Discovery in the interactive shell*
-
-```scala
-scala> smvDiscoverSchemaToFile("/path/to/file.csv")
-```
-
-The schema file will be created in the current running dir.
-
 # SmvCsvStringData
 
 Sometimes people need to create some small data in the code and use as input data. `SmvCsvStringData`
 allow using to specify the data schema and content as strings.
 
-### Scala
-```scala
-object MyTmpDS extends SmvCsvStringData("a:String;b:Double;c:String", "aa,1.0,cc;aa2,3.5,CC")
-```
-### Python
 ```python
 class MyTmpDS(smv.SmvCsvStringData):
     def schemaStr(self):
@@ -334,17 +224,6 @@ SMV supports reading from tables in Hive meta store (which can be native hive, p
 
 Reading from Hive tables is accomplished by wrapping the Hive table in an `SmvHiveTable` object.  The `SmvHiveTable` instance can then be used as a required dataset in another dataset downstream.  The use of `SmvHiveTable` is similar to current use of `SmvCsvFile` and can be considered as just another input file. By default, `SmvHiveTable` simply select all the columns from the table (`SELECT * FROM tableName`), but you may also specify your own query.
 
-### Scala
-```scala
-object FooHiveTable extends SmvHiveTable("hiveschema.foo") {
-  def version = 1
-}
-
-object FooHiveTablWithQuery extends SmvHiveTable("hiveschema.foo", "SELECT mycol FROM hiveschema.foo") {
-  def version = 2
-}
-```
-### Python
 ```Python
 class FooHiveTable(smv.SmvHiveTable):
   def version(self):
@@ -367,12 +246,6 @@ For other inputs like `SmvCsvFile`, we heuristically detect changes in data by c
 
 SMV supports reading data over a JDBC connection using `SmvJdbcTable`. This requires a proper configuration -  read more [here](smv_jdbc.md#configuration).
 
-## Scala
-```Scala
-object FooJdbcTable extends SmvJdbcTable("myTableName")
-```
-
-## Python
 ```Python
 class FooJdbcTable(smv.SmvJdbcTable):
   def tableName(self):
@@ -380,5 +253,3 @@ class FooJdbcTable(smv.SmvJdbcTable):
 ```
 
 Like `SmvHiveTable`, you will need to update a `SmvJdbcTable's` version to force it and its downstream modules to rerun after the data changes.
-
-*=This feature currently only available in Scala smv-shell

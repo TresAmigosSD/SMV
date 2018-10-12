@@ -1,5 +1,7 @@
 # SMV Windows Installation
 
+**SMV DOES NOT SUPPORT WINDOWS, THIS DOC IS HISTORICAL AND JUST FOR REFERENCE**
+
 SMV is currently supported on Linux (ubuntu, centos, etc) and OSX. Since Spark has Windows support, SMV can also
 run on Windows. Currently SMV doesn't have scripts which help launching on Windows yet.
 
