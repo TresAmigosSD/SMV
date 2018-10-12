@@ -16,6 +16,8 @@ package org.tresamigos.smv
 
 import org.apache.spark.sql.DataFrame
 
+import org.apache.hadoop.fs.FileStatus
+import java.io.FileNotFoundException
 import scala.collection.JavaConversions._
 import scala.util.{Try, Success, Failure}
 
@@ -32,6 +34,10 @@ abstract class DataPersistStgy {
   def rmPersisted(): Unit
 
   def isPersisted(): Boolean
+
+  def withLock[T](timeout: Long = Long.MaxValue)(code: => T): T
+
+  def lockfileStatus: Option[FileStatus]
 }
 
 class DfCsvOnHdfsStgy(
@@ -46,6 +52,8 @@ class DfCsvOnHdfsStgy(
   private def moduleCsvPath(): String = versionedBasePath() + ".csv"
 
   private def moduleSchemaPath(): String = versionedBasePath() + ".schema"
+
+  private def lockfilePath(): String = moduleCsvPath() + ".lock"
 
   /**
    * Read a dataframe from a persisted file path, that is usually an
@@ -94,4 +102,18 @@ class DfCsvOnHdfsStgy(
     SmvHDFS.deleteFile(moduleCsvPath())
     SmvHDFS.deleteFile(moduleSchemaPath())
   }
+
+  override def withLock[T](timeout: Long = Long.MaxValue)(code: => T): T = {
+    SmvLock.withLock(lockfilePath, timeout)(code)
+  }
+
+   /** Returns the file status for the lockfile if found */
+  override def lockfileStatus: Option[FileStatus] =
+    // use try/catch instead of Try because we want to handle only
+    // FileNotFoundException and let other errors bubble up
+    try {
+      Some(SmvHDFS.getFileStatus(lockfilePath))
+    } catch {
+      case e: FileNotFoundException => None
+    }
 }

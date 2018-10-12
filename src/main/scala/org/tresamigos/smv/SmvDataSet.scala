@@ -137,7 +137,6 @@ abstract class SmvDataSet {
    * This way, if this module or any of the modules it depends on changes, the HOH should change.
    * The "version" of the current dataset is also used in the computation to allow user to force
    * a change in the hash of hash if some external dependency changed as well.
-   * TODO: need to add requiresAnc dependency here
    */
   private[smv] lazy val hashOfHash: Int = {
     val _datasetHash = datasetHash
@@ -250,19 +249,6 @@ abstract class SmvDataSet {
   /** Returns the path for the module's csv output */
   def moduleCsvPath(): String =
     versionedBasePath() + ".csv"
-
-  private def lockfilePath(): String =
-    moduleCsvPath() + ".lock"
-
-  /** Returns the file status for the lockfile if found */
-  private[smv] def lockfileStatus: Option[FileStatus] =
-    // use try/catch instead of Try because we want to handle only
-    // FileNotFoundException and let other errors bubble up
-    try {
-      Some(SmvHDFS.getFileStatus(lockfilePath()))
-    } catch {
-      case e: FileNotFoundException => None
-    }
 
   /** Returns the path for the module's schema file */
   private[smv] def moduleSchemaPath(): String =
@@ -527,7 +513,7 @@ abstract class SmvDataSet {
         // and return DFn which consists of reading from that persisted result
         case _ =>
           // Acquire lock on output CSV to ensure write is atomic
-          SmvLock.withLock(lockfilePath()) {
+          persistStgy.withLock() {
             // Another process may have persisted the data while we
             // waited for the lock. So we read again before computing.
             persistStgy.unPersist() match {
@@ -539,7 +525,7 @@ abstract class SmvDataSet {
                 val df = dqmValidator.attachTasks(doRun(dqmValidator, collector, quickRun))
                 // Delete outputs in case data was partially written previously
                 persistStgy.rmPersisted()
-                persistStgy.persist(df)
+                persistingTimeElapsed = Some(persistStgy.persist(df))
 
                 runDqmAndMeta(df, true) // has already had action (from persist)
 
