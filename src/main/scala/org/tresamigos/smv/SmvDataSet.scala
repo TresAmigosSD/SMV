@@ -118,7 +118,6 @@ abstract class SmvDataSet {
   private val isObjectInShell: Boolean = this.getClass.getName matches """\$.*"""
 
   /** Hash computed from the dataset, could be overridden to include things other than CRC */
-<<<<<<< HEAD
   def datasetHash(): Int = {
     val _instanceValHash = instanceValHash
     app.log.debug(f"${fqn}.instanceValHash = ${_instanceValHash}")
@@ -128,9 +127,6 @@ abstract class SmvDataSet {
 
     _instanceValHash + _sourceCodeHash
   }
-=======
-  private def datasetHash(): Int = instanceValHash + sourceCodeHash
->>>>>>>  #1347 made private method private
   /** Hash computed based on instance values of the dataset, such as the timestamp of an input file **/
   def instanceValHash(): Int
   /** Hash computed based on the source code of the dataset's class **/
