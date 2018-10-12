@@ -160,8 +160,7 @@ class DQMTest extends SmvTestUtil {
         .add(BoundRule(col("a"), 0, 2))
         .add(SetRule(col("b"), Set("m", "f")))
         .add(FormatRule(col("c"), "."))
-        .add(FailTotalRuleCountPolicy(3)),
-      false
+        .add(FailTotalRuleCountPolicy(3))
     )
     val res = dqm.attachTasks(df)
     res.count
@@ -175,8 +174,7 @@ class DQMTest extends SmvTestUtil {
       SmvDQM()
         .add(SetFix(col("b"), Set("m", "f", "o"), "o"))
         .add(FormatFix(col("c"), ".", "_"))
-        .add(FailTotalFixCountPolicy(5)),
-      false
+        .add(FailTotalFixCountPolicy(5))
     )
     val res = dqm.attachTasks(df)
     assertSrddDataEqual(res, "1,m,a;0,f,c;2,m,z;1,o,x;1,m,_")
@@ -191,8 +189,7 @@ class DQMTest extends SmvTestUtil {
       SmvDQM()
         .add(DQMRule(col("b") < 0.4, "rule1"))
         .add(DQMFix(col("a") < 1, lit(1) as "a", "fix2"))
-        .add(DQMPolicy(policy, "udp")),
-      false
+        .add(DQMPolicy(policy, "udp"))
     )
 
     val res = dqm.attachTasks(df)
