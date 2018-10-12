@@ -76,8 +76,5 @@ class SmvLockTest extends SmvUnitSpec {
     t2.join()
     assert(execTime2 < math.max(SmvLock.DefaultPollInterval, time2) + 100, "Expected second thread to time out")
     assert(except2 != null, "Expected TimeoutException in the blocking thread")
-
-    t1.join()
-    assert(t1.execTime > time1, "Expected first thread to hold on to the lock for the specfiied time")
   }
 }
