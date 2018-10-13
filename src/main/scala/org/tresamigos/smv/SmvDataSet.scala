@@ -29,6 +29,8 @@ import edd._
 
 import org.joda.time._, format._
 
+import org.apache.spark.sql.types.Metadata
+
 /**
  * Dependency management unit within the SMV application framework.  Execution order within
  * the SMV application framework is derived from dependency between SmvDataSet instances.
@@ -40,14 +42,14 @@ abstract class SmvDataSet {
   def app: SmvApp                                                = SmvApp.app
 
   /** Cache metadata so we can reuse it between validation and persistence */
-  private var userMetadataCache: Option[SmvMetadata]             = None
+  private var userMetadataCache: Option[Metadata]             = None
 
   /**
     * Cache the user metadata result (call to `metadata(df)`) so that multiple calls
     * to this `getOrCreateMetadata` method will only do a single evaluation of the user
     * defined metadata method which could be quite expensive.
     */
-  private def getOrCreateUserMetadata(df: DataFrame): SmvMetadata = {
+  private def getOrCreateUserMetadata(df: DataFrame): Metadata = {
     userMetadataCache match {
       // use cached metadata if it exists
       case Some(meta) => meta
@@ -374,8 +376,8 @@ abstract class SmvDataSet {
    * Can be overridden to supply custom metadata
    * TODO: make SmvMetadata more user friendly or find alternative format for user metadata
    */
-  def metadata(df: DataFrame): SmvMetadata =
-    new SmvMetadata()
+  def metadata(df: DataFrame): Metadata =
+    Metadata.empty
 
   /**
    * Get the most detailed metadata available without running this module. If
@@ -403,12 +405,15 @@ abstract class SmvDataSet {
    */
   private def getOrCreateMetadata(dfOpt:       Option[DataFrame],
                                        validResOpt: Option[DqmValidationResult]): SmvMetadata = {
-    val resMetadata = dfOpt match {
+    val metadata = dfOpt match {
       // if df provided, get user metadata (which may be cached)
       case Some(df) => getOrCreateUserMetadata(df)
       // otherwise, skip user metadata - none can be evaluated if there if we haven't run the module
-      case _        => new SmvMetadata()
+      case _        => Metadata.empty
     }
+
+    val resMetadata = new SmvMetadata()
+    resMetadata.addUserMeta(metadata)
     resMetadata.addFQN(fqn)
     resMetadata.addDependencyMetadata(resolvedRequiresDS)
     resMetadata.addApplicationContext(app)
@@ -634,7 +639,7 @@ class SmvExtModulePython(target: ISmvModule) extends SmvDataSet with python.Inte
   override def metadata(df: DataFrame) = {
     val py4jRes = target.getMetadataJson(df)
     val json = getPy4JResult(py4jRes)
-    SmvMetadata.fromJson(json)
+    Metadata.fromJson(json)
   }
 
   override def validateMetadata(current: SmvMetadata, history: Seq[SmvMetadata]) = {
