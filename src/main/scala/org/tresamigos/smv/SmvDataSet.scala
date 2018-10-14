@@ -116,9 +116,6 @@ abstract class SmvDataSet {
   /** full name of hive output table if this module is published to hive. */
   def tableName: String = throw new IllegalStateException("tableName not specified for ${fqn}")
 
-  /** Objects defined in Spark Shell has class name start with $ **/
-  private val isObjectInShell: Boolean = this.getClass.getName matches """\$.*"""
-
   /** Hash computed from the dataset, could be overridden to include things other than CRC */
   def datasetHash(): Int = {
     val _instanceValHash = instanceValHash
