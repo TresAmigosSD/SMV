@@ -124,11 +124,14 @@ abstract class SmvDataSet {
     res
   }
 
+  def verHex: String = f"${hashOfHash}%08x"
+  def versionedFqn   = s"${fqn}_${verHex}"
+
   /**
    * Since hashOfHash is lazy, persistStgy also lazy
    **/
   private[smv] lazy val persistStgy = new DfCsvOnHdfsStgy(
-    app, fqn, hashOfHash
+    app, fqn, versionedFqn
   )
 
   /**
@@ -211,8 +214,6 @@ abstract class SmvDataSet {
     app.dfCache(versionedFqn)
   }
 
-  def verHex: String = f"${hashOfHash}%08x"
-  def versionedFqn   = s"${fqn}_${verHex}"
 
   /** The "versioned" module file base name. */
   private def versionedBasePath(): String = {
@@ -498,9 +499,6 @@ abstract class SmvDataSet {
   /** path to published output without file extension **/
   private def publishPathNoExt(version: String) = s"${app.smvConfig.publishDir}/${version}/${fqn}"
 
-  /** path of published data for a given version. */
-  private def publishCsvPath(version: String) = publishPathNoExt(version) + ".csv"
-
   /** path of published metadata for a given version */
   private def publishMetaPath(version: String) = publishPathNoExt(version) + ".meta"
 
@@ -514,7 +512,7 @@ abstract class SmvDataSet {
   private[smv] def publish(collector: SmvRunInfoCollector) = {
     val df      = rdd(collector=collector)
     val version = app.smvConfig.publishVersion
-    persistStgy.publish(df, version)
+    persistStgy.publish(df)
     // Read persisted metadata and metadata history, and publish it with the output.
     // Note that the metadata will have been persisted, because either
     // 1. the metadata was persisted before publish was started
