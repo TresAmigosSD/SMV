@@ -253,10 +253,6 @@ abstract class SmvDataSet {
   private[smv] def moduleSchemaPath(): String =
     versionedBasePath() + ".schema"
 
-  /** Returns the path for the module's edd report output */
-  private def moduleEddPath(): String =
-    versionedBasePath() + ".edd"
-
   /** Returns the path for the module's metadata output */
   private[smv] def moduleMetaPath(): String =
     versionedBasePath() + ".meta"
@@ -295,14 +291,14 @@ abstract class SmvDataSet {
    * Returns current all outputs produced by this module.
    */
   private[smv] def allOutputFiles(): Seq[String] = {
-    Seq(moduleCsvPath(), moduleSchemaPath(), moduleEddPath(), moduleMetaPath(), moduleMetaHistoryPath())
+    Seq(moduleCsvPath(), moduleSchemaPath(), moduleMetaPath(), moduleMetaHistoryPath())
   }
 
   /**
    * Returns current versioned outputs produced by this module. Excludes metadata history
    */
   private def versionedOutputFiles(): Seq[String] = {
-    Seq(moduleCsvPath(), moduleSchemaPath(), moduleEddPath(), moduleMetaPath())
+    Seq(moduleCsvPath(), moduleSchemaPath(), moduleMetaPath())
   }
 
   /**
@@ -323,9 +319,6 @@ abstract class SmvDataSet {
       SmvMetadataHistory.fromJson(json)
     }
 
-  private def readPersistedEdd(): Try[DataFrame] =
-    Try { app.sqlContext.read.json(moduleEddPath()) }
-
   /**
    * #560
    *
@@ -343,36 +336,6 @@ abstract class SmvDataSet {
   }
 
   /**
-   * Read EDD from disk if it exists, or create and persist it otherwise
-   */
-  private def getEdd(collector: SmvRunInfoCollector): String = {
-    // DON'T automatically persist edd. Edd is explicitly persisted on the next
-    // line. This is the simplest way to prevent EDD from being persisted twice.
-    val df = rdd(forceRun = false, genEdd = false, collector=collector)
-
-    val unorderedSummary = readPersistedEdd().getOrElse {
-      persistEdd(df)
-      readPersistedEdd().get
-      // The persisted df's columns will be ordered arbitrarily, and need to be
-      // reordered to be a valid edd result
-    }.select(EddResult.resultSchema.head, EddResult.resultSchema.tail: _*)
-
-    // Summary rows will be ordered arbitrarily after persisting. Need
-    // to reorder according to the columns of the df. Original order of tasks will
-    // still most likely be lost
-    val orderedSummary = df.columns.map { dfColName =>
-      unorderedSummary.filter(unorderedSummary("colName") === dfColName)
-    }.reduce {
-      _.smvUnion(_)
-    }
-
-    EddResultFunctions(orderedSummary).createReport()
-  }
-
-  private def persistEdd(df: DataFrame) =
-    df.edd.persistBesideData(moduleCsvPath())
-
-  /**
    * Can be overridden to supply custom metadata
    * TODO: make SmvMetadata more user friendly or find alternative format for user metadata
    */
@@ -386,7 +349,7 @@ abstract class SmvDataSet {
    * report will exclude the DQM validation result and user metadata.
    */
   private[smv] def getMetadata(): SmvMetadata =
-    readPersistedMetadata().getOrElse(getOrCreateMetadata(None, None))
+    readPersistedMetadata().getOrElse(getOrCreateMetadata(None, None, false))
 
   /**
    * Read metadata history from file if it exists, otherwise return empty metadata
@@ -403,17 +366,20 @@ abstract class SmvDataSet {
    * return incase this method is called multiple times in same run with/without
    * the df argument.  We assume the df value is the same for all calls!
    */
-  private def getOrCreateMetadata(dfOpt:       Option[DataFrame],
-                                       validResOpt: Option[DqmValidationResult]): SmvMetadata = {
-    val metadata = dfOpt match {
-      // if df provided, get user metadata (which may be cached)
-      case Some(df) => getOrCreateUserMetadata(df)
-      // otherwise, skip user metadata - none can be evaluated if there if we haven't run the module
-      case _        => Metadata.empty
-    }
-
+  private def getOrCreateMetadata(
+    dfOpt:       Option[DataFrame],
+    validResOpt: Option[DqmValidationResult],
+    genEdd: Boolean
+  ): SmvMetadata = {
     val resMetadata = new SmvMetadata()
-    resMetadata.addUserMeta(metadata)
+    dfOpt match {
+      // if df provided, get user metadata and if genEdd, add Edd result
+      case Some(df) => {
+        resMetadata.addUserMeta(getOrCreateUserMetadata(df))
+        if (genEdd) resMetadata.addEddResult(df.edd.toMetaArray)
+      }
+      case _        => Unit
+    }
     resMetadata.addFQN(fqn)
     resMetadata.addDependencyMetadata(resolvedRequiresDS)
     resMetadata.addApplicationContext(app)
@@ -478,7 +444,7 @@ abstract class SmvDataSet {
         doAction(f"VALIDATE DATA QUALITY") {dqmValidator.validate(df, hasAction)}
       dqmTimeElapsed = Some(validationDuration)
 
-      val metadata = getOrCreateMetadata(Some(df), Some(validationResult))
+      val metadata = getOrCreateMetadata(Some(df), Some(validationResult), genEdd)
       val metadataHistory = getMetadataHistory
       // Metadata is complete at time of validation, including user metadata and validation result
       val validationRes: Option[String] = validateMetadata(metadata, metadataHistory.historyList)
@@ -525,13 +491,11 @@ abstract class SmvDataSet {
                 persistStgy.rmPersisted()
                 persistingTimeElapsed = Some(persistStgy.persist(df))
 
-                runDqmAndMeta(df, true) // has already had action (from persist)
+                val dfReadBack = persistStgy.unPersist().get
 
-                // Generate and persist edd based on result of reading results from disk. Avoids
-                // a possibly expensive action on the result from before persisting.
-                if(genEdd)
-                  persistEdd(df)
-                persistStgy.unPersist().get
+                // Use readback DF here, otherwise persiste is one action, here is another one
+                runDqmAndMeta(dfReadBack, true) 
+                dfReadBack
             }
           }
       }
@@ -577,9 +541,6 @@ abstract class SmvDataSet {
     //    when rdd was called above, persisting the metadata.
     getMetadata.saveToFile(app.sc, publishMetaPath(version))
     getMetadataHistory.saveToFile(app.sc, publishHistoryPath(version))
-    /* publish should also calculate edd if generarte Edd flag was turned on */
-    if (app.genEdd)
-      df.edd.persistBesideData(publishCsvPath(version))
   }
 
   /**

@@ -129,3 +129,17 @@ class CreateDot(RunCmdLineBaseTest):
         dot_file = "{}.dot".format(self.smvApp.appName())
         assert (os.path.isfile(dot_file) )
         os.remove(dot_file)
+
+
+class CreateEdd(RunCmdLineBaseTest):
+    @classmethod
+    def whatToRun(cls):
+        return ['-m', 'modules.A', '--edd']
+
+    def test_run_module_with_edd(self):
+        self.smvApp.run()
+        coll = self.smvApp.getRunInfoByPartialName('modules.A', None)
+        edd_json_array = coll.metadata("modules.A")['_edd']
+        for r in edd_json_array:
+            if (r['colName'] == 'k' and r['taskDesc'] == "Non-Null Count"):
+                self.assertEqual(r['valueJSON'], '2')

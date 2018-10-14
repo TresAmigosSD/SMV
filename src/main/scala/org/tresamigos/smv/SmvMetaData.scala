@@ -190,11 +190,19 @@ class SmvMetadata(val builder: MetadataBuilder = new MetadataBuilder) {
     sc.makeRDD(Seq(toJson), 1).saveAsTextFile(path)
 
   /**
-   * Add meta data from a Json string
+   * Add meta data from user defined metadata
    **/
   def addUserMeta(meta: Metadata) = {
     builder.putMetadata("_userMetadata", meta)
   }
+
+  /**
+   * Add Edd result as an array of meta
+   **/
+  def addEddResult(eddMetaArray: Array[Metadata]) = {
+    builder.putMetadataArray("_edd", eddMetaArray)
+  }
+
 }
 
 object SmvMetadata {
