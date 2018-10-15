@@ -29,6 +29,7 @@ from py4j.protocol import Py4JJavaError
 
 
 single_run_counter = 0
+metadata_count = 0
 
 class SmvFrameworkTest(SmvBaseTest):
     @classmethod
@@ -169,11 +170,14 @@ class SmvMetadataTest(SmvBaseTest):
     def test_metadata_only_called_once(self):
         # running the module will incr the global metadata count by 1 for each
         # call to metadata
-        fqn = "metadata_stage.modules.ModWithMetaCount"
-        self.df(fqn)
+        #
+        # Even if the module isEphemeral user meta should only run once
+        fqn1 = "metadata_stage.modules.ModWithMetaCount"
+        fqn2 = "metadata_stage.modules.DependsOnMetaCount"
+        self.df(fqn1).count()
+        self.df(fqn2).count()
 
         # Note: must import AFTER `df` above to get latest instance of package!
-        from metadata_stage.modules import metadata_count
         self.assertEqual(metadata_count, 1)
 
 class SmvNeedsToRunTest(SmvBaseTest):
