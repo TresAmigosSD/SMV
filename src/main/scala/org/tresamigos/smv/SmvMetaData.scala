@@ -61,7 +61,7 @@ class SmvMetadata(val builder: MetadataBuilder = new MetadataBuilder) {
    * Add dependency-related metadata based on a list of dependencies
    */
   def addDependencyMetadata(deps: Seq[SmvDataSet]) = {
-    val dependencyPaths = deps map ( _.moduleMetaPath() )
+    val dependencyPaths = deps map ( _.runInfoStgy.moduleMetaPath() )
     builder.putStringArray("_inputs", dependencyPaths.toArray)
   }
 

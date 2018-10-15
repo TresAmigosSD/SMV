@@ -80,7 +80,7 @@ class CsvStrWithNullData(SmvCsvStringData):
         return False
 
     def run(self, df):
-        return df.withColumn("b", lit("")).repartition(1)
+        return df.withColumn("b", lit(""))
     
 class ModWithBadName(SmvModule):
     def requiresDS(self):

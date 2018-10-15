@@ -70,26 +70,12 @@ class SmvFrameworkTest(SmvBaseTest):
         df = self.df(fqn)
 
     def test_module_persist_with_null(self):
+        # Module has both empty string and null value in string, should read back as the same
         fqn = "stage.modules.CsvStrWithNullData"
         df = self.df(fqn, True)
         j_m = self.load(fqn)[0]
-        f = open(j_m.moduleCsvPath() + "/part-00000", "r")
-        res = f.read()
-        expect = """"1",""
-"_SmvStrNull_",""
-"3",""
-"""
-        self.assertEqual(res, expect)
-
-        s_f = open(j_m.moduleSchemaPath() + "/part-00000", "r")
-        s_res = s_f.read()
-        s_expect = """@delimiter = ,
-@has-header = false
-@quote-char = "
-a: String[,_SmvStrNull_]
-b: String[,_SmvStrNull_]
-"""
-        self.assertEqual(s_res, s_expect)
+        read_back = DataFrame(j_m.persistStgy().unPersist().get(), df.sql_ctx)
+        self.should_be_same(df, read_back)
 
     def test_cycle_dependency_error_out(self):
         fqn = "cycle.modules.CycleA"

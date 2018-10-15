@@ -30,6 +30,8 @@ abstract class DataPersistStgy[T] {
 
   def rmPersisted(): Unit
 
+  def allOutputs(): Seq[String]
+
   def isPersisted(): Boolean = false
 
   def withLock[T2](timeout: Long = Long.MaxValue)(code: => T2): T2 = code
@@ -114,6 +116,11 @@ class DfCsvOnHdfsStgy(
     SmvHDFS.deleteFile(moduleSchemaPath())
   }
 
+  override def allOutputs() = Seq(
+    moduleCsvPath(),
+    moduleSchemaPath()
+  )
+
   override def withLock[T](timeout: Long = Long.MaxValue)(code: => T): T = {
     SmvLock.withLock(lockfilePath, timeout)(code)
   }
@@ -133,9 +140,10 @@ class DfCsvOnHdfsStgy(
 class RunInfoPersistStgy(
   smvApp: SmvApp,
   val fqn: String,
-  val versionedFqn: String
+  val versionedFqn: String,
+  val metadataHistorySize: Int
 ) extends DataPersistStgy[SmvRunInfo] {
-  private def moduleMetaPath(): String = 
+  def moduleMetaPath(): String = 
     s"""${smvApp.smvConfig.outputDir}/${versionedFqn}.meta"""
 
   private def moduleMetaHistoryPath(): String =
@@ -149,19 +157,28 @@ class RunInfoPersistStgy(
   private def publishMetaPath() = publishBasePath() + ".meta"
   private def publishHistoryPath() = publishBasePath() + ".hist"
 
-  private def readMetadataHistory(): Try[SmvMetadataHistory] =
+  def readMetadata(): Try[SmvMetadata] =
+    Try {
+      val json = smvApp.sc.textFile(moduleMetaPath()).collect.head
+      SmvMetadata.fromJson(json)
+    }
+      
+  def readMetadataHistory(): Try[SmvMetadataHistory] =
     Try {
       val json = smvApp.sc.textFile(moduleMetaHistoryPath()).collect.head
       SmvMetadataHistory.fromJson(json)
     }
   
-  val metadataHistorySize = 5
-
-  def persist(runInfo: SmvRunInfo): Double = {
+  override def persist(runInfo: SmvRunInfo): Double = {
     val metaPath =  moduleMetaPath()
     val metaHistoryPath = moduleMetaHistoryPath()
 
     val metadata = runInfo.metadata
+
+    //Use persisted history 
+    val metadataHistory = readMetadataHistory().getOrElse(SmvMetadataHistory.empty)
+
+    rmPersisted()
 
     val (_, metaElapsed) =
       smvApp.doAction(f"PERSIST METADATA", fqn) {metadata.saveToFile(smvApp.sc, metaPath)}
@@ -170,7 +187,7 @@ class RunInfoPersistStgy(
     // For persisting, use read back history
     val (_, histElapsed) =
       smvApp.doAction(f"PERSIST METADATA HISTORY", fqn) {
-        readMetadataHistory().getOrElse(SmvMetadataHistory.empty)
+        metadataHistory
           .update(metadata, metadataHistorySize)
           .saveToFile(smvApp.sc, metaHistoryPath)
       }
@@ -179,23 +196,26 @@ class RunInfoPersistStgy(
     metaElapsed + histElapsed
   }
 
-  def publish(runInfo: SmvRunInfo): Unit = {
+  override def publish(runInfo: SmvRunInfo): Unit = {
     runInfo.metadata.saveToFile(smvApp.sc, publishMetaPath())
     runInfo.metadataHistory.saveToFile(smvApp.sc, publishHistoryPath())
   }
 
-  def unPersist(): Try[SmvRunInfo] = 
-    Try {
-      val json = smvApp.sc.textFile(moduleMetaPath()).collect.head
-      val metadata = SmvMetadata.fromJson(json)
-      val metadataHistory = readMetadataHistory().getOrElse(SmvMetadataHistory.empty)
-      
-      SmvRunInfo(metadata, metadataHistory)
+  override def unPersist(): Try[SmvRunInfo] = {
+    val metadataHistory = readMetadataHistory().getOrElse(SmvMetadataHistory.empty)
+    readMetadata.map{
+      m => SmvRunInfo(m, metadataHistory)
     }
+  }
 
-  def rmPersisted(): Unit = {
+  override def rmPersisted(): Unit = {
     SmvHDFS.deleteFile(moduleMetaPath())
     SmvHDFS.deleteFile(moduleMetaHistoryPath())
   }
+
+  override def allOutputs() = Seq(
+    moduleMetaPath(),
+    moduleMetaHistoryPath()
+  )
 }
 
