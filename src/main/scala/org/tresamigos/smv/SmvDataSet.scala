@@ -338,23 +338,25 @@ abstract class SmvDataSet {
 
     // shared logic when running ephemeral and non-ephemeral modules
     def runDqmAndMeta(df: DataFrame, hasAction: Boolean): Unit = {
-      val metadataHistory = getMetadataHistory
-      val _metadata = readPersistedMetadata().getOrElse{
+      // If metadata is persisted already, no need to rerun
+      val _runInfo = runInfoStgy.unPersist().getOrElse({
         val (validationResult, validationDuration) =
           doAction(f"VALIDATE DATA QUALITY") {dqmValidator.validate(df, hasAction)}
         dqmTimeElapsed = Some(validationDuration)
 
-        val metadata = getOrCreateMetadata(Some(df), Some(validationResult), genEdd)
+        val currentMeta = getOrCreateMetadata(Some(df), Some(validationResult), genEdd)
+        val metadataHistory = getMetadataHistory
         // Metadata is complete at time of validation, including user metadata and validation result
-        val validationRes: Option[String] = validateMetadata(metadata, metadataHistory.historyList)
+        val validationRes: Option[String] = validateMetadata(currentMeta, metadataHistory.historyList)
         validationRes foreach {msg => throw new SmvMetadataValidationError(msg)}
-        
-        //metaDataHistory was updated within the persist method
-        runInfoStgy.persist(SmvRunInfo(metadata, SmvMetadataHistory.empty))
-        metadata
-      }
 
-      collector.addRunInfo(fqn, _metadata, metadataHistory)
+        //metaDataHistory was updated within the persist method
+        runInfoStgy.persist(SmvRunInfo(currentMeta, SmvMetadataHistory.empty))
+        SmvRunInfo(currentMeta, metadataHistory)
+      })
+      
+      //put metadata and the un-updated metadataHistory to collector
+      collector.addRunInfo(fqn, _runInfo)
     }
 
     if (quickRun) {
