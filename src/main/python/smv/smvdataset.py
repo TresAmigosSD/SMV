@@ -92,6 +92,9 @@ class SmvDataSet(ABC):
 
     def smvGetRunConfig(self, key):
         """return the current user run configuration value for the given key."""
+        if (key not in self.requiresConfig()):
+            raise SmvRuntimeError("RunConfig key {} was not specified in requiresConfig method{}.".format(key, self.requiresConfig()))
+
         return self.smvApp.getConf(key)
     
     def smvGetRunConfigAsInt(self, key):
@@ -142,7 +145,16 @@ class SmvDataSet(ABC):
 
             The given keys and their values will influence the dataset hash
         """
-        return []
+        try:
+            self._is_smv_run_config()
+            is_run_conf = True
+        except:
+            is_run_conf = False
+
+        if (is_run_conf):
+            return self.smvApp.py_smvconf.get_run_config_keys()
+        else:
+            return []
     
     def requiresLib(self):
         """User-specified list of 'library' dependencies. These are code, other than

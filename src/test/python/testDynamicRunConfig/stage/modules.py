@@ -19,3 +19,10 @@ class A(SmvModule, SmvRunConfig):
     def requiresConfig(self): return ["src"]
     def run(self, i):
         return self.smvApp.createDF("src:String", self.smvGetRunConfig("src"))
+
+
+class RunConfWithError(SmvModule):
+    def requiresDS(self): return []
+    def run(self, i):
+        # Using "src" without defining requiresConfig, should error out
+        return self.smvApp.createDF("src:String", self.smvGetRunConfig("src"))
