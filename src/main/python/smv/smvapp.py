@@ -544,7 +544,7 @@ class SmvApp(object):
         if(self.cmd_line.forceRunAll):
             ancestors = self._modules_with_ancestors(mods)
             for m in set(ancestors):
-                m.deleteOutputs(m.versionedOutputFiles())
+                self.j_smvPyClient.deleteModuleOutput(m)
         
     def _dry_run(self, mods):
         """Execute as dry-run if the dry-run flag is specified.
@@ -557,7 +557,7 @@ class SmvApp(object):
             # filter the modules that are not yet persisted and not ephemeral.
             # this yields all the modules that will need to be run with the given command
             mods_with_ancestors = self._modules_with_ancestors(mods)
-            mods_not_persisted = [ m for m in mods_with_ancestors if not (m.isPersisted() or m.isEphemeral()) ]
+            mods_not_persisted = [ m for m in mods_with_ancestors if m.needsToRun() ]
 
             print("Dry run - modules not persisted:")
             print("----------------------")

@@ -24,7 +24,7 @@ import scala.util.{Try, Success, Failure}
 import org.apache.log4j.LogManager
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.apache.spark.{SparkContext, SparkConf}
-import org.joda.time.DateTime
+import org.joda.time._, format._
 
 import org.tresamigos.smv.util.Edd
 
@@ -81,6 +81,29 @@ class SmvApp(val smvConfig: SmvConfig, _spark: SparkSession) {
     }
 
     coll
+  }
+
+  /**
+   * Perform an action and log the amount of time it took
+   */
+  def doAction[T](desc: String, name: String)(action: => T): (T, Double)= {
+    val fullDesc = f"${desc}: ${name}"
+    log.info(f"STARTING ${desc}")
+    sc.setJobGroup(groupId=name, description=desc)
+    val before  = DateTime.now()
+
+    val res: T = action
+
+    val after   = DateTime.now()
+    val duration = new Duration(before, after)
+    val secondsElapsed = duration.getMillis() / 1000.0
+
+    val runTimeStr = PeriodFormat.getDefault().print(duration.toPeriod)
+    sc.clearJobGroup()
+    log.info(s"COMPLETED ${fullDesc}")
+    log.info(s"RunTime: ${runTimeStr}")
+
+    (res, secondsElapsed)
   }
 
 }

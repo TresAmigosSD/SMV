@@ -293,7 +293,7 @@ class SmvPyClient(val j_smvApp: SmvApp) {
 
   //Scare folding for moving all SmvDataSet framework to python #1338
   def deleteModuleOutput(m: SmvDataSet) = 
-    m.deleteOutputs(m.versionedOutputFiles)
+    m.deleteOutputs()
 }
 
 /** Not a companion object because we need to access it from Python */

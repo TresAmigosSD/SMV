@@ -47,7 +47,7 @@ abstract class SmvDataSet {
     * to this `getOrCreateMetadata` method will only do a single evaluation of the user
     * defined metadata method which could be quite expensive.
     */
-  def getOrCreateUserMetadata(df: DataFrame): SmvMetadata = {
+  private def getOrCreateUserMetadata(df: DataFrame): SmvMetadata = {
     userMetadataCache match {
       // use cached metadata if it exists
       case Some(meta) => meta
@@ -92,7 +92,7 @@ abstract class SmvDataSet {
    */
   private var timestamp: Option[DateTime] = None
 
-  def setTimestamp(dt: DateTime) =
+  private[smv] def setTimestamp(dt: DateTime) =
     timestamp = Some(dt)
 
   private var userMetadataTimeElapsed: Option[Double] = None
@@ -108,14 +108,6 @@ abstract class SmvDataSet {
     this
   }
 
-  /** All dependencies with the dependency hierarchy flattened */
-  def allDeps: Seq[SmvDataSet] =
-    (resolvedRequiresDS
-      .foldLeft(Seq.empty[SmvDataSet]) { (acc, elem) =>
-        elem.allDeps ++ (elem +: acc)
-      })
-      .distinct
-
   /** user tagged code "version".  Derived classes should update the value when code or data */
   def version(): Int = 0
 
@@ -123,7 +115,7 @@ abstract class SmvDataSet {
   def tableName: String = throw new IllegalStateException("tableName not specified for ${fqn}")
 
   /** Objects defined in Spark Shell has class name start with $ **/
-  val isObjectInShell: Boolean = this.getClass.getName matches """\$.*"""
+  private val isObjectInShell: Boolean = this.getClass.getName matches """\$.*"""
 
   /** Hash computed from the dataset, could be overridden to include things other than CRC */
   def datasetHash(): Int = {
@@ -145,7 +137,6 @@ abstract class SmvDataSet {
    * This way, if this module or any of the modules it depends on changes, the HOH should change.
    * The "version" of the current dataset is also used in the computation to allow user to force
    * a change in the hash of hash if some external dependency changed as well.
-   * TODO: need to add requiresAnc dependency here
    */
   private[smv] lazy val hashOfHash: Int = {
     val _datasetHash = datasetHash
@@ -156,6 +147,13 @@ abstract class SmvDataSet {
     
     res
   }
+
+  /**
+   * Since hashOfHash is lazy, persistStgy also lazy
+   **/
+  private[smv] lazy val persistStgy = new DfCsvOnHdfsStgy(
+    app, fqn, hashOfHash
+  )
 
   /**
    * flag if this module is ephemeral or short lived so that it will not be persisted when a graph is executed.
@@ -196,7 +194,7 @@ abstract class SmvDataSet {
   }
 
   /** do not persist validation result if isObjectInShell **/
-  private[smv] def isPersistValidateResult = !isObjectInShell
+  private def isPersistValidateResult = !isObjectInShell
 
   /**
    * Define the DQM rules, fixes and policies to be applied to this `DataSet`.
@@ -214,7 +212,7 @@ abstract class SmvDataSet {
    * Note: we should accept the user DQM rules as param rather than call dqm() directly as
    * we may need to be passed the user defined DQM rules in python.
    */
-  private[smv] def dqmWithTypeSpecificPolicy(userDQM: SmvDQM) =
+  private def dqmWithTypeSpecificPolicy(userDQM: SmvDQM) =
     userDQM
 
   /**
@@ -244,46 +242,33 @@ abstract class SmvDataSet {
   def versionedFqn   = s"${fqn}_${verHex}"
 
   /** The "versioned" module file base name. */
-  private def versionedBasePath(prefix: String): String = {
-    s"""${app.smvConfig.outputDir}/${prefix}${versionedFqn}"""
+  private def versionedBasePath(): String = {
+    s"""${app.smvConfig.outputDir}/${versionedFqn}"""
   }
 
   /** Returns the path for the module's csv output */
-  def moduleCsvPath(prefix: String = ""): String =
-    versionedBasePath(prefix) + ".csv"
-
-  def lockfilePath(prefix: String = ""): String =
-    moduleCsvPath(prefix) + ".lock"
-
-  /** Returns the file status for the lockfile if found */
-  def lockfileStatus: Option[FileStatus] =
-    // use try/catch instead of Try because we want to handle only
-    // FileNotFoundException and let other errors bubble up
-    try {
-      Some(SmvHDFS.getFileStatus(lockfilePath()))
-    } catch {
-      case e: FileNotFoundException => None
-    }
+  def moduleCsvPath(): String =
+    versionedBasePath() + ".csv"
 
   /** Returns the path for the module's schema file */
-  private[smv] def moduleSchemaPath(prefix: String = ""): String =
-    versionedBasePath(prefix) + ".schema"
+  private[smv] def moduleSchemaPath(): String =
+    versionedBasePath() + ".schema"
 
   /** Returns the path for the module's edd report output */
-  private[smv] def moduleEddPath(prefix: String = ""): String =
-    versionedBasePath(prefix) + ".edd"
+  private def moduleEddPath(): String =
+    versionedBasePath() + ".edd"
 
   /** Returns the path for the module's reject report output */
-  private[smv] def moduleValidPath(prefix: String = ""): String =
-    versionedBasePath(prefix) + ".valid"
+  private def moduleValidPath(): String =
+    versionedBasePath() + ".valid"
 
   /** Returns the path for the module's metadata output */
-  private[smv] def moduleMetaPath(prefix: String = ""): String =
-    versionedBasePath(prefix) + ".meta"
+  private[smv] def moduleMetaPath(): String =
+    versionedBasePath() + ".meta"
 
   /** Returns the path for the module's metadata history */
-  private[smv] def moduleMetaHistoryPath(prefix: String = ""): String =
-    s"""${app.smvConfig.historyDir}/${prefix}${fqn}.hist"""
+  private def moduleMetaHistoryPath(): String =
+    s"""${app.smvConfig.historyDir}/${fqn}.hist"""
 
   /** perform the actual run of this module to get the generated SRDD result. */
   private[smv] def doRun(dqmValidator: DQMValidator, collector: SmvRunInfoCollector, quickRun: Boolean): DataFrame
@@ -292,19 +277,23 @@ abstract class SmvDataSet {
    * delete the output(s) associated with this module (csv file and schema).
    * TODO: replace with df.write.mode(Overwrite) once we move to spark 1.4
    */
-  private[smv] def deleteOutputs(files: Seq[String]) =
+  private def deleteFiles(files: Seq[String]) =
      files foreach {SmvHDFS.deleteFile}
+
+  /* TODO: use persistStrg */
+  private[smv] def deleteOutputs() =
+    deleteFiles(versionedOutputFiles)
 
   /**
    * Delete just the metadata output
    */
-  private[smv] def deleteMetadataOutputs() =
-    deleteOutputs(metadataOutputFiles)
+  private def deleteMetadataOutputs() =
+    deleteFiles(metadataOutputFiles)
 
   /**
    * Files related to metadata
    */
-  private[smv] def metadataOutputFiles(): Seq[String] =
+  private def metadataOutputFiles(): Seq[String] =
     Seq(moduleMetaPath(), moduleMetaHistoryPath())
 
   /**
@@ -317,93 +306,30 @@ abstract class SmvDataSet {
   /**
    * Returns current versioned outputs produced by this module. Excludes metadata history
    */
-  private[smv] def versionedOutputFiles(): Seq[String] = {
+  private def versionedOutputFiles(): Seq[String] = {
     Seq(moduleCsvPath(), moduleSchemaPath(), moduleEddPath(), moduleValidPath(), moduleMetaPath())
   }
 
   /**
-   * Read a dataframe from a persisted file path, that is usually an
-   * input data set or the output of an upstream SmvModule.
-   *
-   * The default format is headerless CSV with '"' as the quote
-   * character
-   */
-  def readFile(path: String,
-               attr: CsvAttributes = CsvAttributes.defaultCsv): DataFrame =
-    new FileIOHandler(app.sparkSession, path).csvFileWithSchema(attr)
-
-  /**
    * Perform an action and log the amount of time it took
    */
-  def doAction[T](desc: String)(action: => T): (T, Double)= {
-    val fullDesc = f"${desc}: ${fqn}"
-    app.log.info(f"STARTING ${fullDesc}")
-    app.sc.setJobGroup(groupId=fqn, description=desc)
-    val before  = DateTime.now()
+  private def doAction[T](desc: String)(action: => T): (T, Double) = 
+      app.doAction(desc, fqn)(action)
 
-    val res: T = action
-
-    val after   = DateTime.now()
-    val duration = new Duration(before, after)
-    val secondsElapsed = duration.getMillis() / 1000.0
-
-    val runTimeStr = PeriodFormat.getDefault().print(duration.toPeriod)
-    app.sc.clearJobGroup()
-    app.log.info(s"COMPLETED ${fullDesc}")
-    app.log.info(s"RunTime: ${runTimeStr}")
-
-    (res, secondsElapsed)
-  }
-
-  def persist(dataframe: DataFrame,
-              prefix: String = ""): Unit = {
-    val path = moduleCsvPath(prefix)
-    val fmt = DateTimeFormat.forPattern("HH:mm:ss")
-
-    val counter = app.sparkSession.sparkContext.longAccumulator
-    val before  = DateTime.now()
-
-    val df      = dataframe.smvPipeCount(counter)
-    val handler = new FileIOHandler(app.sparkSession, path)
-
-    val (_, elapsed) =
-      doAction("PERSIST OUTPUT"){handler.saveAsCsvWithSchema(df, strNullValue = "_SmvStrNull_")}
-    app.log.info(f"Output path: ${path}")
-    persistingTimeElapsed = Some(elapsed)
-
-    val n       = counter.value
-    app.log.info(f"N: ${n}")
-  }
-
-  private[smv] def readPersistedFile(prefix: String = ""): Try[DataFrame] =
-    Try(readFile(moduleCsvPath(prefix)))
-
-  private[smv] def readPersistedMetadata(prefix: String = ""): Try[SmvMetadata] =
+  private def readPersistedMetadata(): Try[SmvMetadata] =
     Try {
-      val json = app.sc.textFile(moduleMetaPath(prefix)).collect.head
+      val json = app.sc.textFile(moduleMetaPath()).collect.head
       SmvMetadata.fromJson(json)
     }
 
-  private[smv] def readMetadataHistory(prefix: String = ""): Try[SmvMetadataHistory] =
+  private def readMetadataHistory(): Try[SmvMetadataHistory] =
     Try {
-      val json = app.sc.textFile(moduleMetaHistoryPath(prefix)).collect.head
+      val json = app.sc.textFile(moduleMetaHistoryPath()).collect.head
       SmvMetadataHistory.fromJson(json)
     }
 
-  private[smv] def readPersistedEdd(prefix: String = ""): Try[DataFrame] =
-    Try { app.sqlContext.read.json(moduleEddPath(prefix)) }
-
-  /** Has the result of this data set been persisted? */
-  private[smv] def isPersisted: Boolean = {
-    val csvPath = moduleCsvPath()
-    val ioHandler = new FileIOHandler(app.sparkSession, csvPath)
-    val res = Try(ioHandler.readSchema()).isSuccess
-
-    if (!res) 
-      app.log.debug("Couldn't find ${ioHandler.fullSchemaPath} - ${fqn} not persisted")
-
-    res
-  }
+  private def readPersistedEdd(): Try[DataFrame] =
+    Try { app.sqlContext.read.json(moduleEddPath()) }
 
   /**
    * #560
@@ -418,13 +344,13 @@ abstract class SmvDataSet {
     else if (isEphemeral)
       false
     else
-      !isPersisted
+      !persistStgy.isPersisted
   }
 
   /**
    * Read EDD from disk if it exists, or create and persist it otherwise
    */
-  private[smv] def getEdd(collector: SmvRunInfoCollector): String = {
+  private def getEdd(collector: SmvRunInfoCollector): String = {
     // DON'T automatically persist edd. Edd is explicitly persisted on the next
     // line. This is the simplest way to prevent EDD from being persisted twice.
     val df = rdd(forceRun = false, genEdd = false, collector=collector)
@@ -448,7 +374,7 @@ abstract class SmvDataSet {
     EddResultFunctions(orderedSummary).createReport()
   }
 
-  private[smv] def persistEdd(df: DataFrame) =
+  private def persistEdd(df: DataFrame) =
     df.edd.persistBesideData(moduleCsvPath())
 
   /**
@@ -482,7 +408,7 @@ abstract class SmvDataSet {
    * return incase this method is called multiple times in same run with/without
    * the df argument.  We assume the df value is the same for all calls!
    */
-  private[smv] def getOrCreateMetadata(dfOpt:       Option[DataFrame],
+  private def getOrCreateMetadata(dfOpt:       Option[DataFrame],
                                        validResOpt: Option[DqmValidationResult]): SmvMetadata = {
     val resMetadata = dfOpt match {
       // if df provided, get user metadata (which may be cached)
@@ -505,7 +431,7 @@ abstract class SmvDataSet {
   /**
    * Persist versioned copy of metadata
    */
-  private[smv] def persistMetadata(metadata: SmvMetadata): Unit = {
+  private def persistMetadata(metadata: SmvMetadata): Unit = {
     val metaPath =  moduleMetaPath()
     doAction(f"PERSIST METADATA") {metadata.saveToFile(app.sc, metaPath)}
     app.log.info(f"Metadata path: ${metaPath}")
@@ -519,7 +445,7 @@ abstract class SmvDataSet {
   /**
    * Save metadata history with new metadata
    */
-  private[smv] def persistMetadataHistory(metadata: SmvMetadata, oldHistory: SmvMetadataHistory): Unit = {
+  private def persistMetadataHistory(metadata: SmvMetadata, oldHistory: SmvMetadataHistory): Unit = {
     val metaHistoryPath = moduleMetaHistoryPath()
     doAction(f"PERSIST METADATA HISTORY") {
       oldHistory
@@ -543,7 +469,7 @@ abstract class SmvDataSet {
    * @param collector recepticle for info about running the module
    * @param quickRun skip computing metadata+validation and persisting output
    */
-  private[smv] def computeDataFrame(genEdd: Boolean,
+  private def computeDataFrame(genEdd: Boolean,
                                     collector: SmvRunInfoCollector,
                                     quickRun: Boolean): DataFrame = {
     val dqmValidator  = new DQMValidator(dqmWithTypeSpecificPolicy(dqm), isPersistValidateResult)
@@ -561,7 +487,7 @@ abstract class SmvDataSet {
       validationRes foreach {msg => throw new SmvMetadataValidationError(msg)}
       
 
-      deleteOutputs(metadataOutputFiles)
+      deleteFiles(metadataOutputFiles)
       persistMetadata(metadata)
       persistMetadataHistory(metadata, metadataHistory)
 
@@ -577,7 +503,7 @@ abstract class SmvDataSet {
       runDqmAndMeta(df, false) // no action before this point
       df
     } else {
-      readPersistedFile() match {
+      persistStgy.unPersist() match {
         // Output was persisted, so return a DF which consists of reading from
         // that persisted result
         case Success(df) =>
@@ -587,10 +513,10 @@ abstract class SmvDataSet {
         // and return DFn which consists of reading from that persisted result
         case _ =>
           // Acquire lock on output CSV to ensure write is atomic
-          SmvLock.withLock(lockfilePath()) {
+          persistStgy.withLock() {
             // Another process may have persisted the data while we
             // waited for the lock. So we read again before computing.
-            readPersistedFile() match {
+            persistStgy.unPersist() match {
               case Success(df) =>
                 app.log.info(f"Relying on cached result ${moduleCsvPath()} for ${fqn} found after lock acquired")
                 df
@@ -598,8 +524,8 @@ abstract class SmvDataSet {
                 app.log.info(f"No cached result found for ${fqn}. Caching result at ${moduleCsvPath()}")
                 val df = dqmValidator.attachTasks(doRun(dqmValidator, collector, quickRun))
                 // Delete outputs in case data was partially written previously
-                deleteOutputs(versionedOutputFiles)
-                persist(df)
+                persistStgy.rmPersisted()
+                persistingTimeElapsed = Some(persistStgy.persist(df))
 
                 runDqmAndMeta(df, true) // has already had action (from persist)
 
@@ -607,7 +533,7 @@ abstract class SmvDataSet {
                 // a possibly expensive action on the result from before persisting.
                 if(genEdd)
                   persistEdd(df)
-                readPersistedFile().get
+                persistStgy.unPersist().get
             }
           }
       }
@@ -628,16 +554,16 @@ abstract class SmvDataSet {
   }
 
   /** path to published output without file extension **/
-  private[smv] def publishPathNoExt(version: String) = s"${app.smvConfig.publishDir}/${version}/${fqn}"
+  private def publishPathNoExt(version: String) = s"${app.smvConfig.publishDir}/${version}/${fqn}"
 
   /** path of published data for a given version. */
-  private[smv] def publishCsvPath(version: String) = publishPathNoExt(version) + ".csv"
+  private def publishCsvPath(version: String) = publishPathNoExt(version) + ".csv"
 
   /** path of published metadata for a given version */
-  private[smv] def publishMetaPath(version: String) = publishPathNoExt(version) + ".meta"
+  private def publishMetaPath(version: String) = publishPathNoExt(version) + ".meta"
 
   /** path of published metadata history for a given version */
-  private[smv] def publishHistoryPath(version: String) = publishPathNoExt(version) + ".hist"
+  private def publishHistoryPath(version: String) = publishPathNoExt(version) + ".hist"
 
   /**
    * Publish the current module data to the publish directory.
@@ -646,10 +572,7 @@ abstract class SmvDataSet {
   private[smv] def publish(collector: SmvRunInfoCollector) = {
     val df      = rdd(collector=collector)
     val version = app.smvConfig.publishVersion
-    val handler = new FileIOHandler(app.sparkSession, publishCsvPath(version))
-    //Same as in persist, publish null string as a special value with assumption that it's not
-    //a valid data value
-    handler.saveAsCsvWithSchema(df, strNullValue = "_SmvStrNull_")
+    persistStgy.publish(df, version)
     // Read persisted metadata and metadata history, and publish it with the output.
     // Note that the metadata will have been persisted, because either
     // 1. the metadata was persisted before publish was started
@@ -675,84 +598,8 @@ abstract class SmvDataSet {
 
   private[smv] def parentStage: Option[String] = urn.getStage
 
-  /**
-   * Read the published data of this module
-   * @return Some(DataFrame) if the module has a version specified, None otherwise.
-   */
-  private[smv] def readPublishedData(version: Option[String]): Option[DataFrame] = {
-    version.map { v =>
-      val handler = new FileIOHandler(app.sparkSession, publishCsvPath(v))
-      handler.csvFileWithSchema(null)
-    }
-  }
 }
 
-
-/**
- * Maps SmvDataSet to DataFrame by FQN. This is the type of the parameter expected
- * by SmvModule's run method.
- *
- * Subclasses `Function1[SmvDataSet, DataFrame]` so it can be used the
- * same way as before, when `runParams` was type-aliased to
- * `Map[SmvDataSet, DataFrame]`
- */
-class RunParams(ds2df: Map[SmvDataSet, DataFrame]) extends (SmvDataSet => DataFrame) {
-  val urn2df                         = ds2df.map { case (ds, df) => (ds.urn, df) }.toMap
-  override def apply(ds: SmvDataSet) = urn2df(ds.urn)
-  def size                           = ds2df.size
-}
-
-/**
- * base module class.  All SMV modules need to extend this class and provide their
- * description and dependency requirements (what does it depend on).
- * The module run method will be provided the result of all dependent inputs and the
- * result of the run is the result of this module.  All modules that depend on this module
- * will be provided the DataFrame result from the run method of this module.
- * Note: the module should *not* persist any RDD itself.
- */
-abstract class SmvModule(val description: String) extends SmvDataSet {
-
-  /**
-   * flag if this module is ephemeral or short lived so that it will not be persisted when a graph is executed.
-   * This is quite handy for "filter" or "map" type modules so that we don't force an extra I/O step when it
-   * is not needed.  By default all modules are persisted unless the flag is overriden to true.
-   * Note: the module will still be persisted if it was specifically selected to run by the user.
-   */
-  override def isEphemeral = false
-
-  override def dsType() = "Module"
-
-  type runParams = RunParams
-  def run(inputs: runParams): DataFrame
-
-  /** perform the actual run of this module to get the generated SRDD result. */
-  override private[smv] def doRun(dqmValidator: DQMValidator, collector: SmvRunInfoCollector, quickRun: Boolean): DataFrame = {
-    val paramMap: Map[SmvDataSet, DataFrame] =
-      (resolvedRequiresDS map (dep => (dep, dep.rdd(collector=collector, quickRun=quickRun)))).toMap
-    run(new runParams(paramMap))
-  }
-
-  /**
-   * Create a snapshot in the current module at some result DataFrame.
-   * This is useful for debugging a long SmvModule by creating snapshots along the way.
-   * {{{
-   * object MyMod extends SmvModule("...") {
-   *   override def requiresDS = Seq(...)
-   *   override def run(...) = {
-   *      val s1 = ...
-   *      snapshot(s1, "s1")
-   *      val s2 = f(s1)
-   *      snapshot(s2, "s2")
-   *      ...
-   *   }
-   * }}}
-   */
-  def snapshot(df: DataFrame, prefix: String): DataFrame = {
-    persist(df, prefix)
-    readPersistedFile(prefix).get
-  }
-
-}
 
 /**
  * Concrete SmvDataSet representation of modules defined in Python. Created

@@ -26,9 +26,9 @@ class SmvLockStatusTest(SmvBaseTest):
     def test_no_lock_before_after_run(self):
         fqn = "stage.modules.X"
         j_m = self.load(fqn)[0]
-        self.assertEqual(j_m.lockfileStatus(), self.smvApp.scalaNone())
+        self.assertEqual(j_m.persistStgy().lockfileStatus(), self.smvApp.scalaNone())
         self.df(fqn, True)
-        self.assertEqual(j_m.lockfileStatus(), self.smvApp.scalaNone())
+        self.assertEqual(j_m.persistStgy().lockfileStatus(), self.smvApp.scalaNone())
 
     def test_should_lock_when_other_app_running(self):
         fqn = "stage.modules.Y"
@@ -48,7 +48,7 @@ class SmvLockStatusTest(SmvBaseTest):
                 time.sleep(0.01)
             time.sleep(0.2)
             self.assertNotEqual(
-                self.load(fqn)[0].lockfileStatus(),
+                self.load(fqn)[0].persistStgy().lockfileStatus(),
                 self.smvApp.scalaNone()
             )
 
@@ -61,6 +61,6 @@ class SmvLockStatusTest(SmvBaseTest):
         t2th.join()
 
         self.assertEqual(
-            self.load(fqn)[0].lockfileStatus(),
+            self.load(fqn)[0].persistStgy().lockfileStatus(),
             self.smvApp.scalaNone()
         )

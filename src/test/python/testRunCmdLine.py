@@ -44,7 +44,7 @@ class DryRunTest(RunCmdLineBaseTest):
 
     def test_dry_run_just_print(self):
         self.smvApp.run()
-        self.assertFalse(self.load("runstage.stage1.modules.A")[0].isPersisted())
+        self.assertTrue(self.load("runstage.stage1.modules.A")[0].needsToRun())
 
 class RunStageFromCmdLineTest(RunCmdLineBaseTest):
     @classmethod
