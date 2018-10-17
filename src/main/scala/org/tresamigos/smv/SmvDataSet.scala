@@ -41,29 +41,6 @@ abstract class SmvDataSet {
 
   def app: SmvApp                                                = SmvApp.app
 
-  /** Cache metadata so we can reuse it between validation and persistence */
-  private var userMetadataCache: Option[Metadata]             = None
-
-  /**
-    * Cache the user metadata result (call to `metadata(df)`) so that multiple calls
-    * to this `getOrCreateMetadata` method will only do a single evaluation of the user
-    * defined metadata method which could be quite expensive.
-    */
-  private def getOrCreateUserMetadata(df: DataFrame): Metadata = {
-    userMetadataCache match {
-      // use cached metadata if it exists
-      case Some(meta) => meta
-      // calculate and cache user metadata otherwise
-      case None => {
-        def _createUserMetadata() = metadata(df)
-        val (userMetadata, elapsed) = doAction(f"GENERATE USER METADATA")(_createUserMetadata)
-        userMetadataCache = Some(userMetadata)
-        userMetadataTimeElapsed = Some(elapsed)
-        userMetadata
-      }
-    }
-  }
-
   /**
    * The FQN of an SmvDataSet is its classname for Scala implementations.
    *
@@ -371,8 +348,13 @@ abstract class SmvDataSet {
     val resMetadata = new SmvMetadata()
     dfOpt match {
       // if df provided, get user metadata and if genEdd, add Edd result
+      // Note: there is no need to cache the user metadata or Edd result in memory,
+      // since they will be persisted in files and as long as the persistes version 
+      // are there, this part of the code will not rerun
       case Some(df) => {
-        resMetadata.addUserMeta(getOrCreateUserMetadata(df))
+        val (userMetadata, elapsed) = doAction(f"GENERATE USER METADATA")(metadata(df))
+        userMetadataTimeElapsed = Some(elapsed)
+        resMetadata.addUserMeta(userMetadata)
         if (genEdd) resMetadata.addEddResult(df.edd.toMetaArray)
       }
       case _        => Unit
@@ -437,22 +419,24 @@ abstract class SmvDataSet {
 
     // shared logic when running ephemeral and non-ephemeral modules
     def runDqmAndMeta(df: DataFrame, hasAction: Boolean): Unit = {
-      val (validationResult, validationDuration) =
-        doAction(f"VALIDATE DATA QUALITY") {dqmValidator.validate(df, hasAction)}
-      dqmTimeElapsed = Some(validationDuration)
-
-      val metadata = getOrCreateMetadata(Some(df), Some(validationResult), genEdd)
       val metadataHistory = getMetadataHistory
-      // Metadata is complete at time of validation, including user metadata and validation result
-      val validationRes: Option[String] = validateMetadata(metadata, metadataHistory.historyList)
-      validationRes foreach {msg => throw new SmvMetadataValidationError(msg)}
-      
+      val _metadata = readPersistedMetadata().getOrElse{
+        val (validationResult, validationDuration) =
+          doAction(f"VALIDATE DATA QUALITY") {dqmValidator.validate(df, hasAction)}
+        dqmTimeElapsed = Some(validationDuration)
 
-      deleteFiles(metadataOutputFiles)
-      persistMetadata(metadata)
-      persistMetadataHistory(metadata, metadataHistory)
+        val metadata = getOrCreateMetadata(Some(df), Some(validationResult), genEdd)
+        // Metadata is complete at time of validation, including user metadata and validation result
+        val validationRes: Option[String] = validateMetadata(metadata, metadataHistory.historyList)
+        validationRes foreach {msg => throw new SmvMetadataValidationError(msg)}
+        
+        deleteFiles(metadataOutputFiles)
+        persistMetadata(metadata)
+        persistMetadataHistory(metadata, metadataHistory)
+        metadata
+      }
 
-      collector.addRunInfo(fqn, metadata, metadataHistory)
+      collector.addRunInfo(fqn, _metadata, metadataHistory)
     }
 
     if (quickRun) {
