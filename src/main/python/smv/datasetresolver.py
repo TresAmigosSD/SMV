@@ -14,13 +14,32 @@
 from datetime import datetime
 
 class DataSetResolver:
+    """DataSetResolver (DSR) is the entrypoint through which the DataSetMgr acquires
+        SmvDataSets. A DSR object represent a single transaction. Each DSR creates a
+        set of DataSetRepos at instantiation. When asked for an SmvDataSet, DSR queries
+        the repos for that SmvDataSet and resolves it. The SmvDataSet is responsible for
+        resolving itself, given access to the DSR to load/resolve the SmvDataSet's
+        dependencies. DSR caches the SmvDataSets it has already resolved to ensure that
+        any SmvDataSet is only resolved once.
+    """
     def __init__(self, repo):
         self.repo = repo
+
+        # FQN to resolved SmvDataSet
         self.fqn2res = {}
+
+        # Track which SmvDataSets is currently being resolved. Used to check for
+        # dependency cycles. Note: we no longer have to worry about corruption of
+        # resolve stack because a new stack is created per transaction.
         self.resolveStack = []
+
+        #Timestamp which will be injected into the resolved SmvDataSets
         self.transaction_time = datetime.now()
 
     def loadDataSet(self, fqns):
+        """Given a list of FQNs, return cached resolved version SmvDataSets if exists, or
+            otherwise load unresolved version from source and resolve them.
+        """
         res = []
         for fqn in fqns:
             # Caller need to check whether the urn is in a stage of the SmvConfig stages
@@ -31,6 +50,9 @@ class DataSetResolver:
         return res
 
     def resolveDataSet(self, ds):
+        """Return cached resolved version of given SmvDataSet if it exists, or resolve
+            it otherwise.
+        """
         if (ds in self.resolveStack):
             raise SmvRuntimeError("Cycle found while resolving {}: {}".format(ds.fqn(), ", ".join(self.resolveDataSet)))
         else:
