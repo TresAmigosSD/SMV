@@ -17,6 +17,7 @@ note left: ctor should take variants\n     (e.g. publish version, etc)\nrawData:
 class SmvCsvOnHdfsIoStrategy extends SmvIoStrategy
 class SmvPandasIoStrategy extends SmvIoStrategy
 class SmvHiveIoStrategy extends SmvIoStrategy
+class SmvJsonOnHdfsIoStrategy extends SmvIoStrategy
 }
 
 class SmvGenericModule {
@@ -26,8 +27,10 @@ class SmvGenericModule {
 
 class SmvModule extends SmvGenericModule {
   def persistStrategy() : return SmvCsvOnHdfsIoStrategy
+  def persistMetadataStrategy() : return SmvJsonOnHDFSIoStrategy
 }
 SmvModule ..> "creates" SmvCsvOnHdfsIoStrategy
+SmvModule ..> "creates" SmvJsonOnHdfsIoStrategy
 
 class SmvPandasModule extends SmvGenericModule {
   def persistStrategy() : return SmvPandasIoStrategy

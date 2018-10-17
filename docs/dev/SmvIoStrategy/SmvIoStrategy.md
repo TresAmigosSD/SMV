@@ -20,14 +20,17 @@ Downstream modules that depend on a instance of `SmvPandasModule` can assume tha
 
 Note: if a module is not ephemeral, it **must** define an `persistStrategy` method that returns a valid strategy.  Ephemeral modules can ignore that method.
 
+## Metadata
+Similar to the persistence of `run` result output, a module can specify an IO strategy to be used to persist the metadata using the `persistMetadataStrategy` method.
+By separating the `run` strategy from the `metadata` strategy, a module can persist the raw data in a completely different place than the metadata.
+For example, the hive output module may persist the raw data output to a hive table but persiste the metadata to a json file on HDFS.
+
 ## `SmvIoStrategy` implementation
 Since the concrete dataset class needs to provide an instance of `SmvIoStrategy`, we can use the constructor of the strategy to capture the variant
 in the required arguments to the strategy.  For exmaple, HDFS strategy may require a directory whereas a hive strategy may require a schema and
 table name.  These areguments can be supplied to the constructor as the caller (concrete dataset) will know what is required and will have the info.  This has two advantages:
 * Do not have to make a kitchen sink interface on dataset to support all possible information needed by strategies.
 * Can easily extend the types of datasets and strategies in the future without changing core SMV
-
-`SmvIoStrategy` will also provide interfaces for read/write of both the raw output and metadata.
 
 From the io strategy point of view, there is no difference between intermediate data persist and publishing.
 IO strategey classes that do both (e.g. `SmvCsvOnHDFSIoStrategy`) will take a constructor parameter to indicate
@@ -37,7 +40,7 @@ An instance of `SmvIoStrategy` can also be created in the `run` method of `SmvOu
 
 ## Exmaple IO strategy implementations
 ```python
-class SmvCsvOnHDFSIoStrategy(SmvIoStrategy):
+class SmvCsvOnHdfsIoStrategy(SmvIoStrategy):
   def __init__(publishVersion, hash, ...):
     ...
   def write(rawData):
@@ -45,11 +48,17 @@ class SmvCsvOnHDFSIoStrategy(SmvIoStrategy):
       # write to publish directory withtout hash in filename
     else:
       # write to output directory using hash file name
-  def writeMeta(metadata):
-    # same check as above.
   def read():
     ...
-  def readMeta():
+
+class SmvJsonOnHdfsIoStrategy(SmvIoStrategy):
+  """read/write json to HDFS.  For example for metadata persistence"""
+  def __init__(hash, ext, ...):
+    ...
+  def write(rawData):
+    # rawData here means the json object.
+    ...
+  def read():
     ...
 
 class SmvHiveIoStrategy(SmvIoStrategy):
@@ -91,10 +100,17 @@ By the time the `run()` method is called, the raw results are extracted by `SmvI
 class SmvModule(SmvDataSet):
   def persistStrategy():
     return SmvCsvOnHdfsIoStrategy(publishVersion=None, hash=..., ...)
+  def persistMetadataStrategy():
+    return SmvJsonOnHdfsIoStrategy(hash=..., ext=".meta")
 
 class SmvPandasModule(SmvDataSet):
   def persistStrategy():
     return SmvPandasIoStrategy(outputDir="...", hash=...)
+
+class SmvOutput:
+  """by default, output modules do not persist result or metadata"""
+  def persistStrategy(): return None
+  def persistMetadataStrategy(): return None
 
 class SmvHiveOutput(SmvOutput):
   """hive output module.
