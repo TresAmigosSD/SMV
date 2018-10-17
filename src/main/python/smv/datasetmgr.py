@@ -119,7 +119,7 @@ class TXContext(object):
     def __exit__(self, type, value, traceback):
         pass
 
-
+# Scaffolding for #1417. This version is for Python side resolver
 class TXContext2(object):
     """Create a TX context for "with tx() as tx" syntax
     """
@@ -196,6 +196,7 @@ class TX(object):
     def _filterOutput(self, dss):
         return [ds for ds in dss if ds.dsType() == "Output"]
 
+# Scaffolding for #1417. This version is for Python side resolver
 class TX2(object):
     """Abstraction of the transaction boundary for loading SmvDataSets. 
         A TX object
