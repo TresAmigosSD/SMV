@@ -3,9 +3,6 @@
 Both `SmvFile` and `SmvModule` has a "Validation" mechanism. SmvApp will
 automatically validate the result `DataFrame`.
 
-If the validation result is nontrivial, it will be persisted in a file with postfix `.valid` in the
-same location of the persisted data and schema files.
-
 If the validation result failed, the process will be terminated.
 
 Currently, there are 2 types of validations implemented,

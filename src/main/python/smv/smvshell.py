@@ -112,7 +112,7 @@ def openCsv(path, validate=False):
             return path
 
     # validator == None will use TerminateParserLogger, empty dqm means ignore errors
-    validator = None if validate else app._jvm.DQMValidator(dqm.SmvDQM(), False)
+    validator = None if validate else app._jvm.DQMValidator(dqm.SmvDQM())
     return DataFrame(TmpCsv(app).doRun(validator, None), app.sqlContext)
 
 def help():

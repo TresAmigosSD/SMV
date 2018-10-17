@@ -193,9 +193,6 @@ abstract class SmvDataSet {
     doAction(f"PUBLISH TO HIVE") {queries foreach {app.sqlContext.sql}}
   }
 
-  /** do not persist validation result if isObjectInShell **/
-  private def isPersistValidateResult = !isObjectInShell
-
   /**
    * Define the DQM rules, fixes and policies to be applied to this `DataSet`.
    * See [[org.tresamigos.smv.dqm]], [[org.tresamigos.smv.dqm.DQMRule]], and [[org.tresamigos.smv.dqm.DQMFix]]
@@ -258,10 +255,6 @@ abstract class SmvDataSet {
   private def moduleEddPath(): String =
     versionedBasePath() + ".edd"
 
-  /** Returns the path for the module's reject report output */
-  private def moduleValidPath(): String =
-    versionedBasePath() + ".valid"
-
   /** Returns the path for the module's metadata output */
   private[smv] def moduleMetaPath(): String =
     versionedBasePath() + ".meta"
@@ -300,14 +293,14 @@ abstract class SmvDataSet {
    * Returns current all outputs produced by this module.
    */
   private[smv] def allOutputFiles(): Seq[String] = {
-    Seq(moduleCsvPath(), moduleSchemaPath(), moduleEddPath(), moduleValidPath(), moduleMetaPath(), moduleMetaHistoryPath())
+    Seq(moduleCsvPath(), moduleSchemaPath(), moduleEddPath(), moduleMetaPath(), moduleMetaHistoryPath())
   }
 
   /**
    * Returns current versioned outputs produced by this module. Excludes metadata history
    */
   private def versionedOutputFiles(): Seq[String] = {
-    Seq(moduleCsvPath(), moduleSchemaPath(), moduleEddPath(), moduleValidPath(), moduleMetaPath())
+    Seq(moduleCsvPath(), moduleSchemaPath(), moduleEddPath(), moduleMetaPath())
   }
 
   /**
@@ -472,12 +465,12 @@ abstract class SmvDataSet {
   private def computeDataFrame(genEdd: Boolean,
                                     collector: SmvRunInfoCollector,
                                     quickRun: Boolean): DataFrame = {
-    val dqmValidator  = new DQMValidator(dqmWithTypeSpecificPolicy(dqm), isPersistValidateResult)
+    val dqmValidator  = new DQMValidator(dqmWithTypeSpecificPolicy(dqm))
 
     // shared logic when running ephemeral and non-ephemeral modules
     def runDqmAndMeta(df: DataFrame, hasAction: Boolean): Unit = {
       val (validationResult, validationDuration) =
-        doAction(f"VALIDATE DATA QUALITY") {dqmValidator.validate(df, hasAction, moduleValidPath())}
+        doAction(f"VALIDATE DATA QUALITY") {dqmValidator.validate(df, hasAction)}
       dqmTimeElapsed = Some(validationDuration)
 
       val metadata = getOrCreateMetadata(Some(df), Some(validationResult))
@@ -491,7 +484,7 @@ abstract class SmvDataSet {
       persistMetadata(metadata)
       persistMetadataHistory(metadata, metadataHistory)
 
-      collector.addRunInfo(fqn, validationResult, metadata, metadataHistory)
+      collector.addRunInfo(fqn, metadata, metadataHistory)
     }
 
     if (quickRun) {
@@ -547,10 +540,9 @@ abstract class SmvDataSet {
    * null for its components.
    */
   def runInfo: SmvRunInfo = {
-    val validation = DQMValidator.readPersistedValidationFile(moduleValidPath()).toOption.orNull
     val meta = readPersistedMetadata().toOption.orNull
     val mhistory = readMetadataHistory().toOption.orNull
-    SmvRunInfo(validation, meta, mhistory)
+    SmvRunInfo(meta, mhistory)
   }
 
   /** path to published output without file extension **/

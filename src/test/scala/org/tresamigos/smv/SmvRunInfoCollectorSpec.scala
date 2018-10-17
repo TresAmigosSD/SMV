@@ -17,36 +17,40 @@ package org.tresamigos.smv
 import dqm.DqmValidationResult
 
 class SmvRunInfoCollectorSpec extends SmvUnitSpec {
-  "SmvRunInfoCollector" should "store validation results per dataset" in {
+  "SmvRunInfoCollector" should "store metadata per dataset" in {
     val target = new SmvRunInfoCollector
     val r1 = new DqmValidationResult(true, null)
-    target.addRunInfo("a", r1, null, null)
+    val m1 = new SmvMetadata()
+    m1.addDqmValidationResult(r1)
+    target.addRunInfo("a", m1, null)
 
-    target.getDqmValidationResult("a") shouldBe r1
+    target.getMetadata("a") shouldBe m1
   }
 
   it should "throw when asked for a non-existent validation result" in {
     val target = new SmvRunInfoCollector
     intercept[SmvRuntimeException] {
-      target.getDqmValidationResult("a")
+      target.getMetadata("a")
     }
   }
 
   it should "store only the last validation result for a given dataset" in {
     val target = new SmvRunInfoCollector
-    val r1 = new DqmValidationResult(true, null)
-    val r2 = new DqmValidationResult(false, null)
-    target.addRunInfo("a", r1, null, null)
-    target.addRunInfo("a", r2, null, null)
+    val m1 = new SmvMetadata()
+    m1.addDqmValidationResult(new DqmValidationResult(true, null))
+    val m2 = new SmvMetadata()
+    m2.addDqmValidationResult(new DqmValidationResult(false, null))
+    target.addRunInfo("a", m1, null)
+    target.addRunInfo("a", m2,  null)
 
-    target.getDqmValidationResult("a") shouldBe r2
+    target.getMetadata("a") shouldBe m2
   }
 
   it should "keep all datasets for which there is a validation result" in {
     val target = new SmvRunInfoCollector
-    target.addRunInfo("a", new DqmValidationResult(true, null), null, null)
-    target.addRunInfo("b", new DqmValidationResult(false, null), null, null)
-    target.addRunInfo("c", new DqmValidationResult(false, null), null, null)
+    target.addRunInfo("a", null, null)
+    target.addRunInfo("b", null, null)
+    target.addRunInfo("c", null, null)
 
     target.dsFqns shouldBe Set("a", "b", "c")
   }
@@ -54,14 +58,14 @@ class SmvRunInfoCollectorSpec extends SmvUnitSpec {
   it should "not accept null for dataset fqn" in {
     val target = new SmvRunInfoCollector
     intercept[IllegalArgumentException] {
-      target.addRunInfo(null, new DqmValidationResult(true, null), null, null)
+      target.addRunInfo(null, null, null)
     }
   }
 
   it should "not accept empty string for dataset fqn" in {
     val target = new SmvRunInfoCollector
     intercept[IllegalArgumentException] {
-      target.addRunInfo("", new DqmValidationResult(true, null), null, null)
+      target.addRunInfo("", null, null)
     }
   }
 }
