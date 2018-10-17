@@ -90,6 +90,19 @@ class SmvDataSet(ABC):
     def __init__(self, smvApp):
         self.smvApp = smvApp
 
+        # For #1417, python side resolving (not used yet)
+        self.timestamp = None
+        self.resolvedRequiresDS = []
+
+    # For #1417, python side resolving (not used yet)
+    def setTimestamp(self, dt):
+        self.timestamp = dt
+
+    # For #1417, python side resolving (not used yet)
+    def resolve(self, resolver):
+        self.resolvedRequiresDS = resolver.loadDataSet([ds.fqn() for ds in self.requiresDS()])
+        return self
+
     def smvGetRunConfig(self, key):
         """return the current user run configuration value for the given key."""
         if (key not in self.requiresConfig()):
@@ -98,7 +111,7 @@ class SmvDataSet(ABC):
         return self.smvApp.getConf(key)
     
     def smvGetRunConfigAsInt(self, key):
-        runConfig = self.smvGetRunConfig(key);
+        runConfig = self.smvGetRunConfig(key)
         if runConfig is None:
             return None
         return int(runConfig)
