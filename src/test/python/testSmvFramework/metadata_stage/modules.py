@@ -12,8 +12,7 @@
 # limitations under the License.
 
 import smv
-
-metadata_count = 0
+import testSmvFramework
 
 class BaseMod(smv.SmvModule):
     def requiresDS(self):
@@ -41,8 +40,17 @@ class ModWithInvalidMetadataValidation(BaseMod):
         return x
 
 class ModWithMetaCount(BaseMod):
+    def isEphemeral(self):
+        return True
+
     def metadata(self, df):
         # keep count of how many times `metadata` is called.
-        global metadata_count
-        metadata_count = metadata_count + 1
+        testSmvFramework.metadata_count = testSmvFramework.metadata_count + 1
         return {'foo': 'bar'}
+
+class DependsOnMetaCount(smv.SmvModule):
+    def requiresDS(self):
+        return [ModWithMetaCount]
+
+    def run(self, i):
+        return i[ModWithMetaCount]

@@ -29,6 +29,7 @@ from py4j.protocol import Py4JJavaError
 
 
 single_run_counter = 0
+metadata_count = 0
 
 class SmvFrameworkTest(SmvBaseTest):
     @classmethod
@@ -70,26 +71,12 @@ class SmvFrameworkTest(SmvBaseTest):
         df = self.df(fqn)
 
     def test_module_persist_with_null(self):
+        # Module has both empty string and null value in string, should read back as the same
         fqn = "stage.modules.CsvStrWithNullData"
         df = self.df(fqn, True)
         j_m = self.load(fqn)[0]
-        f = open(j_m.moduleCsvPath() + "/part-00000", "r")
-        res = f.read()
-        expect = """"1",""
-"_SmvStrNull_",""
-"3",""
-"""
-        self.assertEqual(res, expect)
-
-        s_f = open(j_m.moduleSchemaPath() + "/part-00000", "r")
-        s_res = s_f.read()
-        s_expect = """@delimiter = ,
-@has-header = false
-@quote-char = "
-a: String[,_SmvStrNull_]
-b: String[,_SmvStrNull_]
-"""
-        self.assertEqual(s_res, s_expect)
+        read_back = DataFrame(j_m.persistStgy().read().get(), df.sql_ctx)
+        self.should_be_same(df, read_back)
 
     def test_cycle_dependency_error_out(self):
         fqn = "cycle.modules.CycleA"
@@ -183,11 +170,14 @@ class SmvMetadataTest(SmvBaseTest):
     def test_metadata_only_called_once(self):
         # running the module will incr the global metadata count by 1 for each
         # call to metadata
-        fqn = "metadata_stage.modules.ModWithMetaCount"
-        self.df(fqn)
+        #
+        # Even if the module isEphemeral user meta should only run once
+        fqn1 = "metadata_stage.modules.ModWithMetaCount"
+        fqn2 = "metadata_stage.modules.DependsOnMetaCount"
+        self.df(fqn1).count()
+        self.df(fqn2).count()
 
         # Note: must import AFTER `df` above to get latest instance of package!
-        from metadata_stage.modules import metadata_count
         self.assertEqual(metadata_count, 1)
 
 class SmvNeedsToRunTest(SmvBaseTest):
