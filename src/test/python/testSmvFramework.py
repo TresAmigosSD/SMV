@@ -75,7 +75,7 @@ class SmvFrameworkTest(SmvBaseTest):
         fqn = "stage.modules.CsvStrWithNullData"
         df = self.df(fqn, True)
         j_m = self.load(fqn)[0]
-        read_back = DataFrame(j_m.persistStgy().unPersist().get(), df.sql_ctx)
+        read_back = DataFrame(j_m.persistStgy().read().get(), df.sql_ctx)
         self.should_be_same(df, read_back)
 
     def test_cycle_dependency_error_out(self):

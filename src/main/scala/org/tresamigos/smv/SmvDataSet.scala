@@ -130,12 +130,12 @@ abstract class SmvDataSet {
   /**
    * Since hashOfHash is lazy, persistStgy also lazy
    **/
-  private[smv] lazy val persistStgy = new DfCsvOnHdfsStgy(app, fqn, versionedFqn)
+  private[smv] lazy val persistStgy = new SmvCsvOnHdfsIoStrategy(app, fqn, versionedFqn)
 
   // Allow sub-class to override
   def metadataHistorySize(): Int = 5
 
-  private[smv] lazy val runInfoStgy = new RunInfoPersistStgy(app, fqn, versionedFqn, metadataHistorySize)
+  private[smv] lazy val runInfoStgy = new SmvRunInfoOnHdfsIoStrategy(app, fqn, versionedFqn, metadataHistorySize)
 
   /**
    * flag if this module is ephemeral or short lived so that it will not be persisted when a graph is executed.
@@ -222,7 +222,7 @@ abstract class SmvDataSet {
 
   /* TODO: use persistStrg */
   private[smv] def deleteOutputs() = {
-    persistStgy.rmPersisted()
+    persistStgy.removeWritten()
     SmvHDFS.deleteFile(runInfoStgy.moduleMetaPath())
   }
 
@@ -251,7 +251,7 @@ abstract class SmvDataSet {
     else if (isEphemeral)
       false
     else
-      !persistStgy.isPersisted
+      !persistStgy.isWritten
   }
 
   /**
@@ -339,7 +339,7 @@ abstract class SmvDataSet {
     // shared logic when running ephemeral and non-ephemeral modules
     def runDqmAndMeta(df: DataFrame, hasAction: Boolean): Unit = {
       // If metadata is persisted already, no need to rerun
-      val _runInfo = runInfoStgy.unPersist().getOrElse({
+      val _runInfo = runInfoStgy.read().getOrElse({
         val (validationResult, validationDuration) =
           doAction(f"VALIDATE DATA QUALITY") {dqmValidator.validate(df, hasAction)}
         dqmTimeElapsed = Some(validationDuration)
@@ -351,7 +351,7 @@ abstract class SmvDataSet {
         validationRes foreach {msg => throw new SmvMetadataValidationError(msg)}
 
         //metaDataHistory was updated within the persist method
-        runInfoStgy.persist(SmvRunInfo(currentMeta, SmvMetadataHistory.empty))
+        runInfoStgy.write(SmvRunInfo(currentMeta, SmvMetadataHistory.empty))
         SmvRunInfo(currentMeta, metadataHistory)
       })
       
@@ -368,7 +368,7 @@ abstract class SmvDataSet {
       runDqmAndMeta(df, false) // no action before this point
       df
     } else {
-      persistStgy.unPersist() match {
+      persistStgy.read() match {
         // Output was persisted, so return a DF which consists of reading from
         // that persisted result
         case Success(df) =>
@@ -381,7 +381,7 @@ abstract class SmvDataSet {
           persistStgy.withLock() {
             // Another process may have persisted the data while we
             // waited for the lock. So we read again before computing.
-            persistStgy.unPersist() match {
+            persistStgy.read() match {
               case Success(df) =>
                 app.log.info(f"Relying on cached result ${versionedFqn} for ${fqn} found after lock acquired")
                 df
@@ -389,10 +389,10 @@ abstract class SmvDataSet {
                 app.log.info(f"No cached result found for ${fqn}. Caching result at ${versionedFqn}")
                 val df = dqmValidator.attachTasks(doRun(dqmValidator, collector, quickRun))
                 // Delete outputs in case data was partially written previously
-                persistStgy.rmPersisted()
-                persistingTimeElapsed = Some(persistStgy.persist(df))
+                persistStgy.removeWritten()
+                persistingTimeElapsed = Some(persistStgy.write(df))
 
-                val dfReadBack = persistStgy.unPersist().get
+                val dfReadBack = persistStgy.read().get
 
                 // Use readback DF here, otherwise persiste is one action, here is another one
                 runDqmAndMeta(dfReadBack, true) 
@@ -409,7 +409,7 @@ abstract class SmvDataSet {
    * If the dataset has never been run, returns an empty run info with
    * null for its components.
    */
-  def runInfo: SmvRunInfo = runInfoStgy.unPersist().getOrElse(SmvRunInfo(null, null))
+  def runInfo: SmvRunInfo = runInfoStgy.read().getOrElse(SmvRunInfo(null, null))
 
   /**
    * Publish the current module data to the publish directory.
