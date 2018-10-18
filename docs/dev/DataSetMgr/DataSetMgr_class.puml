@@ -54,8 +54,8 @@ package Scala {
       run(i: runParams): DataFrame
       resolvedRequiresDS: Seq[SmvDataSet]
     }
-    class SmvExtModulePython -|> SmvModule
-    class SmvModule -L|> SmvDataSet
+    SmvExtModulePython -|> SmvModule
+    SmvModule -L|> SmvDataSet
   }
   class SmvExtModule extends SmvModule
   class SmvModuleLink extends SmvModule

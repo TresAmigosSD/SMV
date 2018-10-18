@@ -1,0 +1,46 @@
+@startuml
+
+hide empty methods
+hide empty fields
+hide circle
+
+together {
+class SmvIoStrategy {
+  ctor(publish, hash, etc.)
+  write(rawData)
+  read(rawData)
+  writeMeta(metaData)
+  readMeta(metaData)
+}
+note left: ctor should take variants\n     (e.g. publish version, etc)\nrawData: the raw result data\n     (e.g. DataFrame, Panda, ...)
+
+class SmvCsvOnHdfsIoStrategy extends SmvIoStrategy
+class SmvPandasIoStrategy extends SmvIoStrategy
+class SmvHiveIoStrategy extends SmvIoStrategy
+class SmvJsonOnHdfsIoStrategy extends SmvIoStrategy
+}
+
+class SmvGenericModule {
+  <<abstract>> run(i) : Any
+  <<abstract>> persistStrategy() : SmvIoStrategy
+}
+
+class SmvModule extends SmvGenericModule {
+  def persistStrategy() : return SmvCsvOnHdfsIoStrategy
+  def persistMetadataStrategy() : return SmvJsonOnHDFSIoStrategy
+}
+SmvModule ..> "creates" SmvCsvOnHdfsIoStrategy
+SmvModule ..> "creates" SmvJsonOnHdfsIoStrategy
+
+class SmvPandasModule extends SmvGenericModule {
+  def persistStrategy() : return SmvPandasIoStrategy
+}
+SmvPandasModule ..> "creates" SmvPandasIoStrategy
+
+class SmvHiveOutput extends SmvOutput {
+  def persistStrategy() : return None
+  def run() # creates SmvHiveIoStrategy
+}
+SmvHiveOutput ..> "creates" SmvHiveIoStrategy
+class SmvOutput extends SmvGenericModule 
+@enduml
