@@ -17,6 +17,7 @@ package edd
 
 import org.apache.spark.sql.types.StringType
 import org.apache.spark.sql.{DataFrame, Row}
+import org.apache.spark.sql.types.Metadata
 
 /**
  * Implement the `edd` method of DFHelper
@@ -81,6 +82,9 @@ class Edd(val df: DataFrame, val keys: Seq[String] = Seq()) {
   def persistBesideData(dataPath: String): Unit = {
     summary().saveReport(Edd.dataPathToEddPath(dataPath))
   }
+
+  def toMetaArray: Array[Metadata] = 
+    summary().toDF.toJSON.collect().map{Metadata.fromJson(_)}
 }
 
 /**

@@ -163,7 +163,7 @@ class SmvMetadataTest(SmvBaseTest):
         with open(self.tmpDataDir() + "/history/{}.hist/part-00000".format(fqn)) as f:
             metadata_list = json.loads(f.read())
             metadata = metadata_list['history'][0]
-        self.assertEqual(metadata['foo'], "bar")
+        self.assertEqual(metadata['_userMetadata']['foo'], "bar")
 
     def test_metadata_validation_failure_causes_error(self):
         fqn = "metadata_stage.modules.ModWithFailingValidation"

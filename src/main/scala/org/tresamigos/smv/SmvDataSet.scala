@@ -29,6 +29,8 @@ import edd._
 
 import org.joda.time._, format._
 
+import org.apache.spark.sql.types.Metadata
+
 /**
  * Dependency management unit within the SMV application framework.  Execution order within
  * the SMV application framework is derived from dependency between SmvDataSet instances.
@@ -38,29 +40,6 @@ import org.joda.time._, format._
 abstract class SmvDataSet {
 
   def app: SmvApp                                                = SmvApp.app
-
-  /** Cache metadata so we can reuse it between validation and persistence */
-  private var userMetadataCache: Option[SmvMetadata]             = None
-
-  /**
-    * Cache the user metadata result (call to `metadata(df)`) so that multiple calls
-    * to this `getOrCreateMetadata` method will only do a single evaluation of the user
-    * defined metadata method which could be quite expensive.
-    */
-  private def getOrCreateUserMetadata(df: DataFrame): SmvMetadata = {
-    userMetadataCache match {
-      // use cached metadata if it exists
-      case Some(meta) => meta
-      // calculate and cache user metadata otherwise
-      case None => {
-        def _createUserMetadata() = metadata(df)
-        val (userMetadata, elapsed) = doAction(f"GENERATE USER METADATA")(_createUserMetadata)
-        userMetadataCache = Some(userMetadata)
-        userMetadataTimeElapsed = Some(elapsed)
-        userMetadata
-      }
-    }
-  }
 
   /**
    * The FQN of an SmvDataSet is its classname for Scala implementations.
@@ -113,9 +92,6 @@ abstract class SmvDataSet {
 
   /** full name of hive output table if this module is published to hive. */
   def tableName: String = throw new IllegalStateException("tableName not specified for ${fqn}")
-
-  /** Objects defined in Spark Shell has class name start with $ **/
-  private val isObjectInShell: Boolean = this.getClass.getName matches """\$.*"""
 
   /** Hash computed from the dataset, could be overridden to include things other than CRC */
   def datasetHash(): Int = {
@@ -251,10 +227,6 @@ abstract class SmvDataSet {
   private[smv] def moduleSchemaPath(): String =
     versionedBasePath() + ".schema"
 
-  /** Returns the path for the module's edd report output */
-  private def moduleEddPath(): String =
-    versionedBasePath() + ".edd"
-
   /** Returns the path for the module's metadata output */
   private[smv] def moduleMetaPath(): String =
     versionedBasePath() + ".meta"
@@ -293,14 +265,14 @@ abstract class SmvDataSet {
    * Returns current all outputs produced by this module.
    */
   private[smv] def allOutputFiles(): Seq[String] = {
-    Seq(moduleCsvPath(), moduleSchemaPath(), moduleEddPath(), moduleMetaPath(), moduleMetaHistoryPath())
+    Seq(moduleCsvPath(), moduleSchemaPath(), moduleMetaPath(), moduleMetaHistoryPath())
   }
 
   /**
    * Returns current versioned outputs produced by this module. Excludes metadata history
    */
   private def versionedOutputFiles(): Seq[String] = {
-    Seq(moduleCsvPath(), moduleSchemaPath(), moduleEddPath(), moduleMetaPath())
+    Seq(moduleCsvPath(), moduleSchemaPath(), moduleMetaPath())
   }
 
   /**
@@ -321,9 +293,6 @@ abstract class SmvDataSet {
       SmvMetadataHistory.fromJson(json)
     }
 
-  private def readPersistedEdd(): Try[DataFrame] =
-    Try { app.sqlContext.read.json(moduleEddPath()) }
-
   /**
    * #560
    *
@@ -341,41 +310,11 @@ abstract class SmvDataSet {
   }
 
   /**
-   * Read EDD from disk if it exists, or create and persist it otherwise
-   */
-  private def getEdd(collector: SmvRunInfoCollector): String = {
-    // DON'T automatically persist edd. Edd is explicitly persisted on the next
-    // line. This is the simplest way to prevent EDD from being persisted twice.
-    val df = rdd(forceRun = false, genEdd = false, collector=collector)
-
-    val unorderedSummary = readPersistedEdd().getOrElse {
-      persistEdd(df)
-      readPersistedEdd().get
-      // The persisted df's columns will be ordered arbitrarily, and need to be
-      // reordered to be a valid edd result
-    }.select(EddResult.resultSchema.head, EddResult.resultSchema.tail: _*)
-
-    // Summary rows will be ordered arbitrarily after persisting. Need
-    // to reorder according to the columns of the df. Original order of tasks will
-    // still most likely be lost
-    val orderedSummary = df.columns.map { dfColName =>
-      unorderedSummary.filter(unorderedSummary("colName") === dfColName)
-    }.reduce {
-      _.smvUnion(_)
-    }
-
-    EddResultFunctions(orderedSummary).createReport()
-  }
-
-  private def persistEdd(df: DataFrame) =
-    df.edd.persistBesideData(moduleCsvPath())
-
-  /**
    * Can be overridden to supply custom metadata
    * TODO: make SmvMetadata more user friendly or find alternative format for user metadata
    */
-  def metadata(df: DataFrame): SmvMetadata =
-    new SmvMetadata()
+  def metadata(df: DataFrame): Metadata =
+    Metadata.empty
 
   /**
    * Get the most detailed metadata available without running this module. If
@@ -384,7 +323,7 @@ abstract class SmvDataSet {
    * report will exclude the DQM validation result and user metadata.
    */
   private[smv] def getMetadata(): SmvMetadata =
-    readPersistedMetadata().getOrElse(getOrCreateMetadata(None, None))
+    readPersistedMetadata().getOrElse(getOrCreateMetadata(None, None, false))
 
   /**
    * Read metadata history from file if it exists, otherwise return empty metadata
@@ -401,13 +340,24 @@ abstract class SmvDataSet {
    * return incase this method is called multiple times in same run with/without
    * the df argument.  We assume the df value is the same for all calls!
    */
-  private def getOrCreateMetadata(dfOpt:       Option[DataFrame],
-                                       validResOpt: Option[DqmValidationResult]): SmvMetadata = {
-    val resMetadata = dfOpt match {
-      // if df provided, get user metadata (which may be cached)
-      case Some(df) => getOrCreateUserMetadata(df)
-      // otherwise, skip user metadata - none can be evaluated if there if we haven't run the module
-      case _        => new SmvMetadata()
+  private def getOrCreateMetadata(
+    dfOpt:       Option[DataFrame],
+    validResOpt: Option[DqmValidationResult],
+    genEdd: Boolean
+  ): SmvMetadata = {
+    val resMetadata = new SmvMetadata()
+    dfOpt match {
+      // if df provided, get user metadata and if genEdd, add Edd result
+      // Note: there is no need to cache the user metadata or Edd result in memory,
+      // since they will be persisted in files and as long as the persistes version 
+      // are there, this part of the code will not rerun
+      case Some(df) => {
+        val (userMetadata, elapsed) = doAction(f"GENERATE USER METADATA")(metadata(df))
+        userMetadataTimeElapsed = Some(elapsed)
+        resMetadata.addUserMeta(userMetadata)
+        if (genEdd) resMetadata.addEddResult(df.edd.toMetaArray)
+      }
+      case _        => Unit
     }
     resMetadata.addFQN(fqn)
     resMetadata.addDependencyMetadata(resolvedRequiresDS)
@@ -469,22 +419,24 @@ abstract class SmvDataSet {
 
     // shared logic when running ephemeral and non-ephemeral modules
     def runDqmAndMeta(df: DataFrame, hasAction: Boolean): Unit = {
-      val (validationResult, validationDuration) =
-        doAction(f"VALIDATE DATA QUALITY") {dqmValidator.validate(df, hasAction)}
-      dqmTimeElapsed = Some(validationDuration)
-
-      val metadata = getOrCreateMetadata(Some(df), Some(validationResult))
       val metadataHistory = getMetadataHistory
-      // Metadata is complete at time of validation, including user metadata and validation result
-      val validationRes: Option[String] = validateMetadata(metadata, metadataHistory.historyList)
-      validationRes foreach {msg => throw new SmvMetadataValidationError(msg)}
-      
+      val _metadata = readPersistedMetadata().getOrElse{
+        val (validationResult, validationDuration) =
+          doAction(f"VALIDATE DATA QUALITY") {dqmValidator.validate(df, hasAction)}
+        dqmTimeElapsed = Some(validationDuration)
 
-      deleteFiles(metadataOutputFiles)
-      persistMetadata(metadata)
-      persistMetadataHistory(metadata, metadataHistory)
+        val metadata = getOrCreateMetadata(Some(df), Some(validationResult), genEdd)
+        // Metadata is complete at time of validation, including user metadata and validation result
+        val validationRes: Option[String] = validateMetadata(metadata, metadataHistory.historyList)
+        validationRes foreach {msg => throw new SmvMetadataValidationError(msg)}
+        
+        deleteFiles(metadataOutputFiles)
+        persistMetadata(metadata)
+        persistMetadataHistory(metadata, metadataHistory)
+        metadata
+      }
 
-      collector.addRunInfo(fqn, metadata, metadataHistory)
+      collector.addRunInfo(fqn, _metadata, metadataHistory)
     }
 
     if (quickRun) {
@@ -520,13 +472,11 @@ abstract class SmvDataSet {
                 persistStgy.rmPersisted()
                 persistingTimeElapsed = Some(persistStgy.persist(df))
 
-                runDqmAndMeta(df, true) // has already had action (from persist)
+                val dfReadBack = persistStgy.unPersist().get
 
-                // Generate and persist edd based on result of reading results from disk. Avoids
-                // a possibly expensive action on the result from before persisting.
-                if(genEdd)
-                  persistEdd(df)
-                persistStgy.unPersist().get
+                // Use readback DF here, otherwise persiste is one action, here is another one
+                runDqmAndMeta(dfReadBack, true) 
+                dfReadBack
             }
           }
       }
@@ -572,9 +522,6 @@ abstract class SmvDataSet {
     //    when rdd was called above, persisting the metadata.
     getMetadata.saveToFile(app.sc, publishMetaPath(version))
     getMetadataHistory.saveToFile(app.sc, publishHistoryPath(version))
-    /* publish should also calculate edd if generarte Edd flag was turned on */
-    if (app.genEdd)
-      df.edd.persistBesideData(publishCsvPath(version))
   }
 
   /**
@@ -634,7 +581,7 @@ class SmvExtModulePython(target: ISmvModule) extends SmvDataSet with python.Inte
   override def metadata(df: DataFrame) = {
     val py4jRes = target.getMetadataJson(df)
     val json = getPy4JResult(py4jRes)
-    SmvMetadata.fromJson(json)
+    Metadata.fromJson(json)
   }
 
   override def validateMetadata(current: SmvMetadata, history: Seq[SmvMetadata]) = {
