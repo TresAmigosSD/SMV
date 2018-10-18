@@ -20,6 +20,47 @@ The goal of generalize `SmvDataSet` to `SmvGenericModule` is to support
 The design of `SmvIoStrategy` covers how we will handle the persisting variations 
 of `SmvGenericModule`. This document is focusing on the variations of the running logic of different types of results, and how to generalize.
 
+## Current Run Module Logic Flow
+
+We will focus on the `runModule` method of `SmvApp` class for this design, since we will 
+have a SINGLE method to run a or multiple modules in an App. From smv-run command line, 
+smv-shell command, smv-server Api, or from custom driver script, all use the same single 
+method of `SmvApp` to run modules. In this document just consider the `runModule` method 
+is the SINGLE entry.
+
+Since `runModule` method is the single entry, we can consider its scope as a **Transaction**
+for module running. Please don't be confused with the module resolving transaction, which 
+is defined in the `TX` class, which is just used for module resolving (create module instances
+from classes).
+
+Consider a simple App:
+```
+A -> B
+```
+
+When we call `runModule('B')`, the flow of method calls are:
+
+* `smvApp.runModule('B')` =>
+* `B.rdd(...)` =>
+* `B.computeDataFrame(...)` =>
+* `B.doRun(...)` =>
+    - `A.rdd(...)` =>
+    - `A.computeDataFrame(...)` =>
+    - `A.doRun(...)`
+
+The 3 methods of `SmvDataSet` are for the following things:
+
+* `rdd()`: interface method to run a given DS, maintain an app level DF cache, so will not call the same `computeDataFrame()` twice in the life cycle of the entire app. Please note that the cache is index by versioned-FQN, so in interactive mode (smv-shell or smv-server), the DS with same FQN might have multiple versioned-FQNs
+* `computeDataFrame()`: apply logics of `isEphemeral`, persisting, runInfo (metadata) collection etc, while calling `doRun` to really create the DF
+* `doRun()`: method provided by a concrete sub-class of `SmvDataSet`, which returns the DataFrame
+
+Currently `smvApp.runModule` method is pretty light, which just call `B.rdd()` with attaching a `RunInfoCollector`, and return the result from `B.rdd()` and the collector.
+
+## The Complexity Caused by Spark DataFrame's Delayed Execution
+
+
+
+
 ## The Simple Logic 
 
 For Pandas DF, or any other output which are in memory or get calculated anyhow,
