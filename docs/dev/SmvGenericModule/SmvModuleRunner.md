@@ -56,33 +56,18 @@ The 3 methods of `SmvDataSet` are for the following things:
 
 Currently `smvApp.runModule` method is pretty light, which just call `B.rdd()` with attaching a `RunInfoCollector`, and return the result from `B.rdd()` and the collector.
 
-## The Complexity Caused by Spark DataFrame's Delayed Execution
+## Custom metadata, Ephemeral and DataFrame Caching
 
-
-
-
-## The Simple Logic 
-
-For Pandas DF, or any other output which are in memory or get calculated anyhow,
-any time, the `Ephemeral` concept and `persist` concept are so easy to understand
-and manager. So basically,
+For Pandas DF, or any other output which are in memory, the `Ephemeral` concept and `persist` concept are so easy 
+to understand and manage. So basically,
 
 * Persist - save the data to some storage engine (disc, db, cloud, etc.)
 * Ephemeral - don't do persist on this module
 
-Even for an `Ephemeral` module, user should still be able to use it whatever
-ways they like. 
+Even for an `Ephemeral` module, user should still be able to use it whatever ways they like. 
 
-For easy comparison, let's use current `SmvDataSet` implementation methods for
-some pseudo code. 
-
-* doRun - method a concrete `SmvDataSet` to provide to return a `Result` (currently a DF)
-* computeDataFrame - `SmvDataSet` private method, which calls `doRun`, and manages metadata calculation & persisting
-* rdd - `SmvDataSet` method to maintain an in-memory cache for the Results calculated by `computeDataFrame` 
-
-In the simple case (in memory DF), whatever cached in the `rdd` method buffer are
-the results, which can be used by user within a single transaction without need to
-re-calculate, regardless whether it's Ephemeral or persisted.
+In the simple case (in memory DF), the result from `doRun` and cached in the `rdd` method buffer has all the data 
+ready for caller to use and to use multiple times, regardless whether it's Ephemeral or persisted.
 
 The logic within `computeDataFrame` is very simple:
 ```python
@@ -100,13 +85,14 @@ if (meta_persisted):
 else
     usermeta = self.metadata(df)
     meta = create_system_meta + usermeta
+    persistMeta(meta)
 
-return (df, meta)
+return df
 ```
 
-Let's see for Spark type of delayed action data, what need to be changes above, 
-for now we ignore the Dqm part. The only thing need to change is to use the 
-read-back `df` instead of the raw df when there is a persisting:
+For Spark DataFrame, since it has this delay execution feature, the result from `doRun` method is actually just a
+"recipe", called plan, of how to calculate the data. Because of that, we should reuse the persisted data for the 
+non-ephemeral` case, instead of re-run the plan. So the logic changes to:
 ```python
 if (self.isEphemeral()):
     df = self.doRun(...)
@@ -115,7 +101,7 @@ else:
         df = getPersistedData()
     else:
         raw_df = self.doRun(...)
-        persistData(raw_df)
+        persistData(df)
         df = getPersistedData()
 
 if (meta_persisted):
@@ -123,10 +109,23 @@ if (meta_persisted):
 else
     usermeta = self.metadata(df)
     meta = create_system_meta + usermeta
+    persistMeta(meta)
 
-return (df, meta)
+return df
 ```
 
-The only danger there is a `Ephemeral` module with a non-trivial `metadata` method.
-In that case, the data have to pass through the logic in this modules `doRun` 
-generated plan 2 times. 
+Above logic solves the potential re-run of the plan for non-ephemeral module. However there is danger left for the 
+ephemeral modules. Consider the following case,
+
+```
+A -> B -> C
+```
+
+With `A` and `B` are ephemeral, and both have a some user metadata method which perform some action on the result DF.
+
+When call `runModule('C')`, B's `computeDataFrame` is called, and it returns B's DF to C, and C's run method used B's DF. 
+Also, since B has a usermeta, so B's DF have to have an action there too. So B's DF plan has to run twice, one for the 
+usermeta, and the other for C's calculation. What even worse is that, each of B's DF's action will cause A's action too. 
+So basically A's DF has to run 3 times, one for its own usermeta, one for B's usermeta, and one for C's calculation. 
+
+So each usermeta not only add an action to the c
