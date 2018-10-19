@@ -1,4 +1,4 @@
-# General SmvDataSet Running Logic and Flow
+# Run SmvGenericModule with Visitor Pattern
 
 As part of the effort of making SmvDataSet more generic, we need to generalize the module running part also.
 
@@ -35,7 +35,7 @@ from classes).
 
 Consider a simple App:
 ```
-A -> B
+A <- B
 ```
 
 When we call `runModule('B')`, the flow of method calls are:
@@ -52,80 +52,302 @@ The 3 methods of `SmvDataSet` are for the following things:
 
 * `rdd()`: interface method to run a given DS, maintain an app level DF cache, so will not call the same `computeDataFrame()` twice in the life cycle of the entire app. Please note that the cache is index by versioned-FQN, so in interactive mode (smv-shell or smv-server), the DS with same FQN might have multiple versioned-FQNs
 * `computeDataFrame()`: apply logics of `isEphemeral`, persisting, runInfo (metadata) collection etc, while calling `doRun` to really create the DF
-* `doRun()`: method provided by a concrete sub-class of `SmvDataSet`, which returns the DataFrame
+* `doRun()`: method provided by a concrete sub-class of `SmvDataSet`, which returns the DataFrame by recursivly call the `rdd` method of the modules it depends
 
 Currently `smvApp.runModule` method is pretty light, which just call `B.rdd()` with attaching a `RunInfoCollector`, and return the result from `B.rdd()` and the collector.
 
-## Custom metadata, Ephemeral and DataFrame Caching
+## Challenges of generalize current flow
 
-For Pandas DF, or any other output which are in memory, the `Ephemeral` concept and `persist` concept are so easy 
-to understand and manage. So basically,
+The main challenge is Spark DataFrame's `lazy eval` feature and the `DQM` tool we introduced. Basically
+for any ephemeral module, the `DQM` can't be validated within the `computeDataFrame` method of itself, unless we force an action on the result DataFrame.
 
-* Persist - save the data to some storage engine (disc, db, cloud, etc.)
-* Ephemeral - don't do persist on this module
+For generic data types, there could be other dataframes which take the `lazy eval` approach and have 
+similar problem as Spark DataFrame. 
 
-Even for an `Ephemeral` module, user should still be able to use it whatever ways they like. 
+To solve that, we need to delay the validation of `DQM` to after the earliest action on that DF. To 
+generalize that idea, we can introduce a `SmvGenericModule` method `postAction()`. In the 
+`SmvSparkModule` case, that `postAction()` method will do the `DQM` validation and necessary metadata
+updateing.
 
-In the simple case (in memory DF), the result from `doRun` and cached in the `rdd` method buffer has all the data 
-ready for caller to use and to use multiple times, regardless whether it's Ephemeral or persisted.
+Then the question comes to where to call this `postAction()` method. There are multiple cases:
+* For non-ephemeral module, call after data persisting within the `computeDataFrame` methods
+* For ephemeral module, delay to after the first downstream non-ephemeral module's persist action
+* For ephemeral module which does not have a downstream non-ephemeral module, force an action, at the `runModule` method level, and run `postAction()`
 
-The logic within `computeDataFrame` is very simple:
+Also we need to make sure the `postAction()` only run once per transaction.
+
+Using current run-flow to implement above will be too complicated and ugly.
+
+## Using Visiter Pattern to Run Module
+
+To keep it simple, we start with implementing a simple run without the complexity
+of `lazy eval`, meta, or `DQM`.
+
+### Related Methods in SmvGenericModule
 ```python
-if (self.isEphemeral()):
-    df = self.doRun(...)
-else:
-    if (data_persisted):
-        df = getPersistedData()
-    else:
-        df = self.doRun(...)
-        persistData(df)
+class SmvGenericModule:
+    ...
+    def __init__(self):
+        self.resolvedRequiresDS = []
+        ...
 
-if (meta_persisted):
-    meta = getPersistedMeta()
-else
-    usermeta = self.metadata(df)
-    meta = create_system_meta + usermeta
-    persistMeta(meta)
+    def resolve:
+        ...
+    
+    def visit(self, visitor, state):
+        """Depth first visiting"""
+        for m in self.resolvedRequiresDS:
+            m.visit(visitor, state)
+        return visitor(self, state)
 
-return df
+    def reverse_visit(self, visitor, state):
+        """Breath first visiting"""
+        res = visitor(self, state)
+        for m in self.resolvedRequiresDS:
+            m.visit(visitor, state)
+        return res
+
+
+    def rdd(self, urn2df):
+        if (self.urn() not in app.dfCache):
+            app.dfCache.update({self.urn(), self.computeDataFrame(urn2df)})
+        res = app.dfCache.get(self.urn())
+        urn2df.update({self.urn(), res})
+        return res
+
+    def computeDataFrame(self, urn2df):
+        ...
+        df = self.doRun(urn2df)
+        ...
+        return df
+    
+    def doRun(self, urn2df):
+        i = self.RunParams(urn2df)
+        return self.run(i)
 ```
 
-For Spark DataFrame, since it has this delay execution feature, the result from `doRun` method is actually just a
-"recipe", called plan, of how to calculate the data. Because of that, we should reuse the persisted data for the 
-non-ephemeral` case, instead of re-run the plan. So the logic changes to:
+### Run module
 ```python
-if (self.isEphemeral()):
-    df = self.doRun(...)
-else:
-    if (data_persisted):
-        df = getPersistedData()
+def runModule(mods):
+    known = {}
+    def runner(mod, urn2df):
+        return mod.rdd(urn2df)
+    return [m.visit(runner, known) for m in mods]
+```
+
+So basically the `doRun` method will not try to run the modules it depends,
+instead, the `runModule` method walk through the graph using the `visit` method.
+
+## How the visitor pattern solves our problems
+
+### Create a module list for each transaction
+
+To guarantee each module's `postAction` method run and only run once per transaction, we need to manage a 
+"modules-to-run" list in `runModule` method. We can use the `visitor` to create that list:
+
+```python
+def runModule(mods):
+    mods_to_run_postAction = set()
+    def create_mod_set(mod, run_set):
+        if (mod.hasPostActionMethod()):
+            run_set.add(mod)
+    for m in mods:
+        m.visit(create_mod_set, mods_to_run_postAction)
+    ...
+```
+
+### Implement computeDataFrame to use mods_to_run_postAction
+
+The `computeDataFrame` method need to call `postAction` method and update `mods_to_run_postAction`.
+
+Consider the the simple case where all modules are non-ephemeral:
+```python
+class SmvGenericModule:
+    ...
+    def rdd(self, urn2df, run_set):
+        if (self.urn() not in app.dfCache):
+            app.dfCache.update({self.urn(), self.computeDataFrame(urn2df, run_set)})
+        else:
+            run_set.discard(self)
+        res = app.dfCache.get(self.urn())
+        urn2df.update({self.urn(), res})
+        return res
+
+    def computeDataFrame(self, urn2df, run_set):
+        df = self.doRun(urn2df)
+        self.persistData(df)
+        if (self in run_set):
+            self.postAction()
+            run_set.discard(self)
+        return df
+    ...
+```
+
+and 
+
+```python
+def runModule(mods):
+    ...
+    known = {}
+    def runner(mod, (urn2df, run_set)):
+        return mod.rdd(urn2df, run_set)
+    dfs = [m.visit(runner, (known, mods_to_run_postAction)) for m in mods]
+```
+
+
+### Run postAction as early as possible
+
+The ideal place for running the `postAction` method of a module, is just after the DF generated by the module 
+firstly used (has an action). There could be the following cases:
+
+* Module itself get persisted 
+* User metadata calculation could (or could not) cause an action
+* Some forced actions applied
+* For Ephemeral module, any downstream modules action cause current module's action
+
+From `runModule` method, there will be 4 visits total:
+* Create `mods_to_run_postAction`
+* Calculate `df` (will persist the non-ephemeral modules)
+* Calculate user metadata 
+* If still modules left in `mods_to_run_postAction` force an action on them and run `postAction`
+
+To attach dqm tasks, we just generalize it to a `preAction` method. Adding up all, the relevant methods are
+
+```python
+class SmvGenericModule:
+    ...
+    def run_ancestor_postAction(self, run_set):
+        def run_delayed_postAction(mod, _run_set):
+            if (mod in _run_set):
+                mod.postAction()
+                _run_set.discard(mod)
+        return self.visit(run_delayed_postAction, run_set)
+
+    def computeDataFrame(self, urn2df, run_set):
+        raw_df = self.doRun(urn2df)
+        df = self.preAction(raw_df) # attach dqm task here 
+        
+        if (self.isEphemeral):
+            return df
+        else:
+            self.persistData(df)
+            self.run_ancestor_postAction(run_set)
+            return self.unPersistData()
+
+    def calculate_user_meta(self, run_set):
+        df = app.dfCache.get(self.urn())
+        self.metaCache.addUserMetadata(self.metadata(df))
+        if (self.hadAction()):
+            self.run_ancestor_postAction(run_set)
+
+    def forcePostAction(self, run_set):
+        if (self in run_set):
+            df = app.dfCache.get(self.urn())
+            self.force_an_action(df)
+            self.run_ancestor_postAction(run_set)
+```
+Note: we used a `hadAction` method. For `SmvSparkModule`, the `DQMvalidator` has the info on whether the accumulator has
+non-zero record count. If the count is non-zero, `hasAction` is True. For `SmvGenericModule`, `hadAction` always return False.
+
+And in `runModule`:
+```python
+def runModule(mods):
+    ...
+    known = {}
+    def runner(mod, (urn2df, run_set)):
+        return mod.rdd(urn2df, run_set)
+    dfs = [m.visit(runner, (known, mods_to_run_postAction)) for m in mods]
+
+    def run_meta(mod, run_set):
+        return mod.calculate_user_meta(run_set)
+    for m in mods:
+        m.visit(run_meta, mods_to_run_postAction)
+
+    # If there are still leftovers, force run
+    if (len(mods_to_run_postAction) > 0):
+        def force_run(mod, run_set):
+            mod.forcePostAction(run_set)
+        for m in mods:
+            m.reverse_visit(force_run, mods_to_run_postAction)
+```
+
+Please note that for the `force_run` visiting, we used `reverse_visit` (breath-first) method. The reason is that
+the `forcePostAction` will add an action to the module. Since downstream modules action also caused upstream modules
+action, we'd rather start the force action from the later modules.
+
+## Some other details
+
+### Persist Meta
+Since we also need to persist metadata for each module, need another visit to all the modules,
+
+```python
+class SmvGenericModule:
+    ...
+    def persist_meta(self):
+        persistMeta(self.metaCache)
+        return unPersistMeta()
+```
+
+```python
+def runModule(mods):
+    ...
+    def persist_meta(mod, dummy):
+        return mod.persistMeta()
+    metas = [m.visit(persist_meta, None) for m in mods]
+
+    return zip(dfs, metas)
+```
+    
+### Quick Run
+
+A quick-run on a module means:
+
+* Use persisted data as possible
+* Never persist new data
+* No user-meta
+* No DQM
+
+So need to add `is_quick_run` flag to `rdd` and `computeDataFrame`. 
+```python
+def computeDataFrame(self, urn2df, run_set, is_quick_run):
+    raw_df = self.doRun(urn2df)
+    df = self.preAction(raw_df) # attach dqm task here 
+    
+    if (self.isEphemeral):
+        return df
+    if (is_quick_run):
+        try:
+            res = self.unPersistData()
+        except:
+            res = df
+        return res
     else:
-        raw_df = self.doRun(...)
-        persistData(df)
-        df = getPersistedData()
-
-if (meta_persisted):
-    meta = getPersistedMeta()
-else
-    usermeta = self.metadata(df)
-    meta = create_system_meta + usermeta
-    persistMeta(meta)
-
-return df
+        self.persistData(df)
+        self.run_ancestor_postAction(run_set)
+        return self.unPersistData()
 ```
 
-Above logic solves the potential re-run of the plan for non-ephemeral module. However there is danger left for the 
-ephemeral modules. Consider the following case,
-
+And create a `quickRunModule` method, 
+```python
+def runModule(mods):
+    ...
+    known = {}
+    def runner(mod, urn2df)):
+        return mod.rdd(urn2df, [], is_quick_run=True)
+    return [m.visit(runner, known)) for m in mods]
 ```
-A -> B -> C
-```
 
-With `A` and `B` are ephemeral, and both have a some user metadata method which perform some action on the result DF.
+### MetaHistory, SmvRunInfo, SmvRunInfoCollector
+Current implementation:
 
-When call `runModule('C')`, B's `computeDataFrame` is called, and it returns B's DF to C, and C's run method used B's DF. 
-Also, since B has a usermeta, so B's DF have to have an action there too. So B's DF plan has to run twice, one for the 
-usermeta, and the other for C's calculation. What even worse is that, each of B's DF's action will cause A's action too. 
-So basically A's DF has to run 3 times, one for its own usermeta, one for B's usermeta, and one for C's calculation. 
+* `MetaHistory`: collect module's meta from last N multiple runs, which could across multiple versions (hashOfHash), and persisted to file as JSON
+* `SmvRunInfo`: just a tuple of `(meta, metaHistory)`
+* `SmvRunInfoCollector`: a list of all the SmvRunInfos generated from one run-transaction
 
-So each usermeta not only add an action to the c
+All those should belong to the runner, instead of part of the `SmvGeneralizedModule`. 
+
+## SmvModuleRunner
+
+Since the `runModule` getting pretty heavy, let's create `SmvModuleRunner` class, which represents a run-transaction. The `runModule` and 
+`quickRunModule` methods in `SmvApp` will become interface method to access `SmvModuleRunner`. 
+
