@@ -135,7 +135,7 @@ def runModule(mods):
     return [m.visit(runner, known) for m in mods]
 ```
 
-So basically the `doRun` method will not try to run the modules it depends,
+So basically the `doRun` method will not try to run the modules depends,
 instead, the `runModule` method walk through the graph using the `visit` method.
 
 ## How the visitor pattern solves our problems
@@ -351,3 +351,4 @@ All those should belong to the runner, instead of part of the `SmvGeneralizedMod
 Since the `runModule` getting pretty heavy, let's create `SmvModuleRunner` class, which represents a run-transaction. The `runModule` and 
 `quickRunModule` methods in `SmvApp` will become interface method to access `SmvModuleRunner`. 
 
+For `smv-shell`, should consider to always use `quickRunModule` for `df`, and introduce a different method to `run` with `runModule`. 
