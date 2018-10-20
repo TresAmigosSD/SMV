@@ -103,6 +103,17 @@ class SmvDataSet(ABC):
         self.resolvedRequiresDS = resolver.loadDataSet([ds.fqn() for ds in self.requiresDS()])
         return self
 
+    ####################################################################################
+    # Will eventually move to the SmvGenericModule base class
+    ####################################################################################
+    def build_visit_queue(self, queue):
+        """Depth first visiting"""
+        if (self not in queue):
+            for m in self.resolvedRequiresDS:
+                m.build_visit_queue(queue)
+            queue.update({self:True})
+
+    ####################################################################################
     def smvGetRunConfig(self, key):
         """return the current user run configuration value for the given key."""
         if (key not in self.requiresConfig()):
