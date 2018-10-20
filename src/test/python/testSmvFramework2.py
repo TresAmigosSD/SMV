@@ -33,7 +33,7 @@ class SmvFrameworkTest2(SmvBaseTest):
         names = [m.fqn()[14:] for m in queue]
         self.assertEqual(names, ['I1', 'M1', 'M2', 'M3'])
 
-    def test_run(self):
+    def test_basic_run(self):
         fqn = "stage.modules.M3"
         ds = self.load2(fqn)
         res = SmvModuleRunner(ds).run()[0]
@@ -42,3 +42,9 @@ class SmvFrameworkTest2(SmvBaseTest):
             "a:Integer;b:Double",
             "1,0.3;0,0.2;3,0.5")
         self.should_be_same(res, exp)
+
+    def test_basic_versioned_fqn(self):
+        fqns = ["stage.modules.M3", "stage.modules.M2"]
+        ds = self.load2(*fqns)
+
+        self.assertNotEqual(ds[0].versioned_fqn(), ds[1].versioned_fqn())

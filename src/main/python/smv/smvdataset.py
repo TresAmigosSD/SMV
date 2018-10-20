@@ -58,6 +58,18 @@ def _sourceHash(module):
     # co_code = compile(src, inspect.getsourcefile(cls), 'exec').co_code
     return _smvhash(src_no_comm)
 
+def lazy_property(fn):
+    '''Decorator that makes a property lazy-evaluated.
+    '''
+    attr_name = '_lazy_' + fn.__name__
+
+    @property
+    def _lazy_property(self):
+        if not hasattr(self, attr_name):
+            setattr(self, attr_name, fn(self))
+        return getattr(self, attr_name)
+    return _lazy_property
+
 class SmvOutput(object):
     """Mixin which marks an SmvModule as one of the output of its stage
 
@@ -150,6 +162,33 @@ class SmvDataSet(ABC):
     @abc.abstractmethod
     def doRun2(self, validator, known):
         """Compute this dataset, and return the dataframe"""
+
+    def dataset_hash(self): 
+        log = self.smvApp.log
+        _instanceValHash = self.instanceValHash()
+        log.debug("{}.instanceValHash = {}".format(self.fqn(), _instanceValHash))
+
+        _sourceCodeHash = self.sourceCodeHash()
+        log.debug("{}.sourceCodeHash = ${}".format(self.fqn(), _sourceCodeHash))
+
+        return _instanceValHash + _sourceCodeHash
+    
+    @lazy_property
+    def hash_of_hash(self):
+        log = self.smvApp.log
+        _dataset_hash = self.dataset_hash()
+        log.debug("{}.dataset_hash = {}".format(self.fqn(), _dataset_hash))
+    
+        res = _dataset_hash
+        for m in self.resolvedRequiresDS:
+            res += m.hash_of_hash 
+        log.debug("{}.hash_of_hash = {}".format(self.fqn(), res))
+        return res
+    
+    def ver_hex(self):
+        return "{0:08x}".format(self.hash_of_hash)
+    def versioned_fqn(self):
+        return "{}_{}".format(self.fqn(), self.ver_hex())
     ####################################################################################
     def smvGetRunConfig(self, key):
         """return the current user run configuration value for the given key."""
