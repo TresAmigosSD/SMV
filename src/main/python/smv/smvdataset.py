@@ -150,7 +150,11 @@ class SmvDataSet(ABC):
     # Will eventually move to the SmvGenericModule base class
     ####################################################################################
     def rdd(self, urn2df):
-        res = self.computeDataFrame(urn2df)
+        if (self.versioned_fqn not in self.smvApp.df_cache):
+            self.smvApp.df_cache.update(
+                {self.versioned_fqn:self.computeDataFrame(urn2df)}
+            )
+        res = self.smvApp.df_cache.get(self.versioned_fqn)
         urn2df.update({self.urn(): res})
         return res
 
@@ -187,6 +191,8 @@ class SmvDataSet(ABC):
     
     def ver_hex(self):
         return "{0:08x}".format(self.hash_of_hash)
+
+    @lazy_property
     def versioned_fqn(self):
         return "{}_{}".format(self.fqn(), self.ver_hex())
     ####################################################################################

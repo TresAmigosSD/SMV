@@ -15,6 +15,8 @@ from smv import *
 from smv.dqm import *
 from pyspark.sql.functions import col, lit
 
+import testSmvFramework2
+
 class I1(SmvModule):
     def requiresDS(self):
         return []
@@ -35,6 +37,7 @@ class M2(SmvModule):
     def requiresDS(self):
         return [M1]
     def run(self, i):
+        testSmvFramework2.cross_run_counter += 1
         return i[M1]
 
 class M3(SmvModule):

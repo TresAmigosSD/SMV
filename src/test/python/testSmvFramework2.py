@@ -19,6 +19,8 @@ from smv.smvmodulerunner import SmvModuleRunner
 
 from pyspark.sql import DataFrame
 
+cross_run_counter = 0
+
 class SmvFrameworkTest2(SmvBaseTest):
     @classmethod
     def smvAppInitArgs(cls):
@@ -47,4 +49,19 @@ class SmvFrameworkTest2(SmvBaseTest):
         fqns = ["stage.modules.M3", "stage.modules.M2"]
         ds = self.load2(*fqns)
 
-        self.assertNotEqual(ds[0].versioned_fqn(), ds[1].versioned_fqn())
+        self.assertNotEqual(ds[0].versioned_fqn, ds[1].versioned_fqn)
+
+    def test_cross_tx_df_caching(self):
+        """run method of a module should run only once even cross run tx"""
+        # Reset cache and reset counter
+        self.smvApp.df_cache = {}
+        global cross_run_counter
+        cross_run_counter = 0
+
+        fqns = ["stage.modules.M2", "stage.modules.M3"]
+        ds = self.load2(*fqns)
+
+        r1 = SmvModuleRunner([ds[0]]).run()[0]
+        r2 = SmvModuleRunner([ds[1]]).run()[0]
+
+        self.assertEqual(cross_run_counter, 1)
