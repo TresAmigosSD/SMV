@@ -77,10 +77,14 @@ class SmvOutput(object):
     getTableName = create_py4j_interface_method("getTableName", "tableName")
 
 class ModulesVisitor(object):
+    """Provides way to do depth and breadth first visit to the sub-graph
+        of modules given a set of roots
+    """
     def __init__(self, roots):
         self.queue = self._build_queue(roots)
 
     def _build_queue(self, roots):
+        """Create a depth first queue with order for multiple roots"""
         _queue = OrderedDict()
         def _add_to(mod, q):
             if (len(mod.resolvedRequiresDS) > 0):
@@ -92,12 +96,13 @@ class ModulesVisitor(object):
 
         return [m for m in _queue]
 
-
     def dfs_visit(self, action, state):
+        """Depth first visit"""
         for m in self.queue:
             action(m, state)
     
     def bfs_visit(self, action, state):
+        """Breadth first visit"""
         for m in reversed(self.queue):
             action(m, state)
 
