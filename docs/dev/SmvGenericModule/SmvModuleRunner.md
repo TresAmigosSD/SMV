@@ -94,45 +94,47 @@ class SmvGenericModule:
     def resolve:
         ...
     
-    def visit(self, visitor, state):
-        """Depth first visiting"""
-        for m in self.resolvedRequiresDS:
-            m.visit(visitor, state)
-        return visitor(self, state)
-
-    def reverse_visit(self, visitor, state):
-        """Breath first visiting"""
-        res = visitor(self, state)
-        for m in self.resolvedRequiresDS:
-            m.visit(visitor, state)
+    def rdd(self):
+        if (self.versioned_fqn not in app.dfCache):
+            # by the time this module's rdd is called, all the ancestors are cached
+            app.dfCache.update({self.versioned_fqn, self.computeDataFrame()})
+        res = app.dfCache.get(self.versioned_fqn)
         return res
 
-
-    def rdd(self, urn2df):
-        if (self.urn() not in app.dfCache):
-            app.dfCache.update({self.urn(), self.computeDataFrame(urn2df)})
-        res = app.dfCache.get(self.urn())
-        urn2df.update({self.urn(), res})
-        return res
-
-    def computeDataFrame(self, urn2df):
+    def computeDataFrame(self):
         ...
-        df = self.doRun(urn2df)
+        df = self.doRun()
         ...
         return df
     
-    def doRun(self, urn2df):
-        i = self.RunParams(urn2df)
+    def doRun(self):
+        i = self.build_RunParams(app.dfCache)
         return self.run(i)
+```
+
+### ModulesVisitor
+```python
+class ModuleVisitor(object):
+    def __init__(self, roots):
+        self.queue = self._build_queue(roots)
+
+    ...
+    def dfs_visit(self, action, state):
+        for m in self.queue:
+            action(m, state)
+    
+    def bfs_visit(self, action, state):
+        for m in reversed(self.queue):
+            action(m, state)
 ```
 
 ### Run module
 ```python
 def runModule(mods):
-    known = {}
-    def runner(mod, urn2df):
-        return mod.rdd(urn2df)
-    return [m.visit(runner, known) for m in mods]
+    def runner(mod, dummy):
+        mod.rdd()
+    ModulesVisitor(mods).dfs_visit(runner, None)
+    return [app.dfCache.get(m.versioned_fqn) for m in mods]
 ```
 
 So basically the `doRun` method will not try to run the modules depends,
@@ -147,12 +149,7 @@ To guarantee each module's `postAction` method run and only run once per transac
 
 ```python
 def runModule(mods):
-    mods_to_run_postAction = set()
-    def create_mod_set(mod, run_set):
-        if (mod.hasPostActionMethod()):
-            run_set.add(mod)
-    for m in mods:
-        m.visit(create_mod_set, mods_to_run_postAction)
+    mods_to_run_postAction = set(ModulesVisitor(mods).queue)
     ...
 ```
 
@@ -164,17 +161,16 @@ Consider the the simple case where all modules are non-ephemeral:
 ```python
 class SmvGenericModule:
     ...
-    def rdd(self, urn2df, run_set):
-        if (self.urn() not in app.dfCache):
-            app.dfCache.update({self.urn(), self.computeDataFrame(urn2df, run_set)})
+    def rdd(self, run_set):
+        if (self.versioned_fqn not in app.dfCache):
+            app.dfCache.update({self.versioned_fqn, self.computeDataFrame(run_set)})
         else:
             run_set.discard(self)
-        res = app.dfCache.get(self.urn())
-        urn2df.update({self.urn(), res})
+        res = app.dfCache.get(self.versioned_fqn)
         return res
 
-    def computeDataFrame(self, urn2df, run_set):
-        df = self.doRun(urn2df)
+    def computeDataFrame(self, run_set):
+        df = self.doRun()
         self.persistData(df)
         if (self in run_set):
             self.postAction()
@@ -187,11 +183,11 @@ and
 
 ```python
 def runModule(mods):
-    ...
-    known = {}
-    def runner(mod, (urn2df, run_set)):
-        return mod.rdd(urn2df, run_set)
-    dfs = [m.visit(runner, (known, mods_to_run_postAction)) for m in mods]
+    mods_to_run_postAction = set(ModulesVisitor(mods).queue)
+    def runner(mod, run_set):
+        return mod.rdd(run_set)
+    ModulesVisitor(mods).dfs_visit(runner, mods_to_run_postAction)
+    return [app.dfCache.get(m.versioned_fqn) for m in mods]
 ```
 
 
@@ -216,62 +212,68 @@ To attach dqm tasks, we just generalize it to a `preAction` method. Adding up al
 ```python
 class SmvGenericModule:
     ...
-    def run_ancestor_postAction(self, run_set):
+    def run_ancestor_and_me_postAction(self, run_set):
         def run_delayed_postAction(mod, _run_set):
             if (mod in _run_set):
                 mod.postAction()
                 _run_set.discard(mod)
-        return self.visit(run_delayed_postAction, run_set)
+        ModuleVisitor(self).dfs_visit(run_delayed_postAction, run_set)
 
-    def computeDataFrame(self, urn2df, run_set):
-        raw_df = self.doRun(urn2df)
+    def computeDataFrame(self, run_set):
+        raw_df = self.doRun()
         df = self.preAction(raw_df) # attach dqm task here 
         
         if (self.isEphemeral):
             return df
         else:
             self.persistData(df)
-            self.run_ancestor_postAction(run_set)
+            self.run_ancestor_and_me_postAction(run_set)
             return self.unPersistData()
 
     def calculate_user_meta(self, run_set):
-        df = app.dfCache.get(self.urn())
+        df = app.dfCache.get(self.versioned_fqn)
         self.metaCache.addUserMetadata(self.metadata(df))
         if (self.hadAction()):
-            self.run_ancestor_postAction(run_set)
+            self.run_ancestor_and_me_postAction(run_set)
 
     def forcePostAction(self, run_set):
         if (self in run_set):
-            df = app.dfCache.get(self.urn())
+            df = app.dfCache.get(self.versioned_fqn)
             self.force_an_action(df)
-            self.run_ancestor_postAction(run_set)
+            self.run_ancestor_and_me_postAction(run_set)
 ```
 Note: we used a `hadAction` method. For `SmvSparkModule`, the `DQMvalidator` has the info on whether the accumulator has
-non-zero record count. If the count is non-zero, `hasAction` is True. For `SmvGenericModule`, `hadAction` always return False.
+non-zero record count. If the count is non-zero, `hadAction` is True. However there is a chance of
+false-negative, in case that the DF just has zero records. If possible may need a better way to set
+this flag. For `SmvGenericModule`, `hadAction` always return True (default to no lazy-eval case).
+
+In case of false-negative, the current ephemeral module and its ancestor ephemeral modules may have 
+action twice and cause double counting in the DQM state. Given the DQM state could anyhow double counted
+because of fault-tolerance nature of RDD, this small chance of double counting should be acceptable.
 
 And in `runModule`:
 ```python
 def runModule(mods):
     ...
-    known = {}
-    def runner(mod, (urn2df, run_set)):
-        return mod.rdd(urn2df, run_set)
-    dfs = [m.visit(runner, (known, mods_to_run_postAction)) for m in mods]
+    mods_to_run_postAction = set(ModulesVisitor(mods).queue)
+    def runner(mod, run_set):
+        return mod.rdd(run_set)
+    ModulesVisitor(mods).dfs_visit(runner, mods_to_run_postAction)
 
     def run_meta(mod, run_set):
         return mod.calculate_user_meta(run_set)
-    for m in mods:
-        m.visit(run_meta, mods_to_run_postAction)
+    ModulesVisitor(mods).dfs_visit(run_meta, mods_to_run_postAction)
 
     # If there are still leftovers, force run
     if (len(mods_to_run_postAction) > 0):
         def force_run(mod, run_set):
             mod.forcePostAction(run_set)
-        for m in mods:
-            m.reverse_visit(force_run, mods_to_run_postAction)
+        ModulesVisitor(mods).bfs_visit(force_run, mods_to_run_postAction)
+    
+    return [app.dfCache.get(m.versioned_fqn) for m in mods]
 ```
 
-Please note that for the `force_run` visiting, we used `reverse_visit` (breath-first) method. The reason is that
+Please note that for the `force_run` visiting, we used `bfs_visit` (breadth-first) method. The reason is that
 the `forcePostAction` will add an action to the module. Since downstream modules action also caused upstream modules
 action, we'd rather start the force action from the later modules.
 
@@ -291,9 +293,12 @@ class SmvGenericModule:
 ```python
 def runModule(mods):
     ...
-    def persist_meta(mod, dummy):
-        return mod.persistMeta()
-    metas = [m.visit(persist_meta, None) for m in mods]
+    all_meta = {}
+    def persist_meta(mod, all_meta):
+        all_meta.update({mod.fqn: mod.persist_meta()})
+    ModulesVisitor(mods).dfs_visit(persist_meta, all_meta)
+
+    metas = [all_meta.get(m.fqn) for m in mods]
 
     return zip(dfs, metas)
 ```
@@ -309,13 +314,13 @@ A quick-run on a module means:
 
 So need to add `is_quick_run` flag to `rdd` and `computeDataFrame`. 
 ```python
-def computeDataFrame(self, urn2df, run_set, is_quick_run):
-    raw_df = self.doRun(urn2df)
+def computeDataFrame(self, run_set, is_quick_run):
+    raw_df = self.doRun()
     df = self.preAction(raw_df) # attach dqm task here 
     
     if (self.isEphemeral):
         return df
-    if (is_quick_run):
+    elif (is_quick_run):
         try:
             res = self.unPersistData()
         except:
@@ -329,12 +334,13 @@ def computeDataFrame(self, urn2df, run_set, is_quick_run):
 
 And create a `quickRunModule` method, 
 ```python
-def runModule(mods):
+def quickRunModule(mods):
     ...
-    known = {}
-    def runner(mod, urn2df)):
-        return mod.rdd(urn2df, [], is_quick_run=True)
-    return [m.visit(runner, known)) for m in mods]
+    def runner(mod, dummy):
+        return mod.rdd(run_set, [], is_quick_run=True)
+    ModulesVisitor(mods).dfs_visit(runner, [])
+
+    return [app.dfCache.get(m.versioned_fqn) for m in mods]
 ```
 
 ### MetaHistory, SmvRunInfo, SmvRunInfoCollector
