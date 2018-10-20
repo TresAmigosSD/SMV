@@ -15,11 +15,13 @@ from smv import *
 from smv.dqm import *
 from pyspark.sql.functions import col, lit
 
-class I1(SmvCsvStringData):
-    def schemaStr(self):
-        return "a:Integer;b:Double"
-    def dataStr(self):
-        return "1,0.3;0,0.2;3,0.5"
+class I1(SmvModule):
+    def requiresDS(self):
+        return []
+    def run(self, i):
+        return self.smvApp.createDF(
+            "a:Integer;b:Double",
+            "1,0.3;0,0.2;3,0.5")
 
 class M1(SmvModule):
     def requiresDS(self):

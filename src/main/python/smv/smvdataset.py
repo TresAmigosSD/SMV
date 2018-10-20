@@ -137,6 +137,19 @@ class SmvDataSet(ABC):
     ####################################################################################
     # Will eventually move to the SmvGenericModule base class
     ####################################################################################
+    def rdd(self, urn2df):
+        res = self.computeDataFrame(urn2df)
+        urn2df.update({self.urn(): res})
+        return res
+
+    def computeDataFrame(self, urn2df):
+        print("compute: {}".format(self.urn()))
+        df = self.doRun2(None, urn2df)
+        return df
+
+    @abc.abstractmethod
+    def doRun2(self, validator, known):
+        """Compute this dataset, and return the dataframe"""
     ####################################################################################
     def smvGetRunConfig(self, key):
         """return the current user run configuration value for the given key."""
@@ -563,6 +576,9 @@ class SmvModule(SmvDataSet):
         self.assert_result_is_dataframe(result)
         return result._jdf
 
+    def doRun2(self, validator, known):
+        i = self.RunParams(known)
+        return self.run(i)
 
 class SmvSqlModule(SmvModule):
     """An SMV module which executes a SQL query in place of a run method

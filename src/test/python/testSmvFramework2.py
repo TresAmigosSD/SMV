@@ -15,6 +15,7 @@ from test_support.smvbasetest import SmvBaseTest
 from smv import *
 from smv.error import SmvDqmValidationError, SmvRuntimeError
 from smv.smvdataset import ModulesVisitor
+from smv.smvmodulerunner import SmvModuleRunner
 
 from pyspark.sql import DataFrame
 
@@ -31,3 +32,13 @@ class SmvFrameworkTest2(SmvBaseTest):
 
         names = [m.fqn()[14:] for m in queue]
         self.assertEqual(names, ['I1', 'M1', 'M2', 'M3'])
+
+    def test_run(self):
+        fqn = "stage.modules.M3"
+        ds = self.load2(fqn)
+        res = SmvModuleRunner(ds).run()[0]
+
+        exp = self.createDF(
+            "a:Integer;b:Double",
+            "1,0.3;0,0.2;3,0.5")
+        self.should_be_same(res, exp)
