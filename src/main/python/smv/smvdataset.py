@@ -22,6 +22,7 @@ import sys
 import traceback
 import binascii
 import json
+from collections import OrderedDict
 
 from smv.dqm import SmvDQM
 from smv.error import SmvRuntimeError
@@ -75,6 +76,31 @@ class SmvOutput(object):
 
     getTableName = create_py4j_interface_method("getTableName", "tableName")
 
+class ModulesVisitor(object):
+    def __init__(self, roots):
+        self.queue = self._build_queue(roots)
+
+    def _build_queue(self, roots):
+        _queue = OrderedDict()
+        def _add_to(mod, q):
+            if (len(mod.resolvedRequiresDS) > 0):
+                for m in mod.resolvedRequiresDS:
+                    _add_to(m, q)
+            q.update({mod: True})
+        for m in roots:
+            _add_to(m, _queue)
+
+        return [m for m in _queue]
+
+
+    def dfs_visit(self, action, state):
+        for m in self.queue:
+            action(m, state)
+    
+    def bfs_visit(self, action, state):
+        for m in reversed(self.queue):
+            action(m, state)
+
 
 class SmvDataSet(ABC):
     """Abstract base class for all SmvDataSets
@@ -106,13 +132,6 @@ class SmvDataSet(ABC):
     ####################################################################################
     # Will eventually move to the SmvGenericModule base class
     ####################################################################################
-    def build_visit_queue(self, queue):
-        """Depth first visiting"""
-        if (self not in queue):
-            for m in self.resolvedRequiresDS:
-                m.build_visit_queue(queue)
-            queue.update({self:True})
-
     ####################################################################################
     def smvGetRunConfig(self, key):
         """return the current user run configuration value for the given key."""

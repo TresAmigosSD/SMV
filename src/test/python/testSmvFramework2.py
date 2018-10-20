@@ -14,7 +14,7 @@
 from test_support.smvbasetest import SmvBaseTest
 from smv import *
 from smv.error import SmvDqmValidationError, SmvRuntimeError
-from collections import OrderedDict
+from smv.smvdataset import ModulesVisitor
 
 from pyspark.sql import DataFrame
 
@@ -27,9 +27,7 @@ class SmvFrameworkTest2(SmvBaseTest):
         fqns = ["stage.modules.M3", "stage.modules.M2"]
         ds = self.load2(*fqns)
         
-        queue = OrderedDict()
-        for m in ds:
-            m.build_visit_queue(queue)
+        queue =  ModulesVisitor(ds).queue
 
         names = [m.fqn()[14:] for m in queue]
         self.assertEqual(names, ['I1', 'M1', 'M2', 'M3'])
