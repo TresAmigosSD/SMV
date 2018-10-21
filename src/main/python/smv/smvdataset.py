@@ -202,9 +202,11 @@ class SmvDataSet(ABC):
                 _run_set.discard(mod)
         ModulesVisitor([self]).dfs_visit(run_delayed_postAction, run_set)
 
-    @abc.abstractmethod
+    # Make this not an abstract since not all concrete class has this
+    #@abc.abstractmethod
     def doRun2(self, known):
         """Compute this dataset, and return the dataframe"""
+        pass
 
     def dataset_hash(self): 
         """current module's hash value, depend on code and potentially 
