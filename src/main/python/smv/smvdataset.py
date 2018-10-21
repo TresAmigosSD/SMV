@@ -30,6 +30,7 @@ from smv.dqm import SmvDQM
 from smv.error import SmvRuntimeError
 from smv.utils import smv_copy_array, pickle_lib, is_string
 from smv.py4j_interface import create_py4j_interface_method
+from smv.smviostrategy import SmvCsvOnHdfsIoStrategy
 
 if sys.version_info >= (3, 4):
     ABC = abc.ABC
@@ -197,10 +198,11 @@ class SmvDataSet(ABC):
         if (self.isEphemeral()):
             return df
         else:
-            self.persistData(df)
+            _strategy = self.persistStrategy()
+            if (not _strategy.isWritten()):
+                _strategy.write(df)
             self.run_ancestor_and_me_postAction(run_set)
-            return df
-            #return self.unPersistData()
+            return _strategy.read()
 
     def persistData(self, df):
         # dummy persist, just for the action
@@ -266,6 +268,9 @@ class SmvDataSet(ABC):
         """
         return "{}_{}".format(self.fqn(), self.ver_hex())
 
+    def persistStrategy(self):
+        return SmvCsvOnHdfsIoStrategy(self.smvApp, self.fqn(), self.ver_hex())
+    
     @lazy_property
     def dqmValidator(self):
         return self.smvApp._jvm.DQMValidator(self.dqmWithTypeSpecificPolicy())
