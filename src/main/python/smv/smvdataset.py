@@ -137,6 +137,9 @@ class SmvDataSet(ABC):
         self.timestamp = None
         self.resolvedRequiresDS = []
 
+        # keep a reference to the result DF
+        self.df = None
+
     # For #1417, python side resolving (not used yet)
     def setTimestamp(self, dt):
         self.timestamp = dt
@@ -150,6 +153,13 @@ class SmvDataSet(ABC):
     # Will eventually move to the SmvGenericModule base class
     ####################################################################################
     def rdd(self, urn2df, run_set):
+        """create or get df from smvApp level cache
+            Args:
+                urn2df({str:DataFrame}) already run modules current module may depends
+                run_set(set(SmvDataSet)) modules yet to run post_action
+
+            urn2df will be appended, and run_set will shrink
+        """
         if (self.versioned_fqn not in self.smvApp.df_cache):
             self.smvApp.df_cache.update(
                 {self.versioned_fqn:self.computeDataFrame(urn2df, run_set)}
@@ -158,14 +168,10 @@ class SmvDataSet(ABC):
             run_set.discard(self)
         res = self.smvApp.df_cache.get(self.versioned_fqn)
         urn2df.update({self.urn(): res})
-        return res
-
-    def persistData(self, df):
-        # dummy persist, just for the action
-        df.count()
+        self.df = res
 
     def computeDataFrame(self, urn2df, run_set):
-        print("compute: {}".format(self.urn()))
+        self.smvApp.log.debug("compute: {}".format(self.urn()))
         raw_df = self.doRun2(urn2df)
         df = self.pre_action(raw_df)
 
@@ -176,6 +182,18 @@ class SmvDataSet(ABC):
             self.run_ancestor_and_me_postAction(run_set)
             return df
             #return self.unPersistData()
+
+    def persistData(self, df):
+        # dummy persist, just for the action
+        df.count()
+
+    def force_an_action(self, df):
+        df.count()
+
+    def force_post_action(self, run_set):
+        if (self in run_set):
+            self.force_an_action(self.df)
+            self.run_ancestor_and_me_postAction(run_set)
 
     def run_ancestor_and_me_postAction(self, run_set):
         def run_delayed_postAction(mod, _run_set):
@@ -189,6 +207,9 @@ class SmvDataSet(ABC):
         """Compute this dataset, and return the dataframe"""
 
     def dataset_hash(self): 
+        """current module's hash value, depend on code and potentially 
+            linked data (such as for SmvCsvFile)
+        """
         log = self.smvApp.log
         _instanceValHash = self.instanceValHash()
         log.debug("{}.instanceValHash = {}".format(self.fqn(), _instanceValHash))
@@ -200,6 +221,10 @@ class SmvDataSet(ABC):
     
     @lazy_property
     def hash_of_hash(self):
+        """hash depends on current module's dataset_hash, and all ancestors.
+            this calculation could be expensive, so made it a lazy property
+        """
+        # TODO: implement using visitor too
         log = self.smvApp.log
         _dataset_hash = self.dataset_hash()
         log.debug("{}.dataset_hash = {}".format(self.fqn(), _dataset_hash))
@@ -215,6 +240,9 @@ class SmvDataSet(ABC):
 
     @lazy_property
     def versioned_fqn(self):
+        """module fqn with the hash of hash. It is the signature of a specific
+            version of the module
+        """
         return "{}_{}".format(self.fqn(), self.ver_hex())
 
     @lazy_property

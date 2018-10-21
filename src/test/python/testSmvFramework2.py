@@ -38,7 +38,7 @@ class SmvFrameworkTest2(SmvBaseTest):
     def test_basic_run(self):
         fqn = "stage.modules.M3"
         ds = self.load2(fqn)
-        res = SmvModuleRunner(ds).run()[0]
+        res = SmvModuleRunner(ds, self.smvApp.log).run()[0]
 
         exp = self.createDF(
             "a:Integer;b:Double",
@@ -61,7 +61,7 @@ class SmvFrameworkTest2(SmvBaseTest):
         fqns = ["stage.modules.M2", "stage.modules.M3"]
         ds = self.load2(*fqns)
 
-        r1 = SmvModuleRunner([ds[0]]).run()[0]
-        r2 = SmvModuleRunner([ds[1]]).run()[0]
+        r1 = SmvModuleRunner([ds[0]], self.smvApp.log).run()[0]
+        r2 = SmvModuleRunner([ds[1]], self.smvApp.log).run()[0]
 
         self.assertEqual(cross_run_counter, 1)
