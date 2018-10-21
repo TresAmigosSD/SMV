@@ -39,6 +39,10 @@ class M2(SmvModule):
     def run(self, i):
         testSmvFramework2.cross_run_counter += 1
         return i[M1]
+    def dqm(self):
+        return SmvDQM().add(
+            DQMRule(col("b") < 0.4 , "b_lt_04")).add(
+            FailTotalRuleCountPolicy(2))
 
 class M3(SmvModule):
     def requiresDS(self):
