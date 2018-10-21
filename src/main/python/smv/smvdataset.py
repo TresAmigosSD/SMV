@@ -31,6 +31,7 @@ from smv.error import SmvRuntimeError
 from smv.utils import smv_copy_array, pickle_lib, is_string
 from smv.py4j_interface import create_py4j_interface_method
 from smv.smviostrategy import SmvCsvOnHdfsIoStrategy
+from smv.modulesvisitor import ModulesVisitor
 
 if sys.version_info >= (3, 4):
     ABC = abc.ABC
@@ -91,53 +92,6 @@ class SmvOutput(object):
 
     getTableName = create_py4j_interface_method("getTableName", "tableName")
 
-class ModulesVisitor(object):
-    """Provides way to do depth and breadth first visit to the sub-graph
-        of modules given a set of roots
-    """
-    def __init__(self, roots):
-        self.queue = self._build_queue(roots)
-
-    def _build_queue(self, roots):
-        """Create a depth first queue with order for multiple roots"""
-
-        # to traversal the graph in bfs order
-        _working_queue = queue.Queue()
-        for m in roots:
-            _working_queue.put(m)
-
-        # keep a distinct sorted list of nodes with root always in front of leafs
-        _sorted = OrderedDict()
-        for m in roots:
-            _sorted.update({m: True})
-
-        while(not _working_queue.empty()):
-            mod = _working_queue.get()
-            for m in mod.resolvedRequiresDS:
-                # regardless whether seen before, add to queue, so not drop 
-                # any dependency which may change the ordering of the result
-                _working_queue.put(m)
-
-                # if in the result list already, remove the old, add the new, 
-                # to make sure leafs always later
-                if (m in _sorted):
-                    _sorted.pop(m)
-                _sorted.update({m: True})
-
-        # reverse the result before output to make leafs first
-        return [m for m in reversed(_sorted)]
-
-
-    def dfs_visit(self, action, state):
-        """Depth first visit"""
-        for m in self.queue:
-            action(m, state)
-    
-    def bfs_visit(self, action, state):
-        """Breadth first visit"""
-        for m in reversed(self.queue):
-            action(m, state)
-
 
 class SmvDataSet(ABC):
     """Abstract base class for all SmvDataSets
@@ -192,21 +146,20 @@ class SmvDataSet(ABC):
 
     def computeDataFrame(self, urn2df, run_set):
         self.smvApp.log.debug("compute: {}".format(self.urn()))
-        raw_df = self.doRun2(urn2df)
-        df = self.pre_action(raw_df)
 
         if (self.isEphemeral()):
-            return df
+            raw_df = self.doRun2(urn2df)
+            return self.pre_action(raw_df)
         else:
             _strategy = self.persistStrategy()
             if (not _strategy.isWritten()):
+                raw_df = self.doRun2(urn2df)
+                df = self.pre_action(raw_df)
                 _strategy.write(df)
-            self.run_ancestor_and_me_postAction(run_set)
+                self.run_ancestor_and_me_postAction(run_set)
+            else:
+                run_set.discard(self)
             return _strategy.read()
-
-    def persistData(self, df):
-        # dummy persist, just for the action
-        df.count()
 
     def force_an_action(self, df):
         df.count()

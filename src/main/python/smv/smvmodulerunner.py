@@ -10,7 +10,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from smv.smvdataset import ModulesVisitor
+from smv.modulesvisitor import ModulesVisitor
 
 class SmvModuleRunner(object):
     """Represent the run-transaction. Provides the single entry point to run

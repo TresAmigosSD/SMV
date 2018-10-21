@@ -14,12 +14,13 @@
 from test_support.smvbasetest import SmvBaseTest
 from smv import *
 from smv.error import SmvDqmValidationError, SmvRuntimeError
-from smv.smvdataset import ModulesVisitor
+from smv.modulesvisitor import ModulesVisitor
 from smv.smvmodulerunner import SmvModuleRunner
 
 from pyspark.sql import DataFrame
 
 cross_run_counter = 0
+persist_run_counter = 0
 
 class SmvFrameworkTest2(SmvBaseTest):
     @classmethod
@@ -37,8 +38,7 @@ class SmvFrameworkTest2(SmvBaseTest):
 
     def test_basic_run(self):
         fqn = "stage.modules.M3"
-        ds = self.load2(fqn)
-        res = SmvModuleRunner(ds, self.smvApp.log).run()[0]
+        res = self.df2(fqn)
 
         exp = self.createDF(
             "a:Integer;b:Double",
@@ -58,10 +58,22 @@ class SmvFrameworkTest2(SmvBaseTest):
         global cross_run_counter
         cross_run_counter = 0
 
-        fqns = ["stage.modules.M2", "stage.modules.M3"]
-        ds = self.load2(*fqns)
+        r1 = self.df2("stage.modules.M2")
+        r2 = self.df2("stage.modules.M3")
 
-        r1 = SmvModuleRunner([ds[0]], self.smvApp.log).run()[0]
-        r2 = SmvModuleRunner([ds[1]], self.smvApp.log).run()[0]
-
+        # counter is it M1 (ephemeral)
         self.assertEqual(cross_run_counter, 1)
+
+    def test_persisted_df_should_run_only_once(self):
+        """even reset df-cache, persisted module should only run once"""
+        self.mkTmpTestDir()
+        self.smvApp.df_cache = {}
+        global persist_run_counter
+        persist_run_counter = 0
+
+        r1 = self.df2("stage.modules.M2")
+        self.smvApp.df_cache = {}
+        r2 = self.df2("stage.modules.M3")
+        
+        # counter is in M2 (non-ephemeral)
+        self.assertEqual(persist_run_counter, 1)

@@ -35,6 +35,7 @@ from smv.error import SmvRuntimeError, SmvDqmValidationError
 import smv.helpers
 from smv.utils import FileObjInputStream
 from smv.runinfo import SmvRunInfoCollector
+from smv.smvmodulerunner import SmvModuleRunner
 from smv.smvconfig import SmvConfig
 from py4j.protocol import Py4JJavaError
 
@@ -334,6 +335,11 @@ class SmvApp(object):
         j_df = j_ds.rdd(forceRun, False, collector, quickRun)
         return (DataFrame(j_df, self.sqlContext),
                 SmvRunInfoCollector(collector))
+
+    def runModule2(self, fqn):
+        urn = "mod:" + fqn
+        ds = self.dsm.load2(urn)[0]
+        return SmvModuleRunner([ds], self.log).run()[0]
 
     @exception_handling
     def runModuleByName(self, name, forceRun=False, version=None, runConfig=None, quickRun=False):
