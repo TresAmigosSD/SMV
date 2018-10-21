@@ -24,9 +24,11 @@ class SmvModuleRunner(object):
         self.visitor = ModulesVisitor(modules)
 
     def run(self):
+        mods_to_run_postAction = set(self.visitor.queue)
         known = {}
-        def runner(m, urn2df):
-            m.rdd(urn2df)
-        self.visitor.dfs_visit(runner, known)
+        def runner(m, (urn2df, run_set)):
+            m.rdd(urn2df, run_set)
+        self.visitor.dfs_visit(runner, (known, mods_to_run_postAction))
+        print(mods_to_run_postAction)
         return [known.get(m.urn()) for m in self.roots]
 

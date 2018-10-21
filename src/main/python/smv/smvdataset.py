@@ -149,22 +149,43 @@ class SmvDataSet(ABC):
     ####################################################################################
     # Will eventually move to the SmvGenericModule base class
     ####################################################################################
-    def rdd(self, urn2df):
+    def rdd(self, urn2df, run_set):
         if (self.versioned_fqn not in self.smvApp.df_cache):
             self.smvApp.df_cache.update(
-                {self.versioned_fqn:self.computeDataFrame(urn2df)}
+                {self.versioned_fqn:self.computeDataFrame(urn2df, run_set)}
             )
+        else:
+            run_set.discard(self)
         res = self.smvApp.df_cache.get(self.versioned_fqn)
         urn2df.update({self.urn(): res})
         return res
 
-    def computeDataFrame(self, urn2df):
+    def persistData(self, df):
+        # dummy persist, just for the action
+        df.count()
+
+    def computeDataFrame(self, urn2df, run_set):
         print("compute: {}".format(self.urn()))
-        df = self.doRun2(None, urn2df)
-        return df
+        raw_df = self.doRun2(urn2df)
+        df = self.pre_action(raw_df)
+
+        if (self.isEphemeral()):
+            return df
+        else:
+            self.persistData(df)
+            self.run_ancestor_and_me_postAction(run_set)
+            return df
+            #return self.unPersistData()
+
+    def run_ancestor_and_me_postAction(self, run_set):
+        def run_delayed_postAction(mod, _run_set):
+            if (mod in _run_set):
+                mod.post_action()
+                _run_set.discard(mod)
+        ModulesVisitor([self]).dfs_visit(run_delayed_postAction, run_set)
 
     @abc.abstractmethod
-    def doRun2(self, validator, known):
+    def doRun2(self, known):
         """Compute this dataset, and return the dataframe"""
 
     def dataset_hash(self): 
@@ -195,6 +216,16 @@ class SmvDataSet(ABC):
     @lazy_property
     def versioned_fqn(self):
         return "{}_{}".format(self.fqn(), self.ver_hex())
+
+    @lazy_property
+    def dqmValidator(self):
+        return self.smvApp._jvm.DQMValidator(self.dqmWithTypeSpecificPolicy())
+
+    def pre_action(self, df):
+        return DataFrame(self.dqmValidator.attachTasks(df._jdf), df.sql_ctx)
+
+    def post_action(self):
+        validationResult = self.dqmValidator.validate(None, True)
     ####################################################################################
     def smvGetRunConfig(self, key):
         """return the current user run configuration value for the given key."""
@@ -621,7 +652,7 @@ class SmvModule(SmvDataSet):
         self.assert_result_is_dataframe(result)
         return result._jdf
 
-    def doRun2(self, validator, known):
+    def doRun2(self, known):
         i = self.RunParams(known)
         return self.run(i)
 
