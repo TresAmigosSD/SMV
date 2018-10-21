@@ -37,6 +37,9 @@ class SmvModuleRunner(object):
             m.rdd(urn2df, run_set)
         self.visitor.dfs_visit(runner, (known, mods_to_run_post_action))
 
+        def run_meta(m, run_set):
+            m.calculate_user_meta(run_set)
+        self.visitor.dfs_visit(run_meta, (known, mods_to_run_post_action))
 
         if (len(mods_to_run_post_action) > 0):
             self.log.debug("leftover mods need to run post action: {}".format(

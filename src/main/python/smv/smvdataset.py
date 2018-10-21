@@ -32,6 +32,7 @@ from smv.utils import smv_copy_array, pickle_lib, is_string
 from smv.py4j_interface import create_py4j_interface_method
 from smv.smviostrategy import SmvCsvOnHdfsIoStrategy
 from smv.modulesvisitor import ModulesVisitor
+from smv.smvmetadata import SmvMetaData
 
 if sys.version_info >= (3, 4):
     ABC = abc.ABC
@@ -114,6 +115,8 @@ class SmvDataSet(ABC):
         # keep a reference to the result DF
         self.df = None
 
+        self.module_meta = SmvMetaData()
+
     # For #1417, python side resolving (not used yet)
     def setTimestamp(self, dt):
         self.timestamp = dt
@@ -160,6 +163,15 @@ class SmvDataSet(ABC):
             else:
                 run_set.discard(self)
             return _strategy.read()
+
+    def meta_path(self):
+        return "dummy_meta_path"
+
+    def calculate_user_meta(self, run_set):
+        self.module_meta.addSystemMeta(self)
+        self.module_meta.addUserMeta(self.metadata(self.df))
+        #if (self.hadAction()):
+        #    self.run_ancestor_and_me_postAction(run_set)
 
     def force_an_action(self, df):
         df.count()

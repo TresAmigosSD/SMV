@@ -77,3 +77,11 @@ class SmvFrameworkTest2(SmvBaseTest):
         
         # counter is in M2 (non-ephemeral)
         self.assertEqual(persist_run_counter, 1)
+
+    def test_basic_metadata_creation(self):
+        fqn = "stage.modules.M2"
+        m = self.load2(fqn)[0]
+
+        SmvModuleRunner([m], self.smvApp.log).run()
+
+        self.assertEqual(m.module_meta._metadata['_fqn'], fqn)
