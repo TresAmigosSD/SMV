@@ -10,12 +10,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""SMV User Run Configuration Parameters
-
-This module defined the SmvRunConfig class which can be mixed-in into an
-SmvModule to get user configuration parameters at run-time.
-"""
-
 from smv.smvdataset import ModulesVisitor
 
 class SmvModuleRunner(object):
