@@ -32,7 +32,8 @@ class SmvModuleRunner(object):
         # in the resolved instance
         known = {}
 
-        def runner(m, (urn2df, run_set)):
+        def runner(m, state):
+            (urn2df, run_set) = state
             m.rdd(urn2df, run_set)
         self.visitor.dfs_visit(runner, (known, mods_to_run_post_action))
 
