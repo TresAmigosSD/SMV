@@ -77,6 +77,10 @@ class DataSetMgr(object):
         with self.tx() as tx:
             return tx.inferDS(partial_names)
 
+    def inferDS2(self, *partial_names):
+        with self.tx2() as tx:
+            return tx.inferDS(partial_names)
+
     def inferUrn(self, partial_name):
         """Return URN string from partial name
         """
@@ -93,6 +97,12 @@ class DataSetMgr(object):
         """Return all the SmvDataSets in the app
         """
         with self.tx() as tx:
+            return tx.allDataSets()
+
+    def allDataSets2(self):
+        """Return all the SmvDataSets in the app
+        """
+        with self.tx2() as tx:
             return tx.allDataSets()
 
     def modulesToRun(self, modPartialNames, stageNames, allMods):
@@ -262,4 +272,4 @@ class TX2(object):
         return [urn_str(pn) for pn in partial_names]
 
     def _filterOutput(self, dss):
-        return [ds for ds in dss if ds.dsType() == "Output"]
+        return [ds for ds in dss if ds.isSmvOutput()]
