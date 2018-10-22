@@ -249,6 +249,18 @@ class SmvDataSet(ABC):
     def post_action(self):
         validation_result = self.dqmValidator.validate(None, True)
         self.module_meta.addDqmValidationResult(validation_result.toJSON())
+
+    def needsToRun(self):
+        if (self.isEphemeral()):
+            return False
+        else:
+            return not self.persistStrategy().isWritten()
+
+    def isSmvOutput(self):
+        try:
+            return self.IsSmvOutput
+        except:
+            return False
     ####################################################################################
     def smvGetRunConfig(self, key):
         """return the current user run configuration value for the given key."""

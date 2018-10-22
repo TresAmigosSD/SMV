@@ -60,8 +60,8 @@ stage2:
         self.assertEqual(cmd.ls_ancestors("M2"),
         """
 stage:
-  (O) stage.modules.M1
   (I) stage.modules.CsvStr
+  (O) stage.modules.M1
 
 stage2:
   (I) stage2.modules.CsvStr2
