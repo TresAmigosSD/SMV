@@ -16,6 +16,8 @@ from smv import *
 from smv.error import SmvDqmValidationError, SmvRuntimeError
 from smv.modulesvisitor import ModulesVisitor
 from smv.smvmodulerunner import SmvModuleRunner
+from smv.smviostrategy import SmvJsonOnHdfsIoStrategy
+from smv.smvmetadata import SmvMetaData
 
 from pyspark.sql import DataFrame
 
@@ -82,7 +84,7 @@ class SmvFrameworkTest2(SmvBaseTest):
         fqn = "stage.modules.M2"
         m = self.load2(fqn)[0]
 
-        SmvModuleRunner([m], self.smvApp.log).run()
+        SmvModuleRunner([m], self.smvApp).run()
 
         result = m.module_meta._metadata['_dqmValidation']
         rule_cnt = result['dqmStateSnapshot']['ruleErrors']['b_lt_04']['total']
@@ -96,7 +98,7 @@ class SmvFrameworkTest2(SmvBaseTest):
         fqn = "stage.modules.M3"
         m = self.load2(fqn)[0]
 
-        runner = SmvModuleRunner([m], self.smvApp.log)
+        runner = SmvModuleRunner([m], self.smvApp)
 
         # runner's run logic below, without the last force run
         mods_to_run_post_action = set(runner.visitor.queue)
@@ -108,3 +110,18 @@ class SmvFrameworkTest2(SmvBaseTest):
         # so should be removed from the mods_to_run_post_action
 
         self.assertEqual(len(mods_to_run_post_action), 0)
+
+    def test_metadata_persist(self):
+        self.mkTmpTestDir()
+        fqn = "stage.modules.M1"
+        m = self.load2(fqn)[0]
+        meta_path = m.meta_path()
+
+        self.df2(fqn)
+
+        meta_json = SmvJsonOnHdfsIoStrategy(self.smvApp, meta_path).read()
+        meta = SmvMetaData().fromJson(meta_json)
+        self.assertEqual(meta._metadata['_fqn'], fqn)
+
+
+

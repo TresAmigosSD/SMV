@@ -29,6 +29,7 @@ class SmvIoStrategy(ABC):
     def write(raw_data):
         """Write data to persist file/db"""
 
+# TODO: add lock, add publish
 class SmvCsvOnHdfsIoStrategy(SmvIoStrategy):
     def __init__(self, smvApp, fqn, ver_hex):
         self.smvApp = smvApp
@@ -71,3 +72,16 @@ class SmvCsvOnHdfsIoStrategy(SmvIoStrategy):
             return False
 
 
+class SmvJsonOnHdfsIoStrategy(SmvIoStrategy):
+    def __init__(self, smvApp, path):
+        self._jvm = smvApp._jvm
+        self.path = path
+
+    def read(self):
+        return self._jvm.SmvHDFS.readFromFile(self.path)
+    
+    def write(self, rawdata):
+        self._jvm.SmvHDFS.writeToFile(rawdata, self.path)
+
+    def isWritten(self):
+        return self._jvm.SmvHDFS.exists(self.path)

@@ -89,6 +89,7 @@ class SmvMetaData(object):
 
     def fromJson(self, meta_json):
         self._metadata = json.loads(meta_json)
+        return self
 
     def __repr__(self):
         # So that you can print(metadata)

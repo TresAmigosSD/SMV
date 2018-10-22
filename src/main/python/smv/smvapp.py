@@ -339,7 +339,7 @@ class SmvApp(object):
     def runModule2(self, fqn):
         urn = "mod:" + fqn
         ds = self.dsm.load2(urn)[0]
-        return SmvModuleRunner([ds], self.log).run()[0]
+        return SmvModuleRunner([ds], self).run()[0]
 
     @exception_handling
     def runModuleByName(self, name, forceRun=False, version=None, runConfig=None, quickRun=False):

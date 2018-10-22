@@ -164,9 +164,6 @@ class SmvDataSet(ABC):
                 run_set.discard(self)
             return _strategy.read()
 
-    def meta_path(self):
-        return "dummy_meta_path"
-
     def had_action(self):
         return self.dqmValidator.totalRecords() > 0
 
@@ -236,6 +233,11 @@ class SmvDataSet(ABC):
             version of the module
         """
         return "{}_{}".format(self.fqn(), self.ver_hex())
+
+    def meta_path(self):
+        return "{}/{}.meta".format(
+            self.smvApp.all_data_dirs().outputDir,
+            self.versioned_fqn)
 
     def persistStrategy(self):
         return SmvCsvOnHdfsIoStrategy(self.smvApp, self.fqn(), self.ver_hex())

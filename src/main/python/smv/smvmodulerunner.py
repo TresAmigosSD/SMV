@@ -10,15 +10,18 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
 from smv.modulesvisitor import ModulesVisitor
+from smv.smviostrategy import SmvJsonOnHdfsIoStrategy
 
 class SmvModuleRunner(object):
     """Represent the run-transaction. Provides the single entry point to run
         a group of modules
     """
-    def __init__(self, modules, log):
+    def __init__(self, modules, smvApp):
         self.roots = modules
-        self.log = log
+        self.smvApp = smvApp
+        self.log = smvApp.log
         self.visitor = ModulesVisitor(modules)
 
     def run(self):
@@ -37,6 +40,8 @@ class SmvModuleRunner(object):
         self._create_meta(mods_to_run_post_action)
 
         self._force_post(mods_to_run_post_action)
+
+        self._persist_meta()
 
         return [known.get(m.urn()) for m in self.roots]
 
@@ -59,3 +64,11 @@ class SmvModuleRunner(object):
             def force_run(mod, run_set):
                 mod.force_post_action(run_set)
             self.visitor.bfs_visit(force_run, need_post)
+
+    def _persist_meta(self):
+        def write_meta(m, stage):
+            meta_json = m.module_meta.toJson()
+            SmvJsonOnHdfsIoStrategy(
+                self.smvApp, m.meta_path()
+            ).write(meta_json)
+        self.visitor.dfs_visit(write_meta, None)
