@@ -167,11 +167,15 @@ class SmvDataSet(ABC):
     def meta_path(self):
         return "dummy_meta_path"
 
+    def had_action(self):
+        return self.dqmValidator.totalRecords() > 0
+
     def calculate_user_meta(self, run_set):
         self.module_meta.addSystemMeta(self)
         self.module_meta.addUserMeta(self.metadata(self.df))
-        #if (self.hadAction()):
-        #    self.run_ancestor_and_me_postAction(run_set)
+        if (self.had_action()):
+            self.smvApp.log.debug("{} metadata had an action".format(self.fqn()))
+            self.run_ancestor_and_me_postAction(run_set)
 
     def force_an_action(self, df):
         df.count()
@@ -244,7 +248,8 @@ class SmvDataSet(ABC):
         return DataFrame(self.dqmValidator.attachTasks(df._jdf), df.sql_ctx)
 
     def post_action(self):
-        validationResult = self.dqmValidator.validate(None, True)
+        validation_result = self.dqmValidator.validate(None, True)
+        self.module_meta.addDqmValidationResult(validation_result.toJSON())
     ####################################################################################
     def smvGetRunConfig(self, key):
         """return the current user run configuration value for the given key."""

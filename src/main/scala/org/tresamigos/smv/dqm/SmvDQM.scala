@@ -181,6 +181,11 @@ class DQMValidator(dqm: SmvDQM) {
     }
   }
 
+  private[smv] def totalRecords(): Long = {
+    val snapshot = dqmState.snapshot()
+    snapshot.totalRecords
+  }
+
   /**
    * Entrypoint for validating data. Runs validation UNLESS there is a persisted
    * result, in which case returns that result

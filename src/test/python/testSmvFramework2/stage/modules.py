@@ -52,3 +52,5 @@ class M3(SmvModule):
         return True
     def run(self, i):
         return i[M1]
+    def metadata(self, df):
+        return {'n':df.count()}

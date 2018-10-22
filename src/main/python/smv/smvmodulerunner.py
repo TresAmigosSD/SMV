@@ -32,22 +32,30 @@ class SmvModuleRunner(object):
         # in the resolved instance
         known = {}
 
-        def runner(m, state):
-            (urn2df, run_set) = state
-            m.rdd(urn2df, run_set)
-        self.visitor.dfs_visit(runner, (known, mods_to_run_post_action))
+        self._create_df(known, mods_to_run_post_action)
 
-        def run_meta(m, run_set):
-            m.calculate_user_meta(run_set)
-        self.visitor.dfs_visit(run_meta, (known, mods_to_run_post_action))
+        self._create_meta(mods_to_run_post_action)
 
-        if (len(mods_to_run_post_action) > 0):
-            self.log.debug("leftover mods need to run post action: {}".format(
-                [m.fqn()  for m in mods_to_run_post_action]
-            ))
-            def force_run(mod, run_set):
-                mod.force_post_action(run_set)
-            self.visitor.bfs_visit(force_run, mods_to_run_post_action)
+        self._force_post(mods_to_run_post_action)
 
         return [known.get(m.urn()) for m in self.roots]
 
+    def _create_df(self, known, need_post):
+        def runner(m, state):
+            (urn2df, run_set) = state
+            m.rdd(urn2df, run_set)
+        self.visitor.dfs_visit(runner, (known, need_post))
+
+    def _create_meta(self, need_post):
+        def run_meta(m, run_set):
+            m.calculate_user_meta(run_set)
+        self.visitor.dfs_visit(run_meta, need_post)
+
+    def _force_post(self, need_post):
+        if (len(need_post) > 0):
+            self.log.debug("leftover mods need to run post action: {}".format(
+                [m.fqn()  for m in need_post]
+            ))
+            def force_run(mod, run_set):
+                mod.force_post_action(run_set)
+            self.visitor.bfs_visit(force_run, need_post)

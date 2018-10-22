@@ -84,4 +84,27 @@ class SmvFrameworkTest2(SmvBaseTest):
 
         SmvModuleRunner([m], self.smvApp.log).run()
 
+        result = m.module_meta._metadata['_dqmValidation']
+        rule_cnt = result['dqmStateSnapshot']['ruleErrors']['b_lt_04']['total']
+
         self.assertEqual(m.module_meta._metadata['_fqn'], fqn)
+        self.assertEqual(rule_cnt, 1)
+
+    def test_metadata_action_trigger_validation(self):
+        """M3 is ephemeral and non-trivial metadata, it should trigger post_action"""
+
+        fqn = "stage.modules.M3"
+        m = self.load2(fqn)[0]
+
+        runner = SmvModuleRunner([m], self.smvApp.log)
+
+        # runner's run logic below, without the last force run
+        mods_to_run_post_action = set(runner.visitor.queue)
+        known = {}
+        runner._create_df(known, mods_to_run_post_action)
+        runner._create_meta(mods_to_run_post_action)
+
+        # by now, since M3 has non-trivial metadata, it triggers post_action,
+        # so should be removed from the mods_to_run_post_action
+
+        self.assertEqual(len(mods_to_run_post_action), 0)
