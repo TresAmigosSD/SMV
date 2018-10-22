@@ -11,6 +11,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import os
 from test_support.smvbasetest import SmvBaseTest
 from smv import *
 from smv.error import SmvDqmValidationError, SmvRuntimeError
@@ -129,6 +130,23 @@ class SmvFrameworkTest2(SmvBaseTest):
         hist = SmvMetaHistory().fromJson(hist_json)
 
         self.assertEqual(hist._hist_list[0]['_fqn'], fqn)
+
+    def test_purge_persisted(self):
+        fqn1 = "stage.modules.M2"
+        fqn2 = "stage.modules.M3"
+
+        (m1, m2) = self.load2(fqn1, fqn2)
+
+        self.df2(fqn2)
+
+        self.assertTrue(os.path.exists(m1.persistStrategy()._csv_path()))
+
+        SmvModuleRunner([m2], self.smvApp).purge_persisted()
+
+        self.assertFalse(os.path.exists(m1.persistStrategy()._csv_path()))
+        
+
+
 
 
 

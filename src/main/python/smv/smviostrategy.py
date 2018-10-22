@@ -22,16 +22,20 @@ else:
 
 class SmvIoStrategy(ABC):
     @abc.abstractmethod
-    def read():
+    def read(self):
         """Read data from persisted"""
 
     @abc.abstractmethod
-    def write(raw_data):
+    def write(self, raw_data):
         """Write data to persist file/db"""
 
     @abc.abstractmethod
     def isPersisted(self):
         """Whether the data got successfully persisted before"""
+
+    @abc.abstractmethod
+    def remove(self):
+        """Remove persisted file(s)"""
 
 # TODO: add lock, add publish
 class SmvCsvOnHdfsIoStrategy(SmvIoStrategy):
@@ -75,6 +79,10 @@ class SmvCsvOnHdfsIoStrategy(SmvIoStrategy):
         except:
             return False
 
+    def remove(self):
+        self.smvApp._jvm.SmvHDFS.deleteFile(self._csv_path())
+        self.smvApp._jvm.SmvHDFS.deleteFile(self._schema_path())
+
 
 class SmvJsonOnHdfsIoStrategy(SmvIoStrategy):
     def __init__(self, smvApp, path):
@@ -89,3 +97,6 @@ class SmvJsonOnHdfsIoStrategy(SmvIoStrategy):
 
     def isPersisted(self):
         return self._jvm.SmvHDFS.exists(self.path)
+
+    def remove(self):
+        self._jvm.SmvHDFS.deleteFile(self.path)
