@@ -49,6 +49,14 @@ class SmvModuleRunner(object):
 
         return [known.get(m.urn()) for m in self.roots]
 
+    def purge_persisted(self):
+        def cleaner(m, state):
+            m.persistStrategy().remove()
+            SmvJsonOnHdfsIoStrategy(
+                self.smvApp, m.meta_path()
+            ).remove()
+        self.visitor.dfs_visit(cleaner, None)
+
     def _create_df(self, known, need_post):
         # run module and create df. when persisting, post_action 
         # will run on current module and all upstream modules
