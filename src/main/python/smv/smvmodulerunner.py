@@ -13,6 +13,7 @@
 
 from smv.modulesvisitor import ModulesVisitor
 from smv.smviostrategy import SmvJsonOnHdfsIoStrategy
+from smv.smvmetadata import SmvMetaHistory
 
 class SmvModuleRunner(object):
     """Represent the run-transaction. Provides the single entry point to run
@@ -66,9 +67,24 @@ class SmvModuleRunner(object):
             self.visitor.bfs_visit(force_run, need_post)
 
     def _persist_meta(self):
-        def write_meta(m, stage):
+        def write_meta(m, state):
             meta_json = m.module_meta.toJson()
             SmvJsonOnHdfsIoStrategy(
                 self.smvApp, m.meta_path()
             ).write(meta_json)
+
         self.visitor.dfs_visit(write_meta, None)
+
+        hist_dir = self.smvApp.all_data_dirs().historyDir
+        def write_hist(m, state):
+            hist_path = "{}/{}.hist".format(hist_dir, m.fqn())
+            io_strategy = SmvJsonOnHdfsIoStrategy(self.smvApp, hist_path)
+            try:
+                hist_json = io_strategy.read()
+                hist = SmvMetaHistory().fromJson(hist_json)
+            except:
+                hist = SmvMetaHistory()
+            hist.update(m.module_meta, m.metadataHistorySize())
+            io_strategy.write(hist.toJson())
+
+        self.visitor.dfs_visit(write_hist, None)

@@ -17,7 +17,7 @@ from smv.error import SmvDqmValidationError, SmvRuntimeError
 from smv.modulesvisitor import ModulesVisitor
 from smv.smvmodulerunner import SmvModuleRunner
 from smv.smviostrategy import SmvJsonOnHdfsIoStrategy
-from smv.smvmetadata import SmvMetaData
+from smv.smvmetadata import SmvMetaData, SmvMetaHistory
 
 from pyspark.sql import DataFrame
 
@@ -122,6 +122,13 @@ class SmvFrameworkTest2(SmvBaseTest):
         meta_json = SmvJsonOnHdfsIoStrategy(self.smvApp, meta_path).read()
         meta = SmvMetaData().fromJson(meta_json)
         self.assertEqual(meta._metadata['_fqn'], fqn)
+
+        hist_dir = self.smvApp.all_data_dirs().historyDir
+        hist_path = hist_path = "{}/{}.hist".format(hist_dir, fqn)
+        hist_json = SmvJsonOnHdfsIoStrategy(self.smvApp, hist_path).read()
+        hist = SmvMetaHistory().fromJson(hist_json)
+
+        self.assertEqual(hist._hist_list[0]['_fqn'], fqn)
 
 
 

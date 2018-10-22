@@ -95,3 +95,25 @@ class SmvMetaData(object):
         # So that you can print(metadata)
         return json.dumps(self._metadata, 
             sort_keys=True, indent=2, separators=(',', ': '))
+
+
+class SmvMetaHistory(object):
+    def __init__(self, meta_list=[]):
+        self._hist_list = meta_list
+
+    def update(self, new_meta, max_size):
+        self._hist_list.insert(0, new_meta._metadata)
+        self._hist_list = self._hist_list[0:max_size]
+
+    def toJson(self):
+        return json.dumps({'history':self._hist_list})
+
+    def fromJson(self, hist_json):
+        hist_dict = json.loads(hist_json)
+        self._hist_list = hist_dict['history']
+        return self
+
+    def __repr__(self):
+        # So that you can print(metadata)
+        return json.dumps(self._hist_list, 
+            sort_keys=True, indent=2, separators=(',', ': '))
