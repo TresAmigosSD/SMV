@@ -57,6 +57,23 @@ class SmvModuleRunner(object):
             ).remove()
         self.visitor.dfs_visit(cleaner, None)
 
+    def purge_old_but_keep_new_persisted(self):
+        keep = []
+        def get_to_keep(m, k):
+            k.extend(m.persistStrategy().allOutput())
+            k.extend(SmvJsonOnHdfsIoStrategy(
+                self.smvApp, m.meta_path()
+            ).allOutput())
+        self.visitor.dfs_visit(get_to_keep, keep)
+        outdir = self.smvApp.all_data_dirs().outputDir
+
+        relative_paths = [i[len(outdir)+1:] for i in keep]
+
+        self.smvApp._jvm.SmvPythonHelper.purgeDirectory(
+            outdir,
+            relative_paths
+        )
+        
     def _create_df(self, known, need_post):
         # run module and create df. when persisting, post_action 
         # will run on current module and all upstream modules
