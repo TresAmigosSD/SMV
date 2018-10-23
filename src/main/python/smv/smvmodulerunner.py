@@ -107,21 +107,18 @@ class SmvModuleRunner(object):
 
     def _persist_meta(self):
         def write_meta(m, state):
-            m.persist_meta()
+            persisted = m.persist_meta()
+            if (not persisted):
+                io_strategy = SmvJsonOnHdfsIoStrategy(self.smvApp, self.hist_path(m))
+                try:
+                    hist_json = io_strategy.read()
+                    hist = SmvMetaHistory().fromJson(hist_json)
+                except:
+                    hist = SmvMetaHistory()
+                hist.update(m.module_meta, m.metadataHistorySize())
+                io_strategy.write(hist.toJson())
 
         self.visitor.dfs_visit(write_meta, None)
-
-        def write_hist(m, state):
-            io_strategy = SmvJsonOnHdfsIoStrategy(self.smvApp, self.hist_path(m))
-            try:
-                hist_json = io_strategy.read()
-                hist = SmvMetaHistory().fromJson(hist_json)
-            except:
-                hist = SmvMetaHistory()
-            hist.update(m.module_meta, m.metadataHistorySize())
-            io_strategy.write(hist.toJson())
-
-        self.visitor.dfs_visit(write_hist, None)
 
     def _get_df_and_run_info(self, m):
         df = m.df
