@@ -97,16 +97,32 @@ class ModulesVisitor(object):
 
     def _build_queue(self, roots):
         """Create a depth first queue with order for multiple roots"""
-        _queue = OrderedDict()
-        def _add_to(mod, q):
-            if (len(mod.resolvedRequiresDS) > 0):
-                for m in mod.resolvedRequiresDS:
-                    _add_to(m, q)
-            q.update({mod: True})
-        for m in roots:
-            _add_to(m, _queue)
 
-        return [m for m in _queue]
+        # to traversal the graph in bfs order
+        _stack = []
+        _stack.extend(roots)
+
+        # keep a distinct sorted list of nodes with root always in front of leafs
+        _sorted = OrderedDict()
+        for m in roots:
+            _sorted.update({m: True})
+
+        while(len(_stack) > 0):
+            mod = _stack.pop(0)
+            for m in mod.resolvedRequiresDS:
+                # regardless whether seen before, add to queue, so not drop 
+                # any dependency which may change the ordering of the result
+                _stack.append(m)
+
+                # if in the result list already, remove the old, add the new, 
+                # to make sure leafs always later
+                if (m in _sorted):
+                    _sorted.pop(m)
+                _sorted.update({m: True})
+
+        # reverse the result before output to make leafs first
+        return [m for m in reversed(_sorted)]
+
 
     def dfs_visit(self, action, state):
         """Depth first visit"""
