@@ -47,7 +47,7 @@ class SmvModuleRunner(object):
 
         self._persist_meta()
 
-        return [known.get(m.urn()) for m in self.roots]
+        return [self._get_df_and_run_info(m) for m in self.roots]
 
     def purge_persisted(self):
         def cleaner(m, state):
@@ -104,16 +104,18 @@ class SmvModuleRunner(object):
             # also be calculated
             self.visitor.bfs_visit(force_run, need_post)
 
+    def hist_path(self, m):
+        hist_dir = self.smvApp.all_data_dirs().historyDir
+        return "{}/{}.hist".format(hist_dir, m.fqn())
+
     def _persist_meta(self):
         def write_meta(m, state):
             m.persist_meta()
 
         self.visitor.dfs_visit(write_meta, None)
 
-        hist_dir = self.smvApp.all_data_dirs().historyDir
         def write_hist(m, state):
-            hist_path = "{}/{}.hist".format(hist_dir, m.fqn())
-            io_strategy = SmvJsonOnHdfsIoStrategy(self.smvApp, hist_path)
+            io_strategy = SmvJsonOnHdfsIoStrategy(self.smvApp, self.hist_path(m))
             try:
                 hist_json = io_strategy.read()
                 hist = SmvMetaHistory().fromJson(hist_json)
@@ -123,3 +125,9 @@ class SmvModuleRunner(object):
             io_strategy.write(hist.toJson())
 
         self.visitor.dfs_visit(write_hist, None)
+
+    def _get_df_and_run_info(self, m):
+        df = m.df
+        meta = m.module_meta
+        meta_hist = SmvJsonOnHdfsIoStrategy(self.smvApp, self.hist_path(m)).read()
+        return (df, (meta, meta_hist))
