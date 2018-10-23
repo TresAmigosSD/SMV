@@ -52,18 +52,15 @@ class SmvModuleRunner(object):
     def purge_persisted(self):
         def cleaner(m, state):
             m.persistStrategy().remove()
-            SmvJsonOnHdfsIoStrategy(
-                self.smvApp, m.meta_path()
-            ).remove()
+            m.metaStrategy().remove()
         self.visitor.dfs_visit(cleaner, None)
 
     def purge_old_but_keep_new_persisted(self):
         keep = []
         def get_to_keep(m, k):
             k.extend(m.persistStrategy().allOutput())
-            k.extend(SmvJsonOnHdfsIoStrategy(
-                self.smvApp, m.meta_path()
-            ).allOutput())
+            k.extend(m.metaStrategy().allOutput())
+
         self.visitor.dfs_visit(get_to_keep, keep)
         outdir = self.smvApp.all_data_dirs().outputDir
 
