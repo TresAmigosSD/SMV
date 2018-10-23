@@ -57,11 +57,6 @@ class SmvCsvOnHdfsIoStrategy(SmvIoStrategy):
         self._schema_path = re.sub("\.csv$", ".schema", self._csv_path)
         self._lock_path = self._csv_path + ".lock"
 
-    def _publish_csv_path(self):
-        pubdir = self.smvApp.all_data_dirs().publishDir
-        version = self.smvApp.all_data_dirs().publishVersion
-        return "{}/{}/{}.csv".format(pubdir, version, self.fqn)
-
     def _smvLock(self):
         # get a lock for 1 hour
         return self.smvApp._jvm.org.tresamigos.smv.SmvLock(

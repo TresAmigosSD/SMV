@@ -151,6 +151,20 @@ class SmvFrameworkTest2(SmvBaseTest):
         self.assertFalse(os.path.exists(m1.persistStrategy()._csv_path))
         
 
+    def test_publish(self):
+        fqn = "stage.modules.M3"
+        pub_dir = self.smvApp.all_data_dirs().publishDir
+
+        m = self.load2(fqn)[0]
+        SmvModuleRunner([m], self.smvApp).publish(pub_dir)
+
+        csv_path = '{}/{}.csv'.format(pub_dir, m.fqn())
+        meta_path = '{}/{}.meta'.format(pub_dir, m.fqn())
+        hist_path = '{}/{}.hist'.format(pub_dir, m.fqn())
+
+        self.assertTrue(os.path.exists(csv_path))
+        self.assertTrue(os.path.exists(meta_path))
+        self.assertTrue(os.path.exists(hist_path))
 
 
 

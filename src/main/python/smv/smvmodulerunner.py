@@ -12,7 +12,7 @@
 # limitations under the License.
 
 from smv.modulesvisitor import ModulesVisitor
-from smv.smviostrategy import SmvJsonOnHdfsIoStrategy
+from smv.smviostrategy import SmvCsvOnHdfsIoStrategy, SmvJsonOnHdfsIoStrategy
 from smv.smvmetadata import SmvMetaHistory
 
 class SmvModuleRunner(object):
@@ -49,11 +49,26 @@ class SmvModuleRunner(object):
 
         return [self._get_df_and_run_info(m) for m in self.roots]
 
-    def publish(self):
+    def publish(self, publish_dir=None):
+        # run before persisting
         self.run()
+
+        if (publish_dir is None):
+            pubdir = self.smvApp.all_data_dirs().publishDir
+            version = self.smvApp.all_data_dirs().publishVersion
+            publish_dir = "{}/{}".format(pubdir, version)
+
         for m in self.roots:
-            m.publish()
-    
+            publish_base_path = "{}/{}".format(publish_dir, m.fqn())
+            publish_csv_path = publish_base_path + ".csv"
+            publish_meta_path = publish_base_path + ".meta"
+            publish_hist_path = publish_base_path + ".hist"
+
+            SmvCsvOnHdfsIoStrategy(m.smvApp, m.fqn(), None, publish_csv_path).write(m.df)
+            SmvJsonOnHdfsIoStrategy(m.smvApp, publish_meta_path).write(m.module_meta)
+            hist = SmvJsonOnHdfsIoStrategy(m.smvApp, self.hist_path(m)).read()
+            SmvJsonOnHdfsIoStrategy(m.smvApp, publish_hist_path).write(hist)
+
     def purge_persisted(self):
         def cleaner(m, state):
             m.persistStrategy().remove()
