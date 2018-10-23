@@ -169,27 +169,30 @@ class SmvDataSet(ABC):
         return self.dqmValidator.totalRecords() > 0
 
     def calculate_user_meta(self, run_set):
-        self.module_meta.addSystemMeta(self)
-        (user_meta, self.userMetadataTimeElapsed) = self._do_action_on_df(
-            self.metadata, self.df, "GENERATE USER METADATA")
-        self.module_meta.addUserMeta(user_meta)
-        if (self.had_action()):
-            self.smvApp.log.debug("{} metadata had an action".format(self.fqn()))
-            self.run_ancestor_and_me_postAction(run_set)
+        if (not self.metaStrategy().isWritten()):
+            self.module_meta.addSystemMeta(self)
+            (user_meta, self.userMetadataTimeElapsed) = self._do_action_on_df(
+                self.metadata, self.df, "GENERATE USER METADATA")
+            self.module_meta.addUserMeta(user_meta)
+            if (self.had_action()):
+                self.smvApp.log.debug("{} metadata had an action".format(self.fqn()))
+                self.run_ancestor_and_me_postAction(run_set)
+        else:
+            # if meta persisted, no need to run post_action again
+            run_set.discard(self)
 
     def force_an_action(self, df):
         (n, self.dqmTimeElapsed) = self._do_action_on_df(
             lambda d: d.count(), df, "FORCE AN ACTION FOR DQM")
 
     def persist_meta(self):
-        # Need to add duration at the very end, just before persist
-        self.module_meta.addDuration("persisting", self.persistingTimeElapsed)
-        self.module_meta.addDuration("metadata", self.userMetadataTimeElapsed)
-        self.module_meta.addDuration("dqm", self.dqmTimeElapsed)
-        meta_json = self.module_meta.toJson()
-        SmvJsonOnHdfsIoStrategy(
-            self.smvApp, self.meta_path()
-        ).write(meta_json)
+        if (not self.metaStrategy().isWritten()):
+            # Need to add duration at the very end, just before persist
+            self.module_meta.addDuration("persisting", self.persistingTimeElapsed)
+            self.module_meta.addDuration("metadata", self.userMetadataTimeElapsed)
+            self.module_meta.addDuration("dqm", self.dqmTimeElapsed)
+            meta_json = self.module_meta.toJson()
+            self.metaStrategy().write(meta_json)
 
     def force_post_action(self, run_set):
         if (self in run_set):
@@ -279,6 +282,9 @@ class SmvDataSet(ABC):
     def persistStrategy(self):
         return SmvCsvOnHdfsIoStrategy(self.smvApp, self.fqn(), self.ver_hex())
     
+    def metaStrategy(self):
+        return SmvJsonOnHdfsIoStrategy( self.smvApp, self.meta_path())
+
     @lazy_property
     def dqmValidator(self):
         return self.smvApp._jvm.DQMValidator(self.dqmWithTypeSpecificPolicy())
@@ -301,6 +307,9 @@ class SmvDataSet(ABC):
             return self.IsSmvOutput
         except:
             return False
+
+    # All publish related methods should be moved to generic output module class
+
     ####################################################################################
     def smvGetRunConfig(self, key):
         """return the current user run configuration value for the given key."""
