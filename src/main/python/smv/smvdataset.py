@@ -313,7 +313,26 @@ class SmvDataSet(ABC):
             return False
 
     # All publish related methods should be moved to generic output module class
+    def exportToHive(self):
+        # if user provided a publish hive sql command, run it instead of default
+        # table creation from data frame result.
+        if (self.publishHiveSql() is None):
+            queries = [
+                "drop table if exists {}".format(self.tableName()),
+                "create table {} as select * from dftable".format(self.tableName())
+            ]
+        else:
+            queries = [l.strip() for l in self.publishHiveSql().split(";")]
 
+        self.smvApp.log.info("Hive publish query: {}".format(";".join(queries)))
+        def run_query(df):
+            # register the dataframe as a temp table.  Will be overwritten on next register.
+            df.createOrReplaceTempView("dftable")
+            for l in queries:
+                self.smvApp.sqlContext.sql(l)
+        
+        self._do_action_on_df(run_query, self.df, "PUBLISH TO HIVE")
+    
     ####################################################################################
     def smvGetRunConfig(self, key):
         """return the current user run configuration value for the given key."""

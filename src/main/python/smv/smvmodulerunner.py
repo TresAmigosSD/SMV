@@ -50,7 +50,7 @@ class SmvModuleRunner(object):
         return [self._get_df_and_run_info(m) for m in self.roots]
 
     def publish(self, publish_dir=None):
-        # run before persisting
+        # run before publish
         self.run()
 
         if (publish_dir is None):
@@ -68,6 +68,13 @@ class SmvModuleRunner(object):
             SmvJsonOnHdfsIoStrategy(m.smvApp, publish_meta_path).write(m.module_meta)
             hist = SmvJsonOnHdfsIoStrategy(m.smvApp, self.hist_path(m)).read()
             SmvJsonOnHdfsIoStrategy(m.smvApp, publish_hist_path).write(hist)
+
+    def publish_to_hive(self):
+        # run before publish
+        self.run()
+
+        for m in self.roots:
+            m.exportToHive()
 
     def purge_persisted(self):
         def cleaner(m, state):

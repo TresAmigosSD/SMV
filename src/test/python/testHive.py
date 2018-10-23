@@ -12,6 +12,7 @@
 # limitations under the License.
 
 from test_support.smvbasetest import SmvBaseTest
+from smv.smvmodulerunner import SmvModuleRunner
 import smv.smvshell
 
 class HiveTest(SmvBaseTest):
@@ -26,6 +27,14 @@ class HiveTest(SmvBaseTest):
         import getpass
         hivedir = "file://{0}/{1}/smv_hive_test".format(tempfile.gettempdir(), getpass.getuser())
         cls.smvApp.sqlContext.setConf("hive.metastore.warehouse.dir", hivedir)
+
+class PublishModuleToHiveTest2(HiveTest):
+    def test_publish_to_hive2(self):
+        m = self.load2("stage.modules.M")[0]
+        df = self.df2("stage.modules.M")
+        SmvModuleRunner([m], self.smvApp).publish_to_hive()
+        read_back = self.smvApp.sqlContext.sql("select * from " + "M")
+        self.should_be_same(df, read_back)
 
 # temporarily turn off the tests in this file. since we can't figure out
 # a way to specify the temp hive storage conf in 2.1. Specify
