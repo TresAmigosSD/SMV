@@ -63,6 +63,16 @@ class SmvCsvOnHdfsIoStrategy(SmvIoStrategy):
         version = self.smvApp.all_data_dirs().publishVersion
         return "{}/{}/{}.csv".format(pubdir, version, self.fqn)
 
+    def _lock_path(self):
+        return self._csv_path() + ".lock"
+
+    def _smvLock(self):
+        # get a lock for 1 hour
+        return self.smvApp._jvm.org.tresamigos.smv.SmvLock(
+            self._lock_path(),
+            3600 * 1000 
+        )
+
     def read(self):
         handler = self.smvApp.j_smvPyClient.createFileIOHandler(self._csv_path())
 
@@ -72,7 +82,17 @@ class SmvCsvOnHdfsIoStrategy(SmvIoStrategy):
     def write(self, dataframe):
         jdf = dataframe._jdf
         # TODO: add log
-        self.smvApp.j_smvPyClient.persistDF(self._csv_path(), jdf)
+        slock = self._smvLock()
+
+        slock.lock()
+        try:
+            if (self.isWritten()):
+                self.smvApp.log.info("Relying on cached result {} for {} found after lock acquired".format(self._csv_path(), self.fqn))
+            else:
+                self.smvApp.log.info("No cached result found for {}. Caching result at {}".format(self.fqn, self._csv_path()))
+                self.smvApp.j_smvPyClient.persistDF(self._csv_path(), jdf)
+        finally:
+            slock.unlock()
 
     def isPersisted(self):
         handler = self.smvApp.j_smvPyClient.createFileIOHandler(self._csv_path())
