@@ -22,6 +22,8 @@ import sys
 import traceback
 import binascii
 import json
+import queue
+
 from collections import OrderedDict
 
 from smv.dqm import SmvDQM
@@ -99,20 +101,21 @@ class ModulesVisitor(object):
         """Create a depth first queue with order for multiple roots"""
 
         # to traversal the graph in bfs order
-        _stack = []
-        _stack.extend(roots)
+        _working_queue = queue.Queue()
+        for m in roots:
+            _working_queue.put(m)
 
         # keep a distinct sorted list of nodes with root always in front of leafs
         _sorted = OrderedDict()
         for m in roots:
             _sorted.update({m: True})
 
-        while(len(_stack) > 0):
-            mod = _stack.pop(0)
+        while(not _working_queue.empty()):
+            mod = _working_queue.get()
             for m in mod.resolvedRequiresDS:
                 # regardless whether seen before, add to queue, so not drop 
                 # any dependency which may change the ordering of the result
-                _stack.append(m)
+                _working_queue.put(m)
 
                 # if in the result list already, remove the old, add the new, 
                 # to make sure leafs always later
