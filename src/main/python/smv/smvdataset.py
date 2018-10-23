@@ -194,6 +194,8 @@ class SmvDataSet(ABC):
             self.module_meta.addDuration("dqm", self.dqmTimeElapsed)
             meta_json = self.module_meta.toJson()
             self.metaStrategy().write(meta_json)
+        else:
+            self.module_meta = self.metaStrategy().read()
         return persisted
 
     def force_post_action(self, run_set):
