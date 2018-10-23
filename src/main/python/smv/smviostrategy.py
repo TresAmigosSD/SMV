@@ -90,6 +90,9 @@ class SmvCsvOnHdfsIoStrategy(SmvIoStrategy):
                 self.smvApp.log.info("Relying on cached result {} for {} found after lock acquired".format(self._csv_path(), self.fqn))
             else:
                 self.smvApp.log.info("No cached result found for {}. Caching result at {}".format(self.fqn, self._csv_path()))
+                # Delete outputs in case data was partially written previously
+                # since `isWritten` test on schema file, this case only happens when schema was written half way
+                self.remove()
                 self.smvApp.j_smvPyClient.persistDF(self._csv_path(), jdf)
         finally:
             slock.unlock()
