@@ -91,6 +91,11 @@ class SmvBaseTest(unittest.TestCase):
         urns = ["mod:" + x for x in fqn]
         return cls.smvApp.dsm.load(*urns)
 
+    @classmethod
+    def load2(cls, *fqn):
+        urns = ["mod:" + x for x in fqn]
+        return cls.smvApp.dsm.load2(*urns)
+
     def should_be_same(self, expected, result):
         """Asserts that the two dataframes contain the same data, ignoring order
         """

@@ -44,8 +44,10 @@ class DataSetMgr(object):
         """
         return TXContext(self._jvm, self.dsRepoFactories, self.stages())
 
+
+    def tx2(self):
         # #1417 Scaffolding. To test on Python side resolver use the following line instead
-        # return TXContext2(self._jvm, self.dsRepoFactories2, self.stages())
+        return TXContext2(self._jvm, self.dsRepoFactories2, self.stages())
 
     def load(self, *urns):
         """Load SmvDataSets for specified URNs
@@ -57,6 +59,10 @@ class DataSetMgr(object):
             list(SmvDataSet): list of Scala SmvDataSets (j_ds)
         """
         with self.tx() as tx:
+            return tx.load(urns)
+
+    def load2(self, *urns):
+        with self.tx2() as tx:
             return tx.load(urns)
 
     def inferDS(self, *partial_names):

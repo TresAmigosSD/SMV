@@ -20,4 +20,8 @@ if [ "$1" = "-h" ]; then
   exit 0
 fi
 
+# When run test, use local log4j config so that we can turn on DEBUG log level
+LOG_CONF_FILE="${SMV_HOME}/log4j.properties"
+SPARK_ARGS=("${SPARK_ARGS[@]}" "--conf" "spark.driver.extraJavaOptions=-Dlog4j.configuration=file://${LOG_CONF_FILE}")
+
 run_pyspark_with ${SMV_TOOLS}/../src/main/python/scripts/runtests.py

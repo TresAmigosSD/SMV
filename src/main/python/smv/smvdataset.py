@@ -22,6 +22,9 @@ import sys
 import traceback
 import binascii
 import json
+import queue
+
+from collections import OrderedDict
 
 from smv.dqm import SmvDQM
 from smv.error import SmvRuntimeError
@@ -57,6 +60,18 @@ def _sourceHash(module):
     # co_code = compile(src, inspect.getsourcefile(cls), 'exec').co_code
     return _smvhash(src_no_comm)
 
+def lazy_property(fn):
+    '''Decorator that makes a property lazy-evaluated.
+    '''
+    attr_name = '_lazy_' + fn.__name__
+
+    @property
+    def _lazy_property(self):
+        if not hasattr(self, attr_name):
+            setattr(self, attr_name, fn(self))
+        return getattr(self, attr_name)
+    return _lazy_property
+
 class SmvOutput(object):
     """Mixin which marks an SmvModule as one of the output of its stage
 
@@ -74,6 +89,53 @@ class SmvOutput(object):
         return None
 
     getTableName = create_py4j_interface_method("getTableName", "tableName")
+
+class ModulesVisitor(object):
+    """Provides way to do depth and breadth first visit to the sub-graph
+        of modules given a set of roots
+    """
+    def __init__(self, roots):
+        self.queue = self._build_queue(roots)
+
+    def _build_queue(self, roots):
+        """Create a depth first queue with order for multiple roots"""
+
+        # to traversal the graph in bfs order
+        _working_queue = queue.Queue()
+        for m in roots:
+            _working_queue.put(m)
+
+        # keep a distinct sorted list of nodes with root always in front of leafs
+        _sorted = OrderedDict()
+        for m in roots:
+            _sorted.update({m: True})
+
+        while(not _working_queue.empty()):
+            mod = _working_queue.get()
+            for m in mod.resolvedRequiresDS:
+                # regardless whether seen before, add to queue, so not drop 
+                # any dependency which may change the ordering of the result
+                _working_queue.put(m)
+
+                # if in the result list already, remove the old, add the new, 
+                # to make sure leafs always later
+                if (m in _sorted):
+                    _sorted.pop(m)
+                _sorted.update({m: True})
+
+        # reverse the result before output to make leafs first
+        return [m for m in reversed(_sorted)]
+
+
+    def dfs_visit(self, action, state):
+        """Depth first visit"""
+        for m in self.queue:
+            action(m, state)
+    
+    def bfs_visit(self, action, state):
+        """Breadth first visit"""
+        for m in reversed(self.queue):
+            action(m, state)
 
 
 class SmvDataSet(ABC):
@@ -94,6 +156,9 @@ class SmvDataSet(ABC):
         self.timestamp = None
         self.resolvedRequiresDS = []
 
+        # keep a reference to the result DF
+        self.df = None
+
     # For #1417, python side resolving (not used yet)
     def setTimestamp(self, dt):
         self.timestamp = dt
@@ -103,6 +168,114 @@ class SmvDataSet(ABC):
         self.resolvedRequiresDS = resolver.loadDataSet([ds.fqn() for ds in self.requiresDS()])
         return self
 
+    ####################################################################################
+    # Will eventually move to the SmvGenericModule base class
+    ####################################################################################
+    def rdd(self, urn2df, run_set):
+        """create or get df from smvApp level cache
+            Args:
+                urn2df({str:DataFrame}) already run modules current module may depends
+                run_set(set(SmvDataSet)) modules yet to run post_action
+
+            urn2df will be appended, and run_set will shrink
+        """
+        if (self.versioned_fqn not in self.smvApp.df_cache):
+            self.smvApp.df_cache.update(
+                {self.versioned_fqn:self.computeDataFrame(urn2df, run_set)}
+            )
+        else:
+            run_set.discard(self)
+        res = self.smvApp.df_cache.get(self.versioned_fqn)
+        urn2df.update({self.urn(): res})
+        self.df = res
+
+    def computeDataFrame(self, urn2df, run_set):
+        self.smvApp.log.debug("compute: {}".format(self.urn()))
+        raw_df = self.doRun2(urn2df)
+        df = self.pre_action(raw_df)
+
+        if (self.isEphemeral()):
+            return df
+        else:
+            self.persistData(df)
+            self.run_ancestor_and_me_postAction(run_set)
+            return df
+            #return self.unPersistData()
+
+    def persistData(self, df):
+        # dummy persist, just for the action
+        df.count()
+
+    def force_an_action(self, df):
+        df.count()
+
+    def force_post_action(self, run_set):
+        if (self in run_set):
+            self.force_an_action(self.df)
+            self.run_ancestor_and_me_postAction(run_set)
+
+    def run_ancestor_and_me_postAction(self, run_set):
+        def run_delayed_postAction(mod, _run_set):
+            if (mod in _run_set):
+                mod.post_action()
+                _run_set.discard(mod)
+        ModulesVisitor([self]).dfs_visit(run_delayed_postAction, run_set)
+
+    # Make this not an abstract since not all concrete class has this
+    #@abc.abstractmethod
+    def doRun2(self, known):
+        """Compute this dataset, and return the dataframe"""
+        pass
+
+    def dataset_hash(self): 
+        """current module's hash value, depend on code and potentially 
+            linked data (such as for SmvCsvFile)
+        """
+        log = self.smvApp.log
+        _instanceValHash = self.instanceValHash()
+        log.debug("{}.instanceValHash = {}".format(self.fqn(), _instanceValHash))
+
+        _sourceCodeHash = self.sourceCodeHash()
+        log.debug("{}.sourceCodeHash = ${}".format(self.fqn(), _sourceCodeHash))
+
+        return _instanceValHash + _sourceCodeHash
+    
+    @lazy_property
+    def hash_of_hash(self):
+        """hash depends on current module's dataset_hash, and all ancestors.
+            this calculation could be expensive, so made it a lazy property
+        """
+        # TODO: implement using visitor too
+        log = self.smvApp.log
+        _dataset_hash = self.dataset_hash()
+        log.debug("{}.dataset_hash = {}".format(self.fqn(), _dataset_hash))
+    
+        res = _dataset_hash
+        for m in self.resolvedRequiresDS:
+            res += m.hash_of_hash 
+        log.debug("{}.hash_of_hash = {}".format(self.fqn(), res))
+        return res
+    
+    def ver_hex(self):
+        return "{0:08x}".format(self.hash_of_hash)
+
+    @lazy_property
+    def versioned_fqn(self):
+        """module fqn with the hash of hash. It is the signature of a specific
+            version of the module
+        """
+        return "{}_{}".format(self.fqn(), self.ver_hex())
+
+    @lazy_property
+    def dqmValidator(self):
+        return self.smvApp._jvm.DQMValidator(self.dqmWithTypeSpecificPolicy())
+
+    def pre_action(self, df):
+        return DataFrame(self.dqmValidator.attachTasks(df._jdf), df.sql_ctx)
+
+    def post_action(self):
+        validationResult = self.dqmValidator.validate(None, True)
+    ####################################################################################
     def smvGetRunConfig(self, key):
         """return the current user run configuration value for the given key."""
         if (key not in self.requiresConfig()):
@@ -528,6 +701,9 @@ class SmvModule(SmvDataSet):
         self.assert_result_is_dataframe(result)
         return result._jdf
 
+    def doRun2(self, known):
+        i = self.RunParams(known)
+        return self.run(i)
 
 class SmvSqlModule(SmvModule):
     """An SMV module which executes a SQL query in place of a run method

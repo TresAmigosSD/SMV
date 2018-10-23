@@ -47,5 +47,5 @@ class SmvGraphJsonTest(SmvBaseTest):
 
         res = j_obj['edges'][0]
         exp = ['stage.modules.X', 'stage.modules.Y']
-        assert (sorted(res), sorted(exp))
+        assert (sorted(res) == sorted(exp))
     
