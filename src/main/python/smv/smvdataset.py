@@ -27,7 +27,7 @@ from smv.dqm import SmvDQM
 from smv.error import SmvRuntimeError
 from smv.utils import smv_copy_array, pickle_lib, is_string
 from smv.py4j_interface import create_py4j_interface_method
-from smv.smviostrategy import SmvCsvOnHdfsIoStrategy
+from smv.smviostrategy import SmvCsvOnHdfsIoStrategy, SmvJsonOnHdfsIoStrategy
 from smv.modulesvisitor import ModulesVisitor
 from smv.smvmetadata import SmvMetaData
 
@@ -113,6 +113,9 @@ class SmvDataSet(ABC):
         self.df = None
 
         self.module_meta = SmvMetaData()
+        self.userMetadataTimeElapsed = None
+        self.persistingTimeElapsed = None
+        self.dqmTimeElapsed = None
 
     # For #1417, python side resolving (not used yet)
     def setTimestamp(self, dt):
@@ -155,7 +158,8 @@ class SmvDataSet(ABC):
             if (not _strategy.isPersisted()):
                 raw_df = self.doRun2(urn2df)
                 df = self.pre_action(raw_df)
-                _strategy.write(df)
+                (res, self.persistingTimeElapsed) = self._do_action_on_df(
+                    _strategy.write, df, "RUN & PERSIST OUTPUT")
                 self.run_ancestor_and_me_postAction(run_set)
             else:
                 run_set.discard(self)
@@ -166,13 +170,26 @@ class SmvDataSet(ABC):
 
     def calculate_user_meta(self, run_set):
         self.module_meta.addSystemMeta(self)
-        self.module_meta.addUserMeta(self.metadata(self.df))
+        (user_meta, self.userMetadataTimeElapsed) = self._do_action_on_df(
+            self.metadata, self.df, "GENERATE USER METADATA")
+        self.module_meta.addUserMeta(user_meta)
         if (self.had_action()):
             self.smvApp.log.debug("{} metadata had an action".format(self.fqn()))
             self.run_ancestor_and_me_postAction(run_set)
 
     def force_an_action(self, df):
-        df.count()
+        (n, self.dqmTimeElapsed) = self._do_action_on_df(
+            lambda d: d.count(), df, "FORCE AN ACTION FOR DQM")
+
+    def persist_meta(self):
+        # Need to add duration at the very end, just before persist
+        self.module_meta.addDuration("persisting", self.persistingTimeElapsed)
+        self.module_meta.addDuration("metadata", self.userMetadataTimeElapsed)
+        self.module_meta.addDuration("dqm", self.dqmTimeElapsed)
+        meta_json = self.module_meta.toJson()
+        SmvJsonOnHdfsIoStrategy(
+            self.smvApp, self.meta_path()
+        ).write(meta_json)
 
     def force_post_action(self, run_set):
         if (self in run_set):
@@ -185,6 +202,29 @@ class SmvDataSet(ABC):
                 mod.post_action()
                 _run_set.discard(mod)
         ModulesVisitor([self]).dfs_visit(run_delayed_postAction, run_set)
+
+    def _do_action_on_df(self, func, df, desc):
+        log = self.smvApp.log
+        log.info("STARTING " + desc)
+
+        name = self.fqn()
+        self.smvApp.sc.setJobGroup(groupId=name, description=desc)
+        before  = datetime.now()
+
+        res = func(df)
+
+        after   = datetime.now()
+        duration = (after - before)
+        secondsElapsed = duration.total_seconds()
+
+        # Python api does not have clearJobGroup
+        # set groupId and description to None is equivalent
+        self.smvApp.sc.setJobGroup(groupId=None, description=None)
+
+        log.info("COMPLETED {}: {}".format(desc, name))
+        log.info("RunTime: {}".format(duration))
+
+        return (res, secondsElapsed)
 
     # Make this not an abstract since not all concrete class has this
     #@abc.abstractmethod

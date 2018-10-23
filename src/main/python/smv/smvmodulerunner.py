@@ -106,10 +106,7 @@ class SmvModuleRunner(object):
 
     def _persist_meta(self):
         def write_meta(m, state):
-            meta_json = m.module_meta.toJson()
-            SmvJsonOnHdfsIoStrategy(
-                self.smvApp, m.meta_path()
-            ).write(meta_json)
+            m.persist_meta()
 
         self.visitor.dfs_visit(write_meta, None)
 
