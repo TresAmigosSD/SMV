@@ -186,13 +186,15 @@ class SmvDataSet(ABC):
             lambda d: d.count(), df, "FORCE AN ACTION FOR DQM")
 
     def persist_meta(self):
-        if (not self.metaStrategy().isWritten()):
+        persisted = self.metaStrategy().isWritten()
+        if (not persisted):
             # Need to add duration at the very end, just before persist
             self.module_meta.addDuration("persisting", self.persistingTimeElapsed)
             self.module_meta.addDuration("metadata", self.userMetadataTimeElapsed)
             self.module_meta.addDuration("dqm", self.dqmTimeElapsed)
             meta_json = self.module_meta.toJson()
             self.metaStrategy().write(meta_json)
+        return persisted
 
     def force_post_action(self, run_set):
         if (self in run_set):
