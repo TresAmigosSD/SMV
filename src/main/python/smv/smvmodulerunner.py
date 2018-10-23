@@ -49,6 +49,11 @@ class SmvModuleRunner(object):
 
         return [self._get_df_and_run_info(m) for m in self.roots]
 
+    def publish(self):
+        self.run()
+        for m in self.roots:
+            m.publish()
+    
     def purge_persisted(self):
         def cleaner(m, state):
             m.persistStrategy().remove()

@@ -12,6 +12,7 @@
 # limitations under the License.
 import abc
 import sys
+import re
 
 from pyspark.sql import DataFrame
 
@@ -43,38 +44,33 @@ class SmvIoStrategy(ABC):
 
 # TODO: add lock, add publish
 class SmvCsvOnHdfsIoStrategy(SmvIoStrategy):
-    def __init__(self, smvApp, fqn, ver_hex):
+    def __init__(self, smvApp, fqn, ver_hex, csv_path=None):
         self.smvApp = smvApp
         self.fqn = fqn
         self.versioned_fqn = "{}_{}".format(fqn, ver_hex)
+        if (csv_path is None):
+            output_dir = self.smvApp.all_data_dirs().outputDir
+            self._csv_path = "{}/{}.csv".format(output_dir, self.versioned_fqn)
+        else:
+            self._csv_path = csv_path
 
-    def _output_base(self):
-        output_dir = self.smvApp.all_data_dirs().outputDir
-        return "{}/{}".format(output_dir, self.versioned_fqn)
-
-    def _csv_path(self):
-        return self._output_base() + ".csv"
-    
-    def _schema_path(self):
-        return self._output_base() + ".schema"
+        self._schema_path = re.sub("\.csv$", ".schema", self._csv_path)
+        self._lock_path = self._csv_path + ".lock"
 
     def _publish_csv_path(self):
         pubdir = self.smvApp.all_data_dirs().publishDir
         version = self.smvApp.all_data_dirs().publishVersion
         return "{}/{}/{}.csv".format(pubdir, version, self.fqn)
 
-    def _lock_path(self):
-        return self._csv_path() + ".lock"
-
     def _smvLock(self):
         # get a lock for 1 hour
         return self.smvApp._jvm.org.tresamigos.smv.SmvLock(
-            self._lock_path(),
+            self._lock_path,
             3600 * 1000 
         )
 
     def read(self):
-        handler = self.smvApp.j_smvPyClient.createFileIOHandler(self._csv_path())
+        handler = self.smvApp.j_smvPyClient.createFileIOHandler(self._csv_path)
 
         jdf = handler.csvFileWithSchema(None, self.smvApp.scalaNone())
         return DataFrame(jdf, self.smvApp.sqlContext)
@@ -87,18 +83,18 @@ class SmvCsvOnHdfsIoStrategy(SmvIoStrategy):
         slock.lock()
         try:
             if (self.isWritten()):
-                self.smvApp.log.info("Relying on cached result {} for {} found after lock acquired".format(self._csv_path(), self.fqn))
+                self.smvApp.log.info("Relying on cached result {} for {} found after lock acquired".format(self._csv_path, self.fqn))
             else:
-                self.smvApp.log.info("No cached result found for {}. Caching result at {}".format(self.fqn, self._csv_path()))
+                self.smvApp.log.info("No cached result found for {}. Caching result at {}".format(self.fqn, self._csv_path))
                 # Delete outputs in case data was partially written previously
                 # since `isWritten` test on schema file, this case only happens when schema was written half way
                 self.remove()
-                self.smvApp.j_smvPyClient.persistDF(self._csv_path(), jdf)
+                self.smvApp.j_smvPyClient.persistDF(self._csv_path, jdf)
         finally:
             slock.unlock()
 
     def isPersisted(self):
-        handler = self.smvApp.j_smvPyClient.createFileIOHandler(self._csv_path())
+        handler = self.smvApp.j_smvPyClient.createFileIOHandler(self._csv_path)
 
         try:
             handler.readSchema()
@@ -107,13 +103,13 @@ class SmvCsvOnHdfsIoStrategy(SmvIoStrategy):
             return False
 
     def remove(self):
-        self.smvApp._jvm.SmvHDFS.deleteFile(self._csv_path())
-        self.smvApp._jvm.SmvHDFS.deleteFile(self._schema_path())
+        self.smvApp._jvm.SmvHDFS.deleteFile(self._csv_path)
+        self.smvApp._jvm.SmvHDFS.deleteFile(self._schema_path)
 
     def allOutput(self):
         return [
-            self._csv_path(),
-            self._schema_path()
+            self._csv_path,
+            self._schema_path
         ]
 
 class SmvJsonOnHdfsIoStrategy(SmvIoStrategy):
