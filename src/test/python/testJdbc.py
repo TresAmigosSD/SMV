@@ -13,6 +13,7 @@
 
 from test_support.smvbasetest import SmvBaseTest
 from pyspark.sql import DataFrame
+from smv.smvmodulerunner import SmvModuleRunner
 
 class JdbcTest(SmvBaseTest):
     @classmethod
@@ -54,6 +55,19 @@ class JdbcTest(SmvBaseTest):
             .format("jdbc")\
             .option("url", self.url())\
             .option("dbtable", "MyJdbcOutput")\
+            .load()
+
+        self.should_be_same(res, readback)
+
+    def test_publish_to_jdbc2(self):
+        fqn = "stage.modules.MyJdbcModule"
+        m = self.load2(fqn)[0]
+        res = self.df2(fqn)
+        SmvModuleRunner([m], self.smvApp).publish_to_jdbc()
+        readback = self.smvApp.sqlContext.read\
+            .format("jdbc")\
+            .option("url", self.url())\
+            .option("dbtable", "MyJdbcModule")\
             .load()
 
         self.should_be_same(res, readback)

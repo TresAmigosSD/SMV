@@ -31,3 +31,13 @@ class MyJdbcCsvString(SmvCsvStringData, SmvOutput):
         return "a:String;b:Integer"
     def dataStr(self):
         return "x,10;y,1"
+
+class MyJdbcModule(SmvModule):
+    def requiresDS(self):
+        return []
+
+    def tableName(self):
+        return "MyJdbcModule"
+
+    def run(self, i):
+        return self.smvApp.createDF("a:String", "1")

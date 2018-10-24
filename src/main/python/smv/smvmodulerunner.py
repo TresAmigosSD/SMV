@@ -76,6 +76,12 @@ class SmvModuleRunner(object):
         for m in self.roots:
             m.exportToHive()
 
+    def publish_to_jdbc(self):
+        self.run()
+
+        for m in self.roots:
+            m.publishThroughJDBC()
+
     def purge_persisted(self):
         def cleaner(m, state):
             m.persistStrategy().remove()

@@ -333,6 +333,9 @@ class SmvDataSet(ABC):
         
         self._do_action_on_df(run_query, self.df, "PUBLISH TO HIVE")
     
+    def publishThroughJDBC(self):
+        self.smvApp.j_smvPyClient.writeThroughJDBC(self.df._jdf, self.tableName())
+
     ####################################################################################
     def smvGetRunConfig(self, key):
         """return the current user run configuration value for the given key."""
