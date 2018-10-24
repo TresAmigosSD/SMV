@@ -22,14 +22,14 @@ import sys
 import traceback
 import binascii
 import json
-import queue
-
-from collections import OrderedDict
 
 from smv.dqm import SmvDQM
 from smv.error import SmvRuntimeError
 from smv.utils import smv_copy_array, pickle_lib, is_string
 from smv.py4j_interface import create_py4j_interface_method
+from smv.smviostrategy import SmvCsvOnHdfsIoStrategy
+from smv.modulesvisitor import ModulesVisitor
+from smv.smvmetadata import SmvMetaData
 
 if sys.version_info >= (3, 4):
     ABC = abc.ABC
@@ -90,53 +90,6 @@ class SmvOutput(object):
 
     getTableName = create_py4j_interface_method("getTableName", "tableName")
 
-class ModulesVisitor(object):
-    """Provides way to do depth and breadth first visit to the sub-graph
-        of modules given a set of roots
-    """
-    def __init__(self, roots):
-        self.queue = self._build_queue(roots)
-
-    def _build_queue(self, roots):
-        """Create a depth first queue with order for multiple roots"""
-
-        # to traversal the graph in bfs order
-        _working_queue = queue.Queue()
-        for m in roots:
-            _working_queue.put(m)
-
-        # keep a distinct sorted list of nodes with root always in front of leafs
-        _sorted = OrderedDict()
-        for m in roots:
-            _sorted.update({m: True})
-
-        while(not _working_queue.empty()):
-            mod = _working_queue.get()
-            for m in mod.resolvedRequiresDS:
-                # regardless whether seen before, add to queue, so not drop 
-                # any dependency which may change the ordering of the result
-                _working_queue.put(m)
-
-                # if in the result list already, remove the old, add the new, 
-                # to make sure leafs always later
-                if (m in _sorted):
-                    _sorted.pop(m)
-                _sorted.update({m: True})
-
-        # reverse the result before output to make leafs first
-        return [m for m in reversed(_sorted)]
-
-
-    def dfs_visit(self, action, state):
-        """Depth first visit"""
-        for m in self.queue:
-            action(m, state)
-    
-    def bfs_visit(self, action, state):
-        """Breadth first visit"""
-        for m in reversed(self.queue):
-            action(m, state)
-
 
 class SmvDataSet(ABC):
     """Abstract base class for all SmvDataSets
@@ -158,6 +111,8 @@ class SmvDataSet(ABC):
 
         # keep a reference to the result DF
         self.df = None
+
+        self.module_meta = SmvMetaData()
 
     # For #1417, python side resolving (not used yet)
     def setTimestamp(self, dt):
@@ -191,20 +146,30 @@ class SmvDataSet(ABC):
 
     def computeDataFrame(self, urn2df, run_set):
         self.smvApp.log.debug("compute: {}".format(self.urn()))
-        raw_df = self.doRun2(urn2df)
-        df = self.pre_action(raw_df)
 
         if (self.isEphemeral()):
-            return df
+            raw_df = self.doRun2(urn2df)
+            return self.pre_action(raw_df)
         else:
-            self.persistData(df)
-            self.run_ancestor_and_me_postAction(run_set)
-            return df
-            #return self.unPersistData()
+            _strategy = self.persistStrategy()
+            if (not _strategy.isPersisted()):
+                raw_df = self.doRun2(urn2df)
+                df = self.pre_action(raw_df)
+                _strategy.write(df)
+                self.run_ancestor_and_me_postAction(run_set)
+            else:
+                run_set.discard(self)
+            return _strategy.read()
 
-    def persistData(self, df):
-        # dummy persist, just for the action
-        df.count()
+    def had_action(self):
+        return self.dqmValidator.totalRecords() > 0
+
+    def calculate_user_meta(self, run_set):
+        self.module_meta.addSystemMeta(self)
+        self.module_meta.addUserMeta(self.metadata(self.df))
+        if (self.had_action()):
+            self.smvApp.log.debug("{} metadata had an action".format(self.fqn()))
+            self.run_ancestor_and_me_postAction(run_set)
 
     def force_an_action(self, df):
         df.count()
@@ -266,6 +231,14 @@ class SmvDataSet(ABC):
         """
         return "{}_{}".format(self.fqn(), self.ver_hex())
 
+    def meta_path(self):
+        return "{}/{}.meta".format(
+            self.smvApp.all_data_dirs().outputDir,
+            self.versioned_fqn)
+
+    def persistStrategy(self):
+        return SmvCsvOnHdfsIoStrategy(self.smvApp, self.fqn(), self.ver_hex())
+    
     @lazy_property
     def dqmValidator(self):
         return self.smvApp._jvm.DQMValidator(self.dqmWithTypeSpecificPolicy())
@@ -274,7 +247,8 @@ class SmvDataSet(ABC):
         return DataFrame(self.dqmValidator.attachTasks(df._jdf), df.sql_ctx)
 
     def post_action(self):
-        validationResult = self.dqmValidator.validate(None, True)
+        validation_result = self.dqmValidator.validate(None, True)
+        self.module_meta.addDqmValidationResult(validation_result.toJSON())
     ####################################################################################
     def smvGetRunConfig(self, key):
         """return the current user run configuration value for the given key."""

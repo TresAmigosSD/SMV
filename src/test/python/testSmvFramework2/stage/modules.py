@@ -31,13 +31,14 @@ class M1(SmvModule):
     def isEphemeral(self):
         return True
     def run(self, i):
+        testSmvFramework2.cross_run_counter += 1
         return i[I1]
 
 class M2(SmvModule):
     def requiresDS(self):
         return [M1]
     def run(self, i):
-        testSmvFramework2.cross_run_counter += 1
+        testSmvFramework2.persist_run_counter += 1
         return i[M1]
     def dqm(self):
         return SmvDQM().add(
@@ -51,3 +52,5 @@ class M3(SmvModule):
         return True
     def run(self, i):
         return i[M1]
+    def metadata(self, df):
+        return {'n':df.count()}

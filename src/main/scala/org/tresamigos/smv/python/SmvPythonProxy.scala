@@ -294,6 +294,22 @@ class SmvPyClient(val j_smvApp: SmvApp) {
   //Scare folding for moving all SmvDataSet framework to python #1338
   def deleteModuleOutput(m: SmvDataSet) = 
     m.deleteOutputs()
+
+  def createFileIOHandler(path: String) =
+    new FileIOHandler(j_smvApp.sparkSession, path)
+
+  def persistDF(path: String, dataframe: DataFrame): Unit = {
+    val counter = j_smvApp.sparkSession.sparkContext.longAccumulator
+
+    val df      = dataframe.smvPipeCount(counter)
+    val handler = new FileIOHandler(j_smvApp.sparkSession, path)
+
+    handler.saveAsCsvWithSchema(df, strNullValue = "_SmvStrNull_")
+    j_smvApp.log.info(f"Output path: ${path}")
+
+    val n       = counter.value
+    j_smvApp.log.info(f"N: ${n}")
+  }
 }
 
 /** Not a companion object because we need to access it from Python */

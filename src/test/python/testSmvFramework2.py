@@ -14,12 +14,15 @@
 from test_support.smvbasetest import SmvBaseTest
 from smv import *
 from smv.error import SmvDqmValidationError, SmvRuntimeError
-from smv.smvdataset import ModulesVisitor
+from smv.modulesvisitor import ModulesVisitor
 from smv.smvmodulerunner import SmvModuleRunner
+from smv.smviostrategy import SmvJsonOnHdfsIoStrategy
+from smv.smvmetadata import SmvMetaData, SmvMetaHistory
 
 from pyspark.sql import DataFrame
 
 cross_run_counter = 0
+persist_run_counter = 0
 
 class SmvFrameworkTest2(SmvBaseTest):
     @classmethod
@@ -37,8 +40,7 @@ class SmvFrameworkTest2(SmvBaseTest):
 
     def test_basic_run(self):
         fqn = "stage.modules.M3"
-        ds = self.load2(fqn)
-        res = SmvModuleRunner(ds, self.smvApp.log).run()[0]
+        res = self.df2(fqn)
 
         exp = self.createDF(
             "a:Integer;b:Double",
@@ -58,10 +60,75 @@ class SmvFrameworkTest2(SmvBaseTest):
         global cross_run_counter
         cross_run_counter = 0
 
-        fqns = ["stage.modules.M2", "stage.modules.M3"]
-        ds = self.load2(*fqns)
+        r1 = self.df2("stage.modules.M2")
+        r2 = self.df2("stage.modules.M3")
 
-        r1 = SmvModuleRunner([ds[0]], self.smvApp.log).run()[0]
-        r2 = SmvModuleRunner([ds[1]], self.smvApp.log).run()[0]
-
+        # counter is it M1 (ephemeral)
         self.assertEqual(cross_run_counter, 1)
+
+    def test_persisted_df_should_run_only_once(self):
+        """even reset df-cache, persisted module should only run once"""
+        self.mkTmpTestDir()
+        self.smvApp.df_cache = {}
+        global persist_run_counter
+        persist_run_counter = 0
+
+        r1 = self.df2("stage.modules.M2")
+        self.smvApp.df_cache = {}
+        r2 = self.df2("stage.modules.M3")
+        
+        # counter is in M2 (non-ephemeral)
+        self.assertEqual(persist_run_counter, 1)
+
+    def test_basic_metadata_creation(self):
+        fqn = "stage.modules.M2"
+        m = self.load2(fqn)[0]
+
+        SmvModuleRunner([m], self.smvApp).run()
+
+        result = m.module_meta._metadata['_dqmValidation']
+        rule_cnt = result['dqmStateSnapshot']['ruleErrors']['b_lt_04']['total']
+
+        self.assertEqual(m.module_meta._metadata['_fqn'], fqn)
+        self.assertEqual(rule_cnt, 1)
+
+    def test_metadata_action_trigger_validation(self):
+        """M3 is ephemeral and non-trivial metadata, it should trigger post_action"""
+
+        fqn = "stage.modules.M3"
+        m = self.load2(fqn)[0]
+
+        runner = SmvModuleRunner([m], self.smvApp)
+
+        # runner's run logic below, without the last force run
+        mods_to_run_post_action = set(runner.visitor.queue)
+        known = {}
+        runner._create_df(known, mods_to_run_post_action)
+        runner._create_meta(mods_to_run_post_action)
+
+        # by now, since M3 has non-trivial metadata, it triggers post_action,
+        # so should be removed from the mods_to_run_post_action
+
+        self.assertEqual(len(mods_to_run_post_action), 0)
+
+    def test_metadata_persist(self):
+        self.mkTmpTestDir()
+        fqn = "stage.modules.M1"
+        m = self.load2(fqn)[0]
+        meta_path = m.meta_path()
+
+        self.df2(fqn)
+
+        meta_json = SmvJsonOnHdfsIoStrategy(self.smvApp, meta_path).read()
+        meta = SmvMetaData().fromJson(meta_json)
+        self.assertEqual(meta._metadata['_fqn'], fqn)
+
+        hist_dir = self.smvApp.all_data_dirs().historyDir
+        hist_path = hist_path = "{}/{}.hist".format(hist_dir, fqn)
+        hist_json = SmvJsonOnHdfsIoStrategy(self.smvApp, hist_path).read()
+        hist = SmvMetaHistory().fromJson(hist_json)
+
+        self.assertEqual(hist._hist_list[0]['_fqn'], fqn)
+
+
+
