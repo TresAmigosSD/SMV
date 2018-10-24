@@ -130,7 +130,7 @@ class SmvDataSet(ABC):
     ####################################################################################
     # Will eventually move to the SmvGenericModule base class
     ####################################################################################
-    def rdd(self, urn2df, run_set):
+    def rdd(self, urn2df, run_set, forceRun):
         """create or get df from smvApp level cache
             Args:
                 urn2df({str:DataFrame}) already run modules current module may depends
@@ -138,7 +138,7 @@ class SmvDataSet(ABC):
 
             urn2df will be appended, and run_set will shrink
         """
-        if (self.versioned_fqn not in self.smvApp.df_cache):
+        if (forceRun or (self.versioned_fqn not in self.smvApp.df_cache)):
             self.smvApp.df_cache.update(
                 {self.versioned_fqn:self.computeDataFrame(urn2df, run_set)}
             )

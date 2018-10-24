@@ -84,7 +84,7 @@ class SmvBaseTest(unittest.TestCase):
 
     @classmethod
     def df(cls, fqn, forceRun=False):
-        return cls.smvApp.runModule("mod:" + fqn, forceRun=forceRun)[0]
+        return cls.smvApp.runModule2(fqn, forceRun=forceRun)[0]
 
     @classmethod
     def df2(cls, fqn):

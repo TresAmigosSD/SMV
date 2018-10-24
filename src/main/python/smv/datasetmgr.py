@@ -110,7 +110,7 @@ class DataSetMgr(object):
             Combine specified modules, (-m), stages, (-s) and if
             (--run-app) specified, all output modules
         """
-        with self.tx() as tx:
+        with self.tx2() as tx:
             named_mods = tx.inferDS(modPartialNames)
             stage_mods = tx.outputModulesForStage(stageNames)
             app_mods = tx.allOutputModules() if allMods else []

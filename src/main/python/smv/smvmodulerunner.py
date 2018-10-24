@@ -14,6 +14,7 @@
 from smv.modulesvisitor import ModulesVisitor
 from smv.smviostrategy import SmvCsvOnHdfsIoStrategy, SmvJsonOnHdfsIoStrategy
 from smv.smvmetadata import SmvMetaHistory
+from smv.utils import scala_seq_to_list
 
 class SmvModuleRunner(object):
     """Represent the run-transaction. Provides the single entry point to run
@@ -25,7 +26,7 @@ class SmvModuleRunner(object):
         self.log = smvApp.log
         self.visitor = ModulesVisitor(modules)
 
-    def run(self):
+    def run(self, forceRun=False):
         # a set of modules which need to run post_action, keep tracking 
         # to make sure post_action run one and only one time for each TX
         # the set will be updated by _create_df, _create_meta and _force_post
@@ -39,7 +40,7 @@ class SmvModuleRunner(object):
         # in the resolved instance
         known = {}
 
-        self._create_df(known, mods_to_run_post_action)
+        self._create_df(known, mods_to_run_post_action, forceRun)
 
         self._create_meta(mods_to_run_post_action)
 
@@ -82,6 +83,13 @@ class SmvModuleRunner(object):
         for m in self.roots:
             m.publishThroughJDBC()
 
+    def publish_local(self, local_dir):
+        self.run()
+
+        for m in self.roots:
+            csv_path = "{}/{}".format(local_dir, m.versioned_fqn)
+            m.df.smvExportCsv(csv_path)
+
     def purge_persisted(self):
         def cleaner(m, state):
             m.persistStrategy().remove()
@@ -97,19 +105,26 @@ class SmvModuleRunner(object):
         self.visitor.dfs_visit(get_to_keep, keep)
         outdir = self.smvApp.all_data_dirs().outputDir
 
+        # since all file paths in keep are prefixed by outdir, remove it
         relative_paths = [i[len(outdir)+1:] for i in keep]
 
-        self.smvApp._jvm.SmvPythonHelper.purgeDirectory(
+        res = self.smvApp._jvm.SmvPythonHelper.purgeDirectory(
             outdir,
             relative_paths
         )
         
-    def _create_df(self, known, need_post):
+        for r in scala_seq_to_list(self.smvApp._jvm, res):
+            if (r.success()):
+                self.log.info("... Deleted {}".format(r.fn()))
+            else:
+                self.log.info("... Unable to delete {}".format(r.fn()))
+
+    def _create_df(self, known, need_post, forceRun):
         # run module and create df. when persisting, post_action 
         # will run on current module and all upstream modules
         def runner(m, state):
             (urn2df, run_set) = state
-            m.rdd(urn2df, run_set)
+            m.rdd(urn2df, run_set, forceRun)
         self.visitor.dfs_visit(runner, (known, need_post))
 
     def _create_meta(self, need_post):

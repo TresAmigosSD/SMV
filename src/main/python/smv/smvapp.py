@@ -35,6 +35,7 @@ from smv.error import SmvRuntimeError, SmvDqmValidationError
 import smv.helpers
 from smv.utils import FileObjInputStream
 from smv.runinfo import SmvRunInfoCollector
+from smv.modulesvisitor import ModulesVisitor
 from smv.smvmodulerunner import SmvModuleRunner
 from smv.smvconfig import SmvConfig
 from py4j.protocol import Py4JJavaError
@@ -336,10 +337,10 @@ class SmvApp(object):
         return (DataFrame(j_df, self.sqlContext),
                 SmvRunInfoCollector(collector))
 
-    def runModule2(self, fqn):
+    def runModule2(self, fqn, forceRun=False):
         urn = "mod:" + fqn
         ds = self.dsm.load2(urn)[0]
-        return SmvModuleRunner([ds], self).run()[0]
+        return SmvModuleRunner([ds], self).run(forceRun)[0]
 
     @exception_handling
     def runModuleByName(self, name, forceRun=False, version=None, runConfig=None, quickRun=False):
@@ -529,31 +530,15 @@ class SmvApp(object):
 
     def _purge_old_output_files(self):
         if (self.cmd_line.purgeOldOutput):
-            valid_files_in_output_dir = [
-                self._jvm.SmvHDFS.baseName(f) 
-                for m in self.dsm.allDataSets() 
-                for f in scala_seq_to_list(self._jvm, m.allOutputFiles())
-            ]
-            res = self._jvm.SmvPythonHelper.purgeDirectory(
-                self.all_data_dirs().outputDir, 
-                smv_copy_array(self.sc, valid_files_in_output_dir)
-            )
-            for r in scala_seq_to_list(self._jvm, res):
-                if (r.success()):
-                    print("... Deleted {}".format(r.fn()))
-                else:
-                    print("... Unable to delete {}".format(r.fn()))
+            SmvModuleRunner(self.dsm.allDataSets2(), self).purge_old_but_keep_new_persisted()
     
     def _modules_with_ancestors(self, mods):
-        ancestors = [a for m in mods for a in scala_seq_to_list(self._jvm, m.ancestors())]
-        ancestors.extend(mods)
-        return ancestors
+        visitor = ModulesVisitor(mods)
+        return visitor.queue
 
     def _purge_current_output_files(self, mods):
         if(self.cmd_line.forceRunAll):
-            ancestors = self._modules_with_ancestors(mods)
-            for m in set(ancestors):
-                self.j_smvPyClient.deleteModuleOutput(m)
+            SmvModuleRunner(mods, self).purge_persisted()
         
     def _dry_run(self, mods):
         """Execute as dry-run if the dry-run flag is specified.
@@ -604,52 +589,39 @@ class SmvApp(object):
 
         return self.dsm.modulesToRun(modPartialNames, stageNames, self.cmd_line.runAllApp)
 
-    def _module_rdd(self, m, collector):
-        return m.rdd(
-            False, # force_run
-            self.cmd_line.genEdd,
-            collector,
-            False # quick run
-        )
 
-    def _publish_modules(self, mods, collector):
+    def _publish_modules(self, mods):
         if(self.cmd_line.publish):
-            for m in mods:
-                m.publish(collector)
+            SmvModuleRunner(mods, self).publish()
             return True
         else:
             return False
 
   
-    def _publish_modules_to_hive(self, mods, collector):
+    def _publish_modules_to_hive(self, mods):
         if(self.cmd_line.publishHive):
-            for m in mods:
-                m.exportToHive(collector)
+            SmvModuleRunner(mods, self).publish_to_hive()
             return True
         else:
             return False
 
-    def _publish_modules_through_jdbc(self, mods, collector):
+    def _publish_modules_through_jdbc(self, mods):
         if(self.cmd_line.publishJDBC):
-            for m in mods:
-                m.publishThroughJDBC(collector)
+            SmvModuleRunner(mods, self).publish_to_jdbc()
             return True
         else:
             return False
 
-    def _publish_modules_locally(self, mods, collector):
+    def _publish_modules_locally(self, mods):
         if(self.cmd_line.exportCsv):
             local_dir = self.cmd_line.exportCsv
-            for m in mods:
-                csv_path = "{}/{}".format(local_dir, m.versionedFqn())
-                self._module_rdd(m, collector).smvExportCsv(csv_path)
+            SmvModuleRunner(mods, self).publish_local(local_dir)
             return True
         else:
             return False
 
-    def _generate_output_modules(self, mods, collector):
-        for m in mods:
-            self._module_rdd(m, collector)
+    def _generate_output_modules(self, mods):
+        SmvModuleRunner(mods, self).run()
         return len(mods) > 0
 
     def run(self):
@@ -664,14 +636,13 @@ class SmvApp(object):
             print("\n".join([m.fqn() for m in mods]))
             print("----------------------")
 
-        collector = self._jvm.SmvRunInfoCollector()
 
         #either generate graphs, publish modules, or run output modules (only one will occur)
         self._print_dead_modules() \
         or self._dry_run(mods) \
         or self._generate_dot_graph() \
-        or self._publish_modules_to_hive(mods, collector) \
-        or self._publish_modules(mods, collector) \
-        or self._publish_modules_through_jdbc(mods, collector)  \
-        or self._publish_modules_locally(mods, collector) \
-        or self._generate_output_modules(mods, collector)
+        or self._publish_modules_to_hive(mods) \
+        or self._publish_modules(mods) \
+        or self._publish_modules_through_jdbc(mods)  \
+        or self._publish_modules_locally(mods) \
+        or self._generate_output_modules(mods)
