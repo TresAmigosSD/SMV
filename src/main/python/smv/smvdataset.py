@@ -170,7 +170,7 @@ class SmvDataSet(ABC):
         return self.dqmValidator.totalRecords() > 0
 
     def calculate_user_meta(self, run_set):
-        if (not self.metaStrategy().isWritten()):
+        if (not self.metaStrategy().isPersisted()):
             self.module_meta.addSystemMeta(self)
             (user_meta, self.userMetadataTimeElapsed) = self._do_action_on_df(
                 self.metadata, self.df, "GENERATE USER METADATA")
@@ -187,7 +187,7 @@ class SmvDataSet(ABC):
             lambda d: d.count(), df, "FORCE AN ACTION FOR DQM")
 
     def persist_meta(self):
-        persisted = self.metaStrategy().isWritten()
+        persisted = self.metaStrategy().isPersisted()
         if (not persisted):
             # Need to add duration at the very end, just before persist
             self.module_meta.addDuration("persisting", self.persistingTimeElapsed)
@@ -305,7 +305,7 @@ class SmvDataSet(ABC):
         if (self.isEphemeral()):
             return False
         else:
-            return not self.persistStrategy().isWritten()
+            return not self.persistStrategy().isPersisted()
 
     def isSmvOutput(self):
         try:
