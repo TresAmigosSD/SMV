@@ -22,7 +22,7 @@ import java.util.ArrayList
 import java.io.File
 
 import org.apache.hadoop.mapred.InvalidInputException
-import org.apache.spark.sql.{Column, DataFrame, SQLContext, SparkSession}
+import org.apache.spark.sql.{Column, DataFrame, SQLContext, SparkSession, SaveMode}
 import org.apache.spark.sql.types.{DataType, Metadata}
 import matcher._
 import org.tresamigos.smv.dqm.ParserLogger
@@ -309,6 +309,13 @@ class SmvPyClient(val j_smvApp: SmvApp) {
 
     val n       = counter.value
     j_smvApp.log.info(f"N: ${n}")
+  }
+
+  private[smv] def writeThroughJDBC(df: DataFrame, tableName: String) = {
+    val connectionProperties = new java.util.Properties()
+    connectionProperties.put("driver", j_smvApp.smvConfig.jdbcDriver)
+    val url = j_smvApp.smvConfig.jdbcUrl
+    df.write.mode(SaveMode.Append).jdbc(url, tableName, connectionProperties)
   }
 }
 
