@@ -22,9 +22,6 @@ import sys
 import traceback
 import binascii
 import json
-import queue
-
-from collections import OrderedDict
 
 from smv.dqm import SmvDQM
 from smv.error import SmvRuntimeError
