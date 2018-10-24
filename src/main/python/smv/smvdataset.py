@@ -22,6 +22,7 @@ import sys
 import traceback
 import binascii
 import json
+from datetime import datetime
 
 from smv.dqm import SmvDQM
 from smv.error import SmvRuntimeError
