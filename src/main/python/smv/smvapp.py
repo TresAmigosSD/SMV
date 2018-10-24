@@ -337,6 +337,7 @@ class SmvApp(object):
         return (DataFrame(j_df, self.sqlContext),
                 SmvRunInfoCollector(collector))
 
+    @exception_handling
     def runModule2(self, fqn, forceRun=False):
         urn = "mod:" + fqn
         ds = self.dsm.load2(urn)[0]

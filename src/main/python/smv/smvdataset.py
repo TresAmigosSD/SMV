@@ -183,8 +183,10 @@ class SmvDataSet(ABC):
             run_set.discard(self)
 
     def force_an_action(self, df):
+        # Since optimization can be done on a DF actions like count, we have to convert DF
+        # to RDD and than apply an action, otherwise fix count will be always zero
         (n, self.dqmTimeElapsed) = self._do_action_on_df(
-            lambda d: d.count(), df, "FORCE AN ACTION FOR DQM")
+            lambda d: d.rdd.count(), df, "FORCE AN ACTION FOR DQM")
 
     def persist_meta(self):
         persisted = self.metaStrategy().isPersisted()
