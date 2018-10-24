@@ -74,13 +74,13 @@ class SmvFrameworkTest(SmvBaseTest):
         # Module has both empty string and null value in string, should read back as the same
         fqn = "stage.modules.CsvStrWithNullData"
         df = self.df(fqn, True)
-        j_m = self.load(fqn)[0]
-        read_back = DataFrame(j_m.persistStgy().read().get(), df.sql_ctx)
+        m = self.load(fqn)[0]
+        read_back = m.persistStrategy().read()
         self.should_be_same(df, read_back)
 
     def test_cycle_dependency_error_out(self):
         fqn = "cycle.modules.CycleA"
-        with self.assertRaisesRegexp(Py4JJavaError, "Cycle found while resolving mod"):
+        with self.assertRaisesRegexp(SmvRuntimeError, "Cycle found while resolving"):
             df = self.df(fqn)
 
     def test_module_should_only_run_once(self):

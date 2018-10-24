@@ -93,7 +93,7 @@ class SmvBaseTest(unittest.TestCase):
     @classmethod
     def load(cls, *fqn):
         urns = ["mod:" + x for x in fqn]
-        return cls.smvApp.dsm.load(*urns)
+        return cls.smvApp.dsm.load2(*urns)
 
     @classmethod
     def load2(cls, *fqn):
