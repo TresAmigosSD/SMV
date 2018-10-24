@@ -124,7 +124,7 @@ class SmvNameErrorPropagationTest(SmvBaseTest):
 
     def test_module_NameError_propagation(self):
         fqn = "stage.modules.ModWithBadName"
-        with self.assertRaisesRegexp(Py4JJavaError, "NameError"):
+        with self.assertRaisesRegexp(NameError, "ModWhoseNameDoesntExist"):
             self.df(fqn)
 
 

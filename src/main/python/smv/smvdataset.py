@@ -174,6 +174,10 @@ class SmvDataSet(ABC):
             self.module_meta.addSystemMeta(self)
             (user_meta, self.userMetadataTimeElapsed) = self._do_action_on_df(
                 self.metadata, self.df, "GENERATE USER METADATA")
+
+            if not isinstance(user_meta, dict):
+                raise SmvRuntimeError("User metadata {} is not a dict".format(repr(user_meta)))
+
             self.module_meta.addUserMeta(user_meta)
             if (self.had_action()):
                 self.smvApp.log.debug("{} metadata had an action".format(self.fqn()))
@@ -188,13 +192,15 @@ class SmvDataSet(ABC):
         (n, self.dqmTimeElapsed) = self._do_action_on_df(
             lambda d: d.rdd.count(), df, "FORCE AN ACTION FOR DQM")
 
+    def finalize_meta(self):
+        # Need to add duration at the very end, just before persist
+        self.module_meta.addDuration("persisting", self.persistingTimeElapsed)
+        self.module_meta.addDuration("metadata", self.userMetadataTimeElapsed)
+        self.module_meta.addDuration("dqm", self.dqmTimeElapsed)
+
     def persist_meta(self):
         persisted = self.metaStrategy().isPersisted()
         if (not persisted):
-            # Need to add duration at the very end, just before persist
-            self.module_meta.addDuration("persisting", self.persistingTimeElapsed)
-            self.module_meta.addDuration("metadata", self.userMetadataTimeElapsed)
-            self.module_meta.addDuration("dqm", self.dqmTimeElapsed)
             meta_json = self.module_meta.toJson()
             self.metaStrategy().write(meta_json)
         else:
