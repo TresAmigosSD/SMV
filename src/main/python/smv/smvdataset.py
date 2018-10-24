@@ -152,12 +152,12 @@ class SmvDataSet(ABC):
         self.smvApp.log.debug("compute: {}".format(self.urn()))
 
         if (self.isEphemeral()):
-            raw_df = self.doRun2(urn2df)
+            raw_df = self.doRun(self.dqmValidator, urn2df)
             return self.pre_action(raw_df)
         else:
             _strategy = self.persistStrategy()
             if (not _strategy.isPersisted()):
-                raw_df = self.doRun2(urn2df)
+                raw_df = self.doRun(self.dqmValidator, urn2df)
                 df = self.pre_action(raw_df)
                 (res, self.persistingTimeElapsed) = self._do_action_on_df(
                     _strategy.write, df, "RUN & PERSIST OUTPUT")
@@ -233,12 +233,6 @@ class SmvDataSet(ABC):
         log.info("RunTime: {}".format(duration))
 
         return (res, secondsElapsed)
-
-    # Make this not an abstract since not all concrete class has this
-    #@abc.abstractmethod
-    def doRun2(self, known):
-        """Compute this dataset, and return the dataframe"""
-        pass
 
     def dataset_hash(self): 
         """current module's hash value, depend on code and potentially 
@@ -758,12 +752,6 @@ class SmvModule(SmvDataSet):
         return i
 
     def doRun(self, validator, known):
-        i = self._constructRunParams(known)
-        result = self.run(i)
-        self.assert_result_is_dataframe(result)
-        return result._jdf
-
-    def doRun2(self, known):
         i = self.RunParams(known)
         return self.run(i)
 
@@ -864,10 +852,10 @@ class SmvResultModule(SmvModule):
         """
 
     def doRun(self, validator, known):
-        i = self._constructRunParams(known)
+        i = self.RunParams(known)
         res_obj = self.run(i)
         result = self.result2df(self.smvApp, res_obj)
-        return result._jdf
+        return result
 
 
 class SmvModel(SmvResultModule):
@@ -909,11 +897,9 @@ class SmvModelExec(SmvModule):
         """
 
     def doRun(self, validator, known):
-        i = self._constructRunParams(known)
+        i = self.RunParams(known)
         model = i[self.requiresModel()]
-        result = self.run(i, model)
-        self.assert_result_is_dataframe(result)
-        return result._jdf
+        return self.run(i, model)
 
     @abc.abstractmethod
     def run(self, i, model):

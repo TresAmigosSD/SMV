@@ -119,7 +119,7 @@ class SmvModuleRunner(object):
             else:
                 self.log.info("... Unable to delete {}".format(r.fn()))
 
-    def _create_df(self, known, need_post, forceRun):
+    def _create_df(self, known, need_post, forceRun=False):
         # run module and create df. when persisting, post_action 
         # will run on current module and all upstream modules
         def runner(m, state):
