@@ -299,6 +299,9 @@ class SmvDataSet(ABC):
 
     def needsToRun(self):
         if (self.isEphemeral()):
+            for m in self.resolvedRequiresDS:
+                if m.needsToRun():
+                    return True
             return False
         else:
             return not self.persistStrategy().isPersisted()

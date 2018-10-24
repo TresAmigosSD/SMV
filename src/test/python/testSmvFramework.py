@@ -207,13 +207,6 @@ class SmvNeedsToRunTest(SmvBaseTest):
         self.df(fqn, forceRun=True)
         self.assertFalse(self.load(fqn)[0].needsToRun())
 
-    def test_module_depends_on_need_to_run_module_also_need_to_run(self):
-        fqn = "stage.modules.NeedRunM2"
-        fqn0 = "stage.modules.NeedRunM1"
-        self.df(fqn, True)
-        self.deleteModuleOutput(self.load(fqn0)[0]) # deleting persist files made M1 need to run
-        self.assertTrue(self.load(fqn)[0].needsToRun())
-
     def test_ephemeral_module_depends_on_not_need_to_run_also_not(self):
         fqn = "stage.modules.NeedRunM3"
         fqn0 = "stage.modules.NeedRunM1"
