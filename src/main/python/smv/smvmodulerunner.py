@@ -68,9 +68,9 @@ class SmvModuleRunner(object):
             publish_hist_path = publish_base_path + ".hist"
 
             SmvCsvOnHdfsIoStrategy(m.smvApp, m.fqn(), None, publish_csv_path).write(m.df)
-            SmvJsonOnHdfsIoStrategy(m.smvApp, publish_meta_path).write(m.module_meta)
+            SmvJsonOnHdfsIoStrategy(m.smvApp, publish_meta_path).write(m.module_meta.toJson())
             hist = self._read_meta_hist(m)
-            SmvJsonOnHdfsIoStrategy(m.smvApp, publish_hist_path).write(hist)
+            SmvJsonOnHdfsIoStrategy(m.smvApp, publish_hist_path).write(hist.toJson())
 
     def publish_to_hive(self):
         # run before publish

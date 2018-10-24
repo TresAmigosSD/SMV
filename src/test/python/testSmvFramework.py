@@ -19,7 +19,7 @@ from smv import *
 import smv.utils
 import smv.smvshell
 from smv.dqm import *
-from smv.error import SmvDqmValidationError, SmvRuntimeError
+from smv.error import SmvDqmValidationError, SmvMetadataValidationError, SmvRuntimeError
 
 import pyspark
 from pyspark.context import SparkContext
@@ -135,7 +135,7 @@ class SmvSyntaxErrorPropagationTest(SmvBaseTest):
 
     def test_module_SyntaxError_propagation(self):
         fqn = "syntax_error_stage.modules.ModWithBadSyntax"
-        with self.assertRaisesRegexp(Py4JJavaError, "SyntaxError"):
+        with self.assertRaises(SyntaxError):
             self.df(fqn)
 
 # TODO: this should be moved into own file.
@@ -154,7 +154,7 @@ class SmvMetadataTest(SmvBaseTest):
 
     def test_metadata_validation_failure_causes_error(self):
         fqn = "metadata_stage.modules.ModWithFailingValidation"
-        with self.assertRaisesRegexp(Py4JJavaError, "SmvMetadataValidationError"):
+        with self.assertRaises(SmvMetadataValidationError):
             self.df(fqn)
 
     def test_invalid_metadata_rejected_gracefully(self):
@@ -226,6 +226,8 @@ class SmvPublishTest(SmvBaseTest):
          return [
              '--smv-props', 
              'smv.stages=stage',
+             '-m',
+             'stage.modules.CsvFile',
              '--publish',
              'v1'
          ]
@@ -234,8 +236,7 @@ class SmvPublishTest(SmvBaseTest):
          self.createTempInputFile("test3.csv", "col1\na\nb\n")
          self.createTempInputFile("test3.schema", "col1: String\n")
          fqn = "stage.modules.CsvFile"
-         j_m = self.load(fqn)[0]
-         j_m.publish(self.smvApp._jvm.SmvRunInfoCollector())
+         self.smvApp.run()
 
          # Read from the file
          res = smv.smvshell.openCsv(self.tmpDataDir() + "/publish/v1/" + fqn + ".csv")
