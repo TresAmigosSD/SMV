@@ -29,6 +29,10 @@ class SmvIoStrategy(ABC):
     def write(raw_data):
         """Write data to persist file/db"""
 
+    @abc.abstractmethod
+    def isPersisted(self):
+        """Whether the data got successfully persisted before"""
+
 # TODO: add lock, add publish
 class SmvCsvOnHdfsIoStrategy(SmvIoStrategy):
     def __init__(self, smvApp, fqn, ver_hex):
@@ -62,7 +66,7 @@ class SmvCsvOnHdfsIoStrategy(SmvIoStrategy):
         # TODO: add log
         self.smvApp.j_smvPyClient.persistDF(self._csv_path(), jdf)
 
-    def isWritten(self):
+    def isPersisted(self):
         handler = self.smvApp.j_smvPyClient.createFileIOHandler(self._csv_path())
 
         try:
@@ -83,5 +87,5 @@ class SmvJsonOnHdfsIoStrategy(SmvIoStrategy):
     def write(self, rawdata):
         self._jvm.SmvHDFS.writeToFile(rawdata, self.path)
 
-    def isWritten(self):
+    def isPersisted(self):
         return self._jvm.SmvHDFS.exists(self.path)

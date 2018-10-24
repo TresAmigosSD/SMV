@@ -152,7 +152,7 @@ class SmvDataSet(ABC):
             return self.pre_action(raw_df)
         else:
             _strategy = self.persistStrategy()
-            if (not _strategy.isWritten()):
+            if (not _strategy.isPersisted()):
                 raw_df = self.doRun2(urn2df)
                 df = self.pre_action(raw_df)
                 _strategy.write(df)
