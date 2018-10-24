@@ -147,7 +147,7 @@ class SmvMetadataTest(SmvBaseTest):
     def test_metadata_includes_user_metadata(self):
         fqn = "metadata_stage.modules.ModWithUserMeta"
         self.df(fqn)
-        with open(self.tmpDataDir() + "/history/{}.hist/part-00000".format(fqn)) as f:
+        with open(self.tmpDataDir() + "/history/{}.hist".format(fqn)) as f:
             metadata_list = json.loads(f.read())
             metadata = metadata_list['history'][0]
         self.assertEqual(metadata['_userMetadata']['foo'], "bar")
@@ -186,19 +186,20 @@ class SmvNeedsToRunTest(SmvBaseTest):
         return ['--smv-props', 'smv.stages=stage']
 
     @classmethod
-    def deleteModuleOutput(cls, j_m):
-        cls.smvApp.j_smvPyClient.deleteModuleOutput(j_m)
+    def deleteModuleOutput(cls, m):
+        m.persistStrategy().remove()
+        m.metaStrategy().remove()
 
     def test_input_module_does_not_need_to_run(self):
         fqn = "stage.modules.CsvFile"
-        j_m = self.load(fqn)[0]
-        self.assertFalse(j_m.needsToRun())
+        m = self.load(fqn)[0]
+        self.assertFalse(m.needsToRun())
 
     def test_module_not_persisted_should_need_to_run(self):
         fqn = "stage.modules.NeedRunM1"
-        j_m = self.load(fqn)[0]
-        self.deleteModuleOutput(j_m)
-        self.assertTrue(j_m.needsToRun())
+        m = self.load(fqn)[0]
+        self.deleteModuleOutput(m)
+        self.assertTrue(m.needsToRun())
 
     def test_module_persisted_should_not_need_to_run(self):
         fqn = "stage.modules.NeedRunM1"
