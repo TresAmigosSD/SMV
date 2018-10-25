@@ -322,21 +322,15 @@ class SmvApp(object):
             - SmvRunInfoCollector contains additional information
               about the run, such as validation results.
         """
-        ds = self.dsm.load2(urn)[0]
+        ds = self.dsm.load(urn)[0]
         if (quickRun):
             return SmvModuleRunner([ds], self).quick_run(forceRun)[0]
         else:
             return SmvModuleRunner([ds], self).run(forceRun)[0]
 
-    @exception_handling
-    def runModule2(self, fqn, forceRun=False):
-        urn = "mod:" + fqn
-        ds = self.dsm.load2(urn)[0]
-        return SmvModuleRunner([ds], self).run(forceRun)[0]
-
     def quickRunModule(self, fqn):
         urn = "mod:" + fqn
-        ds = self.dsm.load2(urn)[0]
+        ds = self.dsm.load(urn)[0]
         return SmvModuleRunner([ds], self).quick_run()[0]
 
     @exception_handling
@@ -527,7 +521,7 @@ class SmvApp(object):
 
     def _purge_old_output_files(self):
         if (self.cmd_line.purgeOldOutput):
-            SmvModuleRunner(self.dsm.allDataSets2(), self).purge_old_but_keep_new_persisted()
+            SmvModuleRunner(self.dsm.allDataSets(), self).purge_old_but_keep_new_persisted()
     
     def _modules_with_ancestors(self, mods):
         visitor = ModulesVisitor(mods)
