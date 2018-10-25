@@ -340,7 +340,7 @@ class SmvApp(object):
     def quickRunModule(self, fqn):
         urn = "mod:" + fqn
         ds = self.dsm.load(urn)[0]
-        return self._to_single_run_res(SmvModuleRunner([ds], self).quick_run())
+        return SmvModuleRunner([ds], self).quick_run()[0]
 
     @exception_handling
     def runModuleByName(self, name, forceRun=False, quickRun=False):
@@ -415,12 +415,12 @@ class SmvApp(object):
         return self.getRunInfo(urn)
 
     @exception_handling
-    def publishModuleToHiveByName(self, name, runConfig=None):
+    def publishModuleToHiveByName(self, name):
         """Publish an SmvModule to Hive by its name (can be partial FQN)
         """
-        self.setDynamicRunConfig(runConfig)
-        collector = self._jvm.SmvRunInfoCollector()
-        return self.dsm.inferDS(name)[0].exportToHive(collector)
+        urn = self.dsm.inferUrn(name)
+        ds = self.load_single_ds(urn)
+        return SmvModuleRunner([ds], self).publish_to_hive()
 
     def getMetadataJson(self, urn):
         """Returns the metadata for a given urn"""

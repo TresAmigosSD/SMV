@@ -152,13 +152,13 @@ def lsDead(stageName = None):
     """
     print(_appInfo().ls_dead(stageName))
 
-def exportToHive(dsname, runConfig=None):
+def exportToHive(dsname):
     """Export dataset's running result to a Hive table
 
         Args:
             dsname (str): The name of an SmvDataSet
     """
-    SmvApp.getInstance().publishModuleToHiveByName(dsname, runConfig)
+    SmvApp.getInstance().publishModuleToHiveByName(dsname)
 
 def ancestors(dsname):
     """List all ancestors of a dataset

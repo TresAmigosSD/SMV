@@ -49,7 +49,6 @@ class SmvRunInfoTest(SmvBaseTest):
             assert len(coll.dqm_validation(fqn)) == 0
             assert len(coll.dqm_state(fqn)) == 0
             assert len(coll.metadata(fqn)['_fqn']) > 0  # still collect basic meta
-            assert len(coll.metadata_history(fqn)) == 0
 
     def test_get_run_info_should_return_info_from_last_run(self):
         self.smvApp.runModule(self.R4Urn, forceRun=True)
