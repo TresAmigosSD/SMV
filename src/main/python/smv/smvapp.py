@@ -289,12 +289,12 @@ class SmvApp(object):
         """
         return SmvAppInfo(self).create_graph_json()
 
-    def getModuleResult(self, urn, forceRun=False, version=None):
+    def getModuleResult(self, urn, forceRun=False):
         """Run module and get its result, which may not be a DataFrame
         """
         fqn = urn[urn.find(":")+1:]
         ds = self.repoFactory.createRepo().loadDataSet(fqn)
-        df, collector = self.runModule(urn, forceRun, version)
+        df, collector = self.runModule(urn, forceRun)
         return ds.df2result(df)
 
     def load_single_ds(self, urn):
@@ -441,7 +441,7 @@ class SmvApp(object):
                 (str): The hashOfHash of the named module
         """
         self.setDynamicRunConfig(runConfig)
-        return self.dsm.inferDS(name)[0].verHex()
+        return self.dsm.inferDS(name)[0].ver_hex()
 
     def copyToHdfs(self, fileobj, destination):
         """Copies the content of a file object to an HDFS location.
@@ -460,7 +460,10 @@ class SmvApp(object):
 
     def getStageFromModuleFqn(self, fqn):
         """Returns the stage name for a given fqn"""
-        return self._jvm.org.tresamigos.smv.ModURN(fqn).getStage().get()
+        res = [s for s in self.stages() if fqn.startswith(s + ".")]
+        if (len(res) == 0):
+            raise SmvRuntimeError("Can't find {} from stages {}".format(fqn, ", ".join(self.stages())))
+        return res[0]
 
     def outputDir(self):
         return self.all_data_dirs().outputDir

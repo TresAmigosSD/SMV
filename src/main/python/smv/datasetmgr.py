@@ -71,7 +71,7 @@ class DataSetMgr(object):
     def inferUrn(self, partial_name):
         """Return URN string from partial name
         """
-        return self.inferDS(partial_name)[0].urn().toString()
+        return self.inferDS(partial_name)[0].urn()
 
     def register(self, repo_factory):
         """Register python repo factory
