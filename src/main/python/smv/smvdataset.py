@@ -27,7 +27,6 @@ from datetime import datetime
 from smv.dqm import SmvDQM
 from smv.error import SmvRuntimeError
 from smv.utils import smv_copy_array, pickle_lib, is_string
-from smv.py4j_interface import create_py4j_interface_method
 from smv.smviostrategy import SmvCsvOnHdfsIoStrategy, SmvJsonOnHdfsIoStrategy
 from smv.modulesvisitor import ModulesVisitor
 from smv.smvmetadata import SmvMetaData
@@ -88,9 +87,6 @@ class SmvOutput(object):
                 (string)
         """
         return None
-
-    getTableName = create_py4j_interface_method("getTableName", "tableName")
-
 
 class SmvDataSet(ABC):
     """Abstract base class for all SmvDataSets
@@ -393,8 +389,6 @@ class SmvDataSet(ABC):
     def description(self):
         return self.__doc__
 
-    getDescription = create_py4j_interface_method("getDescription", "description")
-
     @abc.abstractmethod
     def requiresDS(self):
         """User-specified list of dependencies
@@ -455,8 +449,6 @@ class SmvDataSet(ABC):
     def doRun(self, validator, known):
         """Compute this dataset, and return the dataframe"""
 
-    getDoRun = create_py4j_interface_method("getDoRun", "doRun")
-
     def assert_result_is_dataframe(self, result):
         if not isinstance(result, DataFrame):
             raise SmvRuntimeError(
@@ -477,8 +469,6 @@ class SmvDataSet(ABC):
 
     def isOutput(self):
         return isinstance(self, SmvOutput)
-
-    getIsOutput = create_py4j_interface_method("getIsOutput", "isOutput")
 
     # Note that the Scala SmvDataSet will combine sourceCodeHash and instanceValHash
     # to compute datasetHash
@@ -547,22 +537,16 @@ class SmvDataSet(ABC):
         # ensure python's numeric type can fit in a java.lang.Integer
         return res & 0x7fffffff
 
-    getSourceCodeHash = create_py4j_interface_method("getSourceCodeHash", "sourceCodeHash")
-
     def instanceValHash(self):
         """Hash computed based on instance values of the dataset, such as the timestamp of an input file
         """
         return 0
-
-    getInstanceValHash = create_py4j_interface_method("getInstanceValHash", "instanceValHash")
 
     @classmethod
     def fqn(cls):
         """Returns the fully qualified name
         """
         return cls.__module__ + "." + cls.__name__
-
-    getFqn = create_py4j_interface_method("getFqn", "fqn")
 
     @classmethod
     def urn(cls):
@@ -575,8 +559,6 @@ class SmvDataSet(ABC):
                 (bool): True if this SmvDataSet should not persist its data, false otherwise
         """
         return False
-
-    getIsEphemeral = create_py4j_interface_method("getIsEphemeral", "isEphemeral")
 
     def publishHiveSql(self):
         """An optional sql query to run to publish the results of this module when the
@@ -595,31 +577,17 @@ class SmvDataSet(ABC):
         """
         return None
 
-    getPublishHiveSql = create_py4j_interface_method("getPublishHiveSql", "publishHiveSql")
-
     @abc.abstractmethod
     def dsType(self):
         """Return SmvDataSet's type"""
 
-    getDsType = create_py4j_interface_method("getDsType", "dsType")
-
     def dqmWithTypeSpecificPolicy(self):
         return self.dqm()
-
-    getDqmWithTypeSpecificPolicy = create_py4j_interface_method(
-        "getDqmWithTypeSpecificPolicy", "dqmWithTypeSpecificPolicy"
-    )
 
     def dependencies(self):
         """Can be overridden when a module has non-SmvDataSet dependencies (see SmvModelExec)
         """
         return self.requiresDS()
-
-    def dependencyUrns(self):
-        arr = [x.urn() for x in self.dependencies()]
-        return smv_copy_array(self.smvApp.sc, *arr)
-
-    getDependencyUrns = create_py4j_interface_method("getDependencyUrns", "dependencyUrns")
 
     @classmethod
     def df2result(cls, df):
@@ -643,17 +611,6 @@ class SmvDataSet(ABC):
         """
         return {}
 
-    def metadataJson(self, jdf):
-        """Get user's metadata and jsonify it for py4j transport
-        """
-        df = DataFrame(jdf, self.smvApp.sqlContext)
-        metadata = self.metadata(df)
-        if not isinstance(metadata, dict):
-            raise SmvRuntimeError("User metadata {} is not a dict".format(repr(metadata)))
-        return json.dumps(metadata)
-
-    getMetadataJson = create_py4j_interface_method("getMetadataJson", "metadataJson")
-
     def validateMetadata(self, current, history):
         """User-defined metadata validation
 
@@ -670,18 +627,6 @@ class SmvDataSet(ABC):
         """
         return None
 
-    def validateMetadataJson(self, currentJson, historyJson):
-        """Load metadata (jsonified for py4j transport) and run user's validation on it
-        """
-        current = json.loads(currentJson)
-        history = [json.loads(j) for j in historyJson]
-        res = self.validateMetadata(current, history)
-        if res is not None and not is_string(res):
-            raise SmvRuntimeError("Validation failure message {} is not a string".format(repr(res)))
-        return res
-
-    getValidateMetadataJson = create_py4j_interface_method("getValidateMetadataJson", "validateMetadataJson")
-
     def metadataHistorySize(self):
         """Override to define the maximum size of the metadata history for this module
 
@@ -689,12 +634,6 @@ class SmvDataSet(ABC):
                 (int): size
         """
         return 5
-
-    getMetadataHistorySize = create_py4j_interface_method("getMetadataHistorySize", "metadataHistorySize")
-
-    class Java:
-        implements = ['org.tresamigos.smv.ISmvModule']
-
 
 class SmvModule(SmvDataSet):
     """Base class for SmvModules written in Python

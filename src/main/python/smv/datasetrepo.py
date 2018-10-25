@@ -18,7 +18,6 @@ import traceback
 
 from smv.error import SmvRuntimeError
 from smv.utils import smv_copy_array
-from smv.py4j_interface import create_py4j_interface_method
 
 """Python implementations of IDataSetRepoPy4J and IDataSetRepoFactoryPy4J interfaces
 """
@@ -29,8 +28,6 @@ class DataSetRepoFactory(object):
 
     def createRepo(self):
         return DataSetRepo(self.smvApp)
-
-    getCreateRepo = create_py4j_interface_method("getCreateRepo", "createRepo")
 
     class Java:
         implements = ['org.tresamigos.smv.IDataSetRepoFactoryPy4J']
@@ -129,8 +126,6 @@ class DataSetRepo(object):
 
         return ds
 
-    getLoadDataSet = create_py4j_interface_method("getLoadDataSet", "loadDataSet")
-
 
     def _dataSetsForStage(self, stageName):
         urns = []
@@ -204,10 +199,5 @@ class DataSetRepo(object):
         urns = self._dataSetsForStage(stageName)
         return smv_copy_array(self.smvApp.sc, *urns)
 
-    getDataSetsForStage = create_py4j_interface_method("getDataSetsForStage", "dataSetsForStage")
-
     def notFound(self, modUrn, msg):
         raise ValueError("dataset [{0}] is not found in {1}: {2}".format(modUrn, self.__class__.__name__, msg))
-
-    class Java:
-        implements = ['org.tresamigos.smv.IDataSetRepoPy4J']
