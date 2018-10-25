@@ -32,7 +32,7 @@ class SmvFrameworkTest2(SmvBaseTest):
 
     def test_visit_queue(self):
         fqns = ["stage.modules.M3", "stage.modules.M2"]
-        ds = self.load2(*fqns)
+        ds = self.load(*fqns)
         
         queue =  ModulesVisitor(ds).queue
 
@@ -41,7 +41,7 @@ class SmvFrameworkTest2(SmvBaseTest):
 
     def test_basic_run(self):
         fqn = "stage.modules.M3"
-        res = self.df2(fqn)
+        res = self.df(fqn)
 
         exp = self.createDF(
             "a:Integer;b:Double",
@@ -50,7 +50,7 @@ class SmvFrameworkTest2(SmvBaseTest):
 
     def test_basic_versioned_fqn(self):
         fqns = ["stage.modules.M3", "stage.modules.M2"]
-        ds = self.load2(*fqns)
+        ds = self.load(*fqns)
 
         self.assertNotEqual(ds[0].versioned_fqn, ds[1].versioned_fqn)
 
@@ -61,8 +61,8 @@ class SmvFrameworkTest2(SmvBaseTest):
         global cross_run_counter
         cross_run_counter = 0
 
-        r1 = self.df2("stage.modules.M2")
-        r2 = self.df2("stage.modules.M3")
+        r1 = self.df("stage.modules.M2")
+        r2 = self.df("stage.modules.M3")
 
         # counter is it M1 (ephemeral)
         self.assertEqual(cross_run_counter, 1)
@@ -74,16 +74,16 @@ class SmvFrameworkTest2(SmvBaseTest):
         global persist_run_counter
         persist_run_counter = 0
 
-        r1 = self.df2("stage.modules.M2")
+        r1 = self.df("stage.modules.M2")
         self.smvApp.df_cache = {}
-        r2 = self.df2("stage.modules.M3")
+        r2 = self.df("stage.modules.M3")
         
         # counter is in M2 (non-ephemeral)
         self.assertEqual(persist_run_counter, 1)
 
     def test_basic_metadata_creation(self):
         fqn = "stage.modules.M2"
-        m = self.load2(fqn)[0]
+        m = self.load(fqn)[0]
 
         SmvModuleRunner([m], self.smvApp).run()
 
@@ -97,7 +97,7 @@ class SmvFrameworkTest2(SmvBaseTest):
         """M3 is ephemeral and non-trivial metadata, it should trigger post_action"""
 
         fqn = "stage.modules.M3"
-        m = self.load2(fqn)[0]
+        m = self.load(fqn)[0]
 
         runner = SmvModuleRunner([m], self.smvApp)
 
@@ -115,10 +115,10 @@ class SmvFrameworkTest2(SmvBaseTest):
     def test_metadata_persist(self):
         self.mkTmpTestDir()
         fqn = "stage.modules.M1"
-        m = self.load2(fqn)[0]
+        m = self.load(fqn)[0]
         meta_path = m.meta_path()
 
-        self.df2(fqn)
+        self.df(fqn)
 
         meta_json = SmvJsonOnHdfsIoStrategy(self.smvApp, meta_path).read()
         meta = SmvMetaData().fromJson(meta_json)
@@ -135,15 +135,15 @@ class SmvFrameworkTest2(SmvBaseTest):
         fqn1 = "stage.modules.M2"
         fqn2 = "stage.modules.M3"
 
-        (m1, m2) = self.load2(fqn1, fqn2)
+        (m1, m2) = self.load(fqn1, fqn2)
 
-        self.df2(fqn2)
+        self.df(fqn2)
 
         # Should be persisted
         self.assertTrue(os.path.exists(m1.persistStrategy()._csv_path))
 
         # Should still be there is purge_old
-        SmvModuleRunner([m2], self.smvApp).purge_old_but_keep_new_persisted()
+        SmvModuleRunner([m1], self.smvApp).purge_old_but_keep_new_persisted()
         self.assertTrue(os.path.exists(m1.persistStrategy()._csv_path))
 
         # Should be removed
@@ -155,7 +155,7 @@ class SmvFrameworkTest2(SmvBaseTest):
         fqn = "stage.modules.M3"
         pub_dir = self.smvApp.all_data_dirs().publishDir
 
-        m = self.load2(fqn)[0]
+        m = self.load(fqn)[0]
         SmvModuleRunner([m], self.smvApp).publish(pub_dir)
 
         csv_path = '{}/{}.csv'.format(pub_dir, m.fqn())
@@ -167,5 +167,12 @@ class SmvFrameworkTest2(SmvBaseTest):
         self.assertTrue(os.path.exists(hist_path))
 
 
+    def test_quick_run(self):
+        self.smvApp.df_cache = {}
+        fqn1 = "stage.modules.M1"
+        fqn3 = "stage.modules.M3"
+        df1 = self.df(fqn1)
+        df3 = self.smvApp.quickRunModule(fqn3)
+        self.should_be_same(df1, df3)
 
 

@@ -13,10 +13,11 @@
 
 from test_support.smvbasetest import SmvBaseTest
 from smv import SmvApp
+from smv.error import SmvRuntimeError
 from py4j.protocol import Py4JJavaError
 
 class RunModuleWithRunConfigTest(SmvBaseTest):
-    modUrn = 'mod:stage.modules.A'
+    modFqn = 'stage.modules.A'
     modName = 'modules.A'
 
     @classmethod
@@ -28,20 +29,22 @@ class RunModuleWithRunConfigTest(SmvBaseTest):
     def test_run_module_with_cmd_run_config(self):
         self.smvApp.run()
         self.smvApp.setDynamicRunConfig({})
-        res = self.smvApp.runModule(self.modUrn)[0]
+        res = self.df(self.modFqn)
         expected = self.createDF('src:String', 'cmd')
         self.should_be_same(expected, res)
 
     def test_run_module_with_dynamic_run_config(self):
         self.smvApp.run()
         self.smvApp.setDynamicRunConfig({})
-        a = self.smvApp.runModule(self.modUrn, runConfig = {'src': 'dynamic_a'})[0]
+        self.smvApp.setDynamicRunConfig({'src': 'dynamic_a'})
+        a = self.df(self.modFqn)
         self.should_be_same(self.createDF('src:String', 'dynamic_a'), a)
-        b = self.smvApp.runModule(self.modUrn, runConfig = {'src': 'dynamic_b'})[0]
+        self.smvApp.setDynamicRunConfig({'src': 'dynamic_b'})
+        b = self.df(self.modFqn)
         self.should_be_same(self.createDF('src:String', 'dynamic_b'), b)
 
         # Default runConfig=None leads to no change on the dynamic config
-        c = self.smvApp.runModule(self.modUrn)[0]
+        c = self.df(self.modFqn)
         self.should_be_same(self.createDF('src:String', 'dynamic_b'), c)
 
     def test_run_module_by_name_with_run_config(self):
@@ -62,9 +65,9 @@ class RunModuleWithRunConfigTest(SmvBaseTest):
 
     def test_explicit_set_dynamic_run_config(self):
         self.smvApp.setDynamicRunConfig({'src': 'dynamic_a'})
-        a = self.smvApp.runModule(self.modUrn)[0]
+        a = self.df(self.modFqn)
         self.should_be_same(self.createDF('src:String', 'dynamic_a'), a)
 
     def test_use_without_requiresConfig_should_error_out(self):
-        with self.assertRaisesRegexp(Py4JJavaError, "RunConfig key .* was not specified"):
+        with self.assertRaisesRegexp(SmvRuntimeError, "RunConfig key .* was not specified"):
             self.df("stage.modules.RunConfWithError")

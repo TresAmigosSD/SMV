@@ -35,8 +35,11 @@ from smv.error import SmvRuntimeError, SmvDqmValidationError
 import smv.helpers
 from smv.utils import FileObjInputStream
 from smv.runinfo import SmvRunInfoCollector
+from smv.modulesvisitor import ModulesVisitor
 from smv.smvmodulerunner import SmvModuleRunner
 from smv.smvconfig import SmvConfig
+from smv.smviostrategy import SmvJsonOnHdfsIoStrategy
+from smv.smvmetadata import SmvMetaHistory
 from py4j.protocol import Py4JJavaError
 
 class SmvApp(object):
@@ -288,30 +291,31 @@ class SmvApp(object):
         """
         return SmvAppInfo(self).create_graph_json()
 
-    def getModuleResult(self, urn, forceRun=False, version=None):
+    def getModuleResult(self, urn, forceRun=False):
         """Run module and get its result, which may not be a DataFrame
         """
         fqn = urn[urn.find(":")+1:]
         ds = self.repoFactory.createRepo().loadDataSet(fqn)
-        df, collector = self.runModule(urn, forceRun, version)
+        df, collector = self.runModule(urn, forceRun)
         return ds.df2result(df)
 
     def load_single_ds(self, urn):
         """Return j_ds from urn"""
         return self.dsm.load(urn)[0]
 
-    @exception_handling
-    def runModule(self, urn, forceRun=False, version=None, runConfig=None, quickRun=False):
-        """Runs either a Scala or a Python SmvModule by its Fully Qualified Name(fqn)
+    def _to_single_run_res(self, res):
+        """run and quick_run of SmvModuleRunner, returns (list(DF), SmvRunInfoCollector)
+            for a single module, convert to (DF, SmvRunInfoCollector)"""
+        (dfs, coll) = res
+        return (dfs[0], coll)
 
-        Use j_smvPyClient instead of j_smvApp directly so we don't
-        have to construct SmvRunCollector from the python side.
+    @exception_handling
+    def runModule(self, urn, forceRun=False, quickRun=False):
+        """Runs SmvModule by its Fully Qualified Name(fqn)
 
         Args:
             urn (str): The URN of a module
             forceRun (bool): True if the module should be forced to run even if it has persisted output. False otherwise.
-            version (str): The name of the published version to load from
-            runConfig (dict): runtime configuration to use when running the module
             quickRun (bool): skip computing dqm+metadata and persisting csv
 
         Example:
@@ -326,23 +330,20 @@ class SmvApp(object):
             - SmvRunInfoCollector contains additional information
               about the run, such as validation results.
         """
-        self.setDynamicRunConfig(runConfig)
-        collector = self._jvm.SmvRunInfoCollector()
-        j_ds = self.load_single_ds(urn)
-        if (forceRun):
-            self.j_smvPyClient.deleteModuleOutput(j_ds)
+        ds = self.dsm.load(urn)[0]
 
-        j_df = j_ds.rdd(forceRun, False, collector, quickRun)
-        return (DataFrame(j_df, self.sqlContext),
-                SmvRunInfoCollector(collector))
+        if (quickRun):
+            return self._to_single_run_res(SmvModuleRunner([ds], self).quick_run(forceRun))
+        else:
+            return self._to_single_run_res(SmvModuleRunner([ds], self).run(forceRun))
 
-    def runModule2(self, fqn):
+    def quickRunModule(self, fqn):
         urn = "mod:" + fqn
-        ds = self.dsm.load2(urn)[0]
-        return SmvModuleRunner([ds], self).run()[0]
+        ds = self.dsm.load(urn)[0]
+        return SmvModuleRunner([ds], self).quick_run()[0]
 
     @exception_handling
-    def runModuleByName(self, name, forceRun=False, version=None, runConfig=None, quickRun=False):
+    def runModuleByName(self, name, forceRun=False, quickRun=False):
         """Runs a SmvModule by its name (can be partial FQN)
 
         See the `runModule` method above
@@ -361,9 +362,9 @@ class SmvApp(object):
               about the run, such as validation results.
         """
         urn = self.dsm.inferUrn(name)
-        return self.runModule(urn, forceRun, version, runConfig, quickRun)
+        return self.runModule(urn, forceRun, quickRun)
 
-    def getRunInfo(self, urn, runConfig=None):
+    def getRunInfo(self, urn):
         """Returns the run information of a module and all its dependencies
         from the last run.
 
@@ -387,12 +388,10 @@ class SmvApp(object):
             SmvRunInfoCollector
 
         """
-        self.setDynamicRunConfig(runConfig)
-        j_ds = self.dsm.load(urn)[0]
-        java_result = self.j_smvApp.getRunInfo(j_ds)
-        return SmvRunInfoCollector(java_result)
+        ds = self.dsm.load(urn)[0]
+        return SmvModuleRunner([ds], self).get_runinfo()
 
-    def getRunInfoByPartialName(self, name, runConfig):
+    def getRunInfoByPartialName(self, name):
         """Returns the run information of a module and all its dependencies
         from the last run.
 
@@ -408,9 +407,6 @@ class SmvApp(object):
 
         Args:
             name (str): unique suffix to fqn of target module
-            runConfig (dict): runConfig to apply when collecting info. If module
-                              was run with a config, the same config needs to be
-                              specified here to retrieve the info.
 
         Returns:
             SmvRunInfoCollector
@@ -419,22 +415,22 @@ class SmvApp(object):
         return self.getRunInfo(urn)
 
     @exception_handling
-    def publishModuleToHiveByName(self, name, runConfig=None):
+    def publishModuleToHiveByName(self, name):
         """Publish an SmvModule to Hive by its name (can be partial FQN)
         """
-        self.setDynamicRunConfig(runConfig)
-        collector = self._jvm.SmvRunInfoCollector()
-        return self.dsm.inferDS(name)[0].exportToHive(collector)
+        urn = self.dsm.inferUrn(name)
+        ds = self.load_single_ds(urn)
+        return SmvModuleRunner([ds], self).publish_to_hive()
 
     def getMetadataJson(self, urn):
         """Returns the metadata for a given urn"""
-        j_ds = self.load_single_ds(urn)
-        return j_ds.getMetadata().toJson()
+        ds = self.load_single_ds(urn)
+        return ds.get_metadata().toJson()
 
     def getMetadataHistoryJson(self, urn):
         """Returns the metadata history for a given urn"""
-        j_ds = self.load_single_ds(urn)
-        return j_ds.getMetadataHistory().toJson()
+        ds = self.load_single_ds(urn)
+        return self._read_meta_hist(ds).toJson()
 
     def getDsHash(self, name, runConfig):
         """The current hashOfHash for the named module as a hex string
@@ -449,7 +445,7 @@ class SmvApp(object):
                 (str): The hashOfHash of the named module
         """
         self.setDynamicRunConfig(runConfig)
-        return self.dsm.inferDS(name)[0].verHex()
+        return self.dsm.inferDS(name)[0].ver_hex()
 
     def copyToHdfs(self, fileobj, destination):
         """Copies the content of a file object to an HDFS location.
@@ -468,7 +464,10 @@ class SmvApp(object):
 
     def getStageFromModuleFqn(self, fqn):
         """Returns the stage name for a given fqn"""
-        return self._jvm.org.tresamigos.smv.ModURN(fqn).getStage().get()
+        res = [s for s in self.stages() if fqn.startswith(s + ".")]
+        if (len(res) == 0):
+            raise SmvRuntimeError("Can't find {} from stages {}".format(fqn, ", ".join(self.stages())))
+        return res[0]
 
     def outputDir(self):
         return self.all_data_dirs().outputDir
@@ -526,34 +525,33 @@ class SmvApp(object):
             # added to the sys.path
             pass
 
+    def _hist_io_strategy(self, m):
+        """Meta history is managed by smvapp and smvmodulerunner, module
+            instances does not need to know it"""
+        hist_dir = self.all_data_dirs().historyDir
+        hist_path = "{}/{}.hist".format(hist_dir, m.fqn())
+        return SmvJsonOnHdfsIoStrategy(self, hist_path)
+
+    def _read_meta_hist(self, m):
+        io_strategy = self._hist_io_strategy(m)
+        try:
+            hist_json = io_strategy.read()
+            hist = SmvMetaHistory().fromJson(hist_json)
+        except:
+            hist = SmvMetaHistory()
+        return hist
 
     def _purge_old_output_files(self):
         if (self.cmd_line.purgeOldOutput):
-            valid_files_in_output_dir = [
-                self._jvm.SmvHDFS.baseName(f) 
-                for m in self.dsm.allDataSets() 
-                for f in scala_seq_to_list(self._jvm, m.allOutputFiles())
-            ]
-            res = self._jvm.SmvPythonHelper.purgeDirectory(
-                self.all_data_dirs().outputDir, 
-                smv_copy_array(self.sc, valid_files_in_output_dir)
-            )
-            for r in scala_seq_to_list(self._jvm, res):
-                if (r.success()):
-                    print("... Deleted {}".format(r.fn()))
-                else:
-                    print("... Unable to delete {}".format(r.fn()))
+            SmvModuleRunner(self.dsm.allDataSets(), self).purge_old_but_keep_new_persisted()
     
     def _modules_with_ancestors(self, mods):
-        ancestors = [a for m in mods for a in scala_seq_to_list(self._jvm, m.ancestors())]
-        ancestors.extend(mods)
-        return ancestors
+        visitor = ModulesVisitor(mods)
+        return visitor.queue
 
     def _purge_current_output_files(self, mods):
         if(self.cmd_line.forceRunAll):
-            ancestors = self._modules_with_ancestors(mods)
-            for m in set(ancestors):
-                self.j_smvPyClient.deleteModuleOutput(m)
+            SmvModuleRunner(mods, self).purge_persisted()
         
     def _dry_run(self, mods):
         """Execute as dry-run if the dry-run flag is specified.
@@ -604,52 +602,39 @@ class SmvApp(object):
 
         return self.dsm.modulesToRun(modPartialNames, stageNames, self.cmd_line.runAllApp)
 
-    def _module_rdd(self, m, collector):
-        return m.rdd(
-            False, # force_run
-            self.cmd_line.genEdd,
-            collector,
-            False # quick run
-        )
 
-    def _publish_modules(self, mods, collector):
+    def _publish_modules(self, mods):
         if(self.cmd_line.publish):
-            for m in mods:
-                m.publish(collector)
+            SmvModuleRunner(mods, self).publish()
             return True
         else:
             return False
 
   
-    def _publish_modules_to_hive(self, mods, collector):
+    def _publish_modules_to_hive(self, mods):
         if(self.cmd_line.publishHive):
-            for m in mods:
-                m.exportToHive(collector)
+            SmvModuleRunner(mods, self).publish_to_hive()
             return True
         else:
             return False
 
-    def _publish_modules_through_jdbc(self, mods, collector):
+    def _publish_modules_through_jdbc(self, mods):
         if(self.cmd_line.publishJDBC):
-            for m in mods:
-                m.publishThroughJDBC(collector)
+            SmvModuleRunner(mods, self).publish_to_jdbc()
             return True
         else:
             return False
 
-    def _publish_modules_locally(self, mods, collector):
+    def _publish_modules_locally(self, mods):
         if(self.cmd_line.exportCsv):
             local_dir = self.cmd_line.exportCsv
-            for m in mods:
-                csv_path = "{}/{}".format(local_dir, m.versionedFqn())
-                self._module_rdd(m, collector).smvExportCsv(csv_path)
+            SmvModuleRunner(mods, self).publish_local(local_dir)
             return True
         else:
             return False
 
-    def _generate_output_modules(self, mods, collector):
-        for m in mods:
-            self._module_rdd(m, collector)
+    def _generate_output_modules(self, mods):
+        SmvModuleRunner(mods, self).run()
         return len(mods) > 0
 
     def run(self):
@@ -664,14 +649,13 @@ class SmvApp(object):
             print("\n".join([m.fqn() for m in mods]))
             print("----------------------")
 
-        collector = self._jvm.SmvRunInfoCollector()
 
         #either generate graphs, publish modules, or run output modules (only one will occur)
         self._print_dead_modules() \
         or self._dry_run(mods) \
         or self._generate_dot_graph() \
-        or self._publish_modules_to_hive(mods, collector) \
-        or self._publish_modules(mods, collector) \
-        or self._publish_modules_through_jdbc(mods, collector)  \
-        or self._publish_modules_locally(mods, collector) \
-        or self._generate_output_modules(mods, collector)
+        or self._publish_modules_to_hive(mods) \
+        or self._publish_modules(mods) \
+        or self._publish_modules_through_jdbc(mods)  \
+        or self._publish_modules_locally(mods) \
+        or self._generate_output_modules(mods)

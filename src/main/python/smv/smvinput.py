@@ -113,9 +113,7 @@ class SmvInputBase(SmvDataSet, ABC):
             readerLogger = self.smvApp._jvm.SmvPythonHelper.getTerminateParserLogger()
         else:
             readerLogger = validator.createParserValidator()
-        result = self.run(self.readAsDF(readerLogger))
-        self.assert_result_is_dataframe(result)
-        return result._jdf
+        return self.run(self.readAsDF(readerLogger))
 
 
 class SmvInputFromFile(SmvInputBase):

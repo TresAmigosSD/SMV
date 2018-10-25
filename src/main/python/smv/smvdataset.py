@@ -124,13 +124,13 @@ class SmvDataSet(ABC):
 
     # For #1417, python side resolving (not used yet)
     def resolve(self, resolver):
-        self.resolvedRequiresDS = resolver.loadDataSet([ds.fqn() for ds in self.requiresDS()])
+        self.resolvedRequiresDS = resolver.loadDataSet([ds.fqn() for ds in self.dependencies()])
         return self
 
     ####################################################################################
     # Will eventually move to the SmvGenericModule base class
     ####################################################################################
-    def rdd(self, urn2df, run_set):
+    def rdd(self, urn2df, run_set, forceRun, is_quick_run):
         """create or get df from smvApp level cache
             Args:
                 urn2df({str:DataFrame}) already run modules current module may depends
@@ -138,9 +138,9 @@ class SmvDataSet(ABC):
 
             urn2df will be appended, and run_set will shrink
         """
-        if (self.versioned_fqn not in self.smvApp.df_cache):
+        if (forceRun or (self.versioned_fqn not in self.smvApp.df_cache)):
             self.smvApp.df_cache.update(
-                {self.versioned_fqn:self.computeDataFrame(urn2df, run_set)}
+                {self.versioned_fqn:self.computeDataFrame(urn2df, run_set, is_quick_run)}
             )
         else:
             run_set.discard(self)
@@ -148,16 +148,22 @@ class SmvDataSet(ABC):
         urn2df.update({self.urn(): res})
         self.df = res
 
-    def computeDataFrame(self, urn2df, run_set):
+    def computeDataFrame(self, urn2df, run_set, is_quick_run):
         self.smvApp.log.debug("compute: {}".format(self.urn()))
 
         if (self.isEphemeral()):
-            raw_df = self.doRun2(urn2df)
+            raw_df = self.doRun(self.dqmValidator, urn2df)
             return self.pre_action(raw_df)
+        elif(is_quick_run):
+            _strategy = self.persistStrategy()
+            if (not _strategy.isPersisted()):
+                return self.doRun(self.dqmValidator, urn2df)
+            else:
+                return self.unPersistData()
         else:
             _strategy = self.persistStrategy()
             if (not _strategy.isPersisted()):
-                raw_df = self.doRun2(urn2df)
+                raw_df = self.doRun(self.dqmValidator, urn2df)
                 df = self.pre_action(raw_df)
                 (res, self.persistingTimeElapsed) = self._do_action_on_df(
                     _strategy.write, df, "RUN & PERSIST OUTPUT")
@@ -174,6 +180,10 @@ class SmvDataSet(ABC):
             self.module_meta.addSystemMeta(self)
             (user_meta, self.userMetadataTimeElapsed) = self._do_action_on_df(
                 self.metadata, self.df, "GENERATE USER METADATA")
+
+            if not isinstance(user_meta, dict):
+                raise SmvRuntimeError("User metadata {} is not a dict".format(repr(user_meta)))
+
             self.module_meta.addUserMeta(user_meta)
             if (self.had_action()):
                 self.smvApp.log.debug("{} metadata had an action".format(self.fqn()))
@@ -183,21 +193,32 @@ class SmvDataSet(ABC):
             run_set.discard(self)
 
     def force_an_action(self, df):
+        # Since optimization can be done on a DF actions like count, we have to convert DF
+        # to RDD and than apply an action, otherwise fix count will be always zero
         (n, self.dqmTimeElapsed) = self._do_action_on_df(
-            lambda d: d.count(), df, "FORCE AN ACTION FOR DQM")
+            lambda d: d.rdd.count(), df, "FORCE AN ACTION FOR DQM")
+
+    def finalize_meta(self):
+        # Need to add duration at the very end, just before persist
+        self.module_meta.addDuration("persisting", self.persistingTimeElapsed)
+        self.module_meta.addDuration("metadata", self.userMetadataTimeElapsed)
+        self.module_meta.addDuration("dqm", self.dqmTimeElapsed)
 
     def persist_meta(self):
-        persisted = self.metaStrategy().isPersisted()
+        meta_json = self.module_meta.toJson()
+        self.metaStrategy().write(meta_json)
+
+    def get_metadata(self):
+        """Return the best meta without run. If persisted, use it, otherwise
+            add info up to resolved DS"""
+        io_strategy = self.metaStrategy()
+        persisted = io_strategy.isPersisted()
         if (not persisted):
-            # Need to add duration at the very end, just before persist
-            self.module_meta.addDuration("persisting", self.persistingTimeElapsed)
-            self.module_meta.addDuration("metadata", self.userMetadataTimeElapsed)
-            self.module_meta.addDuration("dqm", self.dqmTimeElapsed)
-            meta_json = self.module_meta.toJson()
-            self.metaStrategy().write(meta_json)
+            self.module_meta.addSystemMeta(self)
+            return self.module_meta
         else:
-            self.module_meta = self.metaStrategy().read()
-        return persisted
+            meta_json = io_strategy.read()
+            return SmvMetaData().fromJson(meta_json)
 
     def force_post_action(self, run_set):
         if (self in run_set):
@@ -233,12 +254,6 @@ class SmvDataSet(ABC):
         log.info("RunTime: {}".format(duration))
 
         return (res, secondsElapsed)
-
-    # Make this not an abstract since not all concrete class has this
-    #@abc.abstractmethod
-    def doRun2(self, known):
-        """Compute this dataset, and return the dataframe"""
-        pass
 
     def dataset_hash(self): 
         """current module's hash value, depend on code and potentially 
@@ -303,6 +318,9 @@ class SmvDataSet(ABC):
 
     def needsToRun(self):
         if (self.isEphemeral()):
+            for m in self.resolvedRequiresDS:
+                if m.needsToRun():
+                    return True
             return False
         else:
             return not self.persistStrategy().isPersisted()
@@ -716,7 +734,7 @@ class SmvModule(SmvDataSet):
             if not hasattr(ds, 'urn'):
                 raise TypeError('Argument to RunParams must be an SmvDataSet')
             else:
-                return self.urn2df[ds.urn()]
+                return ds.df2result(self.urn2df[ds.urn()])
 
     def __init__(self, smvApp):
         super(SmvModule, self).__init__(smvApp)
@@ -742,28 +760,7 @@ class SmvModule(SmvDataSet):
                 (DataFrame): ouput of this SmvModule
         """
 
-    def _constructRunParams(self, urn2df):
-        """Given dict from urn to DataFrame, construct RunParams for module
-
-            A given module's result may not actually be a DataFrame. For each
-            dependency, apply its df2result method to its DataFrame to get its
-            actual result. Construct RunParams from the resulting dict.
-        """
-        urn2res = {}
-        for dep in self.dependencies():
-            jdf = urn2df[dep.urn()]
-            df = DataFrame(jdf, self.smvApp.sqlContext)
-            urn2res[dep.urn()] = dep.df2result(df)
-        i = self.RunParams(urn2res)
-        return i
-
     def doRun(self, validator, known):
-        i = self._constructRunParams(known)
-        result = self.run(i)
-        self.assert_result_is_dataframe(result)
-        return result._jdf
-
-    def doRun2(self, known):
         i = self.RunParams(known)
         return self.run(i)
 
@@ -864,10 +861,10 @@ class SmvResultModule(SmvModule):
         """
 
     def doRun(self, validator, known):
-        i = self._constructRunParams(known)
+        i = self.RunParams(known)
         res_obj = self.run(i)
         result = self.result2df(self.smvApp, res_obj)
-        return result._jdf
+        return result
 
 
 class SmvModel(SmvResultModule):
@@ -909,11 +906,9 @@ class SmvModelExec(SmvModule):
         """
 
     def doRun(self, validator, known):
-        i = self._constructRunParams(known)
+        i = self.RunParams(known)
         model = i[self.requiresModel()]
-        result = self.run(i, model)
-        self.assert_result_is_dataframe(result)
-        return result._jdf
+        return self.run(i, model)
 
     @abc.abstractmethod
     def run(self, i, model):

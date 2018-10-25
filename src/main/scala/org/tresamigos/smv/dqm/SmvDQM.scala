@@ -182,8 +182,7 @@ class DQMValidator(dqm: SmvDQM) {
   }
 
   private[smv] def totalRecords(): Long = {
-    val snapshot = dqmState.snapshot()
-    snapshot.totalRecords
+    dqmState.getRecCountNotConcluded()
   }
 
   /**

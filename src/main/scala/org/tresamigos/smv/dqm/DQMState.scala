@@ -105,6 +105,10 @@ class DQMState(
     _my_snapshot
   }
 
+  def getRecCountNotConcluded(): Long = {
+    recordCounter.value
+  }
+
   /** get the overall record count */
   def getRecCount(): Long = {
     require(concluded)

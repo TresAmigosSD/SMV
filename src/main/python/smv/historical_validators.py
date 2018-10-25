@@ -27,8 +27,8 @@ def SmvHistoricalValidators(*validators):
         for v in validators:
             # extract the current/historical metadata for this validator
             k = v._key()
-            v_cur_metadata = cur_metadata.get(k)
-            v_hist_metadata = [m[k] for m in hist_metadata if m.get(k)]
+            v_cur_metadata = cur_metadata['_userMetadata'].get(k)
+            v_hist_metadata = [m['_userMetadata'][k] for m in hist_metadata if m['_userMetadata'].get(k)]
 
             v_res = v.validateMetadata(v_cur_metadata, v_hist_metadata)
             if v_res != None:

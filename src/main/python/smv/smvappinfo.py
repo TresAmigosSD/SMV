@@ -30,7 +30,7 @@ class SmvAppInfo(object):
     def _graph(self):
         """Build graph with nodes:list(SmvDataSet) and edges:list((SmvDataSet, SmvDataSet))
         """
-        nodes = self.dsm.allDataSets2()
+        nodes = self.dsm.allDataSets()
         edges = []
         for ds in nodes:
             from_ds = ds.resolvedRequiresDS
@@ -141,7 +141,7 @@ class SmvAppInfo(object):
 
     def _dead_nodes(self):
         """return all the dead nodes"""
-        nodes = self.dsm.allDataSets2()
+        nodes = self.dsm.allDataSets()
         outputs = [n for n in nodes if n.isSmvOutput()]
         in_flow = set([n for o in outputs for n in self._ds_ancestors(o)])
         return [n for n in nodes if n not in in_flow and n not in outputs]
@@ -192,7 +192,7 @@ class SmvAppInfo(object):
 
     def ls(self, stage=None):
         """List all modules, under their stages"""
-        return self._ls(stage, self.dsm.allDataSets2())
+        return self._ls(stage, self.dsm.allDataSets())
 
     def ls_dead(self, stage=None):
         """List all dead modules, under their stages"""
@@ -200,12 +200,12 @@ class SmvAppInfo(object):
 
     def ls_ancestors(self, mname):
         """List given module's ancestors, under their stages"""
-        m = self.dsm.inferDS2(mname)[0]
+        m = self.dsm.inferDS(mname)[0]
         return self._ls(None, self._ds_ancestors(m))
 
     def ls_descendants(self, mname):
         """List given module's descendants, under their stages"""
-        m = self.dsm.inferDS2(mname)[0]
-        nodes = self.dsm.allDataSets2()
+        m = self.dsm.inferDS(mname)[0]
+        nodes = self.dsm.allDataSets()
         descendants = [n for n in nodes if m.fqn() in [a.fqn() for a in self._ds_ancestors(n)]]
         return self._ls(None, descendants)

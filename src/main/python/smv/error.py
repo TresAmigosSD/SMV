@@ -25,3 +25,6 @@ class SmvDqmValidationError(SmvRuntimeError):
     def __init__(self, dqmValidationResult):
         super(SmvDqmValidationError,self).__init__(json.dumps(dqmValidationResult))
         self.dqmValidationResult = dqmValidationResult
+
+class SmvMetadataValidationError(SmvRuntimeError):
+    pass

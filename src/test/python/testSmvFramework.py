@@ -19,7 +19,7 @@ from smv import *
 import smv.utils
 import smv.smvshell
 from smv.dqm import *
-from smv.error import SmvDqmValidationError, SmvRuntimeError
+from smv.error import SmvDqmValidationError, SmvMetadataValidationError, SmvRuntimeError
 
 import pyspark
 from pyspark.context import SparkContext
@@ -74,13 +74,13 @@ class SmvFrameworkTest(SmvBaseTest):
         # Module has both empty string and null value in string, should read back as the same
         fqn = "stage.modules.CsvStrWithNullData"
         df = self.df(fqn, True)
-        j_m = self.load(fqn)[0]
-        read_back = DataFrame(j_m.persistStgy().read().get(), df.sql_ctx)
+        m = self.load(fqn)[0]
+        read_back = m.persistStrategy().read()
         self.should_be_same(df, read_back)
 
     def test_cycle_dependency_error_out(self):
         fqn = "cycle.modules.CycleA"
-        with self.assertRaisesRegexp(Py4JJavaError, "Cycle found while resolving mod"):
+        with self.assertRaisesRegexp(SmvRuntimeError, "Cycle found while resolving"):
             df = self.df(fqn)
 
     def test_module_should_only_run_once(self):
@@ -124,7 +124,7 @@ class SmvNameErrorPropagationTest(SmvBaseTest):
 
     def test_module_NameError_propagation(self):
         fqn = "stage.modules.ModWithBadName"
-        with self.assertRaisesRegexp(Py4JJavaError, "NameError"):
+        with self.assertRaisesRegexp(NameError, "ModWhoseNameDoesntExist"):
             self.df(fqn)
 
 
@@ -135,7 +135,7 @@ class SmvSyntaxErrorPropagationTest(SmvBaseTest):
 
     def test_module_SyntaxError_propagation(self):
         fqn = "syntax_error_stage.modules.ModWithBadSyntax"
-        with self.assertRaisesRegexp(Py4JJavaError, "SyntaxError"):
+        with self.assertRaises(SyntaxError):
             self.df(fqn)
 
 # TODO: this should be moved into own file.
@@ -147,14 +147,14 @@ class SmvMetadataTest(SmvBaseTest):
     def test_metadata_includes_user_metadata(self):
         fqn = "metadata_stage.modules.ModWithUserMeta"
         self.df(fqn)
-        with open(self.tmpDataDir() + "/history/{}.hist/part-00000".format(fqn)) as f:
+        with open(self.tmpDataDir() + "/history/{}.hist".format(fqn)) as f:
             metadata_list = json.loads(f.read())
             metadata = metadata_list['history'][0]
         self.assertEqual(metadata['_userMetadata']['foo'], "bar")
 
     def test_metadata_validation_failure_causes_error(self):
         fqn = "metadata_stage.modules.ModWithFailingValidation"
-        with self.assertRaisesRegexp(Py4JJavaError, "SmvMetadataValidationError"):
+        with self.assertRaises(SmvMetadataValidationError):
             self.df(fqn)
 
     def test_invalid_metadata_rejected_gracefully(self):
@@ -186,32 +186,26 @@ class SmvNeedsToRunTest(SmvBaseTest):
         return ['--smv-props', 'smv.stages=stage']
 
     @classmethod
-    def deleteModuleOutput(cls, j_m):
-        cls.smvApp.j_smvPyClient.deleteModuleOutput(j_m)
+    def deleteModuleOutput(cls, m):
+        m.persistStrategy().remove()
+        m.metaStrategy().remove()
 
     def test_input_module_does_not_need_to_run(self):
         fqn = "stage.modules.CsvFile"
-        j_m = self.load(fqn)[0]
-        self.assertFalse(j_m.needsToRun())
+        m = self.load(fqn)[0]
+        self.assertFalse(m.needsToRun())
 
     def test_module_not_persisted_should_need_to_run(self):
         fqn = "stage.modules.NeedRunM1"
-        j_m = self.load(fqn)[0]
-        self.deleteModuleOutput(j_m)
-        self.assertTrue(j_m.needsToRun())
+        m = self.load(fqn)[0]
+        self.deleteModuleOutput(m)
+        self.assertTrue(m.needsToRun())
 
     def test_module_persisted_should_not_need_to_run(self):
         fqn = "stage.modules.NeedRunM1"
         # Need to force run, since the df might in cache while the persisted file get deleted
         self.df(fqn, forceRun=True)
         self.assertFalse(self.load(fqn)[0].needsToRun())
-
-    def test_module_depends_on_need_to_run_module_also_need_to_run(self):
-        fqn = "stage.modules.NeedRunM2"
-        fqn0 = "stage.modules.NeedRunM1"
-        self.df(fqn, True)
-        self.deleteModuleOutput(self.load(fqn0)[0]) # deleting persist files made M1 need to run
-        self.assertTrue(self.load(fqn)[0].needsToRun())
 
     def test_ephemeral_module_depends_on_not_need_to_run_also_not(self):
         fqn = "stage.modules.NeedRunM3"
@@ -232,6 +226,8 @@ class SmvPublishTest(SmvBaseTest):
          return [
              '--smv-props', 
              'smv.stages=stage',
+             '-m',
+             'stage.modules.CsvFile',
              '--publish',
              'v1'
          ]
@@ -240,8 +236,7 @@ class SmvPublishTest(SmvBaseTest):
          self.createTempInputFile("test3.csv", "col1\na\nb\n")
          self.createTempInputFile("test3.schema", "col1: String\n")
          fqn = "stage.modules.CsvFile"
-         j_m = self.load(fqn)[0]
-         j_m.publish(self.smvApp._jvm.SmvRunInfoCollector())
+         self.smvApp.run()
 
          # Read from the file
          res = smv.smvshell.openCsv(self.tmpDataDir() + "/publish/v1/" + fqn + ".csv")

@@ -12,6 +12,7 @@
 # limitations under the License.
 
 from datetime import datetime
+from smv.error import SmvRuntimeError
 
 class DataSetResolver:
     """DataSetResolver (DSR) is the entrypoint through which the DataSetMgr acquires
@@ -53,8 +54,8 @@ class DataSetResolver:
         """Return cached resolved version of given SmvDataSet if it exists, or resolve
             it otherwise.
         """
-        if (ds in self.resolveStack):
-            raise SmvRuntimeError("Cycle found while resolving {}: {}".format(ds.fqn(), ", ".join(self.resolveDataSet)))
+        if (ds.fqn() in self.resolveStack):
+            raise SmvRuntimeError("Cycle found while resolving {}: {}".format(ds.fqn(), ", ".join(self.resolveStack)))
         else:
             if (ds.fqn() in self.fqn2res):
                 return self.fqn2res.get(ds.fqn())
@@ -63,7 +64,7 @@ class DataSetResolver:
                 resolvedDs = ds.resolve(self)
                 resolvedDs.setTimestamp(self.transaction_time)
                 self.fqn2res.update({ds.fqn(): resolvedDs})
-                self.resolveStack = self.resolveStack[1:]
+                self.resolveStack.pop()
                 return resolvedDs
 
     

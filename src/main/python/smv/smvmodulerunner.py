@@ -14,6 +14,9 @@
 from smv.modulesvisitor import ModulesVisitor
 from smv.smviostrategy import SmvCsvOnHdfsIoStrategy, SmvJsonOnHdfsIoStrategy
 from smv.smvmetadata import SmvMetaHistory
+from smv.runinfo import SmvRunInfoCollector
+from smv.utils import scala_seq_to_list, is_string
+from smv.error import SmvRuntimeError, SmvMetadataValidationError
 
 class SmvModuleRunner(object):
     """Represent the run-transaction. Provides the single entry point to run
@@ -25,7 +28,7 @@ class SmvModuleRunner(object):
         self.log = smvApp.log
         self.visitor = ModulesVisitor(modules)
 
-    def run(self):
+    def run(self, forceRun=False):
         # a set of modules which need to run post_action, keep tracking 
         # to make sure post_action run one and only one time for each TX
         # the set will be updated by _create_df, _create_meta and _force_post
@@ -39,15 +42,31 @@ class SmvModuleRunner(object):
         # in the resolved instance
         known = {}
 
-        self._create_df(known, mods_to_run_post_action)
+        collector = SmvRunInfoCollector()
+
+        self._create_df(known, mods_to_run_post_action, forceRun)
 
         self._create_meta(mods_to_run_post_action)
 
         self._force_post(mods_to_run_post_action)
 
-        self._persist_meta()
+        self._validate_and_persist_meta(collector)
 
-        return [self._get_df_and_run_info(m) for m in self.roots]
+        dfs = [m.df for m in self.roots]
+        return (dfs, collector)
+
+    def quick_run(self, forceRun=False):
+        known = {}
+        self._create_df(known, set(), forceRun, is_quick_run=True)
+        return [m.df for m in self.roots]
+
+    def get_runinfo(self):
+        collector = SmvRunInfoCollector()
+        def add_to_coll(m, _collector):
+            hist = self.smvApp._read_meta_hist(m)
+            _collector.add_runinfo(m.fqn(), m.get_metadata(), hist)
+        self.visitor.dfs_visit(add_to_coll, collector)
+        return collector
 
     def publish(self, publish_dir=None):
         # run before publish
@@ -65,9 +84,9 @@ class SmvModuleRunner(object):
             publish_hist_path = publish_base_path + ".hist"
 
             SmvCsvOnHdfsIoStrategy(m.smvApp, m.fqn(), None, publish_csv_path).write(m.df)
-            SmvJsonOnHdfsIoStrategy(m.smvApp, publish_meta_path).write(m.module_meta)
-            hist = SmvJsonOnHdfsIoStrategy(m.smvApp, self.hist_path(m)).read()
-            SmvJsonOnHdfsIoStrategy(m.smvApp, publish_hist_path).write(hist)
+            SmvJsonOnHdfsIoStrategy(m.smvApp, publish_meta_path).write(m.module_meta.toJson())
+            hist = self.smvApp._read_meta_hist(m)
+            SmvJsonOnHdfsIoStrategy(m.smvApp, publish_hist_path).write(hist.toJson())
 
     def publish_to_hive(self):
         # run before publish
@@ -81,6 +100,13 @@ class SmvModuleRunner(object):
 
         for m in self.roots:
             m.publishThroughJDBC()
+
+    def publish_local(self, local_dir):
+        self.run()
+
+        for m in self.roots:
+            csv_path = "{}/{}".format(local_dir, m.versioned_fqn)
+            m.df.smvExportCsv(csv_path)
 
     def purge_persisted(self):
         def cleaner(m, state):
@@ -97,19 +123,26 @@ class SmvModuleRunner(object):
         self.visitor.dfs_visit(get_to_keep, keep)
         outdir = self.smvApp.all_data_dirs().outputDir
 
+        # since all file paths in keep are prefixed by outdir, remove it
         relative_paths = [i[len(outdir)+1:] for i in keep]
 
-        self.smvApp._jvm.SmvPythonHelper.purgeDirectory(
+        res = self.smvApp._jvm.SmvPythonHelper.purgeDirectory(
             outdir,
             relative_paths
         )
         
-    def _create_df(self, known, need_post):
+        for r in scala_seq_to_list(self.smvApp._jvm, res):
+            if (r.success()):
+                self.log.info("... Deleted {}".format(r.fn()))
+            else:
+                self.log.info("... Unable to delete {}".format(r.fn()))
+
+    def _create_df(self, known, need_post, forceRun=False, is_quick_run=False):
         # run module and create df. when persisting, post_action 
         # will run on current module and all upstream modules
         def runner(m, state):
             (urn2df, run_set) = state
-            m.rdd(urn2df, run_set)
+            m.rdd(urn2df, run_set, forceRun, is_quick_run)
         self.visitor.dfs_visit(runner, (known, need_post))
 
     def _create_meta(self, need_post):
@@ -134,27 +167,26 @@ class SmvModuleRunner(object):
             # also be calculated
             self.visitor.bfs_visit(force_run, need_post)
 
-    def hist_path(self, m):
-        hist_dir = self.smvApp.all_data_dirs().historyDir
-        return "{}/{}.hist".format(hist_dir, m.fqn())
-
-    def _persist_meta(self):
-        def write_meta(m, state):
-            persisted = m.persist_meta()
+    def _validate_and_persist_meta(self, collector):
+        def do_validation(m, _collector):
+            io_strategy = m.metaStrategy()
+            persisted = io_strategy.isPersisted()
+            # If persisted already, skip: validation, update hist, populate runinfo_collector
             if (not persisted):
-                io_strategy = SmvJsonOnHdfsIoStrategy(self.smvApp, self.hist_path(m))
-                try:
-                    hist_json = io_strategy.read()
-                    hist = SmvMetaHistory().fromJson(hist_json)
-                except:
-                    hist = SmvMetaHistory()
+                # Validate
+                m.finalize_meta()
+                hist = self.smvApp._read_meta_hist(m)
+                res = m.validateMetadata(m.module_meta, hist)
+                if res is not None and not is_string(res):
+                    raise SmvRuntimeError("Validation failure message {} is not a string".format(repr(res)))
+                if (is_string(res) and len(res) > 0):
+                    raise SmvMetadataValidationError(res)
+                # Persist Meta
+                m.persist_meta()
+                # Populate collector
+                _collector.add_runinfo(m.fqn(), m.module_meta, hist)
+                # Update meta history and persist
                 hist.update(m.module_meta, m.metadataHistorySize())
+                io_strategy = self.smvApp._hist_io_strategy(m)
                 io_strategy.write(hist.toJson())
-
-        self.visitor.dfs_visit(write_meta, None)
-
-    def _get_df_and_run_info(self, m):
-        df = m.df
-        meta = m.module_meta
-        meta_hist = SmvJsonOnHdfsIoStrategy(self.smvApp, self.hist_path(m)).read()
-        return (df, (meta, meta_hist))
+        self.visitor.dfs_visit(do_validation, collector)

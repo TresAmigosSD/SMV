@@ -47,22 +47,9 @@ class JdbcTest(SmvBaseTest):
         self.should_be_same(res2, df)
 
     def test_publish_to_jdbc(self):
-        fqn = "stage.modules.MyJdbcCsvString"
-        j_m = self.load(fqn)[0]
-        j_m.publishThroughJDBC(self.smvApp._jvm.SmvRunInfoCollector())
-        res = self.df(fqn)
-        readback = self.smvApp.sqlContext.read\
-            .format("jdbc")\
-            .option("url", self.url())\
-            .option("dbtable", "MyJdbcOutput")\
-            .load()
-
-        self.should_be_same(res, readback)
-
-    def test_publish_to_jdbc2(self):
         fqn = "stage.modules.MyJdbcModule"
-        m = self.load2(fqn)[0]
-        res = self.df2(fqn)
+        m = self.load(fqn)[0]
+        res = self.df(fqn)
         SmvModuleRunner([m], self.smvApp).publish_to_jdbc()
         readback = self.smvApp.sqlContext.read\
             .format("jdbc")\
