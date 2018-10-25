@@ -30,8 +30,8 @@ class HiveTest(SmvBaseTest):
 
 class PublishModuleToHiveTest2(HiveTest):
     def test_publish_to_hive2(self):
-        m = self.load2("stage.modules.M")[0]
-        df = self.df2("stage.modules.M")
+        m = self.load("stage.modules.M")[0]
+        df = self.df("stage.modules.M")
         SmvModuleRunner([m], self.smvApp).publish_to_hive()
         read_back = self.smvApp.sqlContext.sql("select * from " + "M")
         self.should_be_same(df, read_back)

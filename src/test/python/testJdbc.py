@@ -48,8 +48,8 @@ class JdbcTest(SmvBaseTest):
 
     def test_publish_to_jdbc(self):
         fqn = "stage.modules.MyJdbcModule"
-        m = self.load2(fqn)[0]
-        res = self.df2(fqn)
+        m = self.load(fqn)[0]
+        res = self.df(fqn)
         SmvModuleRunner([m], self.smvApp).publish_to_jdbc()
         readback = self.smvApp.sqlContext.read\
             .format("jdbc")\
