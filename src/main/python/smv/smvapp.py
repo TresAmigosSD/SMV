@@ -322,7 +322,6 @@ class SmvApp(object):
             - SmvRunInfoCollector contains additional information
               about the run, such as validation results.
         """
-        urn = "mod:" + fqn
         ds = self.dsm.load2(urn)[0]
         if (quickRun):
             return SmvModuleRunner([ds], self).quick_run(forceRun)[0]
