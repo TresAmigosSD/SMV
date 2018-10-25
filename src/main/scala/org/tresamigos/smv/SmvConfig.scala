@@ -28,14 +28,11 @@ import java.util.Collections
  **/
 class SmvConfig(
   var _appDir: String,
-  val genEdd: Boolean,
   var _mergedProps: java.util.Map[String, String],
   var _dataDirs: java.util.Map[String, String]
 ){
 
   /**For dynamic config to reset SmvConfig
-   * Since genEdd will only be passed in from command line, not part 
-   * of dynamic changes, no need to update
    **/
   def reset(
     _app_dir: String,
@@ -93,7 +90,6 @@ object SmvConfig {
    **/
   def defaultConf(dataDir: String) = new SmvConfig(
     ".",
-    false,
     Collections.emptyMap(),
     mapAsJavaMap(Map(
       "dataDir" -> dataDir,

@@ -35,7 +35,6 @@ import org.tresamigos.smv.util.Edd
  */
 class SmvApp(val smvConfig: SmvConfig, _spark: SparkSession) {
   val log         = LogManager.getLogger("smv")
-  val genEdd      = smvConfig.genEdd
 
   lazy val smvVersion  = {
     val smvHome = sys.env("SMV_HOME")
