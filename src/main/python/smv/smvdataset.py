@@ -124,7 +124,7 @@ class SmvDataSet(ABC):
 
     # For #1417, python side resolving (not used yet)
     def resolve(self, resolver):
-        self.resolvedRequiresDS = resolver.loadDataSet([ds.fqn() for ds in self.requiresDS()])
+        self.resolvedRequiresDS = resolver.loadDataSet([ds.fqn() for ds in self.dependencies()])
         return self
 
     ####################################################################################
@@ -205,14 +205,26 @@ class SmvDataSet(ABC):
         self.module_meta.addDuration("dqm", self.dqmTimeElapsed)
 
     def persist_meta(self):
-        persisted = self.metaStrategy().isPersisted()
+        io_strategy = self.metaStrategy()
+        persisted = io_strategy.isPersisted()
         if (not persisted):
             meta_json = self.module_meta.toJson()
-            self.metaStrategy().write(meta_json)
+            io_strategy.write(meta_json)
         else:
-            meta_json = self.metaStrategy().read()
+            meta_json = io_strategy.read()
             self.module_meta = SmvMetaData().fromJson(meta_json)
         return persisted
+
+    def get_metadata(self):
+        """Return the best meta without run. If persisted, use it, otherwise
+            whatever in the cache"""
+        io_strategy = self.metaStrategy()
+        persisted = io_strategy.isPersisted()
+        if (not persisted):
+            return self.module_meta
+        else:
+            meta_json = io_strategy.read()
+            return SmvMetaData().fromJson(meta_json)
 
     def force_post_action(self, run_set):
         if (self in run_set):
@@ -754,21 +766,6 @@ class SmvModule(SmvDataSet):
                 (DataFrame): ouput of this SmvModule
         """
 
-    def _constructRunParams(self, urn2df):
-        """Given dict from urn to DataFrame, construct RunParams for module
-
-            A given module's result may not actually be a DataFrame. For each
-            dependency, apply its df2result method to its DataFrame to get its
-            actual result. Construct RunParams from the resulting dict.
-        """
-        urn2res = {}
-        for dep in self.dependencies():
-            jdf = urn2df[dep.urn()]
-            df = DataFrame(jdf, self.smvApp.sqlContext)
-            urn2res[dep.urn()] = dep.df2result(df)
-        i = self.RunParams(urn2res)
-        return i
-
     def doRun(self, validator, known):
         i = self.RunParams(known)
         return self.run(i)
@@ -916,7 +913,8 @@ class SmvModelExec(SmvModule):
 
     def doRun(self, validator, known):
         i = self.RunParams(known)
-        model = i[self.requiresModel()]
+        pickled_df = i[self.requiresModel()]
+        model = self.requiresModel().df2result(pickled_df)
         return self.run(i, model)
 
     @abc.abstractmethod

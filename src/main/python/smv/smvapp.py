@@ -422,13 +422,13 @@ class SmvApp(object):
 
     def getMetadataJson(self, urn):
         """Returns the metadata for a given urn"""
-        j_ds = self.load_single_ds(urn)
-        return j_ds.getMetadata().toJson()
+        ds = self.load_single_ds(urn)
+        return ds.get_metadata().toJson()
 
     def getMetadataHistoryJson(self, urn):
         """Returns the metadata history for a given urn"""
-        j_ds = self.load_single_ds(urn)
-        return j_ds.getMetadataHistory().toJson()
+        ds = self.load_single_ds(urn)
+        return self._read_meta_hist(ds).toJson()
 
     def getDsHash(self, name, runConfig):
         """The current hashOfHash for the named module as a hex string
