@@ -14,6 +14,7 @@
 from smv.modulesvisitor import ModulesVisitor
 from smv.smviostrategy import SmvCsvOnHdfsIoStrategy, SmvJsonOnHdfsIoStrategy
 from smv.smvmetadata import SmvMetaHistory
+from smv.runinfo import SmvRunInfoCollector
 from smv.utils import scala_seq_to_list, is_string
 from smv.error import SmvRuntimeError, SmvMetadataValidationError
 
@@ -41,21 +42,31 @@ class SmvModuleRunner(object):
         # in the resolved instance
         known = {}
 
+        collector = SmvRunInfoCollector()
+
         self._create_df(known, mods_to_run_post_action, forceRun)
 
         self._create_meta(mods_to_run_post_action)
 
         self._force_post(mods_to_run_post_action)
 
-        self._validate_meta()
-        self._persist_meta()
+        self._validate_and_persist_meta(collector)
 
-        return [self._get_df_and_run_info(m) for m in self.roots]
+        dfs = [m.df for m in self.roots]
+        return (dfs, collector)
 
     def quick_run(self, forceRun=False):
         known = {}
         self._create_df(known, set(), forceRun, is_quick_run=True)
         return [m.df for m in self.roots]
+
+    def get_runinfo(self):
+        collector = SmvRunInfoCollector()
+        def add_to_coll(m, _collector):
+            hist = self.smvApp._read_meta_hist(m)
+            _collector.add_runinfo(m.fqn(), m.get_metadata(), hist)
+        self.visitor.dfs_visit(add_to_coll, collector)
+        return collector
 
     def publish(self, publish_dir=None):
         # run before publish
@@ -156,30 +167,26 @@ class SmvModuleRunner(object):
             # also be calculated
             self.visitor.bfs_visit(force_run, need_post)
 
-    def _validate_meta(self):
-        def do_validation(m, state):
-            m.finalize_meta()
-            hist = self.smvApp._read_meta_hist(m)
-            res = m.validateMetadata(m.module_meta, hist)
-            if res is not None and not is_string(res):
-                raise SmvRuntimeError("Validation failure message {} is not a string".format(repr(res)))
-            if (is_string(res) and len(res) > 0):
-                raise SmvMetadataValidationError(res)
-        self.visitor.dfs_visit(do_validation, None)
-
-    def _persist_meta(self):
-        def write_meta(m, state):
-            persisted = m.persist_meta()
+    def _validate_and_persist_meta(self, collector):
+        def do_validation(m, _collector):
+            io_strategy = m.metaStrategy()
+            persisted = io_strategy.isPersisted()
+            # If persisted already, skip: validation, update hist, populate runinfo_collector
             if (not persisted):
+                # Validate
+                m.finalize_meta()
                 hist = self.smvApp._read_meta_hist(m)
+                res = m.validateMetadata(m.module_meta, hist)
+                if res is not None and not is_string(res):
+                    raise SmvRuntimeError("Validation failure message {} is not a string".format(repr(res)))
+                if (is_string(res) and len(res) > 0):
+                    raise SmvMetadataValidationError(res)
+                # Persist Meta
+                m.persist_meta()
+                # Populate collector
+                _collector.add_runinfo(m.fqn(), m.module_meta, hist)
+                # Update meta history and persist
                 hist.update(m.module_meta, m.metadataHistorySize())
                 io_strategy = self.smvApp._hist_io_strategy(m)
                 io_strategy.write(hist.toJson())
-
-        self.visitor.dfs_visit(write_meta, None)
-
-    def _get_df_and_run_info(self, m):
-        df = m.df
-        meta = m.module_meta
-        meta_hist = self.smvApp._read_meta_hist(m)
-        return (df, (meta, meta_hist))
+        self.visitor.dfs_visit(do_validation, collector)

@@ -42,8 +42,9 @@ class SmvMetaData(object):
         self._metadata.update({'_timestamp': dt_str})
 
     def addSchemaMetadata(self, df):
-        columns = json.loads(df.schema.json())['fields']
-        self._metadata.update({'_columns': columns})
+        if (df is not None):
+            columns = json.loads(df.schema.json())['fields']
+            self._metadata.update({'_columns': columns})
 
     def addDependencyMetadata(self, deps):
         paths = [m.meta_path() for m in deps]

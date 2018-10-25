@@ -303,6 +303,12 @@ class SmvApp(object):
         """Return j_ds from urn"""
         return self.dsm.load(urn)[0]
 
+    def _to_single_run_res(self, res):
+        """run and quick_run of SmvModuleRunner, returns (list(DF), SmvRunInfoCollector)
+            for a single module, convert to (DF, SmvRunInfoCollector)"""
+        (dfs, coll) = res
+        return (dfs[0], coll)
+
     @exception_handling
     def runModule(self, urn, forceRun=False, quickRun=False):
         """Runs SmvModule by its Fully Qualified Name(fqn)
@@ -325,15 +331,16 @@ class SmvApp(object):
               about the run, such as validation results.
         """
         ds = self.dsm.load(urn)[0]
+
         if (quickRun):
-            return SmvModuleRunner([ds], self).quick_run(forceRun)[0]
+            return self._to_single_run_res(SmvModuleRunner([ds], self).quick_run(forceRun))
         else:
-            return SmvModuleRunner([ds], self).run(forceRun)[0]
+            return self._to_single_run_res(SmvModuleRunner([ds], self).run(forceRun))
 
     def quickRunModule(self, fqn):
         urn = "mod:" + fqn
         ds = self.dsm.load(urn)[0]
-        return SmvModuleRunner([ds], self).quick_run()[0]
+        return self._to_single_run_res(SmvModuleRunner([ds], self).quick_run())
 
     @exception_handling
     def runModuleByName(self, name, forceRun=False, quickRun=False):
@@ -357,7 +364,7 @@ class SmvApp(object):
         urn = self.dsm.inferUrn(name)
         return self.runModule(urn, forceRun, quickRun)
 
-    def getRunInfo(self, urn, runConfig=None):
+    def getRunInfo(self, urn):
         """Returns the run information of a module and all its dependencies
         from the last run.
 
@@ -381,12 +388,10 @@ class SmvApp(object):
             SmvRunInfoCollector
 
         """
-        self.setDynamicRunConfig(runConfig)
-        j_ds = self.dsm.load(urn)[0]
-        java_result = self.j_smvApp.getRunInfo(j_ds)
-        return SmvRunInfoCollector(java_result)
+        ds = self.dsm.load(urn)[0]
+        return SmvModuleRunner([ds], self).get_runinfo()
 
-    def getRunInfoByPartialName(self, name, runConfig):
+    def getRunInfoByPartialName(self, name):
         """Returns the run information of a module and all its dependencies
         from the last run.
 
@@ -402,9 +407,6 @@ class SmvApp(object):
 
         Args:
             name (str): unique suffix to fqn of target module
-            runConfig (dict): runConfig to apply when collecting info. If module
-                              was run with a config, the same config needs to be
-                              specified here to retrieve the info.
 
         Returns:
             SmvRunInfoCollector

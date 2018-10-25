@@ -18,21 +18,36 @@ Todo:
 """
 import json
 from pprint import pformat
+from smv.utils import infer_full_name_from_part
 
+
+class SmvRunInfo(object):
+    """collection of a module's running info with:
+    
+        - metadata
+        - metahistory
+    """
+    def __init__(self, meta, metahist):
+        self.metadata = meta
+        self.metadata_history = metahist
 
 class SmvRunInfoCollector(object):
-    """Python wrapper to its counterpart on the Scala side
-
-    Example:
-        df, coll = smvApp.runModule(...)
-        coll.ds_names  # returns
+    """A list of SmvRunInfos from a run transaction, and methods
+        to help reporting on them
     """
-    def __init__(self, jcollector):
-        self.jcollector = jcollector
+    def __init__(self):
+        self.runinfos = {}
+
+    def add_runinfo(self, fqn, meta, meta_hist):
+        self.runinfos.update({fqn: SmvRunInfo(meta, meta_hist)})
 
     def fqns(self):
         """Returns a list of FQNs for all datasets that ran"""
-        return self.jcollector.dsFqnsAsJava()
+        return [fqn for fqn in self.runinfos]
+
+    def _infer_fqn(self, ds_name):
+        """ds_name for user to use could be partial name, infer full fqn from partial name"""
+        return infer_full_name_from_part(self.fqns(), ds_name)
 
     def dqm_validation(self, ds_name):
         """Returns the DQM validation result for a given dataset
@@ -49,7 +64,7 @@ class SmvRunInfoCollector(object):
         metadata = self.metadata(ds_name)
         if (not metadata):
             return {}
-        return metadata["_validation"]
+        return metadata["_dqmValidation"]
 
     def dqm_state(self, ds_name):
         """Returns the DQM state for a given dataset
@@ -69,45 +84,14 @@ class SmvRunInfoCollector(object):
         return {}
 
     def metadata(self, ds_name):
-        """Returns the metadata for a given dataset
-
-        Returns:
-            A dictionary representation of the metadata
-
-        Raises:
-            py4j.protocol.Py4JError: if there is java call error or
-                there is no metadata for the specified dataset
-                (e.g. caused by a typo in the name)
-
+        """Returns the metadata for a given dataset as a dict
         """
-        java_result = self.jcollector.getMetadata(ds_name)
-        if java_result is None:
-            return {}
-        return json.loads(java_result.toJson())
+        return self.runinfos.get(self._infer_fqn(ds_name)).metadata._metadata
 
     def metadata_history(self, ds_name):
-        """Returns the metadata history for a given dataset
-
-        Returns:
-            A list of metadata dictionaries in reverse chronological order
-
-        Raises:
-            py4j.protocol.Py4JError: if there is java call error or
-                there is no metadata for the specified dataset
-                (e.g. caused by a typo in the name)
-
+        """Returns the metadata history for a given dataset as a list(dict)
         """
-        java_result = self.jcollector.getMetadataHistory(ds_name)
-        if java_result is None:
-            return {}
-        # note that the json is an object with the structure
-        # {
-        #   "history": [
-        #     {...},
-        #     ...
-        #   ]
-        # }
-        return json.loads(java_result.toJson())['history']
+        return self.runinfos.get(self._infer_fqn(ds_name)).metadata_history._hist_list
 
     def show_report(self, ds_name=None, show_history=False):
         """Print detailed report of information collected
@@ -119,7 +103,7 @@ class SmvRunInfoCollector(object):
         if ds_name is None:
             fqns = self.fqns()
         else:
-            fqns = [self.jcollector.inferFqn(ds_name)]
+            fqns = [self._infer_fqn(ds_name)]
         msg = 'datasets: %s' % fqns
 
         def items_to_report(fqn):
@@ -127,7 +111,7 @@ class SmvRunInfoCollector(object):
             metadata = self.metadata(fqn)
             # Remove validation results from metadata (if they exist) as we are reporting it above
             try:
-                del metadata['_validation']
+                del metadata['_dqmValidation']
             except:
                 pass
 

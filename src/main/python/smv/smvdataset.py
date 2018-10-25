@@ -205,22 +205,16 @@ class SmvDataSet(ABC):
         self.module_meta.addDuration("dqm", self.dqmTimeElapsed)
 
     def persist_meta(self):
-        io_strategy = self.metaStrategy()
-        persisted = io_strategy.isPersisted()
-        if (not persisted):
-            meta_json = self.module_meta.toJson()
-            io_strategy.write(meta_json)
-        else:
-            meta_json = io_strategy.read()
-            self.module_meta = SmvMetaData().fromJson(meta_json)
-        return persisted
+        meta_json = self.module_meta.toJson()
+        self.metaStrategy().write(meta_json)
 
     def get_metadata(self):
         """Return the best meta without run. If persisted, use it, otherwise
-            whatever in the cache"""
+            add info up to resolved DS"""
         io_strategy = self.metaStrategy()
         persisted = io_strategy.isPersisted()
         if (not persisted):
+            self.module_meta.addSystemMeta(self)
             return self.module_meta
         else:
             meta_json = io_strategy.read()
