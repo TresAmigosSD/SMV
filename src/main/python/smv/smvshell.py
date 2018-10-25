@@ -49,7 +49,7 @@ def props():
     """
     return SmvApp.getInstance().getCurrentProperties()
 
-def dshash(name, runConfig=None):
+def dshash(name):
     """The current hashOfHash for the named module as a hex string
 
         Args:
@@ -61,9 +61,9 @@ def dshash(name, runConfig=None):
         Returns:
             (int): The hashOfHash of the named module
     """
-    return SmvApp.getInstance().getDsHash(name, runConfig)
+    return SmvApp.getInstance().getDsHash(name)
 
-def getModel(name, forceRun = False, version = None):
+def getModel(name, forceRun = False):
     """Get the result of running the named SmvModel module
 
         Args:
@@ -76,7 +76,7 @@ def getModel(name, forceRun = False, version = None):
     """
     app = SmvApp.getInstance()
     urn = app.inferUrn(name)
-    return app.getModuleResult(urn, forceRun, version)
+    return app.getModuleResult(urn, forceRun)
 
 def openHive(tableName):
     """Read in a Hive table as a DataFrame
