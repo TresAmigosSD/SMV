@@ -29,10 +29,6 @@ class DataSetRepoFactory(object):
     def createRepo(self):
         return DataSetRepo(self.smvApp)
 
-    class Java:
-        implements = ['org.tresamigos.smv.IDataSetRepoFactoryPy4J']
-
-
 class DataSetRepo(object):
     def __init__(self, smvApp):
         self.smvApp = smvApp

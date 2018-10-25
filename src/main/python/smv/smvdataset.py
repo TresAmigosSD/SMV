@@ -449,13 +449,6 @@ class SmvDataSet(ABC):
     def doRun(self, validator, known):
         """Compute this dataset, and return the dataframe"""
 
-    def assert_result_is_dataframe(self, result):
-        if not isinstance(result, DataFrame):
-            raise SmvRuntimeError(
-                self.fqn() + " produced " +
-                type(result).__name__ + " in place of a DataFrame"
-            )
-
     def version(self):
         """Version number
 

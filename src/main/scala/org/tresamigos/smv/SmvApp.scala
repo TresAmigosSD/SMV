@@ -64,25 +64,6 @@ class SmvApp(val smvConfig: SmvConfig, _spark: SparkSession) {
   // Since OldVersionHelper will be used by executors, need to inject the version from the driver
   OldVersionHelper.version = sc.version
 
-  def getRunInfo(ds: SmvDataSet): SmvRunInfoCollector = 
-    _getRunInfo(ds)
-
-  /**
-   * Returns the run information for a given dataset and all its
-   * dependencies (including transitive dependencies), from the last run
-   */
-  private def _getRunInfo(ds: SmvDataSet,
-    coll: SmvRunInfoCollector=new SmvRunInfoCollector()): SmvRunInfoCollector = {
-    // get fqn from urn, because if ds is a link we want the fqn of its target
-    coll.addRunInfo(ds.fqn, ds.runInfo)
-
-    ds.resolvedRequiresDS foreach { dep =>
-      _getRunInfo(dep, coll)
-    }
-
-    coll
-  }
-
   /**
    * Perform an action and log the amount of time it took
    */
