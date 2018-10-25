@@ -89,10 +89,10 @@ The `run` method of a module defines the operations needed to get the output bas
       return df2
 ```
 
-Now remove the old output and run the module again with
+Now run the module again with
 
 ```shell
-smv-run --purge-old-output --run-app
+smv-run --run-app
 ```
 (make sure you run this from the from the root of the project)
 

@@ -83,40 +83,6 @@ class SmvAppForceAllTest(RunCmdLineBaseTest):
     def test_should_force_run(self):
         self.smvApp.run()
     
-class SmvAppPurgeTest(SmvBaseTest):
-    @classmethod
-    def smvAppInitArgs(cls):
-        return ['--smv-props', 'smv.stages=runstage.stage1',
-            '-m', 'modules.A',
-            '--purge-old-output']
-
-    def tmpOutputDir(self):
-        return self.tmpDataDir() + "/output"
-
-    def createTempOutputFile(self, baseName, fileContents = "xxx"):
-        """create a temp file in the input data dir with the given contents"""
-        import os
-        fullPath = self.tmpOutputDir() + "/" + baseName
-        directory = os.path.dirname(fullPath)
-        if not os.path.exists(directory):
-            os.makedirs(directory)
-
-        f = open(fullPath, "w")
-        f.write(fileContents)
-        f.close()
-
-    def test_old_persisted_data_should_be_removed(self):
-        import os
-        # create some dummy old persisted data files
-        self.createTempOutputFile("runstage.stage1.modules.A_111.csv")
-
-        self.smvApp.run()
-        self.assertNotIn(
-            "runstage.stage1.modules.A_111.csv", 
-            os.listdir(self.tmpOutputDir())
-        )
-
-
 class CreateDot(RunCmdLineBaseTest):
     @classmethod
     def whatToRun(cls):

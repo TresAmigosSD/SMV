@@ -142,10 +142,6 @@ class SmvFrameworkTest2(SmvBaseTest):
         # Should be persisted
         self.assertTrue(os.path.exists(m1.persistStrategy()._csv_path))
 
-        # Should still be there is purge_old
-        SmvModuleRunner([m1], self.smvApp).purge_old_but_keep_new_persisted()
-        self.assertTrue(os.path.exists(m1.persistStrategy()._csv_path))
-
         # Should be removed
         SmvModuleRunner([m2], self.smvApp).purge_persisted()
         self.assertFalse(os.path.exists(m1.persistStrategy()._csv_path))

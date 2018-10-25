@@ -161,7 +161,6 @@ function verify_spark_version() {
 function show_run_usage_message() {
   echo "USAGE: $1 [-h] <smv_app_args> [-- spark_args]"
   echo "smv_app_args:"
-  echo "    [--purge-old-output]"
   echo "    [--data-dir dir] ..."
   echo "    <-m mod1 [mod2 ...] | -s stage1 [stage2 ...] | --run-app> ..."
   echo "    ..."
