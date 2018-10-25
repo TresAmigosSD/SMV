@@ -256,9 +256,6 @@ class SmvMultiJoinAdaptor(joiner: SmvMultiJoin) {
 class SmvPyClient(val j_smvApp: SmvApp) {
   val config      = j_smvApp.smvConfig
 
-  def javaMapToImmutableMap(javaMap: java.util.Map[String, String]): Map[String, String] =
-    if (javaMap == null) Map.empty else mapAsScalaMap(javaMap).toMap
-
   def getSmvSchema() = SmvSchema
 
   def readCsvFromFile(
