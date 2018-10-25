@@ -38,10 +38,6 @@ class SmvIoStrategy(ABC):
     def remove(self):
         """Remove persisted file(s)"""
 
-    @abc.abstractmethod
-    def allOutput(self):
-        """list of all output from this IO"""
-
 # TODO: add lock, add publish
 class SmvCsvOnHdfsIoStrategy(SmvIoStrategy):
     def __init__(self, smvApp, fqn, ver_hex, csv_path=None):
@@ -101,12 +97,6 @@ class SmvCsvOnHdfsIoStrategy(SmvIoStrategy):
         self.smvApp._jvm.SmvHDFS.deleteFile(self._csv_path)
         self.smvApp._jvm.SmvHDFS.deleteFile(self._schema_path)
 
-    def allOutput(self):
-        return [
-            self._csv_path,
-            self._schema_path
-        ]
-
 class SmvJsonOnHdfsIoStrategy(SmvIoStrategy):
     def __init__(self, smvApp, path):
         self._jvm = smvApp._jvm
@@ -123,6 +113,3 @@ class SmvJsonOnHdfsIoStrategy(SmvIoStrategy):
 
     def remove(self):
         self._jvm.SmvHDFS.deleteFile(self.path)
-
-    def allOutput(self):
-        return [self.path]

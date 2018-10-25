@@ -536,10 +536,6 @@ class SmvApp(object):
             hist = SmvMetaHistory()
         return hist
 
-    def _purge_old_output_files(self):
-        if (self.cmd_line.purgeOldOutput):
-            SmvModuleRunner(self.dsm.allDataSets(), self).purge_old_but_keep_new_persisted()
-    
     def _modules_with_ancestors(self, mods):
         visitor = ModulesVisitor(mods)
         return visitor.queue
@@ -636,7 +632,6 @@ class SmvApp(object):
         mods = self._modules_to_run()
 
         self._purge_current_output_files(mods)
-        self._purge_old_output_files()
 
         if (len(mods) > 0):
             print("Modules to run/publish")

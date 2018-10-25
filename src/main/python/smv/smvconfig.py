@@ -213,7 +213,6 @@ class SmvConfig(object):
         parser.add_argument('--publish-hive', dest='publishHive', action="store_true", help="publish|export given modules/stage/app to hive tables")
         parser.add_argument('--dead', dest='printDeadModules', action="store_true", help="print a list of the dead modules in this application")
         parser.add_argument('--graph', dest='graph', action="store_true", help="generate a dot dependency graph of the given modules (modules are not run)")
-        parser.add_argument('--purge-old-output', dest='purgeOldOutput', action="store_true", help="remove all old output files in output dir")
         parser.add_argument('--dry-run', dest='dryRun', action="store_true", help="determine which modules do not have persisted data and will need to be run")
 
         # Where to output CSVs
