@@ -740,7 +740,7 @@ class SmvModule(SmvDataSet):
             if not hasattr(ds, 'urn'):
                 raise TypeError('Argument to RunParams must be an SmvDataSet')
             else:
-                return self.urn2df[ds.urn()]
+                return ds.df2result(self.urn2df[ds.urn()])
 
     def __init__(self, smvApp):
         super(SmvModule, self).__init__(smvApp)
@@ -913,8 +913,7 @@ class SmvModelExec(SmvModule):
 
     def doRun(self, validator, known):
         i = self.RunParams(known)
-        pickled_df = i[self.requiresModel()]
-        model = self.requiresModel().df2result(pickled_df)
+        model = i[self.requiresModel()]
         return self.run(i, model)
 
     @abc.abstractmethod
