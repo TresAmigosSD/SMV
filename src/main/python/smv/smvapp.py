@@ -18,7 +18,6 @@ It is equivalent to ``SmvApp`` on Scala side
 from datetime import datetime
 import os
 import sys
-import traceback
 import json
 from collections import namedtuple
 

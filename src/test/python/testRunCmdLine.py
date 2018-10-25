@@ -12,7 +12,6 @@
 # limitations under the License.
 
 from test_support.smvbasetest import SmvBaseTest
-from py4j.protocol import Py4JJavaError
 from smv.error import SmvRuntimeError
 
 class RunCmdLineBaseTest(SmvBaseTest):

@@ -14,7 +14,6 @@
 from test_support.smvbasetest import SmvBaseTest
 from smv import SmvApp
 from smv.error import SmvRuntimeError
-from py4j.protocol import Py4JJavaError
 
 class RunModuleWithRunConfigTest(SmvBaseTest):
     modFqn = 'stage.modules.A'
