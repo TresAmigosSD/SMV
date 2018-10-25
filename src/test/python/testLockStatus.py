@@ -14,6 +14,7 @@
 from test_support.smvbasetest import SmvBaseTest
 import threading
 import time
+import os
 
 class SmvLockStatusTest(SmvBaseTest):
     @classmethod
@@ -23,44 +24,17 @@ class SmvLockStatusTest(SmvBaseTest):
             "smv.stages=stage"
         ]
 
+    def assert_lock(self, m, status):
+        lock_file = m.persistStrategy()._lock_path
+        print(lock_file)
+        if (status):
+            self.assertTrue(os.path.exists(lock_file))
+        else:
+            self.assertFalse(os.path.exists(lock_file))
+
     def test_no_lock_before_after_run(self):
         fqn = "stage.modules.X"
-        j_m = self.load(fqn)[0]
-        self.assertEqual(j_m.persistStgy().lockfileStatus(), self.smvApp.scalaNone())
+        m = self.load(fqn)[0]
+        self.assert_lock(m, False)
         self.df(fqn, True)
-        self.assertEqual(j_m.persistStgy().lockfileStatus(), self.smvApp.scalaNone())
-
-    def test_should_lock_when_other_app_running(self):
-        fqn = "stage.modules.Y"
-        t1_running = False
-        status = self.smvApp.scalaNone()
-        s2 = 0
-        def t1():
-            global t1_running
-            t1_running = True
-            self.df(fqn, True)
-
-        t1th = threading.Thread(target=t1)
-
-        def t2():
-            global t1_running
-            while(not t1_running):
-                time.sleep(0.01)
-            time.sleep(0.2)
-            self.assertNotEqual(
-                self.load(fqn)[0].persistStgy().lockfileStatus(),
-                self.smvApp.scalaNone()
-            )
-
-        t2th = threading.Thread(target=t2)
-
-        t1th.start()
-        t2th.start()
-
-        t1th.join()
-        t2th.join()
-
-        self.assertEqual(
-            self.load(fqn)[0].persistStgy().lockfileStatus(),
-            self.smvApp.scalaNone()
-        )
+        self.assert_lock(m, False)
