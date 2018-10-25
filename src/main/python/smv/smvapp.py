@@ -343,6 +343,11 @@ class SmvApp(object):
         ds = self.dsm.load2(urn)[0]
         return SmvModuleRunner([ds], self).run(forceRun)[0]
 
+    def quickRunModule(self, fqn):
+        urn = "mod:" + fqn
+        ds = self.dsm.load2(urn)[0]
+        return SmvModuleRunner([ds], self).quick_run()[0]
+
     @exception_handling
     def runModuleByName(self, name, forceRun=False, version=None, runConfig=None, quickRun=False):
         """Runs a SmvModule by its name (can be partial FQN)

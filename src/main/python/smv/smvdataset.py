@@ -130,7 +130,7 @@ class SmvDataSet(ABC):
     ####################################################################################
     # Will eventually move to the SmvGenericModule base class
     ####################################################################################
-    def rdd(self, urn2df, run_set, forceRun):
+    def rdd(self, urn2df, run_set, forceRun, is_quick_run):
         """create or get df from smvApp level cache
             Args:
                 urn2df({str:DataFrame}) already run modules current module may depends
@@ -140,7 +140,7 @@ class SmvDataSet(ABC):
         """
         if (forceRun or (self.versioned_fqn not in self.smvApp.df_cache)):
             self.smvApp.df_cache.update(
-                {self.versioned_fqn:self.computeDataFrame(urn2df, run_set)}
+                {self.versioned_fqn:self.computeDataFrame(urn2df, run_set, is_quick_run)}
             )
         else:
             run_set.discard(self)
@@ -148,12 +148,18 @@ class SmvDataSet(ABC):
         urn2df.update({self.urn(): res})
         self.df = res
 
-    def computeDataFrame(self, urn2df, run_set):
+    def computeDataFrame(self, urn2df, run_set, is_quick_run):
         self.smvApp.log.debug("compute: {}".format(self.urn()))
 
         if (self.isEphemeral()):
             raw_df = self.doRun(self.dqmValidator, urn2df)
             return self.pre_action(raw_df)
+        elif(is_quick_run):
+            _strategy = self.persistStrategy()
+            if (not _strategy.isPersisted()):
+                return self.doRun(self.dqmValidator, urn2df)
+            else:
+                return self.unPersistData()
         else:
             _strategy = self.persistStrategy()
             if (not _strategy.isPersisted()):
@@ -204,7 +210,8 @@ class SmvDataSet(ABC):
             meta_json = self.module_meta.toJson()
             self.metaStrategy().write(meta_json)
         else:
-            self.module_meta = self.metaStrategy().read()
+            meta_json = self.metaStrategy().read()
+            self.module_meta = SmvMetaData().fromJson(meta_json)
         return persisted
 
     def force_post_action(self, run_set):

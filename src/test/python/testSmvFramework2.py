@@ -167,5 +167,12 @@ class SmvFrameworkTest2(SmvBaseTest):
         self.assertTrue(os.path.exists(hist_path))
 
 
+    def test_quick_run(self):
+        self.smvApp.df_cache = {}
+        fqn1 = "stage.modules.M1"
+        fqn3 = "stage.modules.M3"
+        df1 = self.df(fqn1)
+        df3 = self.smvApp.quickRunModule(fqn3)
+        self.should_be_same(df1, df3)
 
 

@@ -52,6 +52,11 @@ class SmvModuleRunner(object):
 
         return [self._get_df_and_run_info(m) for m in self.roots]
 
+    def quick_run(self):
+        known = {}
+        self._create_df(known, set(), is_quick_run=True)
+        return [m.df for m in self.roots]
+
     def publish(self, publish_dir=None):
         # run before publish
         self.run()
@@ -121,12 +126,12 @@ class SmvModuleRunner(object):
             else:
                 self.log.info("... Unable to delete {}".format(r.fn()))
 
-    def _create_df(self, known, need_post, forceRun=False):
+    def _create_df(self, known, need_post, forceRun=False, is_quick_run=False):
         # run module and create df. when persisting, post_action 
         # will run on current module and all upstream modules
         def runner(m, state):
             (urn2df, run_set) = state
-            m.rdd(urn2df, run_set, forceRun)
+            m.rdd(urn2df, run_set, forceRun, is_quick_run)
         self.visitor.dfs_visit(runner, (known, need_post))
 
     def _create_meta(self, need_post):
