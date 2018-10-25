@@ -27,20 +27,18 @@ from pyspark.sql import DataFrame
 def _appInfo():
     return SmvAppInfo(SmvApp.getInstance())
 
-def df(name, forceRun=False, version=None, runConfig=None, quickRun=False):
+def df(name, forceRun=False, quickRun=False):
     """The DataFrame result of running the named module
 
         Args:
             name (str): The unique name of a module. Does not have to be the FQN.
             forceRun (bool): True if the module should be forced to run even if it has persisted output. False otherwise.
-            version (str): The name of the published version to load from
-            runConfig (dict): runtime configuration to use when running the module
             quickRun (bool): skip computing dqm+metadata and persisting csv
 
         Returns:
             (DataFrame): The result of running the named module.
     """
-    return SmvApp.getInstance().runModuleByName(name, forceRun, version, runConfig, quickRun)[0]
+    return SmvApp.getInstance().runModuleByName(name, forceRun, quickRun)[0]
 
 def props():
     """The current app propertied used by SMV after the app, user, command-line

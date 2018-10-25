@@ -302,17 +302,12 @@ class SmvApp(object):
         return self.dsm.load(urn)[0]
 
     @exception_handling
-    def runModule(self, urn, forceRun=False, version=None, runConfig=None, quickRun=False):
-        """Runs either a Scala or a Python SmvModule by its Fully Qualified Name(fqn)
-
-        Use j_smvPyClient instead of j_smvApp directly so we don't
-        have to construct SmvRunCollector from the python side.
+    def runModule(self, urn, forceRun=False, quickRun=False):
+        """Runs SmvModule by its Fully Qualified Name(fqn)
 
         Args:
             urn (str): The URN of a module
             forceRun (bool): True if the module should be forced to run even if it has persisted output. False otherwise.
-            version (str): The name of the published version to load from
-            runConfig (dict): runtime configuration to use when running the module
             quickRun (bool): skip computing dqm+metadata and persisting csv
 
         Example:
@@ -327,15 +322,12 @@ class SmvApp(object):
             - SmvRunInfoCollector contains additional information
               about the run, such as validation results.
         """
-        self.setDynamicRunConfig(runConfig)
-        collector = self._jvm.SmvRunInfoCollector()
-        j_ds = self.load_single_ds(urn)
-        if (forceRun):
-            self.j_smvPyClient.deleteModuleOutput(j_ds)
-
-        j_df = j_ds.rdd(forceRun, False, collector, quickRun)
-        return (DataFrame(j_df, self.sqlContext),
-                SmvRunInfoCollector(collector))
+        urn = "mod:" + fqn
+        ds = self.dsm.load2(urn)[0]
+        if (quickRun):
+            return SmvModuleRunner([ds], self).quick_run(forceRun)[0]
+        else:
+            return SmvModuleRunner([ds], self).run(forceRun)[0]
 
     @exception_handling
     def runModule2(self, fqn, forceRun=False):
@@ -349,7 +341,7 @@ class SmvApp(object):
         return SmvModuleRunner([ds], self).quick_run()[0]
 
     @exception_handling
-    def runModuleByName(self, name, forceRun=False, version=None, runConfig=None, quickRun=False):
+    def runModuleByName(self, name, forceRun=False, quickRun=False):
         """Runs a SmvModule by its name (can be partial FQN)
 
         See the `runModule` method above
@@ -368,7 +360,7 @@ class SmvApp(object):
               about the run, such as validation results.
         """
         urn = self.dsm.inferUrn(name)
-        return self.runModule(urn, forceRun, version, runConfig, quickRun)
+        return self.runModule(urn, forceRun, quickRun)
 
     def getRunInfo(self, urn, runConfig=None):
         """Returns the run information of a module and all its dependencies

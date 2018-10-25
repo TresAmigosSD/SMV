@@ -52,9 +52,9 @@ class SmvModuleRunner(object):
 
         return [self._get_df_and_run_info(m) for m in self.roots]
 
-    def quick_run(self):
+    def quick_run(self, forceRun=False):
         known = {}
-        self._create_df(known, set(), is_quick_run=True)
+        self._create_df(known, set(), forceRun, is_quick_run=True)
         return [m.df for m in self.roots]
 
     def publish(self, publish_dir=None):
