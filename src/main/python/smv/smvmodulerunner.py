@@ -74,7 +74,7 @@ class SmvModuleRunner(object):
 
             SmvCsvOnHdfsIoStrategy(m.smvApp, m.fqn(), None, publish_csv_path).write(m.df)
             SmvJsonOnHdfsIoStrategy(m.smvApp, publish_meta_path).write(m.module_meta.toJson())
-            hist = self._read_meta_hist(m)
+            hist = self.smvApp._read_meta_hist(m)
             SmvJsonOnHdfsIoStrategy(m.smvApp, publish_hist_path).write(hist.toJson())
 
     def publish_to_hive(self):
@@ -159,7 +159,7 @@ class SmvModuleRunner(object):
     def _validate_meta(self):
         def do_validation(m, state):
             m.finalize_meta()
-            hist = self._read_meta_hist(m)
+            hist = self.smvApp._read_meta_hist(m)
             res = m.validateMetadata(m.module_meta, hist)
             if res is not None and not is_string(res):
                 raise SmvRuntimeError("Validation failure message {} is not a string".format(repr(res)))
@@ -167,27 +167,13 @@ class SmvModuleRunner(object):
                 raise SmvMetadataValidationError(res)
         self.visitor.dfs_visit(do_validation, None)
 
-    def _hist_io_strategy(self, m):
-        hist_dir = self.smvApp.all_data_dirs().historyDir
-        hist_path = "{}/{}.hist".format(hist_dir, m.fqn())
-        return SmvJsonOnHdfsIoStrategy(self.smvApp, hist_path)
-
-    def _read_meta_hist(self, m):
-        io_strategy = self._hist_io_strategy(m)
-        try:
-            hist_json = io_strategy.read()
-            hist = SmvMetaHistory().fromJson(hist_json)
-        except:
-            hist = SmvMetaHistory()
-        return hist
-
     def _persist_meta(self):
         def write_meta(m, state):
             persisted = m.persist_meta()
             if (not persisted):
-                hist = self._read_meta_hist(m)
+                hist = self.smvApp._read_meta_hist(m)
                 hist.update(m.module_meta, m.metadataHistorySize())
-                io_strategy = self._hist_io_strategy(m)
+                io_strategy = self.smvApp._hist_io_strategy(m)
                 io_strategy.write(hist.toJson())
 
         self.visitor.dfs_visit(write_meta, None)
@@ -195,5 +181,5 @@ class SmvModuleRunner(object):
     def _get_df_and_run_info(self, m):
         df = m.df
         meta = m.module_meta
-        meta_hist = self._read_meta_hist(m)
+        meta_hist = self.smvApp._read_meta_hist(m)
         return (df, (meta, meta_hist))

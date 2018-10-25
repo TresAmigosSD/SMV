@@ -38,6 +38,8 @@ from smv.runinfo import SmvRunInfoCollector
 from smv.modulesvisitor import ModulesVisitor
 from smv.smvmodulerunner import SmvModuleRunner
 from smv.smvconfig import SmvConfig
+from smv.smviostrategy import SmvJsonOnHdfsIoStrategy
+from smv.smvmetadata import SmvMetaHistory
 from py4j.protocol import Py4JJavaError
 
 class SmvApp(object):
@@ -521,6 +523,21 @@ class SmvApp(object):
             # added to the sys.path
             pass
 
+    def _hist_io_strategy(self, m):
+        """Meta history is managed by smvapp and smvmodulerunner, module
+            instances does not need to know it"""
+        hist_dir = self.all_data_dirs().historyDir
+        hist_path = "{}/{}.hist".format(hist_dir, m.fqn())
+        return SmvJsonOnHdfsIoStrategy(self, hist_path)
+
+    def _read_meta_hist(self, m):
+        io_strategy = self._hist_io_strategy(m)
+        try:
+            hist_json = io_strategy.read()
+            hist = SmvMetaHistory().fromJson(hist_json)
+        except:
+            hist = SmvMetaHistory()
+        return hist
 
     def _purge_old_output_files(self):
         if (self.cmd_line.purgeOldOutput):
