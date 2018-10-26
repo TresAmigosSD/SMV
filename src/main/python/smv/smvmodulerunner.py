@@ -114,29 +114,6 @@ class SmvModuleRunner(object):
             m.metaStrategy().remove()
         self.visitor.dfs_visit(cleaner, None)
 
-    def purge_old_but_keep_new_persisted(self):
-        keep = []
-        def get_to_keep(m, k):
-            k.extend(m.persistStrategy().allOutput())
-            k.extend(m.metaStrategy().allOutput())
-
-        self.visitor.dfs_visit(get_to_keep, keep)
-        outdir = self.smvApp.all_data_dirs().outputDir
-
-        # since all file paths in keep are prefixed by outdir, remove it
-        relative_paths = [i[len(outdir)+1:] for i in keep]
-
-        res = self.smvApp._jvm.SmvPythonHelper.purgeDirectory(
-            outdir,
-            relative_paths
-        )
-        
-        for r in scala_seq_to_list(self.smvApp._jvm, res):
-            if (r.success()):
-                self.log.info("... Deleted {}".format(r.fn()))
-            else:
-                self.log.info("... Unable to delete {}".format(r.fn()))
-
     def _create_df(self, known, need_post, forceRun=False, is_quick_run=False):
         # run module and create df. when persisting, post_action 
         # will run on current module and all upstream modules
