@@ -180,7 +180,17 @@ class SmvForceEddTest(SmvBaseTest):
     def smvAppInitArgs(cls):
         return ['--smv-props', 'smv.stages=stage']
 
+    def test_no_force_create_edd(self):
+        self.mkTmpTestDir()
+        fqn = "stage.modules.M2"
+        self.smvApp.setDynamicRunConfig({})
+        (df, info) = self.smvApp.runModule("mod:" + fqn)
+        meta = info.metadata(fqn)
+        edd = meta.get('_edd')
+        self.assertEqual(len(edd), 0)
+
     def test_force_create_edd(self):
+        self.mkTmpTestDir()
         fqn = "stage.modules.M2"
         self.smvApp.setDynamicRunConfig({'smv.forceEdd': 'True'})
         (df, info) = self.smvApp.runModule("mod:" + fqn)

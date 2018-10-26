@@ -48,7 +48,7 @@ class SmvModuleRunner(object):
 
         self._create_meta(mods_to_run_post_action)
 
-        if (self.smvApp.py_smvconf.merged_props().get('smv.forceEdd')):
+        if (self.smvApp.py_smvconf.force_edd()):
             self._create_edd(mods_to_run_post_action)
 
         self._force_post(mods_to_run_post_action)

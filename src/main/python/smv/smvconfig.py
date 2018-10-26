@@ -143,6 +143,13 @@ class SmvConfig(object):
     def stage_names(self):
         return self._split_prop("smv.stages")
 
+    def force_edd(self):
+        flag = self.merged_props().get("smv.forceEdd")
+        if (flag and flag.lower() == "true"):
+            return True
+        else:
+            return False
+    
     def get_run_config(self, key):
         """Run config will be accessed within client modules. Return 
             run-config value of the given key.
