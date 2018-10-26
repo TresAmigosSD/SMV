@@ -54,7 +54,6 @@ class SmvConfig(object):
         # Send conf result to Scala side
         self.j_smvconf = self._jvm.SmvConfig(
             self.app_dir,
-            self.cmdline.get('genEdd'),
             self.merged_props(), 
             self.all_data_dirs()
         )
@@ -216,7 +215,6 @@ class SmvConfig(object):
         parser.add_argument('--graph', dest='graph', action="store_true", help="generate a dot dependency graph of the given modules (modules are not run)")
         parser.add_argument('--purge-old-output', dest='purgeOldOutput', action="store_true", help="remove all old output files in output dir")
         parser.add_argument('--dry-run', dest='dryRun', action="store_true", help="determine which modules do not have persisted data and will need to be run")
-        parser.add_argument('--edd', dest='genEdd', action="store_true", help="summarize data and generate an edd file in the same directory as csv and schema")
 
         # Where to output CSVs
         parser.add_argument('--publish', dest='publish', help="publish the given modules/stage/app as given version")

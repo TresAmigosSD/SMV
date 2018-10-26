@@ -109,4 +109,4 @@ stage2:
 
     def test_app_getDsHash(self):
         fqn = "stage.modules.CsvStr"
-        print(self.smvApp.getDsHash(fqn, None))
+        print(self.smvApp.getDsHash(fqn))

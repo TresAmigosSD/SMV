@@ -25,7 +25,6 @@ import pyspark
 from pyspark.context import SparkContext
 from pyspark.sql import SQLContext, HiveContext, DataFrame
 from pyspark.sql.functions import col, lit
-from py4j.protocol import Py4JJavaError
 
 
 single_run_counter = 0

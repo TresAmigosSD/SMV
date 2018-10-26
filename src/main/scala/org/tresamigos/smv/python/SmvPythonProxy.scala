@@ -196,8 +196,6 @@ object SmvPythonHelper {
     SmvHDFS.purgeDirectory(dirName, keepFiles.toSeq).map(r => PurgeResult(r._1, r._2))
   }
 
-  def createDsResolver(repos: ArrayList[DataSetRepo]): DataSetResolver =
-    new DataSetResolver(repos.toSeq)
 }
 
 class SmvGroupedDataAdaptor(grouped: SmvGroupedData) {
@@ -258,9 +256,6 @@ class SmvMultiJoinAdaptor(joiner: SmvMultiJoin) {
 class SmvPyClient(val j_smvApp: SmvApp) {
   val config      = j_smvApp.smvConfig
 
-  def javaMapToImmutableMap(javaMap: java.util.Map[String, String]): Map[String, String] =
-    if (javaMap == null) Map.empty else mapAsScalaMap(javaMap).toMap
-
   def getSmvSchema() = SmvSchema
 
   def readCsvFromFile(
@@ -291,10 +286,6 @@ class SmvPyClient(val j_smvApp: SmvApp) {
     }
   }
 
-  //Scare folding for moving all SmvDataSet framework to python #1338
-  def deleteModuleOutput(m: SmvDataSet) = 
-    m.deleteOutputs()
-
   def createFileIOHandler(path: String) =
     new FileIOHandler(j_smvApp.sparkSession, path)
 
@@ -324,7 +315,3 @@ object SmvPyClientFactory {
   def init(smvConf: SmvConfig, sparkSession: SparkSession): SmvPyClient =
     new SmvPyClient(SmvApp.init(smvConf, sparkSession))
 }
-
-
-/** For use by Python API to return a tuple */
-case class RunModuleResult(df: DataFrame, collector: SmvRunInfoCollector)

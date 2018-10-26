@@ -100,7 +100,6 @@ class DataSetMgr(object):
             # Need to perserve the ordering
             return list_distinct(res)
 
-# Scaffolding for #1417. This version is for Python side resolver
 class TXContext(object):
     """Create a TX context for "with tx() as tx" syntax
     """

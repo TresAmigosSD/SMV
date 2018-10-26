@@ -35,9 +35,6 @@ import org.tresamigos.smv.util.Edd
  */
 class SmvApp(val smvConfig: SmvConfig, _spark: SparkSession) {
   val log         = LogManager.getLogger("smv")
-  val genEdd      = smvConfig.genEdd
-
-  def stages      = smvConfig.stageNames
 
   lazy val smvVersion  = {
     val smvHome = sys.env("SMV_HOME")
@@ -52,59 +49,8 @@ class SmvApp(val smvConfig: SmvConfig, _spark: SparkSession) {
   val sc         = sparkSession.sparkContext
   val sqlContext = sparkSession.sqlContext
 
-  /**
-   * Get the DataFrame associated with data set. The DataFrame plan (not data) is cached in
-   * dfCache to ensure only a single DataFrame exists for a given data set
-   * (file/module).
-   * Note: this keyed by the "versioned" dataset FQN.
-   */
-  var dfCache: mutable.Map[String, DataFrame] = mutable.Map.empty[String, DataFrame]
-
-
   // Since OldVersionHelper will be used by executors, need to inject the version from the driver
   OldVersionHelper.version = sc.version
-
-  def getRunInfo(ds: SmvDataSet): SmvRunInfoCollector = 
-    _getRunInfo(ds)
-
-  /**
-   * Returns the run information for a given dataset and all its
-   * dependencies (including transitive dependencies), from the last run
-   */
-  private def _getRunInfo(ds: SmvDataSet,
-    coll: SmvRunInfoCollector=new SmvRunInfoCollector()): SmvRunInfoCollector = {
-    // get fqn from urn, because if ds is a link we want the fqn of its target
-    coll.addRunInfo(ds.fqn, ds.runInfo)
-
-    ds.resolvedRequiresDS foreach { dep =>
-      _getRunInfo(dep, coll)
-    }
-
-    coll
-  }
-
-  /**
-   * Perform an action and log the amount of time it took
-   */
-  def doAction[T](desc: String, name: String)(action: => T): (T, Double)= {
-    val fullDesc = f"${desc}: ${name}"
-    log.info(f"STARTING ${desc}")
-    sc.setJobGroup(groupId=name, description=desc)
-    val before  = DateTime.now()
-
-    val res: T = action
-
-    val after   = DateTime.now()
-    val duration = new Duration(before, after)
-    val secondsElapsed = duration.getMillis() / 1000.0
-
-    val runTimeStr = PeriodFormat.getDefault().print(duration.toPeriod)
-    sc.clearJobGroup()
-    log.info(s"COMPLETED ${fullDesc}")
-    log.info(s"RunTime: ${runTimeStr}")
-
-    (res, secondsElapsed)
-  }
 
 }
 

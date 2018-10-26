@@ -18,7 +18,6 @@ It is equivalent to ``SmvApp`` on Scala side
 from datetime import datetime
 import os
 import sys
-import traceback
 import json
 from collections import namedtuple
 
@@ -87,8 +86,6 @@ class SmvApp(object):
                     enableHiveSupport().\
                     getOrCreate() if _sparkSession is None else _sparkSession
 
-        #self.prepend_source("src/main/python")
-
         sc = self.sparkSession.sparkContext
         sc.setLogLevel("ERROR")
 
@@ -102,9 +99,7 @@ class SmvApp(object):
         java_import(self._jvm, "org.tresamigos.smv.dqm.*")
         java_import(self._jvm, "org.tresamigos.smv.panel.*")
         java_import(self._jvm, "org.tresamigos.smv.python.SmvPythonHelper")
-        java_import(self._jvm, "org.tresamigos.smv.SmvRunInfoCollector")
         java_import(self._jvm, "org.tresamigos.smv.SmvHDFS")
-        java_import(self._jvm, "org.tresamigos.smv.URN")
         java_import(self._jvm, "org.tresamigos.smv.DfCreator")
 
         self.py_smvconf = SmvConfig(arglist, self._jvm)
@@ -337,6 +332,7 @@ class SmvApp(object):
         else:
             return self._to_single_run_res(SmvModuleRunner([ds], self).run(forceRun))
 
+    @exception_handling
     def quickRunModule(self, fqn):
         urn = "mod:" + fqn
         ds = self.dsm.load(urn)[0]
@@ -432,7 +428,7 @@ class SmvApp(object):
         ds = self.load_single_ds(urn)
         return self._read_meta_hist(ds).toJson()
 
-    def getDsHash(self, name, runConfig):
+    def getDsHash(self, name):
         """The current hashOfHash for the named module as a hex string
 
             Args:
@@ -444,7 +440,6 @@ class SmvApp(object):
             Returns:
                 (str): The hashOfHash of the named module
         """
-        self.setDynamicRunConfig(runConfig)
         return self.dsm.inferDS(name)[0].ver_hex()
 
     def copyToHdfs(self, fileobj, destination):
