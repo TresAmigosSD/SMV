@@ -82,8 +82,14 @@ class SmvMetaData(object):
     def addDqmValidationResult(self, result_json):
         self._metadata.update({'_dqmValidation': json.loads(result_json)})
 
-    def addEddResult(self, edd_result_json):
-        self._metadata.update({'_edd': json.loads(edd_result_json)})
+    def addEddResult(self, edd_result_json_list):
+        edd_list = []
+        for rc in edd_result_json_list:
+            edd_list.append(json.loads(rc))
+        self._metadata.update({'_edd': edd_list})
+
+    def getEddResult(self):
+        return self._metadata.get('_edd')
 
     def toJson(self):
         return json.dumps(self._metadata)

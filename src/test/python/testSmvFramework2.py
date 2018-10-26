@@ -171,4 +171,27 @@ class SmvFrameworkTest2(SmvBaseTest):
         df3 = self.smvApp.quickRunModule(fqn3)
         self.should_be_same(df1, df3)
 
+class SmvForceEddTest(SmvBaseTest):
+    @classmethod
+    def smvAppInitArgs(cls):
+        return ['--smv-props', 'smv.stages=stage']
 
+    def test_no_force_create_edd(self):
+        self.mkTmpTestDir()
+        fqn = "stage.modules.M2"
+        self.smvApp.setDynamicRunConfig({})
+        (df, info) = self.smvApp.runModule("mod:" + fqn)
+        meta = info.metadata(fqn)
+        edd = meta.get('_edd')
+        self.assertEqual(len(edd), 0)
+
+    def test_force_create_edd(self):
+        self.mkTmpTestDir()
+        fqn = "stage.modules.M2"
+        self.smvApp.setDynamicRunConfig({'smv.forceEdd': 'True'})
+        (df, info) = self.smvApp.runModule("mod:" + fqn)
+        meta = info.metadata(fqn)
+        edd = meta.get('_edd')
+        for r in edd:
+            if (r['taskName'] == 'cnt' and r['colName'] == 'a'):
+                self.assertEqual(r['valueJSON'], '2')

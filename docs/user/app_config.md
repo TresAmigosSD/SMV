@@ -95,17 +95,10 @@ Note that for sequence/list type parameters (e.g. smv.stages), a "," or ":" can 
 </tr>
 
 <tr>
-<td>smv.runConfigObj</td>
+<td>smv.forceEdd</td>
 <td>empty</td>
 <td>Optional</td>
-<td>The configuration object to use. See <a href="smv_module.md">SmvModule</a> for details</td>
-</tr>
-
-<tr>
-<td>smv.config.keys</td>
-<td>empty</td>
-<td>Optional</td>
-<td>A list of runtime configuration keys user can specify, and accessed through the `smvGetRunConfi` method of `SmvRunConfig` mix-in</td>
+<td>When set to "true" or "True", a run will force edd calculation on all modules, and persisted in metadata</td>
 </tr>
 
 <tr>
@@ -159,16 +152,8 @@ Can be overridden using <code>--publish-dir</code> command line option</td>
 </tr>
 
 <tr>
-<th colspan="4">Class Directory Parameter</th>
+<th colspan="4">Jdbc Parameter</th>
 </tr>
-
-<tr>
-<td>smv.class_dir</td>
-<td>./target/classes</td>
-<td>Optional</td>
-<td>directory where the class loader would look for new class instances.</td>
-</tr>
-</table>
 
 <tr>
 <td>smv.jdbc.url</td>

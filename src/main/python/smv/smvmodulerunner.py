@@ -48,6 +48,9 @@ class SmvModuleRunner(object):
 
         self._create_meta(mods_to_run_post_action)
 
+        if (self.smvApp.py_smvconf.force_edd()):
+            self._create_edd(mods_to_run_post_action)
+
         self._force_post(mods_to_run_post_action)
 
         self._validate_and_persist_meta(collector)
@@ -128,6 +131,11 @@ class SmvModuleRunner(object):
         def run_meta(m, run_set):
             m.calculate_user_meta(run_set)
         self.visitor.dfs_visit(run_meta, need_post)
+
+    def _create_edd(self, need_post):
+        def run_edd(m, run_set):
+            m.calculate_edd(run_set)
+        self.visitor.dfs_visit(run_edd, need_post)
 
     def _force_post(self, need_post):
         # If there are still module left for post_action, force a run here

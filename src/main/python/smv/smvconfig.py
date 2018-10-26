@@ -144,6 +144,9 @@ class SmvConfig(object):
     def stage_names(self):
         return self._split_prop("smv.stages")
 
+    def force_edd(self):
+        return self._get_prop_as_bool("smv.forceEdd")
+    
     def get_run_config(self, key):
         """Run config will be accessed within client modules. Return 
             run-config value of the given key.
@@ -177,6 +180,13 @@ class SmvConfig(object):
         """
         return infer_full_name_from_part(self.stage_names(), part_name)
 
+    def _get_prop_as_bool(self, prop):
+        flag = self.merged_props().get(prop)
+        if (flag and flag.lower() == "true"):
+            return True
+        else:
+            return False
+    
     def _split_prop(self, prop_name):
         """Split multi-value prop to a list
         """
