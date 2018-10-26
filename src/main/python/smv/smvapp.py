@@ -39,6 +39,7 @@ from smv.smvmodulerunner import SmvModuleRunner
 from smv.smvconfig import SmvConfig
 from smv.smviostrategy import SmvJsonOnHdfsIoStrategy
 from smv.smvmetadata import SmvMetaHistory
+from smv.smvhdfs import SmvHDFS
 from py4j.protocol import Py4JJavaError
 
 class SmvApp(object):
@@ -454,8 +455,7 @@ class SmvApp(object):
 
         The file object is closed when this function completes.
         """
-        src = FileObjInputStream(fileobj)
-        self._jvm.SmvHDFS.writeToFile(src, destination)
+        SmvHDFS(self._jvm.SmvHDFS).writeToFile(fileobj, destination)
 
     def getStageFromModuleFqn(self, fqn):
         """Returns the stage name for a given fqn"""

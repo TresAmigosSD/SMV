@@ -22,7 +22,7 @@ import java.io.OutputStream
 import java.io.{BufferedWriter, StringWriter, OutputStreamWriter}
 import java.nio.charset.StandardCharsets
 
-import org.apache.hadoop.fs.{FileSystem, Path, FileUtil, FileStatus}
+import org.apache.hadoop.fs.{FileSystem, Path, FileUtil, FileStatus, FSDataOutputStream}
 import org.apache.commons.io.IOUtils
 
 import scala.util.Try
@@ -101,6 +101,14 @@ private[smv] object SmvHDFS {
     } finally {
       out.close()
     }
+  }
+
+  def openForWrite(fileName: String): FSDataOutputStream = {
+    val path = new org.apache.hadoop.fs.Path(fileName)
+    val hdfs = getFileSystem(fileName)
+
+    if (hdfs.exists(path)) hdfs.delete(path, true)
+    hdfs.create(path)
   }
 
   /**
