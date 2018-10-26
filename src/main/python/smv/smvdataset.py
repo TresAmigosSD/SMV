@@ -155,7 +155,7 @@ class SmvDataSet(ABC):
             if (not _strategy.isPersisted()):
                 return self.doRun(self.dqmValidator, urn2df)
             else:
-                return self.unPersistData()
+                return _strategy.read()
         else:
             _strategy = self.persistStrategy()
             if (not _strategy.isPersisted()):
