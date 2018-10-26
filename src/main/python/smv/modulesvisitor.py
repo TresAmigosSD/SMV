@@ -10,7 +10,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from collections import OrderedDict
-import queue
+import sys
+
+if sys.version_info >= (3, 0):
+    import queue
+else:
+    import Queue as queue
 
 class ModulesVisitor(object):
     """Provides way to do depth and breadth first visit to the sub-graph
