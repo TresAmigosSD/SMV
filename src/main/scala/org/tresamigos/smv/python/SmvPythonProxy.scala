@@ -196,6 +196,8 @@ object SmvPythonHelper {
     SmvHDFS.purgeDirectory(dirName, keepFiles.toSeq).map(r => PurgeResult(r._1, r._2))
   }
 
+  def getEddJsonArray(df: DataFrame): java.util.List[String] =
+    df.edd.summary().toDF.toJSON.collect().toSeq
 }
 
 class SmvGroupedDataAdaptor(grouped: SmvGroupedData) {

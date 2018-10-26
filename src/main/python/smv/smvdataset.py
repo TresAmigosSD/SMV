@@ -208,6 +208,18 @@ class SmvDataSet(ABC):
             # if meta persisted, no need to run post_action again
             run_set.discard(self)
 
+    def calculate_edd(self, run_set):
+        """When config smv.forceEdd flag is true, run edd calculation. 
+            If already in metadata (in case persisetd), skip, otherwise
+            calculate Edd and fill in to metadata, and 
+            run_ancestor_and_me_postAction
+        """
+        current_edd = self.module_meta.getEddResult()
+        if (len(current_edd) == 0):
+            edd_json_array = self.smvApp._jvm.SmvPythonHelper.getEddJsonArray(self.df._jdf)
+            self.run_ancestor_and_me_postAction(run_set)
+            self.module_meta.addEddResult(edd_json_array)
+
     def force_an_action(self, df):
         # Since optimization can be done on a DF actions like count, we have to convert DF
         # to RDD and than apply an action, otherwise fix count will be always zero
