@@ -4,4 +4,3 @@ graphviz
 sphinx
 decorator
 tox
-pyarrow
