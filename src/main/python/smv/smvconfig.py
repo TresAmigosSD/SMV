@@ -24,6 +24,7 @@ from smv.utils import infer_full_name_from_part
 class SmvConfig(object):
     """Smv configurations 
         Including:
+
             - command line parsing
             - read in property files
             - dynamic configuration handling
