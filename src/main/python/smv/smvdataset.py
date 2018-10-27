@@ -390,7 +390,9 @@ class SmvDataSet(ABC):
         self._do_action_on_df(run_query, self.df, "PUBLISH TO HIVE")
     
     def publishThroughJDBC(self):
-        self.smvApp.j_smvPyClient.writeThroughJDBC(self.df._jdf, self.tableName())
+        url = self.smvApp.jdbcUrl()
+        driver = self.smvApp.jdbcDriver()
+        self.smvApp.j_smvPyClient.writeThroughJDBC(self.df._jdf, url, driver, self.tableName())
 
     ####################################################################################
     def smvGetRunConfig(self, key):
