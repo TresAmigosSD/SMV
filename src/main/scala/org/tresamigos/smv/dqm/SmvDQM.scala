@@ -172,7 +172,8 @@ class DQMValidator(dqm: SmvDQM) {
   }
 
   private def toConsole(res: DqmValidationResult) = {
-    SmvReportIO.printReport(res.toJSON())
+    //TODO: use java log
+    println(res.toJSON())
   }
 
   private def terminateAtError(result: DqmValidationResult) = {
@@ -246,7 +247,7 @@ class DQMValidator(dqm: SmvDQM) {
 
 object DQMValidator {
   def readPersistedValidationFile(path: String): Try[DqmValidationResult] =
-    Try(DqmValidationResult.fromJson(SmvReportIO.readReport(path)))
+    Try(DqmValidationResult.fromJson(SmvHDFS.readFromFile(path)))
 }
 
 /**

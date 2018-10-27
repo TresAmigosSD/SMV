@@ -143,11 +143,6 @@ case class EddResultFunctions(eddRes: DataFrame) {
     println(createReport())
   }
 
-  /** print edd result to file **/
-  def eddSave(path: String): Unit = {
-    SmvReportIO.saveLocalReport(createReport(), path)
-  }
-
   /**
    * Save report as Json
    * Could be read back in as

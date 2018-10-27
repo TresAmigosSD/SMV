@@ -26,7 +26,6 @@ import org.apache.spark.sql.{Column, DataFrame, SQLContext, SparkSession, SaveMo
 import org.apache.spark.sql.types.{DataType, Metadata}
 import matcher._
 import org.tresamigos.smv.dqm.ParserLogger
-import org.tresamigos.smv.SmvConfig
 
 // Serialize scala map to json w/o reinventing any wheels
 import org.json4s.jackson.Serialization

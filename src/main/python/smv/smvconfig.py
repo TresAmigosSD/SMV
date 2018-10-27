@@ -49,21 +49,6 @@ class SmvConfig(object):
         self.mods_to_run = self.cmdline.pop('modsToRun')
         self.stages_to_run = self.cmdline.pop('stagesToRun')
 
-        from py4j.java_gateway import java_import
-        java_import(self._jvm, "org.tresamigos.smv.SmvConfig")
-
-        # Send conf result to Scala side
-        self.j_smvconf = self._jvm.SmvConfig(
-            self.app_dir,
-            self.merged_props(), 
-            self.all_data_dirs()
-        )
-
-    def reset_j_smvconf(self):
-        """Reset scala side conf - for dynamic conf
-        """
-        self.j_smvconf.reset(self.app_dir, self.merged_props(), self.all_data_dirs())
-
     def read_props_from_app_dir(self, _app_dir):
         """For a given app dir, read in the prop files
         """
@@ -90,7 +75,6 @@ class SmvConfig(object):
         """
         if(new_d_props is not None):
             self.dynamic_props = new_d_props.copy()
-            self.reset_j_smvconf()
 
     def set_app_dir(self, new_app_dir):
         """Dynamic reset of app dir, so that the location of app and user
@@ -99,7 +83,6 @@ class SmvConfig(object):
         if(new_app_dir):
             self.app_dir = new_app_dir
             self.read_props_from_app_dir(self.app_dir)
-            self.reset_j_smvconf()
 
     def all_data_dirs(self):
         """Create all the data dir configs
