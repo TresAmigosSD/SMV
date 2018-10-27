@@ -65,7 +65,7 @@ import org.apache.commons.lang.StringEscapeUtils.escapeJava
  * }}}
  * After the action, we can check the policies
  * {{{
- * val result = dqm.validate(dfWithDqm)
+ * val result = dqm.validate()
  * }}}
  * The result is a [[org.tresamigos.smv.ValidationResult]]
  **/
@@ -187,36 +187,12 @@ class DQMValidator(dqm: SmvDQM) {
   }
 
   /**
-   * Entrypoint for validating data. Runs validation UNLESS there is a persisted
-   * result, in which case returns that result
-   * @param df the data to validate
-   * @param hadAction whether df has already had an action (used to decide whether to force an action)
-   * @param path the path where the validation result will be persisted
+   * Entrypoint for validating data
    */
-  def validate(df: DataFrame, hadAction: Boolean) = {
-    val forceAction = needAction && !hadAction
-
-    val result = runValidation(df, forceAction)
-
+  def validate() = {
+    val result = applyPolicies()
     terminateAtError(result)
     result
-  }
-
-  /**
-   * Run validation aginst DataFrame and print results
-   * @param df the data to validate
-   * @param forceAction whether an action needs to be forced on df
-   * @param path the path where the validation result should be persisted
-   */
-  def runValidation(df: DataFrame, forceAction: Boolean): DqmValidationResult = {
-    // If necessary, force action of dataframe with DQM tasks attached in order to trigger the accumulators
-    // that count task failures
-    if (forceAction)
-      doForceAction(df)
-
-    val res = applyPolicies()
-
-    res
   }
 
   /**
