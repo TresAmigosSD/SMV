@@ -162,20 +162,6 @@ class DQMValidator(dqm: SmvDQM) {
     new ParserValidation(dqmState)
   }
 
-  def needAction = dqm.needAction
-
-  /** Since optimization can be done on a DF actions like count, we have to convert DF
-   *  to RDD and than apply an action
-   **/
-  private def doForceAction(df: DataFrame): Unit = {
-    df.rdd.count
-  }
-
-  private def toConsole(res: DqmValidationResult) = {
-    //TODO: use java log
-    println(res.toJSON())
-  }
-
   private def terminateAtError(result: DqmValidationResult) = {
     if (!result.passed) {
       throw new SmvDqmValidationError(result)
