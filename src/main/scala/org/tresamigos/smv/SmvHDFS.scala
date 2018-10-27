@@ -77,30 +77,9 @@ private[smv] object SmvHDFS {
   }
 
   def writeToFile(contents: String, fileName: String): Unit = {
-    val from = InputStreamAdapter(contents)
-    try {
-      writeToFile(from, fileName)
-    } finally {
-      from.close()
-    }
-  }
-
-  def writeToFile(from: IAnyInputStream, fileName: String): Unit = {
-    val path = new org.apache.hadoop.fs.Path(fileName)
-    val hdfs = getFileSystem(fileName)
-
-    if (hdfs.exists(path)) hdfs.delete(path, true)
-    val out = hdfs.create(path)
-
-    try {
-      var buf = from.read(8192)
-      while (!buf.isEmpty) {
-        out.write(buf, 0, buf.size)
-        buf = from.read(8192)
-      }
-    } finally {
-      out.close()
-    }
+    val out = openForWrite(fileName)
+    out.write(contents.getBytes("UTF-8"))
+    out.close()
   }
 
   def openForWrite(fileName: String): FSDataOutputStream = {
