@@ -348,7 +348,11 @@ class SmvDataSet(ABC):
         """Will run when action happens on a DF, here for DQM validation"""
         validation_result = self.dqmValidator.validate()
         if (not validation_result.isEmpty()):
-            self.smvApp.log.warn("Nontrivial DQM result:\n{}".format(validation_result.toJSON()))
+            msg = json.dumps(
+                json.loads(validation_result.toJSON()),
+                indent=2, separators=(',', ': ')
+            )
+            self.smvApp.log.warn("Nontrivial DQM result:\n{}".format(msg))
         self.module_meta.addDqmValidationResult(validation_result.toJSON())
 
     def needsToRun(self):
