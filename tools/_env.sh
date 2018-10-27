@@ -19,9 +19,9 @@ function split_smv_spark_args()
         if [ "$1" == "--" ]; then
             shift
             break
-        fi 
-        
-        if [ "$1" == "--script" ]; then 
+        fi
+
+        if [ "$1" == "--script" ]; then
           SMV_USER_SCRIPT="$2"
         fi
 
@@ -109,8 +109,15 @@ function find_fat_jar()
 function set_smv_spark_paths() {
   # if user specified --spark-home, use that as prefix to all spark commands.
   local prefix=""
+  local python_site_packages_regex=".*/site-packages/.*"
   if [ -n "$SPARK_HOME_OPT" ]; then
     prefix="${SPARK_HOME_OPT}/bin/"
+  # If we are installed in a python environment where pyspark was installed via pip,
+  # we should look for the spark/bin stuff inside the pyspark package within site-packages.
+  # NB: Don't quote the regex below
+  elif [[ "$(pwd)" == $python_site_packages_regex ]]; then
+    echo "Detected python pip (site-packages) installation of pyspark. Adding it to the spark-submit candidates on the PATH"
+    PATH="${PATH}:../pyspark/bin"
   fi
 
   # create the submit/pyspark full paths from spark home and override env vars.
@@ -127,6 +134,7 @@ function set_smv_spark_paths() {
   if [ $valid_paths -eq 0 ]; then
     echo "ERROR: The combination of --spark-home with spark commands override"
     echo "produced invalid paths above!"
+    echo "Are you sure that pyspark and spark-submit are on your PATH?"
     exit 1
   fi
 }
