@@ -154,26 +154,3 @@ private[smv] object SmvHDFS {
       r = deleteFile(filename)
     } yield (filename, r)
 }
-
-/**
- * Adapts a java InputStream object to the IAnyInputStream interface,
- * so it can be used in I/O methods that can work with input streams
- * from both Java and Python sources.
- */
-class InputStreamAdapter(in: InputStream) extends IAnyInputStream {
-  @Override def read(max: Int) = {
-    val buf = new Array[Byte](max)
-    var size = 0
-    while (0 == size)
-      size = in.read(buf)
-    if (-1 == size) Array.empty else buf.slice(0, size)
-  }
-  @Override def close(): Unit = in.close()
-}
-
-/** Factory object to create InputStreamAdapters from input sources */
-object InputStreamAdapter {
-  def apply(in: InputStream): InputStreamAdapter = new InputStreamAdapter(in)
-  def apply(content: String): InputStreamAdapter = new InputStreamAdapter(
-    new ByteArrayInputStream(content.getBytes(StandardCharsets.UTF_8)))
-}
