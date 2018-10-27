@@ -216,10 +216,6 @@ class DQMValidator(dqm: SmvDQM) {
 
     val res = applyPolicies()
 
-    // print report to console if any policies were failed
-    if(!res.isEmpty)
-      toConsole(res)
-
     res
   }
 
