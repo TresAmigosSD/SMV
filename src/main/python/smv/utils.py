@@ -111,30 +111,6 @@ def infer_full_name_from_part(full_names, part_name):
     else:
         raise SmvRuntimeError("Partial name {} is ambiguous".format(part_name))
 
-class FileObjInputStream(object):
-    """Wraps a Python binary file object to be used like a java.io.InputStream."""
-
-    def __init__(self, fileobj):
-        self.fileobj = fileobj
-
-    def read(self, maxsize):
-        buf = self.fileobj.read(maxsize)
-        # The following should work in both Python 2.7 and 3.5.
-        #
-        # In 2.7, read() returns a str even in 'rb' mode, but calling
-        # bytearray converts it to the right type.
-        #
-        # In 3.5, read() returns a bytes in 'rb' mode, and calling
-        # bytearray does not require a specified encoding
-        buf = bytearray(buf)
-        return buf
-
-    def close(self):
-        self.fileobj.close()
-
-    class Java:
-        implements = ['org.tresamigos.smv.IAnyInputStream']
-
 # If using Python 2, prefer cPickle because it is faster
 # If using Python 3, there is no cPickle (cPickle is now the implementation of pickle)
 # see https://docs.python.org/3.1/whatsnew/3.0.html#library-changes

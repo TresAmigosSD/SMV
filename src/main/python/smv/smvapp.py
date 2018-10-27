@@ -32,13 +32,13 @@ from smv.datasetrepo import DataSetRepoFactory
 from smv.utils import smv_copy_array, check_socket, scala_seq_to_list
 from smv.error import SmvRuntimeError, SmvDqmValidationError
 import smv.helpers
-from smv.utils import FileObjInputStream
 from smv.runinfo import SmvRunInfoCollector
 from smv.modulesvisitor import ModulesVisitor
 from smv.smvmodulerunner import SmvModuleRunner
 from smv.smvconfig import SmvConfig
 from smv.smviostrategy import SmvJsonOnHdfsIoStrategy
 from smv.smvmetadata import SmvMetaHistory
+from smv.smvhdfs import SmvHDFS
 from py4j.protocol import Py4JJavaError
 
 class SmvApp(object):
@@ -127,34 +127,6 @@ class SmvApp(object):
 
         # issue #429 set application name from smv config
         sc._conf.setAppName(self.appName())
-
-        # user may choose a port for the callback server
-        gw = sc._gateway
-        cbsp = self.cmd_line.cbsPort
-        cbs_port = cbsp if cbsp is not None else gw._python_proxy_port
-
-        # check wither the port is in-use or not for several times - if all fail, error out
-        check_counter = 0
-        while(not check_socket(cbs_port) and check_counter < int(self.maxCbsPortRetries())):
-            cbs_port += 1
-            check_counter += 1
-
-        if (not check_socket(cbs_port)):
-            raise SmvRuntimeError("Start Python callback server failed. Port {0}-{1} are all in use. Please consider increasing the maximum retries or overriding the default port.".format(cbs_port - check_counter, cbs_port))
-
-        if "_callback_server" not in gw.__dict__ or gw._callback_server is None:
-            print("Starting Py4j callback server on port {0}".format(cbs_port))
-            gw.callback_server_parameters.eager_load = True
-            gw.callback_server_parameters.daemonize = True
-            gw.callback_server_parameters.daemonize_connections = True
-            gw.callback_server_parameters.port = cbs_port
-            gw.start_callback_server(gw.callback_server_parameters)
-            gw._callback_server.port = cbs_port
-            gw._python_proxy_port = gw._callback_server.port
-            # get the GatewayServer object in JVM by ID
-            jgws = JavaObject("GATEWAY_SERVER", gw._gateway_client)
-            # update the port of CallbackClient with real port
-            gw.jvm.SmvPythonHelper.updatePythonGatewayPort(jgws, gw._python_proxy_port)
 
         self.repoFactory = DataSetRepoFactory(self)
         self.dsm.register(self.repoFactory)
@@ -454,8 +426,7 @@ class SmvApp(object):
 
         The file object is closed when this function completes.
         """
-        src = FileObjInputStream(fileobj)
-        self._jvm.SmvHDFS.writeToFile(src, destination)
+        SmvHDFS(self._jvm.SmvHDFS).writeToFile(fileobj, destination)
 
     def getStageFromModuleFqn(self, fqn):
         """Returns the stage name for a given fqn"""
