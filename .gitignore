@@ -23,3 +23,8 @@ Pipfile.lock
 .sparks
 *.tgz
 .ivy2
+
+# Python setup.py distribution stuff
+dist
+build
+*egg-info/
