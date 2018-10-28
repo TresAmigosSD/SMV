@@ -134,6 +134,12 @@ class SmvApp(object):
         # Initialize DataFrame and Column with helper methods
         smv.helpers.init_helpers()
 
+    def smvVersion(self): 
+        smvHome = os.environ.get("SMV_HOME")
+        versionFile = smvHome + "/.smv_version"
+        with open(versionFile, "r") as fp:
+            line = fp.readline()
+        return line.strip()
 
     def exception_handling(func):
         """ Decorator function to catch Py4JJavaError and raise SmvDqmValidationError if any.

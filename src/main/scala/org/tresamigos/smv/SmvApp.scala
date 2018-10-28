@@ -27,14 +27,6 @@ import org.apache.spark.SparkContext
 class SmvApp(_spark: SparkSession) {
   val log         = LogManager.getLogger("smv")
 
-  lazy val smvVersion  = {
-    val smvHome = sys.env("SMV_HOME")
-    val versionFile = Source.fromFile(f"${smvHome}/.smv_version")
-    val nextLine = versionFile.getLines.next
-    versionFile.close
-    nextLine
-  }
-
   val sparkSession = _spark 
 
   val sc         = sparkSession.sparkContext
