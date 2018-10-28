@@ -15,7 +15,9 @@ import unittest
 import json
 
 from test_support.smvbasetest import SmvBaseTest
+from test_support.testconfig import TestConfig
 from smv import *
+import sys
 import smv.utils
 import smv.smvshell
 from smv.dqm import *
@@ -29,6 +31,7 @@ from pyspark.sql.functions import col, lit
 
 single_run_counter = 0
 metadata_count = 0
+module_load_count = 0
 
 class SmvFrameworkTest(SmvBaseTest):
     @classmethod
@@ -242,3 +245,50 @@ class SmvPublishTest(SmvBaseTest):
          expected = self.createDF("col1: String", "a;b")
 
          self.should_be_same(res, expected)
+
+class SmvAppPyHotLoadTest(SmvBaseTest):
+    @classmethod
+    def smvAppInitArgs(cls):
+        return ['--smv-props', 'smv.stages=hotload', '-m', "None"]
+
+    def test_with_hotload(self):
+        """Module M1 should be loaded twice"""
+        global module_load_count
+        module_load_count = 0
+        fqn = "hotload.modules.M1"
+        self.load(fqn)
+        self.load(fqn)
+        self.assertEqual(module_load_count, 2)
+
+class SmvAppNoPyHotLoadTest(SmvBaseTest):
+    @classmethod
+    def smvAppInitArgs(cls):
+        return ['--smv-props', 'smv.stages=hotload', '-m', "None"]
+
+    @classmethod
+    def setUpClass(cls):
+        # Import needs to happen during EVERY setup to ensure that we are
+        # using the most recently reloaded SmvApp
+        from smv.smvapp import SmvApp
+
+        cls.sparkSession = TestConfig.sparkSession()
+        cls.sparkContext = TestConfig.sparkContext()
+        cls.sparkContext.setLogLevel("ERROR")
+
+        args = TestConfig.smv_args() + cls.smvAppInitArgs() + ['--data-dir', cls.tmpDataDir()]
+        # The test's SmvApp must be set as the singleton for correct results of some tests
+        # The original SmvApp (if any) will be restored when the test is torn down
+        cls.smvApp = SmvApp.createInstance(args, cls.sparkSession, py_module_hotload=False)
+
+        sys.path.append(cls.resourceTestDir())
+
+        cls.mkTmpTestDir()
+
+    def test_without_hotload(self):
+        """Module M1 should only be loaded once"""
+        global module_load_count
+        module_load_count = 0
+        fqn = "hotload.modules.M1"
+        self.load(fqn)
+        self.load(fqn)
+        self.assertEqual(module_load_count, 1)
