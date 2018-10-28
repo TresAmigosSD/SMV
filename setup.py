@@ -32,7 +32,7 @@ def read_file(path_from_root):
 NAME = 'smv'
 DESCRIPTION = 'A modular framework for creating applications in Apache Spark'
 URL = 'https://github.com/TresAmigosSD/SMV'
-EMAIL = 'TODO'
+EMAIL = 'bzhangusc@live.com'
 AUTHOR = 'Bo Zhang, Ali Tajeldin, Kai Chen, Lane Barlow, Guangning Yu'
 REQUIRES_PYTHON = '>=2.7'
 VERSION = read_file('.smv_version')
