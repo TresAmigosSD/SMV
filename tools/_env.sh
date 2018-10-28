@@ -44,7 +44,7 @@ function get_smv_tools_dir() {
     smv_tools_candidate="${SMV_TOOLS}"
   # We appaer to be inside of a python distributions bin directory. Full path has
   # bin in the name and there is a python file (executable) alongside us
-  elif [[ "${this_file_dir}" =~ $bin_dir_pattern ]] && [[ -e "${this_file_dir}/python" ]]; then
+  elif [[ "${this_file_dir}" =~ $bin_dir_pattern ]]; then
     local site_package_dir
     site_package_dir="$(get_python_site_packages_dir)"
     : "${site_package_dir:? Seems like we have a Python installation, but could not find the SMV_TOOLS directory}"
