@@ -2,7 +2,7 @@ sudo: required
 dist: trusty
 language: python
 python: 3.6.5
-install: 
+install:
   - pip install tox
   - pyenv install --skip-existing 2.7.13
   - pyenv install --skip-existing 3.5.3
@@ -19,4 +19,4 @@ jobs:
     - name: quick
       if: type != cron and env(TEST_TYPE) != thorough
       stage: test
-      script: make test-quick 
+      script: make test-quick

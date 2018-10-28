@@ -116,7 +116,7 @@ install-spark-all: $(INSTALL_SPARK_RULES)
 test: test-quick
 
 # Run all the basic tests tests with the default Python and Spark
-test-quick: test-scala test-python test-integration
+test-quick: test-scala test-python test-integration test-ingration-pip
 
 test-scala:
 	sbt test
@@ -125,7 +125,8 @@ test-python: install-basic
 	TOX_TESTENV_PASSENV="*" tox -e $(DEFAULT_PYTHON_MAJOR) -- bash tools/smv-pytest --spark-home $(DEFAULT_SPARK_HOME)
 
 test-integration: install-basic publish-scala
-	TOX_TESTENV_PASSENV="*" tox -e $(DEFAULT_PYTHON_MAJOR) -- bash src/test/scripts/run-integration-test.sh --spark-home $(DEFAULT_SPARK_HOME)
+	TOX_TESTENV_PASSENV="*" tox -e $(DEFAULT_PYTHON_MAJOR) -- bash src/test/scripts/run-integration-test.sh \
+		--spark-home $(DEFAULT_SPARK_HOME)
 
 test-ingration-pip:
 	bash src/test/scripts/run-integration-test.sh --pip-install
