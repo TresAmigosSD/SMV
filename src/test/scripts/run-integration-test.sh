@@ -23,9 +23,11 @@ function parse_args() {
     shift
     _spark_home="${1}"
     shift
+  elif [ ! -z "${SPARK_HOME:-}" ]; then
+    _spark_home="${SPARK_HOME}"
   else
     local spark_submit="$(type -p spark-submit)"
-    local spark_bin="$(dirname "$spark_submit")" 
+    local spark_bin="$(dirname "$spark_submit")"
     _spark_home="$(cd "$spark_bin"; pwd)"
   fi
 
@@ -35,15 +37,19 @@ function parse_args() {
 }
 
 function verify_test_context() {
-  if [ ! -d "src/test/scripts" ]; then
+  SMV_HOME="${SMV_HOME:-$(pwd)}"
+  echo "Using SMV_HOME of: ${SMV_HOME}"
+
+  if [ ! -d "${SMV_HOME}/src/test/scripts" ]; then
     echo "Must run this script from top level SMV directory"
     exit 1
   fi
 
-  SMV_HOME="$(pwd)"
   SMV_TOOLS="${SMV_HOME}/tools"
   SMV_INIT="${SMV_TOOLS}/smv-init"
+  echo "Using smv-init from $(type -p ${SMV_INIT})"
   SMV_RUN="${SMV_TOOLS}/smv-run --spark-home ${SPARK_HOME}"
+  echo "Using smv-init from $(type -p ${SMV_TOOLS}/smv-run)"
 }
 
 function enter_clean_test_dir() {
