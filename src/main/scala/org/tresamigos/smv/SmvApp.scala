@@ -15,18 +15,9 @@
 package org.tresamigos.smv
 
 
-import collection.JavaConverters._
-import java.util.List
-import scala.collection.mutable
-import scala.io.Source
-import scala.util.{Try, Success, Failure}
-
 import org.apache.log4j.LogManager
-import org.apache.spark.sql.{DataFrame, SparkSession}
-import org.apache.spark.{SparkContext, SparkConf}
-import org.joda.time._, format._
-
-import org.tresamigos.smv.util.Edd
+import org.apache.spark.sql.SparkSession
+import org.apache.spark.SparkContext
 
 
 /**
