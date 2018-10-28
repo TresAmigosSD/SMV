@@ -32,9 +32,11 @@ class DataSetRepoFactory(object):
 class DataSetRepo(object):
     def __init__(self, smvApp):
         self.smvApp = smvApp
-        # Remove client modules from sys.modules to force reload of all client
+        # When SmvApp init with py_module_hotload flag (by default),
+        # remove client modules from sys.modules to force reload of all client
         # code in the new transaction
-        self._clear_sys_modules()
+        if (smvApp.py_module_hotload):
+            self._clear_sys_modules()
 
     def _clear_sys_modules(self):
         """

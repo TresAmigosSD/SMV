@@ -21,7 +21,9 @@ class SmvDriver(object):
                 smv_args (list(str)): CLI args for SMV - should be passed to `SmvApp`)
                 driver_args (list(str)): CLI args for the driver
         """
-        return SmvApp.createInstance(smv_args)
+        # When SmvDriver is in use, user will call smv-run and interact
+        # through command-line, so no need to do py module hotload
+        return SmvApp.createInstance(smv_args, py_module_hotload=False)
 
     def main(self, app, driver_args):
         """Override this to define the driver logic 

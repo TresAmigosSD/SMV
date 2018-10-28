@@ -69,10 +69,10 @@ class SmvApp(object):
             return cls._instance
 
     @classmethod
-    def createInstance(cls, arglist, _sparkSession = None):
+    def createInstance(cls, arglist, _sparkSession=None, py_module_hotload=True):
         """Create singleton instance. Also returns the instance.
         """
-        cls._instance = cls(arglist, _sparkSession)
+        cls._instance = cls(arglist, _sparkSession, py_module_hotload)
         return cls._instance
 
     @classmethod
@@ -81,7 +81,7 @@ class SmvApp(object):
         """
         cls._instance = app
 
-    def __init__(self, arglist, _sparkSession = None):
+    def __init__(self, arglist, _sparkSession=None, py_module_hotload=True):
         self.sparkSession = SparkSession.builder.\
                     enableHiveSupport().\
                     getOrCreate() if _sparkSession is None else _sparkSession
@@ -92,6 +92,8 @@ class SmvApp(object):
         self.sc = sc
         self.sqlContext = self.sparkSession._wrapped
         self._jvm = sc._jvm
+
+        self.py_module_hotload = py_module_hotload
 
         from py4j.java_gateway import java_import
         java_import(self._jvm, "org.tresamigos.smv.ColumnHelper")
