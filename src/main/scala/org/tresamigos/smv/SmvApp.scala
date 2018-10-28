@@ -48,10 +48,6 @@ class SmvApp(_spark: SparkSession) {
 
   val sc         = sparkSession.sparkContext
   val sqlContext = sparkSession.sqlContext
-
-  // Since OldVersionHelper will be used by executors, need to inject the version from the driver
-  OldVersionHelper.version = sc.version
-
 }
 
 /**
