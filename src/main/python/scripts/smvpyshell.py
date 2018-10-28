@@ -54,9 +54,12 @@ import pyspark.sql.types as T
 
 sc.setLogLevel("ERROR")
 
-user_args = "_SMV_ALL_ARGS_".split()
-all_args = user_args
-app = SmvApp.createInstance(all_args, spark)
+with open("smv_shell_all_args") as fp:
+    args = fp.readline()
+
+print("-------------", args)
+user_args = args.split()
+app = SmvApp.createInstance(user_args, spark)
 
 from smv.smvshell import *
 
