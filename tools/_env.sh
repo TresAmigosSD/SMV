@@ -193,6 +193,15 @@ function set_smv_spark_paths() {
     echo "Are you sure that pyspark and spark-submit are on your PATH?"
     exit 1
   fi
+
+  if ! java -version &> /dev/null; then
+    echo "ERROR: java command does not appear on the PATH. Spark will not work without java8 installed"
+    exit 3
+  fi
+
+  if ! java -version 2>&1 | grep "1.8" &>/dev/null; then
+    echo "WARNING: java command found, but version is greater than what spark may support"
+  fi
 }
 
 function set_smv_home() {
