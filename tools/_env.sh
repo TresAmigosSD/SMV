@@ -12,10 +12,17 @@
 function get_python_site_packages_dir() {
   # site.getsitepackages is broken inside of virtual environments on mac os x, so we fall back to distutils
     # https://github.com/dmlc/tensorboard/issues/38#issuecomment-343017735
-    local python_site_packages=$(\
-      python -c "import site; site.getsitepackages()" 2>/dev/null ||  \
+    local python_site_packages
+    python_site_packages=$( \
+      python -c "import site; print(site.getsitepackages()[0])" 2>/dev/null ||  \
       python -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())" 2>/dev/null \
     )
+
+    if [ -z "${python_site_packages}" ]; then
+      echo "Could not find site-packages directory. Need to exit"
+      exit 3
+    fi
+
     echo "${python_site_packages}"
 }
 
@@ -28,7 +35,8 @@ function get_python_site_packages_dir() {
 # (2) otherwise, assume that where the called of get_smv_tools_dir is inside of the SMV_TOOLS dir
 function get_smv_tools_dir() {
   local smv_tools_candidate=""
-  local this_file_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
+  local this_file_dir
+  this_file_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
   local bin_dir_pattern=".*/bin"
 
   # SMV_TOOLS env var is already populated
@@ -37,7 +45,9 @@ function get_smv_tools_dir() {
   # We appaer to be inside of a python distributions bin directory. Full path has
   # bin in the name and there is a python file (executable) alongside us
   elif [[ "${this_file_dir}" =~ $bin_dir_pattern ]] && [[ -e "${this_file_dir}/python" ]]; then
-    local site_package_dir="$(get_python_site_packages_dir)"
+    local site_package_dir
+    site_package_dir="$(get_python_site_packages_dir)"
+    : "${site_package_dir:? Seems like we have a Python installation, but could not find the SMV_TOOLS directory}"
     smv_tools_candidate="${site_package_dir}/smv/tools"
   else
     smv_tools_candidate="${this_file_dir}"
@@ -51,6 +61,10 @@ function get_smv_tools_dir() {
 
   if [[ ! -z "${smv_tools_candidate}" ]]; then
     echo "${smv_tools_candidate}"
+  else
+    (>&2 echo "Could not establish the SMV_TOOLS directory. Something seems broken.")
+    (>&2 echo "Please raise an issue at https://github.com/TresAmigosSD/SMV/issues if you see this issue")
+    exit 3
   fi
 }
 
@@ -115,7 +129,6 @@ function find_file_in_dir()
   local file_candidate=""
   filepat=$1
   shift
-  (2> echo "Looking for $filepat in locations ${*}")
   for dir in "${@}"; do
     if [ -d $dir ]; then
       file_candidate=$(find $dir -maxdepth 1 -name "${filepat}")
@@ -183,7 +196,11 @@ function set_smv_spark_paths() {
 }
 
 function set_smv_home() {
-  export SMV_HOME="${SMV_HOME:-$(cd $(get_smv_tools_dir)/..; pwd)}"
+  local smv_tools
+  smv_tools="$(get_smv_tools_dir)"
+  : ${smv_tools:? smv_tools should have been populated, but only got ${smv_tools}}
+
+  export SMV_HOME="${SMV_HOME:-$(cd $smv_tools; cd ..; pwd)}"
   echo "SMV_HOME set to: ${SMV_HOME}"
 }
 

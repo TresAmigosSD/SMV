@@ -26,7 +26,7 @@ here = os.path.abspath(os.path.dirname(__file__))
 
 def read_file(path_from_root):
     with io.open(os.path.join(here, path_from_root), encoding='utf-8') as f:
-        return f.read()
+        return f.read().strip()
 
 # Package meta-data.
 NAME = 'smv'

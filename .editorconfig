@@ -26,3 +26,6 @@ trim_trailing_whitespace = false
 
 [*.txt]
 trim_trailing_whitespace = false
+
+[.smv_version]
+trim_trailing_whitespace = false
