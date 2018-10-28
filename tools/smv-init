@@ -180,7 +180,6 @@ function substitute_tokens()
     local ESCAPED_DATA_DIR=$(echo ${PROJ_DATA_DIR} | sed -e 's/[\/&]/\\&/g')
 
     for f in "${files_array[@]}"; do
-        echo "-- -- substituting file: ${f}"
         sed  -e "s/_GROUP_ID_/$PROJ_GROUP_ID/" \
              -e "s/_ARTIFACT_ID_/$PROJ_ARTIFACT_ID/" \
              -e "s/_PROJ_DIR_FULL_PATH_/${ESCAPED_FULL_PATH}/g" \

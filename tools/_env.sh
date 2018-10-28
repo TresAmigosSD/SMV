@@ -38,7 +38,7 @@ function get_smv_tools_dir() {
   # bin in the name and there is a python file (executable) alongside us
   elif [[ "${this_file_dir}" =~ $bin_dir_pattern ]] && [[ -e "${this_file_dir}/python" ]]; then
     local site_package_dir="$(get_python_site_packages_dir)"
-    smv_tools_candidate="${python_site_packages}/smv/tools"
+    smv_tools_candidate="${site_package_dir}/smv/tools"
   else
     smv_tools_candidate="${this_file_dir}"
   fi
@@ -112,12 +112,17 @@ function split_smv_spark_args()
 
 function find_file_in_dir()
 {
+  local file_candidate=""
   filepat=$1
   shift
-  for dir in "$@"; do
-    APP_JAR=`ls -1t ${dir}/${filepat} 2>/dev/null | head -1`
-    if [ -n "$APP_JAR" ]; then
-      break
+  (2> echo "Looking for $filepat in locations ${*}")
+  for dir in "${@}"; do
+    if [ -d $dir ]; then
+      file_candidate=$(find $dir -maxdepth 1 -name "${filepat}")
+      if [ -n "$file_candidate" ]; then
+        echo "${file_candidate}"
+        break
+      fi
     fi
   done
 }
@@ -131,9 +136,8 @@ function find_fat_jar()
   # try sbt-build location first if not found try mvn-build location next.
   # then repeat from the parent directory, because the shell is
   # sometimes run from a notebook subdirectory of a data project
-  dirs=("target/scala-2.11" "target" "../target/scala-2.11" "../target" "$SMV_FAT_JAR")
-  find_file_in_dir "*jar-with-dependencies.jar" "${dirs[@]}"
-  echo APP_JAR = $APP_JAR
+  dirs=("target/scala-2.11" "target" "../target/scala-2.11" "../target" "$SMV_FAT_JAR" "${SMV_HOME}/target" "${SMV_HOME}/target/scala-2.11")
+  APP_JAR=$(find_file_in_dir "smv*jar-with-dependencies.jar" "${dirs[@]}")
 
   if [ -z "$APP_JAR" ]; then
     echo "ERROR: could not find an app jar in local target directory or SMV build target"
@@ -179,7 +183,8 @@ function set_smv_spark_paths() {
 }
 
 function set_smv_home() {
-  export SMV_HOME="$(cd "`dirname "$0"/`/.."; pwd)"
+  export SMV_HOME="${SMV_HOME:-$(cd $(get_smv_tools_dir)/..; pwd)}"
+  echo "SMV_HOME set to: ${SMV_HOME}"
 }
 
 # Remove trailing alphanum characters in dot-separated version text.
@@ -248,7 +253,7 @@ function run_pyspark_with () {
 
   PYTHONPATH="${PYTHONPATH}" PYTHONDONTWRITEBYTECODE="${PYTHONDONTWRITEBYTECODE}" \
   SPARK_PRINT_LAUNCH_COMMAND="${SPARK_PRINT_LAUNCH_COMMAND}" \
-  "${SMV_SPARK_SUBMIT_FULLPATH}" --verbose "${SPARK_ARGS[@]}" \
+  "${SMV_SPARK_SUBMIT_FULLPATH}" "${SPARK_ARGS[@]}" \
     --jars "$APP_JAR,$EXTRA_JARS" \
     --driver-class-path "$APP_JAR:$(basename ${APP_JAR}):$EXTRA_DRIVER_CLASSPATHS" \
     $1 "${SMV_ARGS[@]}"

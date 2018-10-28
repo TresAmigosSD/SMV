@@ -16,40 +16,69 @@ test4 \
 
 HASH_TEST_MOD="integration.test.hashtest.modules.M"
 
+PIP_INSTALL=0
+
 function parse_args() {
   local _spark_home
 
-  if [ "${1}" == "--spark-home" ]; then
-    shift
-    _spark_home="${1}"
-    shift
-  elif [ ! -z "${SPARK_HOME:-}" ]; then
+  if [ ! -z "${SPARK_HOME:-}" ]; then
     _spark_home="${SPARK_HOME}"
-  else
-    local spark_submit="$(type -p spark-submit)"
-    local spark_bin="$(dirname "$spark_submit")"
-    _spark_home="$(cd "$spark_bin"; pwd)"
   fi
 
-  SPARK_HOME=$(cd "$_spark_home"; pwd)
+  for arg in "${@}"; do
+    if [ "${arg}" == "--spark-home" ]; then
+      shift
+      _spark_home="${1}"
+      shift
+    fi
+    if [ "${arg}" == "--pip-install" ]; then
+      PIP_INSTALL=1
+    fi
+  done
 
-  echo "Using Spark installation at $SPARK_HOME"
+  # In insatlling in pip, make sure eo emulate a user environment without a spark home
+  if [ $PIP_INSTALL == 1 ]; then
+    echo "Not setting the SPARK_HOME since this is a pip installation"
+    unset SPARK_HOME
+  else
+    export SPARK_HOME
+    SPARK_HOME=$(cd "${_spark_home}"; pwd)
+    echo "Using Spark installation at ${SPARK_HOME:? Expected SPARK_HOME to have been set}"
+
+    export SMV_HOME
+    SMV_HOME=$(pwd)
+  fi
+}
+
+function setup_virtualenv() {
+  if [ $PIP_INSTALL == 1 ]; then
+    echo "Performing virtualenv pip installation of smv"
+    rm -rf venv
+    python -m virtualenv venv
+    source venv/bin/activate
+    pip install ".[pyspark]"
+  fi
 }
 
 function verify_test_context() {
-  SMV_HOME="${SMV_HOME:-$(pwd)}"
-  echo "Using SMV_HOME of: ${SMV_HOME}"
+  echo "Using SMV_HOME of: ${SMV_HOME:-No SMV_HOME set}"
 
-  if [ ! -d "${SMV_HOME}/src/test/scripts" ]; then
+  if [ ! -z "${SMV_HOME}" ] && [ ! -d "${SMV_HOME}/src/test/scripts" ]; then
     echo "Must run this script from top level SMV directory"
     exit 1
   fi
 
-  SMV_TOOLS="${SMV_HOME}/tools"
-  SMV_INIT="${SMV_TOOLS}/smv-init"
-  echo "Using smv-init from $(type -p ${SMV_INIT})"
-  SMV_RUN="${SMV_TOOLS}/smv-run --spark-home ${SPARK_HOME}"
-  echo "Using smv-init from $(type -p ${SMV_TOOLS}/smv-run)"
+  if [ ${PIP_INSTALL} == 1 ]; then
+    SMV_INIT="smv-init"
+    SMV_RUN="smv-run"
+  else
+    SMV_TOOLS="${SMV_HOME}/tools"
+    SMV_INIT="${SMV_TOOLS}/smv-init"
+    SMV_RUN="${SMV_TOOLS}/smv-run --spark-home ${SPARK_HOME}"
+  fi
+
+  echo "Using SMV_INIT of ${SMV_INIT}"
+  echo "Using SMV_RUN of ${SMV_RUN}"
 }
 
 function enter_clean_test_dir() {
@@ -88,6 +117,7 @@ function verify_hash_changed() {
 
 function generate_integration_app() {
   echo "--------- GENERATE INTEGRATION APP -------------"
+  echo "SMV_INIT=${SMV_INIT} I_APP_NAME=${I_APP_NAME}"
   ${SMV_INIT} -test ${I_APP_NAME}
 }
 
@@ -188,16 +218,17 @@ function test_enterprise_app() {
 }
 
 function test_simple_app() {
-  echo "--------- GENERATE ENTERPRISE APP -------------"
+  echo "--------- GENERATE SIMPLE APP -------------"
   ${SMV_INIT} -e $S_APP_NAME
 
-  echo "--------- RUN ENTERPRISE APP -------------"
+  echo "--------- RUN SIMPLE APP -------------"
   execute_in_dir "$S_APP_NAME" "${SMV_RUN} --run-app"
 }
 
 echo "--------- INTEGRATION TEST BEGIN -------------"
 
 parse_args $@
+setup_virtualenv
 verify_test_context
 enter_clean_test_dir
 generate_integration_app
