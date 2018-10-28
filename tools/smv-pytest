@@ -11,9 +11,9 @@
 # the rest of the arguments are the standard SmvApp arguments.
 
 set -e
-SMV_TOOLS="$(cd "`dirname "$0"`"; pwd)"
-source $SMV_TOOLS/_env.sh
-source $SMV_TOOLS/_pyenv.sh
+THIS_FILE_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
+source "${THIS_FILE_DIR}/_env.sh"
+SMV_TOOLS="$(get_smv_tools_dir)"
 
 if [ "$1" = "-h" ]; then
   show_run_usage_message `basename $0`
@@ -24,4 +24,5 @@ fi
 LOG_CONF_FILE="${SMV_HOME}/log4j.properties"
 SPARK_ARGS=("${SPARK_ARGS[@]}" "--conf" "spark.driver.extraJavaOptions=-Dlog4j.configuration=file://${LOG_CONF_FILE}")
 
+echo "DEBUG SPARK_ARGS = ${SPARK_ARGS[*]}"
 run_pyspark_with ${SMV_TOOLS}/../src/main/python/scripts/runtests.py

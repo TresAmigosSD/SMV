@@ -8,7 +8,51 @@
 # SMV_APP_CLASS : user specified --class name to use for spark-submit or SmvApp as default
 # APP_JAR : user specified --jar option or the discovered application fat jar.
 # SMV_USER_SCRIPT : optional user-defined launch script
-#
+
+function get_python_site_packages_dir() {
+  # site.getsitepackages is broken inside of virtual environments on mac os x, so we fall back to distutils
+    # https://github.com/dmlc/tensorboard/issues/38#issuecomment-343017735
+    local python_site_packages=$(\
+      python -c "import site; site.getsitepackages()" 2>/dev/null ||  \
+      python -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())" 2>/dev/null \
+    )
+    echo "${python_site_packages}"
+}
+
+# This function is used to determine where the "real" SMV_TOOLS directory lives. In the most basic case,
+# SMV_TOOLS is specifed by an environment variable, and we simply take that as the SMV_TOOLS dir.
+# If not specified as an environment variable, then we take one of two paths:
+# (1) if it appears like the get_smv_tools_dir got invoked from within a python environment (i.e. installed
+#     via pip into virtualenv_root/lib/python/site-packages, and CLI tools in virtualenv_root/bin), then
+#     we can set SMV tools to site-packages/SMV
+# (2) otherwise, assume that where the called of get_smv_tools_dir is inside of the SMV_TOOLS dir
+function get_smv_tools_dir() {
+  local smv_tools_candidate=""
+  local this_file_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
+  local bin_dir_pattern=".*/bin"
+
+  # SMV_TOOLS env var is already populated
+  if [[ ! -z "${SMV_TOOLS:-}" ]]; then
+    smv_tools_candidate="${SMV_TOOLS}"
+  # We appaer to be inside of a python distributions bin directory. Full path has
+  # bin in the name and there is a python file (executable) alongside us
+  elif [[ "${this_file_dir}" =~ $bin_dir_pattern ]] && [[ -e "${this_file_dir}/python" ]]; then
+    local site_package_dir="$(get_python_site_packages_dir)"
+    smv_tools_candidate="${python_site_packages}/smv/tools"
+  else
+    smv_tools_candidate="${this_file_dir}"
+  fi
+
+  if [[ ! -f "${smv_tools_candidate}/smv-run" ]]; then
+    (>&2 echo "Could not a suitable candidate for the SMV_TOOLS directory")
+    (>&2 echo "Best guess was ${smv_tools_candidate}, but it did not contain smv-run command")
+    exit 1
+  fi
+
+  if [[ ! -z "${smv_tools_candidate}" ]]; then
+    echo "${smv_tools_candidate}"
+  fi
+}
 
 # This function is used to split the command line arguments into SMV / Spark
 # arguments.  Everything before "--" are considered SMV arguments and everything
@@ -81,17 +125,12 @@ function find_file_in_dir()
 # find latest fat jar in target directory.
 function find_fat_jar()
 {
-  # SMV_TOOLS should have been set by caller.
-  if [ -z "$SMV_TOOLS" ]; then
-    echo "ERROR: SMV_TOOLS not set by calling script!"
-    exit 1
-  fi
-  SMV_FAT_JAR="${SMV_TOOLS}/../target/scala-2.11"
+  local smv_tools_dir="$(get_smv_tools_dir)"
+  SMV_FAT_JAR="${smv_tools_dir}/../target/scala-2.11"
 
   # try sbt-build location first if not found try mvn-build location next.
   # then repeat from the parent directory, because the shell is
   # sometimes run from a notebook subdirectory of a data project
-
   dirs=("target/scala-2.11" "target" "../target/scala-2.11" "../target" "$SMV_FAT_JAR")
   find_file_in_dir "*jar-with-dependencies.jar" "${dirs[@]}"
   echo APP_JAR = $APP_JAR
@@ -195,13 +234,29 @@ function print_help() {
   "${SMV_SPARK_SUBMIT_FULLPATH}" --class ${SMV_APP_CLASS}  "${APP_JAR}" --help
 }
 
+# We eagerly add the basename of the APP_JAR so that this same command
+# works in YARN Cluster mode, where the JAR gets added to the root directory
+# of the container. Also note the colon separator
+function run_pyspark_with () {
+  local tools_dir="$(get_smv_tools_dir)"
+  local SMV_HOME="$(cd ${tools_dir}/..; pwd)"
+  local PYTHONPATH="$SMV_HOME/src/main/python:$PYTHONPATH"
+  # Suppress creation of .pyc files. These cause complications with
+  # reloading code and have led to discovering deleted modules (#612)
+  local PYTHONDONTWRITEBYTECODE=1
+  local SPARK_PRINT_LAUNCH_COMMAND=1
+
+  PYTHONPATH="${PYTHONPATH}" PYTHONDONTWRITEBYTECODE="${PYTHONDONTWRITEBYTECODE}" \
+  SPARK_PRINT_LAUNCH_COMMAND="${SPARK_PRINT_LAUNCH_COMMAND}" \
+  "${SMV_SPARK_SUBMIT_FULLPATH}" --verbose "${SPARK_ARGS[@]}" \
+    --jars "$APP_JAR,$EXTRA_JARS" \
+    --driver-class-path "$APP_JAR:$(basename ${APP_JAR}):$EXTRA_DRIVER_CLASSPATHS" \
+    $1 "${SMV_ARGS[@]}"
+}
+
 # --- MAIN ---
 declare -a SMV_ARGS SPARK_ARGS
-# SMV_TOOLS should have been set by caller.
-if [ -z "$SMV_TOOLS" ]; then
-    echo "ERROR: SMV_TOOLS not set by calling script!"
-    exit 1
-fi
+
 USER_CMD=`basename $0`
 SMV_APP_CLASS="org.tresamigos.smv.SmvApp"
 split_smv_spark_args "$@"

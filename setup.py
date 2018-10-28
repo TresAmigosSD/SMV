@@ -122,7 +122,6 @@ setuptools.setup(
         'tools/smv-pytest',
         'tools/spark-install',
         'tools/_env.sh',
-        'tools/_pyenv.sh',
     ],
     install_requires=requirements_file_as_list,
     extras_require=EXTRAS,

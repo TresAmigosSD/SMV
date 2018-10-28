@@ -2,9 +2,9 @@
 
 set -e
 
-SMV_TOOLS="$(cd "`dirname "$0"`"; pwd)"
-source $SMV_TOOLS/_env.sh
-source $SMV_TOOLS/_pyenv.sh
+THIS_FILE_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
+source "${THIS_FILE_DIR}/_env.sh"
+SMV_TOOLS="$(get_smv_tools_dir)"
 
 export SPARK_PRINT_LAUNCH_COMMAND=1
 
@@ -12,7 +12,7 @@ export SPARK_PRINT_LAUNCH_COMMAND=1
 # Since pyspark does not take app parameters, we have to pass SMV_ARGS to the
 # startup script. A little hackish before we figure out better ways.
 export SMV_ALL_ARGS="${SMV_ARGS[@]}"
-sed -e "s|_SMV_ALL_ARGS_|${SMV_ALL_ARGS}|" $SMV_TOOLS/conf/smv_pyshell_init.py.template > smv_pyshell_init.py
+sed -e "s|_SMV_ALL_ARGS_|${SMV_ALL_ARGS}|" "$SMV_TOOLS/conf/smv_pyshell_init.py.template" > smv_pyshell_init.py
 
 OLD_PYTHONSTARTUP=$PYTHONSTARTUP
 export PYTHONSTARTUP="smv_pyshell_init.py"
