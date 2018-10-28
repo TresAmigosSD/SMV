@@ -9,3 +9,4 @@ recursive-include docs *
 recursive-include tools *
 recursive-include src/main/python/scripts *
 recursive-include src/main/python/test_support *
+recursive-include src/test *
