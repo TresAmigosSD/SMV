@@ -44,10 +44,6 @@ if os.path.exists(historyPath):
 
 atexit.register(save_history)
 
-# Get a random port for callback server
-import random;
-callback_server_port = random.randint(20000, 65535)
-
 # Import commonly used pyspark lib
 import pyspark.sql.functions as F
 import pyspark.sql.types as T
@@ -57,7 +53,6 @@ sc.setLogLevel("ERROR")
 with open("smv_shell_all_args") as fp:
     args = fp.readline()
 
-print("-------------", args)
 user_args = args.split()
 app = SmvApp.createInstance(user_args, spark)
 
