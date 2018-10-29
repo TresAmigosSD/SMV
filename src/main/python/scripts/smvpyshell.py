@@ -50,7 +50,7 @@ import pyspark.sql.types as T
 
 sc.setLogLevel("ERROR")
 
-with open("smv_shell_all_args") as fp:
+with open(".smv_shell_all_args") as fp:
     args = fp.readline()
 
 user_args = args.split()
