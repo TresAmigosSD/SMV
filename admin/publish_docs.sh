@@ -40,18 +40,13 @@ function write_docs()
   cd "$GHPAGES_DIR/$SMV_DIR"
 
   PYVERSION_DIR="pythondocs/$TO_VERSION"
-  SCALAVERSION_DIR="scaladocs/$TO_VERSION"
 
   PYDOC_DIR="$OUTPUT_DIR/pythondocs"
-  SCALADOC_DIR="$OUTPUT_DIR/scaladocs"
 
-  echo "-- copying scaladocs to ~/.smv/ghpages/SMV/scaladocs ..."
   echo "-- copying pythondocs to ~/.smv/ghpages/SMV/pythondocs ..."
   # put the docs in the right version subdirectory
   mkdir -p $PYVERSION_DIR
-  mkdir -p $SCALAVERSION_DIR
   cp -R ${PYDOC_DIR}/_build/html/* $PYVERSION_DIR
-  cp -R ${SCALADOC_DIR}/* $SCALAVERSION_DIR
   rm -rf $OUTPUT_DIR
 }
 
