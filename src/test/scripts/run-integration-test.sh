@@ -51,7 +51,7 @@ function parse_args() {
   fi
 }
 
-function setup_virtualenv() {
+function setup_virtualenv_if_needed() {
   if [ $PIP_INSTALL == 1 ]; then
     echo "Performing virtualenv pip installation of smv"
     rm -rf venv
@@ -118,7 +118,6 @@ function verify_hash_changed() {
 
 function generate_integration_app() {
   echo "--------- GENERATE INTEGRATION APP -------------"
-  echo "SMV_INIT=${SMV_INIT} I_APP_NAME=${I_APP_NAME}"
   ${SMV_INIT} -test ${I_APP_NAME}
 }
 
@@ -229,7 +228,7 @@ function test_simple_app() {
 echo "--------- INTEGRATION TEST BEGIN -------------"
 
 parse_args $@
-setup_virtualenv
+setup_virtualenv_if_needed
 verify_test_context
 enter_clean_test_dir
 generate_integration_app

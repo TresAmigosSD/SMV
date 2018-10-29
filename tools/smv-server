@@ -13,8 +13,6 @@ if [ "$1" = "-e" ]; then
   shift; shift
 fi
 
-source "${SMV_TOOLS}/_env.sh"
-
 echo "START SMV SERVER =============================="
 
 run_pyspark_with "${ENTRY_SCRIPT}"

@@ -24,5 +24,4 @@ fi
 LOG_CONF_FILE="${SMV_HOME}/log4j.properties"
 SPARK_ARGS=("${SPARK_ARGS[@]}" "--conf" "spark.driver.extraJavaOptions=-Dlog4j.configuration=file://${LOG_CONF_FILE}")
 
-echo "DEBUG SPARK_ARGS = ${SPARK_ARGS[*]}"
 run_pyspark_with ${SMV_TOOLS}/../src/main/python/scripts/runtests.py

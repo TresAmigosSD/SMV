@@ -9,6 +9,8 @@
 # APP_JAR : user specified --jar option or the discovered application fat jar.
 # SMV_USER_SCRIPT : optional user-defined launch script
 
+# This function prints to stdout the full path to the site-packages directory of the Python
+# distribution on the PATH
 function get_python_site_packages_dir() {
   # site.getsitepackages is broken inside of virtual environments on mac os x, so we fall back to distutils
     # https://github.com/dmlc/tensorboard/issues/38#issuecomment-343017735
