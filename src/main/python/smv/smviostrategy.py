@@ -126,3 +126,14 @@ class SmvJsonOnHdfsIoStrategy(SmvFileOnHdfsIoStrategy):
     
     def _write(self, rawdata):
         self.smvApp._jvm.SmvHDFS.writeToFile(rawdata, self._file_path)
+
+
+class SmvParquetOnHdfsIoStrategy(SmvFileOnHdfsIoStrategy):
+    def __init__(self, smvApp, fqn, ver_hex, file_path=None):
+        super(SmvParquetOnHdfsIoStrategy, self).__init__(smvApp, fqn, ver_hex, 'parquet', file_path)
+
+    def read(self):
+        return self.smvApp.sparkSession.read.parquet(self._file_path)
+
+    def _write(self, rawdata):
+        rawdata.write.parquet(self._file_path)
