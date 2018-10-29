@@ -61,7 +61,7 @@ private[smv] class Histogram(inputDT: DataType) extends UserDefinedAggregateFunc
     }
   }
 
-  def evaluate(buffer: Row) = OldVersionHelper.dataCV150(buffer.getMap(0), dataType)
+  def evaluate(buffer: Row) = buffer.getMap(0)
 }
 
 object histStr     extends Histogram(StringType)
@@ -72,9 +72,9 @@ object histDouble  extends Histogram(DoubleType)
 private[smv] class MostFrequentValue(in: DataType) extends Histogram(in) {
   override def evaluate(buffer: Row) = {
     val reducedMap = buffer.getMap(0).asInstanceOf[Map[Any, Long]]
-    val hist       = reducedMap.toList
-    val max        = maxBySeq(hist)(_._2)
-    OldVersionHelper.dataCV150(max.toMap, dataType)
+    val hist = reducedMap.toList
+    val max = maxBySeq(hist)(_._2)
+    max.toMap.asInstanceOf[Map[Nothing, Nothing]]
   }
 
   //since stdlib maxBy returns a single element, and we need to return Seq for the case that we have multiple modes
@@ -169,10 +169,9 @@ private[smv] object stddev extends UserDefinedAggregateFunction {
   // Called on exit to get return value
   def evaluate(buffer: Row) = {
     val count = buffer.getLong(0)
-    val avg   = buffer.getDouble(1)
-    val m2    = buffer.getDouble(2)
-    val res   = if (count < 2) 0.0 else scala.math.sqrt(m2 / (count - 1))
-    OldVersionHelper.dataCV150(res, dataType)
+    val avg = buffer.getDouble(1)
+    val m2 = buffer.getDouble(2)
+    if (count < 2) 0.0 else scala.math.sqrt(m2 / (count - 1))
   }
 }
 
@@ -296,28 +295,10 @@ private[smv] object DoubleBinHistogram extends UserDefinedAggregateFunction {
       null
     } else {
       val bin_frequencies = buffer.getMap(0).asInstanceOf[Map[Int, Int]].toSeq.sortBy(_._1)
-      val res = bin_frequencies.map { bin_freq =>
-        val bin_inter =
-          bin_interval(bin_freq._1, buffer.getDouble(1), buffer.getDouble(2), buffer.getInt(3))
+      bin_frequencies.map { bin_freq =>
+        val bin_inter = bin_interval(bin_freq._1, buffer.getDouble(1), buffer.getDouble(2), buffer.getInt(3))
         Row(bin_inter._1, bin_inter._2, bin_freq._2)
       }
-      OldVersionHelper.dataCV150(res, dataType)
     }
   }
-}
-
-private[smv] object OldVersionHelper {
-  import org.apache.spark.sql.contrib.smv._
-  /* In Yarn mode the executors have no access to server side variables including sc,
-   * so we need to inject the version from the server when initiate SmvApp.
-   */
-  var version = "1.5.2"
-
-  /**
-   * Addressing: 1.5.0's bug
-   * https://issues.apache.org/jira/browse/SPARK-10639
-   **/
-  def dataCV150(sv: Any, dt: DataType) =
-    if (version < "1.5.1") convertDataToCatalyst(sv, dt)
-    else sv
 }

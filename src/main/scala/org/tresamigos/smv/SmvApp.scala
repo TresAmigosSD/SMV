@@ -15,43 +15,22 @@
 package org.tresamigos.smv
 
 
-import collection.JavaConverters._
-import java.util.List
-import scala.collection.mutable
-import scala.io.Source
-import scala.util.{Try, Success, Failure}
-
 import org.apache.log4j.LogManager
-import org.apache.spark.sql.{DataFrame, SparkSession}
-import org.apache.spark.{SparkContext, SparkConf}
-import org.joda.time._, format._
-
-import org.tresamigos.smv.util.Edd
+import org.apache.spark.sql.SparkSession
+import org.apache.spark.SparkContext
 
 
 /**
  * Driver for SMV applications.  Most apps do not need to override this class and should just be
  * launched using the SmvApp object (defined below)
  */
-class SmvApp(val smvConfig: SmvConfig, _spark: SparkSession) {
+class SmvApp(_spark: SparkSession) {
   val log         = LogManager.getLogger("smv")
-
-  lazy val smvVersion  = {
-    val smvHome = sys.env("SMV_HOME")
-    val versionFile = Source.fromFile(f"${smvHome}/.smv_version")
-    val nextLine = versionFile.getLines.next
-    versionFile.close
-    nextLine
-  }
 
   val sparkSession = _spark 
 
   val sc         = sparkSession.sparkContext
   val sqlContext = sparkSession.sqlContext
-
-  // Since OldVersionHelper will be used by executors, need to inject the version from the driver
-  OldVersionHelper.version = sc.version
-
 }
 
 /**
@@ -60,8 +39,8 @@ class SmvApp(val smvConfig: SmvConfig, _spark: SparkSession) {
 object SmvApp {
   var app: SmvApp = _
 
-  def init(smvConf: SmvConfig, _spark: SparkSession) = {
-    app = new SmvApp(smvConf, _spark)
+  def init(_spark: SparkSession) = {
+    app = new SmvApp(_spark)
     app
   }
 }

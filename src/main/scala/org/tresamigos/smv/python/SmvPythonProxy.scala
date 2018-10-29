@@ -26,7 +26,6 @@ import org.apache.spark.sql.{Column, DataFrame, SQLContext, SparkSession, SaveMo
 import org.apache.spark.sql.types.{DataType, Metadata}
 import matcher._
 import org.tresamigos.smv.dqm.ParserLogger
-import org.tresamigos.smv.SmvConfig
 
 // Serialize scala map to json w/o reinventing any wheels
 import org.json4s.jackson.Serialization
@@ -256,8 +255,6 @@ class SmvMultiJoinAdaptor(joiner: SmvMultiJoin) {
  * through the py4j gateway.
  */
 class SmvPyClient(val j_smvApp: SmvApp) {
-  val config      = j_smvApp.smvConfig
-
   def getSmvSchema() = SmvSchema
 
   def readCsvFromFile(
@@ -304,16 +301,15 @@ class SmvPyClient(val j_smvApp: SmvApp) {
     j_smvApp.log.info(f"N: ${n}")
   }
 
-  private[smv] def writeThroughJDBC(df: DataFrame, tableName: String) = {
+  private[smv] def writeThroughJDBC(df: DataFrame, url: String, driver: String, tableName: String) = {
     val connectionProperties = new java.util.Properties()
-    connectionProperties.put("driver", j_smvApp.smvConfig.jdbcDriver)
-    val url = j_smvApp.smvConfig.jdbcUrl
+    connectionProperties.put("driver", driver)
     df.write.mode(SaveMode.Append).jdbc(url, tableName, connectionProperties)
   }
 }
 
 /** Not a companion object because we need to access it from Python */
 object SmvPyClientFactory {
-  def init(smvConf: SmvConfig, sparkSession: SparkSession): SmvPyClient =
-    new SmvPyClient(SmvApp.init(smvConf, sparkSession))
+  def init(sparkSession: SparkSession): SmvPyClient =
+    new SmvPyClient(SmvApp.init(sparkSession))
 }

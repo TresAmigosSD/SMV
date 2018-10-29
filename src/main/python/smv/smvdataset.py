@@ -346,7 +346,13 @@ class SmvDataSet(ABC):
 
     def post_action(self):
         """Will run when action happens on a DF, here for DQM validation"""
-        validation_result = self.dqmValidator.validate(None, True)
+        validation_result = self.dqmValidator.validate()
+        if (not validation_result.isEmpty()):
+            msg = json.dumps(
+                json.loads(validation_result.toJSON()),
+                indent=2, separators=(',', ': ')
+            )
+            self.smvApp.log.warn("Nontrivial DQM result:\n{}".format(msg))
         self.module_meta.addDqmValidationResult(validation_result.toJSON())
 
     def needsToRun(self):
@@ -390,7 +396,9 @@ class SmvDataSet(ABC):
         self._do_action_on_df(run_query, self.df, "PUBLISH TO HIVE")
     
     def publishThroughJDBC(self):
-        self.smvApp.j_smvPyClient.writeThroughJDBC(self.df._jdf, self.tableName())
+        url = self.smvApp.jdbcUrl()
+        driver = self.smvApp.jdbcDriver()
+        self.smvApp.j_smvPyClient.writeThroughJDBC(self.df._jdf, url, driver, self.tableName())
 
     ####################################################################################
     def smvGetRunConfig(self, key):

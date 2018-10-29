@@ -103,7 +103,7 @@ class SmvApp(object):
         java_import(self._jvm, "org.tresamigos.smv.DfCreator")
 
         self.py_smvconf = SmvConfig(arglist, self._jvm)
-        self.j_smvPyClient = self.create_smv_pyclient(self.py_smvconf.j_smvconf)
+        self.j_smvPyClient = self.create_smv_pyclient()
 
         # configure spark sql params 
         for k, v in self.py_smvconf.spark_sql_props().items():
@@ -134,6 +134,12 @@ class SmvApp(object):
         # Initialize DataFrame and Column with helper methods
         smv.helpers.init_helpers()
 
+    def smvVersion(self): 
+        smvHome = os.environ.get("SMV_HOME")
+        versionFile = smvHome + "/.smv_version"
+        with open(versionFile, "r") as fp:
+            line = fp.readline()
+        return line.strip()
 
     def exception_handling(func):
         """ Decorator function to catch Py4JJavaError and raise SmvDqmValidationError if any.
@@ -180,7 +186,16 @@ class SmvApp(object):
         return self.py_smvconf.merged_props().get('smv.maxCbsPortRetries')
 
     def jdbcUrl(self):
-        return self.py_smvconf.merged_props().get('smv.jdbc.url')
+        res = self.py_smvconf.merged_props().get('smv.jdbc.url')
+        if (res is None):
+            raise SmvRuntimeError("JDBC url not specified in SMV config")
+        return res
+  
+    def jdbcDriver(self):
+        res = self.py_smvconf.merged_props().get('smv.jdbc.driver')
+        if (res is None):
+            raise SmvRuntimeError("JDBC driver is not specified in SMV config")
+        return res
 
     def getConf(self, key):
         return self.py_smvconf.get_run_config(key)
@@ -246,12 +261,12 @@ class SmvApp(object):
         all_files = self._jvm.SmvPythonHelper.getDirList(self.inputDir())
         return [str(f) for f in all_files if f.endswith(ftype)]
 
-    def create_smv_pyclient(self, j_smvconf):
+    def create_smv_pyclient(self):
         '''
         return a smvPyClient instance
         '''
         # convert python arglist to java String array
-        return self._jvm.org.tresamigos.smv.python.SmvPyClientFactory.init(j_smvconf, self.sparkSession._jsparkSession)
+        return self._jvm.org.tresamigos.smv.python.SmvPyClientFactory.init(self.sparkSession._jsparkSession)
 
     def get_graph_json(self):
         """Generate a json string representing the dependency graph.

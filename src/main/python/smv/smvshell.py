@@ -124,7 +124,7 @@ def help():
         signature = formatargspec(*getargspec(func))
         help_msg += "\n* {}{}".format(func_name, signature)
 
-    smv_version = SmvApp.getInstance().j_smvApp.smvVersion()
+    smv_version = SmvApp.getInstance().smvVersion()
     doc_url = ("http://tresamigossd.github.io/SMV/pythondocs/{}/smv.html#module-smv.smvshell"
                 .format(smv_version))
     help_msg += "\nDocumentation may be found at " + doc_url

@@ -77,30 +77,9 @@ private[smv] object SmvHDFS {
   }
 
   def writeToFile(contents: String, fileName: String): Unit = {
-    val from = InputStreamAdapter(contents)
-    try {
-      writeToFile(from, fileName)
-    } finally {
-      from.close()
-    }
-  }
-
-  def writeToFile(from: IAnyInputStream, fileName: String): Unit = {
-    val path = new org.apache.hadoop.fs.Path(fileName)
-    val hdfs = getFileSystem(fileName)
-
-    if (hdfs.exists(path)) hdfs.delete(path, true)
-    val out = hdfs.create(path)
-
-    try {
-      var buf = from.read(8192)
-      while (!buf.isEmpty) {
-        out.write(buf, 0, buf.size)
-        buf = from.read(8192)
-      }
-    } finally {
-      out.close()
-    }
+    val out = openForWrite(fileName)
+    out.write(contents.getBytes("UTF-8"))
+    out.close()
   }
 
   def openForWrite(fileName: String): FSDataOutputStream = {
@@ -174,27 +153,4 @@ private[smv] object SmvHDFS {
       filename = s"${dirName}/${file}"
       r = deleteFile(filename)
     } yield (filename, r)
-}
-
-/**
- * Adapts a java InputStream object to the IAnyInputStream interface,
- * so it can be used in I/O methods that can work with input streams
- * from both Java and Python sources.
- */
-class InputStreamAdapter(in: InputStream) extends IAnyInputStream {
-  @Override def read(max: Int) = {
-    val buf = new Array[Byte](max)
-    var size = 0
-    while (0 == size)
-      size = in.read(buf)
-    if (-1 == size) Array.empty else buf.slice(0, size)
-  }
-  @Override def close(): Unit = in.close()
-}
-
-/** Factory object to create InputStreamAdapters from input sources */
-object InputStreamAdapter {
-  def apply(in: InputStream): InputStreamAdapter = new InputStreamAdapter(in)
-  def apply(content: String): InputStreamAdapter = new InputStreamAdapter(
-    new ByteArrayInputStream(content.getBytes(StandardCharsets.UTF_8)))
 }

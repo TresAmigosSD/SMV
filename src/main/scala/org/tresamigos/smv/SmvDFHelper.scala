@@ -1079,17 +1079,6 @@ class SmvDFHelper(df: DataFrame) {
   def peek(colRegex: String): Unit = peek(1, colRegex)
 
   /**
-   * Write `peek` result to a file
-   *
-   * @param path local file name to write
-   * @param pos the n-th row to display, default as 1
-   * @param colRegex show the columns with names match the regex, default as ".*"
-   **/
-  def peekSave(path: String, pos: Int = 1, colRegex: String = ".*") = {
-    SmvReportIO.saveLocalReport(_peek(pos, colRegex) + "\n", path)
-  }
-
-  /**
    * Find column combinations which uniquely identify a row from the data
    *
    * @param n number of rows the PK discovery algorithm will run on.
@@ -1390,21 +1379,9 @@ class SmvDFHelper(df: DataFrame) {
   def smvEdd(cols: String*) = println(_smvEdd(cols: _*).createReport())
 
   /**
-   * Save Edd summary
-   **/
-  def smvEddSave(cols: String*)(path: String) =
-    SmvReportIO.saveLocalReport(_smvEdd(cols: _*).createReport(), path)
-
-  /**
    * Print EDD histogram (each col's histogram prints separately)
    **/
   def smvHist(cols: String*) = println(_smvHist(cols: _*).createReport())
-
-  /**
-   * Save Edd histogram
-   **/
-  def smvHistSave(cols: String*)(path: String) =
-    SmvReportIO.saveLocalReport(_smvHist(cols: _*).createReport(), path)
 
   /**
    * Print EDD histogram of a group of cols (joint distribution)
@@ -1412,32 +1389,14 @@ class SmvDFHelper(df: DataFrame) {
   def smvConcatHist(cols: Seq[String]*) = println(_smvConcatHist(cols: _*).createReport())
 
   /**
-   * Save Edd histogram of a group of cols (joint distribution)
-   **/
-  def smvConcatHistSave(cols: Seq[String]*)(path: String) =
-    SmvReportIO.saveLocalReport(_smvConcatHist(cols: _*).createReport(), path)
-
-  /**
    * Print EDD histogram with frequency sorting
    **/
   def smvFreqHist(cols: String*) = println(_smvFreqHist(cols: _*).createReport())
 
   /**
-   * Save Edd histogram with frequency sorting
-   **/
-  def smvFreqHistSave(cols: String*)(path: String) =
-    SmvReportIO.saveLocalReport(_smvFreqHist(cols: _*).createReport(), path)
-
-  /**
    * Print Edd histogram with bins
    **/
   def smvBinHist(colWithBin: (String, Double)*) = println(_smvBinHist(colWithBin: _*).createReport())
-
-  /**
-   * Save Edd histogram with bins
-   **/
-  def smvBinHistSave(colWithBin: (String, Double)*)(path: String) =
-    SmvReportIO.saveLocalReport(_smvBinHist(colWithBin: _*).createReport(), path)
 
   /**
    * Print Edd histogram on count of records for a group of given keys
@@ -1465,14 +1424,6 @@ class SmvDFHelper(df: DataFrame) {
     println(_smvCountHist(keys, binSize).createReport())
 
   def smvCountHist(key: String): Unit = smvCountHist(Seq(key), 1)
-
-  /**
-   * Save Edd histogram on count of records for a group of given keys
-   **/
-  def smvCountHistSave(keys: Seq[String], binSize: Int = 1)(path: String): Unit =
-    SmvReportIO.saveLocalReport(_smvCountHist(keys, binSize).createReport(), path)
-
-  def smvCountHistSave(key: String)(path: String): Unit = smvCountHistSave(Seq(key), 1)(path)
 
   private[smv] def _smvEddCompare(df2: DataFrame, ignoreColName: Boolean) = {
     val toBeCom = if (ignoreColName) {
