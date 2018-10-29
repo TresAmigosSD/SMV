@@ -18,6 +18,24 @@ Spark Modularized View enables users to build enterprise scale applications on A
 
 ## Installation
 
+### Pip Install
+
+SMV is now [distributed as a package on PyPi](https://pypi.org/project/smv/). It comes in two flavors -- with and without a dependnecy on `pyspark`. The first is for consumers who might be installing to a machine outside of a cluster that does not already have `pyspark` installed, while the second is targeted for those installing to a gateway machine in a cluster that already has Spark available in the environment.
+
+#### Without Pyspark
+
+```bash
+pip install smv
+```
+
+#### With Pyspark
+
+```bash
+pip install smv[pyspark]
+```
+
+### Docker
+
 We avidly recommend using [Docker](https://docs.docker.com/engine/installation/) to install SMV. Using Docker, start an SMV container with
 
 ```
