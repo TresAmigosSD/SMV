@@ -21,6 +21,14 @@ if sys.version_info >= (3, 4):
 else:
     ABC = abc.ABCMeta('ABC', (), {})
 
+# If using Python 2, prefer cPickle because it is faster
+# If using Python 3, there is no cPickle (cPickle is now the implementation of pickle)
+# see https://docs.python.org/3.1/whatsnew/3.0.html#library-changes
+try:
+    import cPickle as pickle_lib
+except ImportError:
+    import pickle as pickle_lib
+
 class SmvIoStrategy(ABC):
     @abc.abstractmethod
     def read(self):
@@ -152,6 +160,19 @@ class SmvJsonOnHdfsIoStrategy(SmvFileOnHdfsIoStrategy):
     
     def _write(self, rawdata):
         self.smvApp._jvm.SmvHDFS.writeToFile(rawdata, self._file_path)
+
+
+class SmvPicklableOnHdfsIoStrategy(SmvFileOnHdfsIoStrategy):
+    def __init__(self, smvApp, fqn, ver_hex, file_path=None):
+        super(SmvCsvOnHdfsIoStrategy, self).__init__(smvApp, fqn, ver_hex, 'pickle', file_path)
+
+    def _read(self):
+        pickled_res_as_str = self.smvApp._jvm.SmvHDFS.readFromFile(self._file_path)
+        return pickle_lib.loads(pickled_res_as_str)
+
+    def _write(self, rawdata):
+        pickled_res = pickle_lib.dumps(rawdata, -1)
+        self.smvApp._jvm.SmvHDFS.writeToFile(pickled_res, self._file_path)
 
 
 class SmvParquetOnHdfsIoStrategy(SmvFileOnHdfsIoStrategy):
