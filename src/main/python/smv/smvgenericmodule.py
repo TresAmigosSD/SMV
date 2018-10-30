@@ -440,7 +440,7 @@ class SmvGenericModule(ABC):
         duration = (after - before)
         secondsElapsed = duration.total_seconds()
 
-        log.info("COMPLETED {}: {}".format(desc, name))
+        log.info("COMPLETED {}: {}".format(desc, self.fqn()))
         log.info("RunTime: {}".format(duration))
 
         return (res, secondsElapsed)

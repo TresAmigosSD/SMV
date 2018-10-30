@@ -191,33 +191,19 @@ class SmvModule(SmvGenericModule):
 
     # Override this method to add the dqmTimeElapsed 
     def finalize_meta(self):
+        super(SmvModule, self).finalize_meta()
         # Need to add duration at the very end, just before persist
-        self.module_meta.addDuration("persisting", self.persistingTimeElapsed)
-        self.module_meta.addDuration("metadata", self.userMetadataTimeElapsed)
         self.module_meta.addDuration("dqm", self.dqmTimeElapsed)
 
     # Override this to add the task to a Spark job group
     def _do_action_on_df(self, func, df, desc):
-        log = self.smvApp.log
-        log.info("STARTING " + desc)
-
         name = self.fqn()
         self.smvApp.sc.setJobGroup(groupId=name, description=desc)
-        before  = datetime.now()
-
-        res = func(df)
-
-        after   = datetime.now()
-        duration = (after - before)
-        secondsElapsed = duration.total_seconds()
+        (res, secondsElapsed) = super(SmvModule, self)._do_action_on_df(func, df, desc)
 
         # Python api does not have clearJobGroup
         # set groupId and description to None is equivalent
         self.smvApp.sc.setJobGroup(groupId=None, description=None)
-
-        log.info("COMPLETED {}: {}".format(desc, name))
-        log.info("RunTime: {}".format(duration))
-
         return (res, secondsElapsed)
 
     def persistStrategy(self):
