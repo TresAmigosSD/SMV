@@ -19,11 +19,7 @@ HASH_TEST_MOD="integration.test.hashtest.modules.M"
 PIP_INSTALL=0
 
 function parse_args() {
-  local _spark_home
-
-  if [ ! -z "${SPARK_HOME:-}" ]; then
-    _spark_home="${SPARK_HOME}"
-  fi
+  local _spark_home="${SPARK_HOME:-}"
 
   for arg in "${@}"; do
     if [ "${arg}" == "--spark-home" ]; then
@@ -35,6 +31,15 @@ function parse_args() {
       PIP_INSTALL=1
     fi
   done
+
+  # If _spark_home is still unset, look for it by deciphering the spark-submit on the PATH
+  if [ -z "${_spark_home}" ]; then
+    local spark_submit
+    spark_submit="$(type -p spark-submit)"
+    local spark_bin
+    spark_bin="$(dirname "$spark_submit")"
+    _spark_home="$(cd "$spark_bin/.."; pwd)"
+  fi
 
   # In insatlling in pip, make sure eo emulate a user environment without a spark home
   if [ $PIP_INSTALL == 1 ]; then
@@ -129,9 +134,6 @@ function test_integration_app() {
 }
 
 function run_integration_app() {
-  echo "--------- BUILD INTEGRATION APP -------------"
-  sbt clean assembly
-
   echo "--------- RUN INTEGRATION APP -------------"
   ${SMV_RUN} \
       --smv-props \
