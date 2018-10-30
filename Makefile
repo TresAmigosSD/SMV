@@ -124,7 +124,7 @@ test-scala:
 test-python: install-basic
 	tox -e $(DEFAULT_PYTHON_MAJOR) -- bash tools/smv-pytest --spark-home $(DEFAULT_SPARK_HOME)
 
-test-integration: install-basic publish-scala
+test-integration: install-basic
 	tox -e $(DEFAULT_PYTHON_MAJOR) -- bash src/test/scripts/run-integration-test.sh --spark-home $(DEFAULT_SPARK_HOME)
                                
 
