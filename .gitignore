@@ -23,6 +23,7 @@ Pipfile.lock
 .sparks
 *.tgz
 .ivy2
+.smv_shell_all_args
 
 # Python setup.py distribution stuff
 dist

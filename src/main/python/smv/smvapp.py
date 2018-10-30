@@ -69,10 +69,10 @@ class SmvApp(object):
             return cls._instance
 
     @classmethod
-    def createInstance(cls, arglist, _sparkSession = None):
+    def createInstance(cls, arglist, _sparkSession=None, py_module_hotload=True):
         """Create singleton instance. Also returns the instance.
         """
-        cls._instance = cls(arglist, _sparkSession)
+        cls._instance = cls(arglist, _sparkSession, py_module_hotload)
         return cls._instance
 
     @classmethod
@@ -81,7 +81,7 @@ class SmvApp(object):
         """
         cls._instance = app
 
-    def __init__(self, arglist, _sparkSession = None):
+    def __init__(self, arglist, _sparkSession=None, py_module_hotload=True):
         self.sparkSession = SparkSession.builder.\
                     enableHiveSupport().\
                     getOrCreate() if _sparkSession is None else _sparkSession
@@ -93,6 +93,8 @@ class SmvApp(object):
         self.sqlContext = self.sparkSession._wrapped
         self._jvm = sc._jvm
 
+        self.py_module_hotload = py_module_hotload
+
         from py4j.java_gateway import java_import
         java_import(self._jvm, "org.tresamigos.smv.ColumnHelper")
         java_import(self._jvm, "org.tresamigos.smv.SmvDFHelper")
@@ -103,7 +105,7 @@ class SmvApp(object):
         java_import(self._jvm, "org.tresamigos.smv.DfCreator")
 
         self.py_smvconf = SmvConfig(arglist, self._jvm)
-        self.j_smvPyClient = self.create_smv_pyclient(self.py_smvconf.j_smvconf)
+        self.j_smvPyClient = self.create_smv_pyclient()
 
         # configure spark sql params 
         for k, v in self.py_smvconf.spark_sql_props().items():
@@ -134,6 +136,12 @@ class SmvApp(object):
         # Initialize DataFrame and Column with helper methods
         smv.helpers.init_helpers()
 
+    def smvVersion(self): 
+        smvHome = os.environ.get("SMV_HOME")
+        versionFile = smvHome + "/.smv_version"
+        with open(versionFile, "r") as fp:
+            line = fp.readline()
+        return line.strip()
 
     def exception_handling(func):
         """ Decorator function to catch Py4JJavaError and raise SmvDqmValidationError if any.
@@ -180,7 +188,16 @@ class SmvApp(object):
         return self.py_smvconf.merged_props().get('smv.maxCbsPortRetries')
 
     def jdbcUrl(self):
-        return self.py_smvconf.merged_props().get('smv.jdbc.url')
+        res = self.py_smvconf.merged_props().get('smv.jdbc.url')
+        if (res is None):
+            raise SmvRuntimeError("JDBC url not specified in SMV config")
+        return res
+  
+    def jdbcDriver(self):
+        res = self.py_smvconf.merged_props().get('smv.jdbc.driver')
+        if (res is None):
+            raise SmvRuntimeError("JDBC driver is not specified in SMV config")
+        return res
 
     def getConf(self, key):
         return self.py_smvconf.get_run_config(key)
@@ -246,12 +263,12 @@ class SmvApp(object):
         all_files = self._jvm.SmvPythonHelper.getDirList(self.inputDir())
         return [str(f) for f in all_files if f.endswith(ftype)]
 
-    def create_smv_pyclient(self, j_smvconf):
+    def create_smv_pyclient(self):
         '''
         return a smvPyClient instance
         '''
         # convert python arglist to java String array
-        return self._jvm.org.tresamigos.smv.python.SmvPyClientFactory.init(j_smvconf, self.sparkSession._jsparkSession)
+        return self._jvm.org.tresamigos.smv.python.SmvPyClientFactory.init(self.sparkSession._jsparkSession)
 
     def get_graph_json(self):
         """Generate a json string representing the dependency graph.
@@ -512,8 +529,7 @@ class SmvApp(object):
         return visitor.queue
 
     def _purge_current_output_files(self, mods):
-        if(self.cmd_line.forceRunAll):
-            SmvModuleRunner(mods, self).purge_persisted()
+        SmvModuleRunner(mods, self).purge_persisted()
         
     def _dry_run(self, mods):
         """Execute as dry-run if the dry-run flag is specified.
@@ -521,42 +537,30 @@ class SmvApp(object):
             actually running the modules.
         """
         
-        if(self.cmd_line.dryRun):
-            # Find all ancestors inclusive,
-            # filter the modules that are not yet persisted and not ephemeral.
-            # this yields all the modules that will need to be run with the given command
-            mods_with_ancestors = self._modules_with_ancestors(mods)
-            mods_not_persisted = [ m for m in mods_with_ancestors if m.needsToRun() ]
+        # Find all ancestors inclusive,
+        # filter the modules that are not yet persisted and not ephemeral.
+        # this yields all the modules that will need to be run with the given command
+        mods_with_ancestors = self._modules_with_ancestors(mods)
+        mods_not_persisted = [ m for m in mods_with_ancestors if m.needsToRun() ]
 
-            print("Dry run - modules not persisted:")
-            print("----------------------")
-            print("\n".join([m.fqn() for m in mods_not_persisted]))
-            print("----------------------")
-            return True
-        else:
-            return False
+        print("Dry run - modules not persisted:")
+        print("----------------------")
+        print("\n".join([m.fqn() for m in mods_not_persisted]))
+        print("----------------------")
 
     def _generate_dot_graph(self):
         """Genrate app level graphviz dot file
         """
-        if(self.cmd_line.graph):
-            dot_graph_str = SmvAppInfo(self).create_graph_dot()
-            path = "{}.dot".format(self.appName())
-            with open(path, "w") as f:
-                f.write(dot_graph_str)
-            return True
-        else:
-            return False
+        dot_graph_str = SmvAppInfo(self).create_graph_dot()
+        path = "{}.dot".format(self.appName())
+        with open(path, "w") as f:
+            f.write(dot_graph_str)
 
     def _print_dead_modules(self):
         """Print dead modules: 
         Modules which do not contribute to any output modules are considered dead
         """
-        if(self.cmd_line.printDeadModules):
-            SmvAppInfo(self).ls_dead()
-            return True
-        else:
-            return False
+        SmvAppInfo(self).ls_dead()
 
     def _modules_to_run(self):
         modPartialNames = self.py_smvconf.mods_to_run
@@ -566,43 +570,26 @@ class SmvApp(object):
 
 
     def _publish_modules(self, mods):
-        if(self.cmd_line.publish):
-            SmvModuleRunner(mods, self).publish()
-            return True
-        else:
-            return False
-
+        SmvModuleRunner(mods, self).publish()
   
     def _publish_modules_to_hive(self, mods):
-        if(self.cmd_line.publishHive):
-            SmvModuleRunner(mods, self).publish_to_hive()
-            return True
-        else:
-            return False
+        SmvModuleRunner(mods, self).publish_to_hive()
 
     def _publish_modules_through_jdbc(self, mods):
-        if(self.cmd_line.publishJDBC):
-            SmvModuleRunner(mods, self).publish_to_jdbc()
-            return True
-        else:
-            return False
+        SmvModuleRunner(mods, self).publish_to_jdbc()
 
     def _publish_modules_locally(self, mods):
-        if(self.cmd_line.exportCsv):
-            local_dir = self.cmd_line.exportCsv
-            SmvModuleRunner(mods, self).publish_local(local_dir)
-            return True
-        else:
-            return False
+        local_dir = self.cmd_line.exportCsv
+        SmvModuleRunner(mods, self).publish_local(local_dir)
 
     def _generate_output_modules(self, mods):
         SmvModuleRunner(mods, self).run()
-        return len(mods) > 0
 
     def run(self):
         mods = self._modules_to_run()
 
-        self._purge_current_output_files(mods)
+        if(self.cmd_line.forceRunAll):
+            self._purge_current_output_files(mods)
 
         if (len(mods) > 0):
             print("Modules to run/publish")
@@ -610,13 +597,20 @@ class SmvApp(object):
             print("\n".join([m.fqn() for m in mods]))
             print("----------------------")
 
-
         #either generate graphs, publish modules, or run output modules (only one will occur)
-        self._print_dead_modules() \
-        or self._dry_run(mods) \
-        or self._generate_dot_graph() \
-        or self._publish_modules_to_hive(mods) \
-        or self._publish_modules(mods) \
-        or self._publish_modules_through_jdbc(mods)  \
-        or self._publish_modules_locally(mods) \
-        or self._generate_output_modules(mods)
+        if(self.cmd_line.printDeadModules):
+            self._print_dead_modules()
+        elif(self.cmd_line.dryRun):
+            self._dry_run(mods) 
+        elif(self.cmd_line.graph):
+            self._generate_dot_graph()
+        elif(self.cmd_line.publishHive):
+            self._publish_modules_to_hive(mods)
+        elif(self.cmd_line.publish):
+            self._publish_modules(mods)
+        elif(self.cmd_line.publishJDBC):
+            self._publish_modules_through_jdbc(mods)
+        elif(self.cmd_line.exportCsv):
+            self._publish_modules_locally(mods)
+        else:
+            self._generate_output_modules(mods)

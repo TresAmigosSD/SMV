@@ -35,9 +35,6 @@ private[smv] class ReportWriter(path: String) {
 }
 
 private[smv] object SmvReportIO {
-  def saveReport(report: String, path: String): Unit =
-    SmvHDFS.writeToFile(report, path)
-
   def saveLocalReport(report: String, path: String): Unit = {
     val rw = new ReportWriter(path)
     rw.write(report)
@@ -50,15 +47,5 @@ private[smv] object SmvReportIO {
     // memory than what is required for the largest partition
     report.toLocalIterator foreach (s => rw.write(s + "\n"))
     rw.close
-  }
-
-  def readReport(path: String): String =
-    SmvHDFS.readFromFile(path)
-
-  /** print report to console
-   *  TODO: use java log
-   **/
-  def printReport(report: String): Unit = {
-    println(report)
   }
 }

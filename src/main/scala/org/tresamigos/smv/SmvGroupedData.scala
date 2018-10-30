@@ -941,19 +941,8 @@ class SmvGroupedDataFunc(smvGD: SmvGroupedData) {
   def smvHist(cols: String*) = println(_smvHist(cols: _*).createReport())
 
   /**
-   * Save Edd histogram
-  **/
-  def smvHistSave(cols: String*)(path: String) =
-    SmvReportIO.saveLocalReport(_smvHist(cols: _*).createReport(), path)
-
-  /**
    * Print EDD histogram of a group of cols (joint distribution)
    **/
   def smvConcatHist(cols: Seq[String]*) = println(_smvConcatHist(cols: _*).createReport())
 
-  /**
-   * Save Edd histogram of a group of cols (joint distribution)
-   **/
-  def smvConcatHistSave(cols: Seq[String]*)(path: String) =
-    SmvReportIO.saveLocalReport(_smvConcatHist(cols: _*).createReport(), path)
 }

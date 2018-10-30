@@ -15,7 +15,9 @@ import unittest
 import json
 
 from test_support.smvbasetest import SmvBaseTest
+from test_support.testconfig import TestConfig
 from smv import *
+import sys
 import smv.utils
 import smv.smvshell
 from smv.dqm import *
@@ -29,6 +31,7 @@ from pyspark.sql.functions import col, lit
 
 single_run_counter = 0
 metadata_count = 0
+module_load_count = 0
 
 class SmvFrameworkTest(SmvBaseTest):
     @classmethod
@@ -242,3 +245,56 @@ class SmvPublishTest(SmvBaseTest):
          expected = self.createDF("col1: String", "a;b")
 
          self.should_be_same(res, expected)
+
+class SmvAppPyHotLoadTest(SmvBaseTest):
+    @classmethod
+    def smvAppInitArgs(cls):
+        return ['--smv-props', 'smv.stages=hotload', '-m', "None"]
+
+    def test_with_hotload(self):
+        """Module M1 should be loaded twice"""
+        global module_load_count
+        module_load_count = 0
+        fqn = "hotload.modules.M1"
+        self.load(fqn)
+        self.load(fqn)
+        # module_load_count is defined in this file. It is imported by python module hotload.modules.
+        # When the fqn is loaded, the module hotload.modules is loaded. When we don't do hotload on 
+        # python modules, python itself will only load each module once, but when we have hotload 
+        # switched on, we clean up sys.modules each time when call self.load(fqn), so here the counter
+        # get accumulated twice as the fqn is loaded twice
+        self.assertEqual(module_load_count, 2)
+
+class SmvAppNoPyHotLoadTest(SmvBaseTest):
+    @classmethod
+    def smvAppInitArgs(cls):
+        return ['--smv-props', 'smv.stages=hotload', '-m', "None"]
+
+    @classmethod
+    def setUpClass(cls):
+        from smv.smvapp import SmvApp
+
+        cls.sparkSession = TestConfig.sparkSession()
+        cls.sparkContext = TestConfig.sparkContext()
+        cls.sparkContext.setLogLevel("ERROR")
+
+        args = TestConfig.smv_args() + cls.smvAppInitArgs() + ['--data-dir', cls.tmpDataDir()]
+        # set py_module_hotload flag to False so no reload of python files
+        cls.smvApp = SmvApp.createInstance(args, cls.sparkSession, py_module_hotload=False)
+
+        sys.path.append(cls.resourceTestDir())
+
+        cls.mkTmpTestDir()
+
+    def test_without_hotload(self):
+        """Module M1 should only be loaded once"""
+        global module_load_count
+        module_load_count = 0
+        fqn = "hotload.modules.M1"
+        self.load(fqn)
+        self.load(fqn)
+        # As we switched off module hotload, the hotload.modules python module 
+        # will be only load once. If it was loaded once before this test run
+        # module_load_count will be 0, otherwise, will be 1. It will not be 
+        # 2 as in test_with_hotload
+        self.assertTrue(module_load_count <= 1)
