@@ -13,6 +13,7 @@
 import abc
 import sys
 import re
+import binascii
 
 from pyspark.sql import DataFrame
 
@@ -164,15 +165,25 @@ class SmvJsonOnHdfsIoStrategy(SmvFileOnHdfsIoStrategy):
 
 class SmvPicklableOnHdfsIoStrategy(SmvFileOnHdfsIoStrategy):
     def __init__(self, smvApp, fqn, ver_hex, file_path=None):
-        super(SmvCsvOnHdfsIoStrategy, self).__init__(smvApp, fqn, ver_hex, 'pickle', file_path)
+        super(SmvPicklableOnHdfsIoStrategy, self).__init__(smvApp, fqn, ver_hex, 'pickle', file_path)
 
     def _read(self):
-        pickled_res_as_str = self.smvApp._jvm.SmvHDFS.readFromFile(self._file_path)
+        # reverses result of applying _write. see _write for explanation.
+        hex_encoded_pickle_as_str = self.smvApp._jvm.SmvHDFS.readFromFile(self._file_path)
+        pickled_res_as_str = binascii.unhexlify(hex_encoded_pickle_as_str)
         return pickle_lib.loads(pickled_res_as_str)
 
     def _write(self, rawdata):
+        print("---------------", rawdata)
         pickled_res = pickle_lib.dumps(rawdata, -1)
-        self.smvApp._jvm.SmvHDFS.writeToFile(pickled_res, self._file_path)
+        # pickle may contain problematic characters like newlines, so we
+        # encode the pickle it as a hex string
+        hex_encoded_pickle = binascii.hexlify(pickled_res)
+        # encoding will be a bytestring object if in Python 3, so need to convert it to string
+        # str.decode converts string to utf8 in python 2 and bytes to str in Python 3
+        hex_encoded_pickle_as_str = hex_encoded_pickle.decode()
+        # insert the resulting serialization into a DataFrame
+        self.smvApp._jvm.SmvHDFS.writeToFile(hex_encoded_pickle_as_str, self._file_path)
 
 
 class SmvParquetOnHdfsIoStrategy(SmvFileOnHdfsIoStrategy):

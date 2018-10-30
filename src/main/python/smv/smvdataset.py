@@ -42,6 +42,38 @@ class SmvOutput(object):
                 (string)
         """
         return None
+    
+
+class RunParams(object):
+    """Map from SmvDataSet to resulting DataFrame
+
+        We need to simulate a dict from ds to df where the same object can be
+        keyed by different datasets with the same urn. For example, in the
+        module
+
+        class X(SmvModule):
+            def requiresDS(self): return [Foo]
+            def run(self, i): return i[Foo]
+
+        the i argument of the run method should map Foo to
+        the correct DataFrame.
+
+        Args:
+            (dict): a map from urn to DataFrame
+    """
+
+    def __init__(self, urn2df):
+        self.urn2df = urn2df
+
+    def __getitem__(self, ds):
+        """Called by the '[]' operator
+        """
+        if not hasattr(ds, 'urn'):
+            raise TypeError('Argument to RunParams must be an SmvDataSet')
+        else:
+            # called df2result so that SmvModel result get returned in `i`
+            return ds.df2result(self.urn2df[ds.urn()])
+
 
 class SmvModule(SmvGenericModule):
     """Base class for SmvModules written in Python
@@ -105,36 +137,6 @@ class SmvModule(SmvGenericModule):
         """
         return None
 
-    class RunParams(object):
-        """Map from SmvDataSet to resulting DataFrame
-
-            We need to simulate a dict from ds to df where the same object can be
-            keyed by different datasets with the same urn. For example, in the
-            module
-
-            class X(SmvModule):
-                def requiresDS(self): return [Foo]
-                def run(self, i): return i[Foo]
-
-            the i argument of the run method should map Foo to
-            the correct DataFrame.
-
-            Args:
-                (dict): a map from urn to DataFrame
-        """
-
-        def __init__(self, urn2df):
-            self.urn2df = urn2df
-
-        def __getitem__(self, ds):
-            """Called by the '[]' operator
-            """
-            if not hasattr(ds, 'urn'):
-                raise TypeError('Argument to RunParams must be an SmvDataSet')
-            else:
-                # called df2result so that SmvModel result get returned in `i`
-                return ds.df2result(self.urn2df[ds.urn()])
-
 
     @abc.abstractmethod
     def run(self, i):
@@ -161,7 +163,7 @@ class SmvModule(SmvGenericModule):
     # Implement of SmvGenericModule abatract methos and other private methods
     #########################################################################
     def doRun(self, known):
-        i = self.RunParams(known)
+        i = RunParams(known)
         return self.run(i)
 
     def had_action(self):
@@ -192,6 +194,7 @@ class SmvModule(SmvGenericModule):
     # Override this method to add the dqmTimeElapsed 
     def finalize_meta(self):
         super(SmvModule, self).finalize_meta()
+        self.module_meta.addSchemaMetadata(self.df)
         # Need to add duration at the very end, just before persist
         self.module_meta.addDuration("dqm", self.dqmTimeElapsed)
 
@@ -299,7 +302,7 @@ class SmvSqlModule(SmvModule):
         return res
 
 
-class SmvResultModule(SmvModule):
+class SmvResultModule(SmvGenericModule):
     """An SmvModule whose result is not a DataFrame
 
         The result must be picklable - see
@@ -308,43 +311,12 @@ class SmvResultModule(SmvModule):
     def persistStrategy(self):
         return SmvPicklableOnHdfsIoStrategy(self.smvApp, self.fqn(), self.ver_hex())
 
-    @classmethod
-    def df2result(self, df):
-        """Unpickle and decode module result stored in DataFrame
-        """
-        return df
-
-    @classmethod
-    def result2df(cls, smvApp, res_obj):
-        """Pick and encode module result, and store it in a DataFrame
-        """
-        return res_obj
-
-    @abc.abstractmethod
-    def run(self, i):
-        """User-specified definition of the operations of this SmvModule
-
-            Override this method to define the output of this module, given a map
-            'i' from input SmvDataSet to resulting DataFrame. 'i' will have a
-            mapping for each SmvDataSet listed in requiresDS. E.g.
-
-            def requiresDS(self):
-                return [MyDependency]
-
-            def run(self, i):
-                return train_model(i[MyDependency])
-
-            Args:
-                (RunParams): mapping from input SmvDataSet to DataFrame
-
-            Returns:
-                (object): picklable output of this SmvModule
-        """
+    def metaStrategy(self):
+        return SmvJsonOnHdfsIoStrategy(self.smvApp, self.meta_path())
 
     def doRun(self, known):
-        i = self.RunParams(known)
+        i = RunParams(known)
         return self.run(i)
-
 
 class SmvModel(SmvResultModule):
     """SmvModule whose result is a data model
@@ -385,7 +357,7 @@ class SmvModelExec(SmvModule):
         """
 
     def doRun(self, known):
-        i = self.RunParams(known)
+        i = RunParams(known)
         model = i[self.requiresModel()]
         return self.run(i, model)
 

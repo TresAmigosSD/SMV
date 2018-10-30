@@ -74,7 +74,6 @@ class SmvMetaData(object):
         self.addTimestamp(mod.timestamp)
         self.addApplicationContext(mod.smvApp)
         self.addDependencyMetadata(mod.resolvedRequiresDS)
-        self.addSchemaMetadata(mod.df)
 
     def addUserMeta(self, user_meta):
         self._metadata.update({'_userMetadata': user_meta})
