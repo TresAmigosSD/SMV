@@ -196,7 +196,8 @@ function set_smv_spark_paths() {
   #   * In Java 1.9 you get a nasty java stacktrace that either talks about a string class exception
   #   * In Java 1.7 you get a java stacktrace byte code version mismatch (this message is the most helpful of the lot)
   if ! (java -version 2>&1 | grep "1.8" &>/dev/null); then
-    (>&2 echo "WARNING: java command found, but version is greater than what spark may support")
+    (>&2 echo "WARNING: java command found, but version may not be supported by spark")
+    (>&2 echo "WARNING: spark 2.2+ only support java 1.8")
   fi
 }
 

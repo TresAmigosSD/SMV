@@ -122,14 +122,14 @@ test-scala:
 	sbt test
 
 test-python: install-basic
-	TOX_TESTENV_PASSENV="*" tox -e $(DEFAULT_PYTHON_MAJOR) -- bash tools/smv-pytest --spark-home $(DEFAULT_SPARK_HOME)
+	tox -e $(DEFAULT_PYTHON_MAJOR) -- bash tools/smv-pytest --spark-home $(DEFAULT_SPARK_HOME)
 
 test-integration: install-basic publish-scala
-	TOX_TESTENV_PASSENV="*" tox -e $(DEFAULT_PYTHON_MAJOR) -- bash src/test/scripts/run-integration-test.sh \
+	tox -e $(DEFAULT_PYTHON_MAJOR) -- bash src/test/scripts/run-integration-test.sh \
 		--spark-home $(DEFAULT_SPARK_HOME)
 
 test-ingration-pip:
-	bash src/test/scripts/run-integration-test.sh --pip-install
+	tox -e $(DEFAULT_PYTHON_MAJOR) -- bash src/test/scripts/run-integration-test.sh --pip-install
 
 # test-spark-x.y.z
 # Run python unit tests and integrations tests against target spark versions
