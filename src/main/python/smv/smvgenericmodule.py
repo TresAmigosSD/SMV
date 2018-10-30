@@ -9,8 +9,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from pyspark.sql import DataFrame
-
 import abc
 import inspect
 import sys
@@ -19,10 +17,8 @@ import binascii
 import json
 from datetime import datetime
 
-from smv.dqm import SmvDQM
+from smv.utils import lazy_property
 from smv.error import SmvRuntimeError
-from smv.utils import smv_copy_array, pickle_lib, is_string
-from smv.smviostrategy import SmvCsvOnHdfsIoStrategy, SmvJsonOnHdfsIoStrategy
 from smv.modulesvisitor import ModulesVisitor
 from smv.smvmetadata import SmvMetaData
 
@@ -55,17 +51,6 @@ def _sourceHash(module):
     # co_code = compile(src, inspect.getsourcefile(cls), 'exec').co_code
     return _smvhash(src_no_comm)
 
-def lazy_property(fn):
-    '''Decorator that makes a property lazy-evaluated.
-    '''
-    attr_name = '_lazy_' + fn.__name__
-
-    @property
-    def _lazy_property(self):
-        if not hasattr(self, attr_name):
-            setattr(self, attr_name, fn(self))
-        return getattr(self, attr_name)
-    return _lazy_property
 
 class SmvGenericModule(ABC):
     """Abstract base class for all SMV modules, including dataset and task modules
