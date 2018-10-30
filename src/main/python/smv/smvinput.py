@@ -108,7 +108,7 @@ class SmvInputBase(SmvDataSet, ABC):
         # ensure python's numeric type can fit in a java.lang.Integer
         return int(res) & 0x7fffffff
 
-    def doRun(self, validator, known):
+    def doRun(self, known):
         return self.run(self.readAsDF())
 
 
