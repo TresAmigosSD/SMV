@@ -346,12 +346,13 @@ class SmvMultiCsvFiles(SmvCsvFile):
             raise SmvRuntimeError("There are no data files in {}".format(self.fullPath()))
 
         combinedJdf = None
+        reader_logger = self.readerLogger()
         for filePath in filesInDir:
             jdf = self.smvApp.j_smvPyClient.readCsvFromFile(
                 filePath,
                 self.smvSchema(),
                 self.csvAttr(),
-                self.readerLogger()
+                reader_logger
             )
             combinedJdf = jdf if (combinedJdf is None) else combinedJdf.unionAll(jdf)
 
