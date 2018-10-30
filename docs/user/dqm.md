@@ -23,16 +23,49 @@ this differently.
 Also even if we want to fail the entire `SmvFile`, we should rather log more than one "bad" records
 for easy debugging.
 
-The default behavior of `SmvCsvFile` or any other input module with Csv parsers will fail the DF 
-read operation when the first parsing error happen, and will throw and exception. This behavior 
-can be change by `failAtParsingError` and `dqm` method override.
+The default behavior of `SmvCsvFile` or any other input modules with Csv parser will fail the DF 
+reading operation when the first parsing error happens, and will throw an exception. This behavior 
+can be changed by override the `failAtParsingError` and `dqm` methods
 
-To tolerant some parsing error one can set `SmvCsvFile` to behave the following:
+By default, any parser error will throw exception. This behavior is controlled
+by the `failAtParsingError` attribute of `SmvCsvFile`. The default value is `True`. To change that we
+can override it
+
+```python
+class Myfile(smv.SmvCsvFile):
+    def path(self):
+        return "accounts/acct_demo.csv"
+    def failAtParsingError(self):
+        return False
+```
+
+With above setting, the `SmvCsvFile` will simply persist the validation result and keep moving.
+
+Either terminating the process or not, as long as the log is nontrivial, it will be logged in
+log4j with level "warning".
+The result will also by persisted in the `SmvModule` persisted metadata with postfix `.meta`.
+
+Sometimes we need more flexibility on specifying the terminate criteria. For example, I can tolerate
+less than 10 parser errors, if more than that, terminate. Here is an example of how to specify that,
+
+```python
+import smv.dqm
+...
+class Myfile(smv.SmvCsvFile):
+    def path(self):
+        return "accounts/acct_demo.csv"
+    def failAtParsingError(self):
+        return False
+    def dqm(self):
+        return dqm.SmvDQM().add(dqm.FailParserCountPolicy(10))
+```
+
+Please refer the `DQMPolicy` session below.
+
+The logged dqm result has:
 
 * The total number of rejected records, and
 * Some example rejected records
-
-And then fail the `SmvFile` by terminating the process when a threshold number of rejections happen.
 
 **Note** that we only log a limited number of rejected records to prevent run-away rejections.
 
@@ -54,40 +87,6 @@ An example parsing validation log is like the following
 }
 ```
 
-By default, any parser error will throw exception. This behavior is controlled
-by the `failAtParsingError` attribute of `SmvCsvFile`. The default value is `True`. To change that we
-can override it
-
-```python
-class Myfile(smv.SmvCsvFile):
-    def path(self):
-        return "accounts/acct_demo.csv"
-    def failAtParsingError(self):
-        return False
-```
-
-With above setting, the `SmvCsvFile` will simply persist the validation result and keep moving.
-
-Either terminating the process or not, as long as the log is nontrivial, it will be logged with
-warning level
-and persisted in the `SmvModule` persisted metadata path with postfix `.meta`.
-
-Sometimes we need more flexibility on specifying the terminate criteria. For example, I can tolerate
-less than 10 parser errors, if more than that, terminate. Here is an example of how to specify that,
-
-```python
-import smv.dqm
-...
-class Myfile(smv.SmvCsvFile):
-    def path(self):
-        return "accounts/acct_demo.csv"
-    def failAtParsingError(self):
-        return False
-    def dqm(self):
-        return dqm.SmvDQM().add(dqm.FailParserCountPolicy(10))
-```
-
-Please refer the `DQMPolicy` session below.
 
 ## DQM
 
