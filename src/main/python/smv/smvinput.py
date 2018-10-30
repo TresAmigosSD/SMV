@@ -71,7 +71,7 @@ class SmvInputBase(SmvDataSet, ABC):
         return df
 
     @abc.abstractmethod
-    def readAsDF(self, readerLogger):
+    def readAsDF(self):
         """User defined data reader
 
             Returns:
@@ -109,11 +109,7 @@ class SmvInputBase(SmvDataSet, ABC):
         return int(res) & 0x7fffffff
 
     def doRun(self, validator, known):
-        if (validator is None):
-            readerLogger = self.smvApp._jvm.SmvPythonHelper.getTerminateParserLogger()
-        else:
-            readerLogger = validator.createParserValidator()
-        return self.run(self.readAsDF(readerLogger))
+        return self.run(self.readAsDF())
 
 
 class SmvInputFromFile(SmvInputBase):
@@ -201,7 +197,7 @@ class SmvXmlFile(SmvInputFromFile):
                 schema_st = sj.read()
             return StructType.fromJson(json.loads(schema_st))
 
-    def readAsDF(self, readerLogger):
+    def readAsDF(self):
         """readin xml data"""
 
         # TODO: look for possibilities to feed to readerLogger
@@ -226,17 +222,18 @@ class WithParser(SmvInputBase):
 
         if self.failAtParsingError():
             res = userDqm.add(FailParserCountPolicy(1)).addAction()
-        elif self.forceParserCheck():
-            res = userDqm.addAction()
         else:
             res = userDqm
         return res
 
-    def forceParserCheck(self):
-        return True
-
     def failAtParsingError(self):
         return True
+
+    def readerLogger(self):
+        if (self.failAtParsingError()):
+            return self.smvApp._jvm.SmvPythonHelper.getTerminateParserLogger()
+        else:
+            return self.dqmValidator.createParserValidator()
 
     @abc.abstractmethod
     def smvSchema(self):
@@ -294,12 +291,12 @@ class SmvCsvFile(WithParser, SmvInputFromFile):
             return smvSchemaObj.fromFile(self.smvApp.j_smvApp.sc(), self.fullSchemaPath())
 
 
-    def readAsDF(self, readerLogger):
+    def readAsDF(self):
         jdf = self.smvApp.j_smvPyClient.readCsvFromFile(
             self.fullPath(),
             self.smvSchema(),
             self.csvAttr(),
-            readerLogger
+            self.readerLogger()
         )
         return DataFrame(jdf, self.smvApp.sqlContext)
 
@@ -344,7 +341,7 @@ class SmvMultiCsvFiles(SmvCsvFile):
     def path(self):
         return self.dir()
 
-    def readAsDF(self, readerLogger):
+    def readAsDF(self):
         flist = self.smvApp._jvm.SmvHDFS.dirList(self.fullPath()).array()
         # ignore all hidden files in the data dir
         filesInDir = ["{}/{}".format(self.fullPath(), n) for n in flist if not n.startswith(".")]
@@ -358,7 +355,7 @@ class SmvMultiCsvFiles(SmvCsvFile):
                 filePath,
                 self.smvSchema(),
                 self.csvAttr(),
-                readerLogger
+                self.readerLogger()
             )
             combinedJdf = jdf if (combinedJdf is None) else combinedJdf.unionAll(jdf)
 
@@ -384,8 +381,8 @@ class SmvCsvStringData(WithParser):
         smvSchemaObj = self.smvApp.j_smvPyClient.getSmvSchema()
         return smvSchemaObj.fromString(self.schemaStr())
 
-    def readAsDF(self, readerLogger):
-        return self.smvApp.createDFWithLogger(self.schemaStr(), self.dataStr(), readerLogger)
+    def readAsDF(self):
+        return self.smvApp.createDFWithLogger(self.schemaStr(), self.dataStr(), self.readerLogger())
 
     def dataSrcHash(self):
         return _smvhash(self.dataStr())
@@ -421,7 +418,7 @@ class SmvJdbcTable(SmvInputBase):
         """User can override this, default use the jdbcUrl setting in smvConfig"""
         return self.smvApp.jdbcUrl()
 
-    def readAsDF(self, readerLogger):
+    def readAsDF(self):
         if (self.tableQuery() is None):
             tableNameOrQuery = self.tableName()
         else:
@@ -462,7 +459,7 @@ class SmvHiveTable(SmvInputBase):
     """Input from a Hive table
     """
 
-    def readAsDF(self, readerLogger):
+    def readAsDF(self):
         if (self.tableQuery() is None):
             query = "select * from {}".format(self.tableName())
         else:

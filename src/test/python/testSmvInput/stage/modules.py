@@ -12,6 +12,7 @@
 # limitations under the License.
 
 from smv import *
+from smv.dqm import *
 from smv.functions import smvStrCat
 import pyspark.sql.functions as F
 
@@ -22,6 +23,11 @@ class D1(SmvCsvStringData):
         return "x,10;y,1"
 
 class D1WithError(SmvCsvStringData):
+    def failAtParsingError(self):
+        return False
+    def dqm(self):
+        return SmvDQM().add(FailParserCountPolicy(1))
+
     def schemaStr(self):
         return "a:String;b:Integer"
     def dataStr(self):
