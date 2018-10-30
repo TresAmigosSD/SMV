@@ -43,12 +43,49 @@ class SmvOutput(object):
         """
         return None
 
-class SmvDataSet(SmvGenericModule):
-    """Abstract base class for all SmvDataSets
+class SmvModule(SmvGenericModule):
+    """Base class for SmvModules written in Python
     """
 
+    IsSmvModule = True
+
+
+    def dsType(self):
+        return "Module"
+
+
+    class RunParams(object):
+        """Map from SmvDataSet to resulting DataFrame
+
+            We need to simulate a dict from ds to df where the same object can be
+            keyed by different datasets with the same urn. For example, in the
+            module
+
+            class X(SmvModule):
+                def requiresDS(self): return [Foo]
+                def run(self, i): return i[Foo]
+
+            the i argument of the run method should map Foo to
+            the correct DataFrame.
+
+            Args:
+                (dict): a map from urn to DataFrame
+        """
+
+        def __init__(self, urn2df):
+            self.urn2df = urn2df
+
+        def __getitem__(self, ds):
+            """Called by the '[]' operator
+            """
+            if not hasattr(ds, 'urn'):
+                raise TypeError('Argument to RunParams must be an SmvDataSet')
+            else:
+                # called df2result so that SmvModel result get returned in `i`
+                return ds.df2result(self.urn2df[ds.urn()])
+
     def __init__(self, smvApp):
-        super(SmvDataSet, self).__init__(smvApp)
+        super(SmvModule, self).__init__(smvApp)
         self.dqmTimeElapsed = None
 
     def had_action(self):
@@ -190,49 +227,6 @@ class SmvDataSet(SmvGenericModule):
         """
         return None
 
-class SmvModule(SmvDataSet):
-    """Base class for SmvModules written in Python
-    """
-
-    IsSmvModule = True
-
-
-    def dsType(self):
-        return "Module"
-
-
-    class RunParams(object):
-        """Map from SmvDataSet to resulting DataFrame
-
-            We need to simulate a dict from ds to df where the same object can be
-            keyed by different datasets with the same urn. For example, in the
-            module
-
-            class X(SmvModule):
-                def requiresDS(self): return [Foo]
-                def run(self, i): return i[Foo]
-
-            the i argument of the run method should map Foo to
-            the correct DataFrame.
-
-            Args:
-                (dict): a map from urn to DataFrame
-        """
-
-        def __init__(self, urn2df):
-            self.urn2df = urn2df
-
-        def __getitem__(self, ds):
-            """Called by the '[]' operator
-            """
-            if not hasattr(ds, 'urn'):
-                raise TypeError('Argument to RunParams must be an SmvDataSet')
-            else:
-                # called df2result so that SmvModel result get returned in `i`
-                return ds.df2result(self.urn2df[ds.urn()])
-
-    def __init__(self, smvApp):
-        super(SmvModule, self).__init__(smvApp)
 
     @abc.abstractmethod
     def run(self, i):
