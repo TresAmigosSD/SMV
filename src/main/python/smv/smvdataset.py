@@ -49,10 +49,61 @@ class SmvModule(SmvGenericModule):
 
     IsSmvModule = True
 
-
     def dsType(self):
         return "Module"
 
+    def __init__(self, smvApp):
+        super(SmvModule, self).__init__(smvApp)
+        self.dqmTimeElapsed = None
+
+    #########################################################################
+    # User interface methods
+    #
+    # Inherited from SmvGenericModule:
+    #
+    # - isEphemeral: Optional, default False
+    # - description: Optional, default class docstr
+    # - requiresDS: Required 
+    # - requiresConfig: Optional, default []
+    # - requiresLib: Optional, default []
+    # - metadata: Optional, default {}
+    # - validateMetadata: Optional, default None
+    # - metadataHistorySize: Optional, default 5
+    # - version: Optional, default "0" --- Deprecated!
+    #
+    # SmvModule specific:
+    # - dqm: Optional, default SmvDQM()
+    # - publishHiveSql: Optional, default None
+    # - run: Required
+    #########################################################################
+    def dqm(self):
+        """DQM policy
+
+            Override this method to define your own DQM policy (optional).
+            Default is an empty policy.
+
+            Returns:
+                (SmvDQM): a DQM policy
+        """
+        return SmvDQM()
+
+
+    def publishHiveSql(self):
+        """An optional sql query to run to publish the results of this module when the
+           --publish-hive command line is used.  The DataFrame result of running this
+           module will be available to the query as the "dftable" table.
+
+            Example:
+                >>> return "insert overwrite table mytable select * from dftable"
+
+            Note:
+                If this method is not specified, the default is to just create the
+                table specified by tableName() with the results of the module.
+
+           Returns:
+               (string): the query to run.
+        """
+        return None
 
     class RunParams(object):
         """Map from SmvDataSet to resulting DataFrame
@@ -84,9 +135,34 @@ class SmvModule(SmvGenericModule):
                 # called df2result so that SmvModel result get returned in `i`
                 return ds.df2result(self.urn2df[ds.urn()])
 
-    def __init__(self, smvApp):
-        super(SmvModule, self).__init__(smvApp)
-        self.dqmTimeElapsed = None
+
+    @abc.abstractmethod
+    def run(self, i):
+        """User-specified definition of the operations of this SmvModule
+
+            Override this method to define the output of this module, given a map
+            'i' from inputSmvDataSet to resulting DataFrame. 'i' will have a
+            mapping for each SmvDataSet listed in requiresDS. E.g.
+
+            def requiresDS(self):
+                return [MyDependency]
+
+            def run(self, i):
+                return i[MyDependency].select("importantColumn")
+
+            Args:
+                (RunParams): mapping from input SmvDataSet to DataFrame
+
+            Returns:
+                (DataFrame): ouput of this SmvModule
+        """
+
+    #########################################################################
+    # Implement of SmvGenericModule abatract methos and other private methods
+    #########################################################################
+    def doRun(self, known):
+        i = self.RunParams(known)
+        return self.run(i)
 
     def had_action(self):
         """Check dqm overall counter to simulate an action check.
@@ -113,17 +189,14 @@ class SmvModule(SmvGenericModule):
         (n, self.dqmTimeElapsed) = self._do_action_on_df(
             lambda d: d.rdd.count(), df, "FORCE AN ACTION FOR DQM")
 
+    # Override this method to add the dqmTimeElapsed 
     def finalize_meta(self):
         # Need to add duration at the very end, just before persist
         self.module_meta.addDuration("persisting", self.persistingTimeElapsed)
         self.module_meta.addDuration("metadata", self.userMetadataTimeElapsed)
         self.module_meta.addDuration("dqm", self.dqmTimeElapsed)
 
-    def force_post_action(self, run_set):
-        if (self in run_set):
-            self.force_an_action(self.df)
-            self.run_ancestor_and_me_postAction(run_set)
-
+    # Override this to add the task to a Spark job group
     def _do_action_on_df(self, func, df, desc):
         log = self.smvApp.log
         log.info("STARTING " + desc)
@@ -197,61 +270,6 @@ class SmvModule(SmvGenericModule):
         url = self.smvApp.jdbcUrl()
         driver = self.smvApp.jdbcDriver()
         self.smvApp.j_smvPyClient.writeThroughJDBC(self.df._jdf, url, driver, self.tableName())
-
-    def dqm(self):
-        """DQM policy
-
-            Override this method to define your own DQM policy (optional).
-            Default is an empty policy.
-
-            Returns:
-                (SmvDQM): a DQM policy
-        """
-        return SmvDQM()
-
-
-    def publishHiveSql(self):
-        """An optional sql query to run to publish the results of this module when the
-           --publish-hive command line is used.  The DataFrame result of running this
-           module will be available to the query as the "dftable" table.
-
-            Example:
-                >>> return "insert overwrite table mytable select * from dftable"
-
-            Note:
-                If this method is not specified, the default is to just create the
-                table specified by tableName() with the results of the module.
-
-           Returns:
-               (string): the query to run.
-        """
-        return None
-
-
-    @abc.abstractmethod
-    def run(self, i):
-        """User-specified definition of the operations of this SmvModule
-
-            Override this method to define the output of this module, given a map
-            'i' from inputSmvDataSet to resulting DataFrame. 'i' will have a
-            mapping for each SmvDataSet listed in requiresDS. E.g.
-
-            def requiresDS(self):
-                return [MyDependency]
-
-            def run(self, i):
-                return i[MyDependency].select("importantColumn")
-
-            Args:
-                (RunParams): mapping from input SmvDataSet to DataFrame
-
-            Returns:
-                (DataFrame): ouput of this SmvModule
-        """
-
-    def doRun(self, known):
-        i = self.RunParams(known)
-        return self.run(i)
 
 class SmvSqlModule(SmvModule):
     """An SMV module which executes a SQL query in place of a run method
