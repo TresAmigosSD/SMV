@@ -23,11 +23,16 @@ this differently.
 Also even if we want to fail the entire `SmvFile`, we should rather log more than one "bad" records
 for easy debugging.
 
-Without any specific setup, the default behavior of `SmvFile` is to log:
+The default behavior of `SmvCsvFile` or any other input module with Csv parsers will fail the DF 
+read operation when the first parsing error happen, and will throw and exception. This behavior 
+can be change by `failAtParsingError` and `dqm` method override.
+
+To tolerant some parsing error one can set `SmvCsvFile` to behave the following:
+
 * The total number of rejected records, and
 * Some example rejected records
 
-And then fail the `SmvFile` by terminating the process when any rejection happens.
+And then fail the `SmvFile` by terminating the process when a threshold number of rejections happen.
 
 **Note** that we only log a limited number of rejected records to prevent run-away rejections.
 
@@ -49,8 +54,8 @@ An example parsing validation log is like the following
 }
 ```
 
-By default, any parser error will cause validation fail (`passed: false`). This behavior is controlled
-by the `failAtParsingError` attribute of `SmvFile`. The default value is `true`. To change that we
+By default, any parser error will throw exception. This behavior is controlled
+by the `failAtParsingError` attribute of `SmvCsvFile`. The default value is `True`. To change that we
 can override it
 
 ```python
@@ -61,12 +66,13 @@ class Myfile(smv.SmvCsvFile):
         return False
 ```
 
-With above setting, the `SmvFile` will simply persist the validation result and keep moving.
+With above setting, the `SmvCsvFile` will simply persist the validation result and keep moving.
 
-Either terminating the process or not, as long as the log is nontrivial, it will be printed to
-console and persisted in the `SmvModule` persisted data path with postfix `.valid`.
+Either terminating the process or not, as long as the log is nontrivial, it will be logged with
+warning level
+and persisted in the `SmvModule` persisted metadata path with postfix `.meta`.
 
-Sometimes we need more flexibility on specifying the terminate criterial. For example, I can tolerate
+Sometimes we need more flexibility on specifying the terminate criteria. For example, I can tolerate
 less than 10 parser errors, if more than that, terminate. Here is an example of how to specify that,
 
 ```python
