@@ -26,7 +26,7 @@ function parse_args() {
   else
     local spark_submit="$(type -p spark-submit)"
     local spark_bin="$(dirname "$spark_submit")" 
-    _spark_home="$(cd "$spark_bin"; pwd)"
+    _spark_home="$(cd "$spark_bin/.."; pwd)"
   fi
 
   SPARK_HOME=$(cd "$_spark_home"; pwd)
@@ -93,9 +93,6 @@ function test_integration_app() {
 }
 
 function run_integration_app() {
-  echo "--------- BUILD INTEGRATION APP -------------"
-  sbt clean assembly
-
   echo "--------- RUN INTEGRATION APP -------------"
   ${SMV_RUN} \
       --smv-props \
