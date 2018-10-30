@@ -92,7 +92,7 @@ def openHive(tableName):
         def tableName(self):
             return tableName
 
-    return DataFrame(TmpHive(app).doRun(None, None), app.sqlContext)
+    return DataFrame(TmpHive(app).doRun(None), app.sqlContext)
 
 def openCsv(path, validate=False):
     """Read in a CSV file as a DataFrame
@@ -108,10 +108,10 @@ def openCsv(path, validate=False):
     class TmpCsv(SmvCsvFile):
         def fullPath(self):
             return path
+        def failAtParsingError(self):
+            return validate
 
-    # validator == None will use TerminateParserLogger, empty dqm means ignore errors
-    validator = None if validate else app._jvm.DQMValidator(dqm.SmvDQM())
-    return TmpCsv(app).doRun(validator, None)
+    return TmpCsv(app).doRun(None)
 
 def help():
     """Print a list of the SMV helper functions available in the shell

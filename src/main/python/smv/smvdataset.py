@@ -153,18 +153,18 @@ class SmvDataSet(ABC):
         self.smvApp.log.debug("compute: {}".format(self.urn()))
 
         if (self.isEphemeral()):
-            raw_df = self.doRun(self.dqmValidator, urn2df)
+            raw_df = self.doRun(urn2df)
             return self.pre_action(raw_df)
         elif(is_quick_run):
             _strategy = self.persistStrategy()
             if (not _strategy.isPersisted()):
-                return self.doRun(self.dqmValidator, urn2df)
+                return self.doRun(urn2df)
             else:
                 return _strategy.read()
         else:
             _strategy = self.persistStrategy()
             if (not _strategy.isPersisted()):
-                raw_df = self.doRun(self.dqmValidator, urn2df)
+                raw_df = self.doRun(urn2df)
                 df = self.pre_action(raw_df)
                 (res, self.persistingTimeElapsed) = self._do_action_on_df(
                     _strategy.write, df, "RUN & PERSIST OUTPUT")
@@ -495,7 +495,7 @@ class SmvDataSet(ABC):
         return SmvDQM()
 
     @abc.abstractmethod
-    def doRun(self, validator, known):
+    def doRun(self, known):
         """Compute this dataset, and return the dataframe"""
 
     def version(self):
@@ -742,7 +742,7 @@ class SmvModule(SmvDataSet):
                 (DataFrame): ouput of this SmvModule
         """
 
-    def doRun(self, validator, known):
+    def doRun(self, known):
         i = self.RunParams(known)
         return self.run(i)
 
@@ -842,7 +842,7 @@ class SmvResultModule(SmvModule):
                 (object): picklable output of this SmvModule
         """
 
-    def doRun(self, validator, known):
+    def doRun(self, known):
         i = self.RunParams(known)
         res_obj = self.run(i)
         result = self.result2df(self.smvApp, res_obj)
@@ -887,7 +887,7 @@ class SmvModelExec(SmvModule):
                 (SmvModel): the SmvModel this module depends on
         """
 
-    def doRun(self, validator, known):
+    def doRun(self, known):
         i = self.RunParams(known)
         model = i[self.requiresModel()]
         return self.run(i, model)
