@@ -21,14 +21,6 @@ class SmvResultTest(SmvBaseTest):
     def smvAppInitArgs(cls):
         return ["--smv-props", "smv.stages=stage1:stage2"]
 
-    def test_SmvResultModule_serialization(self):
-        """Test serialization/deserialization of non-DataFrame results
-        """
-        obj = [100, "100", 100.0]
-        df = smv.smvdataset.SmvResultModule.result2df(self.smvApp, obj)
-        deserialized_obj = smv.smvdataset.SmvResultModule.df2result(df)
-        self.assertEqual(obj, deserialized_obj)
-
     def test_SmvResultModule_persistence(self):
         """Test persistence of non-DataFrame results
         """
