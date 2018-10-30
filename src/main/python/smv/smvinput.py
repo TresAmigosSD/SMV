@@ -216,8 +216,8 @@ class WithParser(SmvInputBase):
     """Input uses SmvSchema and Csv parser"""
 
     def failAtParsingError(self):
-        """When set, any parsing error will throw and exception to make sure we can stop early
-            to tolerant some parsing error, should
+        """When set, any parsing error will throw an exception to make sure we can stop early.
+            To tolerant some parsing error, user can
 
             - Override failAtParsingError to False
             - Set dqm to SmvDQM().add(FailParserCountPolicy(10))
