@@ -174,7 +174,6 @@ class SmvPicklableOnHdfsIoStrategy(SmvFileOnHdfsIoStrategy):
         return pickle_lib.loads(pickled_res_as_str)
 
     def _write(self, rawdata):
-        print("---------------", rawdata)
         pickled_res = pickle_lib.dumps(rawdata, -1)
         # pickle may contain problematic characters like newlines, so we
         # encode the pickle it as a hex string
