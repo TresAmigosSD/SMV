@@ -12,6 +12,7 @@
 # limitations under the License.
 
 from smv import *
+from smv.dqm import *
 from smv.functions import smvStrCat
 import pyspark.sql.functions as F
 
@@ -25,3 +26,7 @@ class CsvIgnoreError(SmvCsvFile):
 class CsvWithError(SmvCsvFile):
     def path(self):
         return "csv1.csv"
+    def failAtParsingError(self):
+        return False
+    def dqm(self):
+        return SmvDQM().add(FailParserCountPolicy(1))
