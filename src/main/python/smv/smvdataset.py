@@ -17,19 +17,14 @@ This module defines the abstract classes which formed the SmvDataSet Framework f
 from pyspark.sql import DataFrame
 
 import abc
-import inspect
-import sys
-import traceback
 import binascii
 import json
 from datetime import datetime
 
 from smv.dqm import SmvDQM
 from smv.error import SmvRuntimeError
-from smv.utils import smv_copy_array, pickle_lib, is_string
+from smv.utils import pickle_lib, lazy_property
 from smv.smviostrategy import SmvCsvOnHdfsIoStrategy, SmvJsonOnHdfsIoStrategy
-from smv.modulesvisitor import ModulesVisitor
-from smv.smvmetadata import SmvMetaData
 from smv.smvgenericmodule import SmvGenericModule, lazy_property
 
 class SmvOutput(object):
