@@ -33,7 +33,7 @@ function get_python_site_packages_dir() {
 # If not specified as an environment variable, then we take one of two paths:
 # (1) if it appears like the get_smv_tools_dir got invoked from within a python environment (i.e. installed
 #     via pip into virtualenv_root/lib/python/site-packages, and CLI tools in virtualenv_root/bin), then
-#     we can set SMV tools to site-packages/SMV
+#     we can set SMV tools to site-packages/SMV/tools
 # (2) otherwise, assume that where the called of get_smv_tools_dir is inside of the SMV_TOOLS dir
 function get_smv_tools_dir() {
   local smv_tools_candidate=""
@@ -49,7 +49,6 @@ function get_smv_tools_dir() {
   elif [[ "${this_file_dir}" =~ $bin_dir_pattern ]]; then
     local site_package_dir
     site_package_dir="$(get_python_site_packages_dir)"
-    : "${site_package_dir:? Seems like we have a Python installation, but could not find the SMV_TOOLS directory}"
     smv_tools_candidate="${site_package_dir}/smv/tools"
   else
     smv_tools_candidate="${this_file_dir}"
@@ -61,13 +60,7 @@ function get_smv_tools_dir() {
     exit 1
   fi
 
-  if [[ ! -z "${smv_tools_candidate}" ]]; then
-    echo "${smv_tools_candidate}"
-  else
-    (>&2 echo "Could not establish the SMV_TOOLS directory. Something seems broken.")
-    (>&2 echo "Please raise an issue at https://github.com/TresAmigosSD/SMV/issues if you see this issue")
-    exit 3
-  fi
+  echo "${smv_tools_candidate}"
 }
 
 # This function is used to split the command line arguments into SMV / Spark
@@ -165,17 +158,13 @@ function find_fat_jar()
 # users can specify SMV_SPARK_SUBMIT_CMD and SMV_PYSPARK_CMD to override the
 # executable used for spark-submit and pyspark respectively.
 function set_smv_spark_paths() {
+  local this_file_dir
+  this_file_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
+
   # if user specified --spark-home, use that as prefix to all spark commands.
   local prefix=""
-  local python_site_packages_regex=".*/site-packages/.*"
   if [ -n "$SPARK_HOME_OPT" ]; then
     prefix="${SPARK_HOME_OPT}/bin/"
-  # If we are installed in a python environment where pyspark was installed via pip,
-  # we should look for the spark/bin stuff inside the pyspark package within site-packages.
-  # NB: Don't quote the regex below
-  elif [[ "$(pwd)" == $python_site_packages_regex ]]; then
-    echo "Detected python pip (site-packages) installation of pyspark. Adding it to the spark-submit candidates on the PATH"
-    PATH="${PATH}:../pyspark/bin"
   fi
 
   # create the submit/pyspark full paths from spark home and override env vars.
@@ -201,8 +190,13 @@ function set_smv_spark_paths() {
     exit 3
   fi
 
-  if ! java -version 2>&1 | grep "1.8" &>/dev/null; then
-    echo "WARNING: java command found, but version is greater than what spark may support"
+  # The reason why I added the check at all is because if you are on java !== 1.8 and spark 2.2
+  # the error message is absolutely atrocious...
+  # If `spark-submit` is run:
+  #   * In Java 1.9 you get a nasty java stacktrace that either talks about a string class exception
+  #   * In Java 1.7 you get a java stacktrace byte code version mismatch (this message is the most helpful of the lot)
+  if ! (java -version 2>&1 | grep "1.8" &>/dev/null); then
+    (>&2 echo "WARNING: java command found, but version is greater than what spark may support")
   fi
 }
 

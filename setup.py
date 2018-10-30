@@ -6,7 +6,26 @@
 # pip install .
 # pip install .[pyspark]  -- to test with pyspark support
 
+# Packing Background
+#
+# 1) the "name" section indicates the name of our package as referenced on pypi and is
+#    referred to in the documentation as the "root package"
+# 2) the MANIFEST.in file indicates what files should be uploaded to PyPi during the upload
+#    upload step. They dictate the contents of the wheel and source distribution (i.e. .zip file)
+#    that forms the distribution. This behavior is enabled by "include_package_data=True"
+# 3) the "packages" list indicates what packages -- i.e. directories -- should be created inside
+#    python's site-packages directory. Any entry with a "." indicates to create a subdirectory
+#    (e.g. 'smv.target' means create a target directory inside of the site-packages/smv directory)
+# 3) the "packages_data" dict ties together the MANIFEST to the "packages" section.
+#    the keys of the "packages_data" dict indicate the location (i.e. directory or subdirectory)
+#    to copy (i.e. install) files into. An empty section ('') indicates the "root package" as specifed
+#    by the "name" section. Any name with a dot indicates a sub-directory (e.g. smv.target
+#    means copy into the the subdirectory smv/target).
+#    The values of the packages dict indicate which files should be copies from the MANIFEST into the
+#    directory specified by the "key"
+
 # Instructions for adding new files to the distribution:
+#
 # 1. If the directory is to be within an existing sub-package, then the only thing you need
 #    to do is make sure the contents are refernced inside of the MANIFEST.in file, and ignore
 #    the rest of these instructions
@@ -73,14 +92,10 @@ class UploadCommand(setuptools.Command):
             pass
 
         self.status('Building Source and Wheel (universal) distribution…')
-        os.system('{0} setup.py sdist bdist_wheel --universal'.format(sys.executable))
+        os.system('{0} setup.py sdist bdist_wheel'.format(sys.executable))
 
         self.status('Uploading the package to PyPI via Twine…')
         os.system('twine upload dist/*')
-
-        self.status('Pushing git tags…')
-        os.system('git tag v{0}'.format(VERSION))
-        os.system('git push --tags')
 
         sys.exit()
 
@@ -104,6 +119,7 @@ setuptools.setup(
         'smv.tools',
         'smv.src',
     ],
+    # https://docs.python.org/2/distutils/setupscript.html#listing-whole-packages
     package_dir={
         '':'src/main/python',
         'smv.target': 'target/scala-2.11',
@@ -125,7 +141,7 @@ setuptools.setup(
     ],
     install_requires=requirements_file_as_list,
     extras_require=EXTRAS,
-    license='Apache',
+    license='Apache License, Version 2.0',
     classifiers=[
         # Trove classifiers
         # Full list: https://pypi.python.org/pypi?%3Aaction=list_classifiers
