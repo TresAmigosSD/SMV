@@ -21,7 +21,7 @@ function get_python_site_packages_dir() {
     )
 
     if [ -z "${python_site_packages}" ]; then
-      echo "Could not find site-packages directory. Need to exit"
+      (>&2 echo "Could not find site-packages directory. Need to exit")
       exit 3
     fi
 
@@ -204,9 +204,9 @@ function set_smv_spark_paths() {
 function set_smv_home() {
   local smv_tools
   smv_tools="$(get_smv_tools_dir)"
-  : ${smv_tools:? smv_tools should have been populated, but only got ${smv_tools}}
 
-  export SMV_HOME="${SMV_HOME:-$(cd $smv_tools; cd ..; pwd)}"
+  export SMV_HOME
+  SMV_HOME="${SMV_HOME:-$(cd $smv_tools; cd ..; pwd)}"
   echo "SMV_HOME set to: ${SMV_HOME}"
 }
 

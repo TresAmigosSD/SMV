@@ -350,8 +350,9 @@ function push_changes_on_branch() {
 }
 
 function publish_to_pypi() {
-  echo "Starting to release to PyPi" && \
+  echo "Starting to release to PyPi"
   local temp_dir="temp"
+
   python -m pip install twine wheel && \
   rm -rf "${temp_dir}" && \
   mkdir -p "${temp_dir}" && \

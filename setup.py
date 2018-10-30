@@ -39,7 +39,6 @@ import io
 import os
 import sys
 import setuptools
-from shutil import rmtree
 
 here = os.path.abspath(os.path.dirname(__file__))
 
