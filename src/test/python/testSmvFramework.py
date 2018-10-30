@@ -258,6 +258,11 @@ class SmvAppPyHotLoadTest(SmvBaseTest):
         fqn = "hotload.modules.M1"
         self.load(fqn)
         self.load(fqn)
+        # module_load_count is defined in this file. It is imported by python module hotload.modules.
+        # When the fqn is loaded, the module hotload.modules is loaded. When we don't do hotload on 
+        # python modules, python itself will only load each module once, but when we have hotload 
+        # switched on, we clean up sys.modules each time when call self.load(fqn), so here the counter
+        # get accumulated twice as the fqn is loaded twice
         self.assertEqual(module_load_count, 2)
 
 class SmvAppNoPyHotLoadTest(SmvBaseTest):
@@ -267,8 +272,6 @@ class SmvAppNoPyHotLoadTest(SmvBaseTest):
 
     @classmethod
     def setUpClass(cls):
-        # Import needs to happen during EVERY setup to ensure that we are
-        # using the most recently reloaded SmvApp
         from smv.smvapp import SmvApp
 
         cls.sparkSession = TestConfig.sparkSession()
@@ -276,8 +279,7 @@ class SmvAppNoPyHotLoadTest(SmvBaseTest):
         cls.sparkContext.setLogLevel("ERROR")
 
         args = TestConfig.smv_args() + cls.smvAppInitArgs() + ['--data-dir', cls.tmpDataDir()]
-        # The test's SmvApp must be set as the singleton for correct results of some tests
-        # The original SmvApp (if any) will be restored when the test is torn down
+        # set py_module_hotload flag to False so no reload of python files
         cls.smvApp = SmvApp.createInstance(args, cls.sparkSession, py_module_hotload=False)
 
         sys.path.append(cls.resourceTestDir())
@@ -291,4 +293,8 @@ class SmvAppNoPyHotLoadTest(SmvBaseTest):
         fqn = "hotload.modules.M1"
         self.load(fqn)
         self.load(fqn)
-        self.assertEqual(module_load_count, 1)
+        # As we switched off module hotload, the hotload.modules python module 
+        # will be only load once. If it was loaded once before this test run
+        # module_load_count will be 0, otherwise, will be 1. It will not be 
+        # 2 as in test_with_hotload
+        self.assertTrue(module_load_count <= 1)
