@@ -243,6 +243,7 @@ class SmvGenericModule(ABC):
     # - pre_action: Optional, default pass through the input data
     # - post_action: Optional, default pass
     # - force_an_action: Optional, default pass
+    # - calculate_edd: Optional, default pass
     # - instanceValHash: Optional, default 0
     #########################################################################
     @abc.abstractmethod
@@ -294,6 +295,12 @@ class SmvGenericModule(ABC):
     def force_an_action(self, df):
         """For Spark DF and other data with lazy-eval, may need to force an action to 
             trigger the post_action calculation. For general data without lazy-eval, do nothing
+        """
+        pass
+
+    def calculate_edd(self, run_set):
+        """When config smv.forceEdd flag is true, run edd calculation. 
+            So far only Spark DF has edd defined
         """
         pass
 
