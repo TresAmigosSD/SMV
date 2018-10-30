@@ -215,17 +215,6 @@ class SmvXmlFile(SmvInputFromFile):
 class WithParser(SmvInputBase):
     """Input uses SmvSchema and Csv parser"""
 
-    def dqmWithTypeSpecificPolicy(self):
-        """for parsers we should get the type specific dqm policy from the
-           concrete scala proxy class that is the actual input (e.g. SmvCsvFile)"""
-        userDqm = self.dqm()
-
-        if self.failAtParsingError():
-            res = userDqm.add(FailParserCountPolicy(1)).addAction()
-        else:
-            res = userDqm
-        return res
-
     def failAtParsingError(self):
         return True
 

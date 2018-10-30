@@ -338,7 +338,7 @@ class SmvDataSet(ABC):
 
     @lazy_property
     def dqmValidator(self):
-        return self.smvApp._jvm.DQMValidator(self.dqmWithTypeSpecificPolicy())
+        return self.smvApp._jvm.DQMValidator(self.dqm())
 
     def pre_action(self, df):
         """DF in and DF out, to perform operations on created from run method"""
@@ -622,9 +622,6 @@ class SmvDataSet(ABC):
     @abc.abstractmethod
     def dsType(self):
         """Return SmvDataSet's type"""
-
-    def dqmWithTypeSpecificPolicy(self):
-        return self.dqm()
 
     def dependencies(self):
         """Can be overridden when a module has non-SmvDataSet dependencies (see SmvModelExec)
