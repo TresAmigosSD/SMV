@@ -24,7 +24,7 @@ from datetime import datetime
 from smv.dqm import SmvDQM
 from smv.error import SmvRuntimeError
 from smv.utils import pickle_lib, lazy_property
-from smv.smviostrategy import SmvCsvOnHdfsIoStrategy, SmvJsonOnHdfsIoStrategy
+from smv.smviostrategy import SmvCsvOnHdfsIoStrategy, SmvJsonOnHdfsIoStrategy, SmvPicklableOnHdfsIoStrategy
 from smv.smvgenericmodule import SmvGenericModule, lazy_property
 
 class SmvOutput(object):
@@ -305,32 +305,20 @@ class SmvResultModule(SmvModule):
         The result must be picklable - see
         https://docs.python.org/2/library/pickle.html#what-can-be-pickled-and-unpickled.
     """
+    def persistStrategy(self):
+        return SmvPicklableOnHdfsIoStrategy(self.smvApp, self.fqn(), self.ver_hex())
+
     @classmethod
     def df2result(self, df):
         """Unpickle and decode module result stored in DataFrame
         """
-        # reverses result of applying result2df. see result2df for explanation.
-        hex_encoded_pickle_as_str = df.collect()[0][0]
-        pickled_res_as_str = binascii.unhexlify(hex_encoded_pickle_as_str)
-        res = pickle_lib.loads(pickled_res_as_str)
-        return res
+        return df
 
     @classmethod
     def result2df(cls, smvApp, res_obj):
         """Pick and encode module result, and store it in a DataFrame
         """
-        # pickle the result object. this will use the most optimal pickling
-        # protocol available for this version of cPickle
-        pickled_res = pickle_lib.dumps(res_obj, -1)
-        # pickle may contain problematic characters like newlines, so we
-        # encode the pickle it as a hex string
-        hex_encoded_pickle = binascii.hexlify(pickled_res)
-        # encoding will be a bytestring object if in Python 3, so need to convert it to string
-        # str.decode converts string to utf8 in python 2 and bytes to str in Python 3
-        hex_encoded_pickle_as_str = hex_encoded_pickle.decode()
-        # insert the resulting serialization into a DataFrame
-        df = smvApp.createDF("pickled_result: String", hex_encoded_pickle_as_str)
-        return df
+        return res_obj
 
     @abc.abstractmethod
     def run(self, i):
@@ -355,9 +343,7 @@ class SmvResultModule(SmvModule):
 
     def doRun(self, known):
         i = self.RunParams(known)
-        res_obj = self.run(i)
-        result = self.result2df(self.smvApp, res_obj)
-        return result
+        return self.run(i)
 
 
 class SmvModel(SmvResultModule):
