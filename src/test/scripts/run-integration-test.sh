@@ -49,7 +49,7 @@ function parse_args() {
     export SPARK_HOME
     SPARK_HOME=$(cd "${_spark_home}"; pwd)
     echo "Using Spark installation at ${SPARK_HOME:? Expected SPARK_HOME to have been set}"
-    PATH="${PATH}:${SPARK_HOME}/bin"
+    PATH="${SPARK_HOME}/bin:${PATH}"
 
     export SMV_HOME
     SMV_HOME=$(pwd)
