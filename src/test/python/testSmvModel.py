@@ -33,3 +33,11 @@ class SmvModelTest(SmvBaseTest):
             ModelRes = self.smvApp.getModuleResult("mod:stage1.modules.Model")
             ModelExecDf = self.smvApp.getModuleResult("mod:stage2.modules.ModelExecWithLink")
         self.assertEqual(str(ModelRes), ModelExecDf.collect()[0][0])
+
+    def test_module_depends_on_model(self):
+        """Test module can depends on model and use directly"""
+        with ExtraPath("src/test/python/smv_model"):
+            mod = self.df("stage1.modules.Model")
+            res = self.df("stage1.modules.ModuleUsesModel")
+        exp = self.createDF("a:String", "\"{}\"".format(mod))
+        self.should_be_same(res, exp)

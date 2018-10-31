@@ -11,7 +11,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from smv import SmvModel, SmvModelExec, SmvOutput
+from smv import SmvModel, SmvModelExec, SmvOutput, SmvModule
 
 class Model(SmvModel, SmvOutput):
     def requiresDS(self):
@@ -30,3 +30,10 @@ class ModelExec(SmvModelExec):
 
     def run(self, i, model):
         return self.smvApp.createDF("model: String", "\"{}\"".format(model))
+
+class ModuleUsesModel(SmvModule):
+    def requiresDS(self):
+        return [Model]
+
+    def run(self, i):
+        return self.smvApp.createDF("a:String", "\"{}\"".format(i[Model]))
