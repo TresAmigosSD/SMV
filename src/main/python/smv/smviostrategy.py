@@ -38,20 +38,30 @@ class SmvIoStrategy(ABC):
     def remove(self):
         """Remove persisted file(s)"""
 
-# TODO: add lock, add publish
-class SmvCsvOnHdfsIoStrategy(SmvIoStrategy):
-    def __init__(self, smvApp, fqn, ver_hex, csv_path=None):
-        self.smvApp = smvApp
-        self.fqn = fqn
-        self.versioned_fqn = "{}_{}".format(fqn, ver_hex)
-        if (csv_path is None):
-            output_dir = self.smvApp.all_data_dirs().outputDir
-            self._csv_path = "{}/{}.csv".format(output_dir, self.versioned_fqn)
-        else:
-            self._csv_path = csv_path
 
-        self._schema_path = re.sub("\.csv$", ".schema", self._csv_path)
-        self._lock_path = self._csv_path + ".lock"
+class SmvFileOnHdfsIoStrategy(SmvIoStrategy):
+    """Abstract class for persisting data to Hdfs file system
+        handling general tasks as file name creation, locking when write, etc. 
+
+        Args:
+            smvApp(SmvApp): 
+            fqn(str): data/module's FQN/Name
+            ver_hex(str): data/module's version hex string
+            postfix(str): persisted file's postfix
+            file_path(str): parameters "fqn", "ver_hex" and "postfix" are used to create
+                a data file path. However if "file_path" is provided, all the other 3 
+                parameters are ignored
+    """
+    def __init__(self, smvApp, fqn=None, ver_hex=None, postfix=None, file_path=None):
+        self.smvApp = smvApp
+        if (file_path is None):
+            versioned_fqn = "{}_{}".format(fqn, ver_hex)
+            output_dir = self.smvApp.all_data_dirs().outputDir
+            self._file_path = "{}/{}.{}".format(output_dir, versioned_fqn, postfix)
+        else:
+            self._file_path = file_path
+
+        self._lock_path = self._file_path + ".lock"
 
     def _smvLock(self):
         # get a lock for 1 hour
@@ -59,34 +69,75 @@ class SmvCsvOnHdfsIoStrategy(SmvIoStrategy):
             self._lock_path,
             3600 * 1000 
         )
+    
+    @abc.abstractmethod
+    def _read(self):
+        """The raw io read action"""
 
     def read(self):
-        handler = self.smvApp.j_smvPyClient.createFileIOHandler(self._csv_path)
+        # May add lock or other logic here in future
+        return self._read()
 
-        jdf = handler.csvFileWithSchema(None, self.smvApp.scalaNone())
-        return DataFrame(jdf, self.smvApp.sqlContext)
+    @abc.abstractmethod
+    def _write(self, raw_data):
+        """The raw io write action"""
 
     def write(self, dataframe):
-        jdf = dataframe._jdf
-        # TODO: add log
         slock = self._smvLock()
-
         slock.lock()
         try:
             if (self.isPersisted()):
-                self.smvApp.log.info("Relying on cached result {} for {} found after lock acquired".format(self._csv_path, self.fqn))
+                self.smvApp.log.info("Relying on cached result {} found after lock acquired".format(self._file_path))
             else:
-                self.smvApp.log.info("No cached result found for {}. Caching result at {}".format(self.fqn, self._csv_path))
+                self.smvApp.log.info("No cached result found. Caching result at {}".format(self._file_path))
                 # Delete outputs in case data was partially written previously
                 # since `isPersisted` test on schema file, this case only happens when schema was written half way
                 self.remove()
-                self.smvApp.j_smvPyClient.persistDF(self._csv_path, jdf)
+                self._write(dataframe)
         finally:
             slock.unlock()
 
     def isPersisted(self):
-        handler = self.smvApp.j_smvPyClient.createFileIOHandler(self._csv_path)
+        return self.smvApp._jvm.SmvHDFS.exists(self._file_path)
 
+    def remove(self):
+        self.smvApp._jvm.SmvHDFS.deleteFile(self._file_path)
+
+
+class SmvCsvOnHdfsIoStrategy(SmvFileOnHdfsIoStrategy):
+    """Persist strategy for using Smv CSV IO handler
+
+        Args:
+            smvApp(SmvApp):
+            fqn(str): data/module's FQN/Name
+            ver_hex(str): data/module's version hex string
+            file_path(str): parameters "fqn", "ver_hex" are used to create
+                a data file path. However if "file_path" is provided, all the other 2
+                parameters are ignored
+    """
+    def __init__(self, smvApp, fqn, ver_hex, file_path=None):
+        super(SmvCsvOnHdfsIoStrategy, self).__init__(smvApp, fqn, ver_hex, 'csv', file_path)
+
+    @property
+    def _schema_path(self):
+        return re.sub("\.csv$", ".schema", self._file_path)
+
+    def _write(self, raw_data):
+        jdf = raw_data._jdf
+        # this call creates both .csv and .schema file from the scala side
+        self.smvApp.j_smvPyClient.persistDF(self._file_path, jdf)
+
+    def _read(self):
+        handler = self.smvApp.j_smvPyClient.createFileIOHandler(self._file_path)
+
+        jdf = handler.csvFileWithSchema(None, self.smvApp.scalaNone())
+        return DataFrame(jdf, self.smvApp.sqlContext)
+
+    def isPersisted(self):
+        handler = self.smvApp.j_smvPyClient.createFileIOHandler(self._file_path)
+
+        # since within the persistDF call on scala side, schema was written after
+        # csv file, so we can use the schema file as a semaphore
         try:
             handler.readSchema()
             return True
@@ -94,22 +145,37 @@ class SmvCsvOnHdfsIoStrategy(SmvIoStrategy):
             return False
 
     def remove(self):
-        self.smvApp._jvm.SmvHDFS.deleteFile(self._csv_path)
+        self.smvApp._jvm.SmvHDFS.deleteFile(self._file_path)
         self.smvApp._jvm.SmvHDFS.deleteFile(self._schema_path)
 
-class SmvJsonOnHdfsIoStrategy(SmvIoStrategy):
+
+class SmvJsonOnHdfsIoStrategy(SmvFileOnHdfsIoStrategy):
     def __init__(self, smvApp, path):
-        self._jvm = smvApp._jvm
-        self.path = path
+        super(SmvJsonOnHdfsIoStrategy, self).__init__(smvApp, None, None, None, path)
 
-    def read(self):
-        return self._jvm.SmvHDFS.readFromFile(self.path)
+    def _read(self):
+        return self.smvApp._jvm.SmvHDFS.readFromFile(self._file_path)
     
-    def write(self, rawdata):
-        self._jvm.SmvHDFS.writeToFile(rawdata, self.path)
+    def _write(self, rawdata):
+        self.smvApp._jvm.SmvHDFS.writeToFile(rawdata, self._file_path)
 
-    def isPersisted(self):
-        return self._jvm.SmvHDFS.exists(self.path)
 
-    def remove(self):
-        self._jvm.SmvHDFS.deleteFile(self.path)
+class SmvParquetOnHdfsIoStrategy(SmvFileOnHdfsIoStrategy):
+    """Persist strategy for using Spark native parquet
+
+        Args:
+            smvApp(SmvApp):
+            fqn(str): data/module's FQN/Name
+            ver_hex(str): data/module's version hex string
+            file_path(str): parameters "fqn", "ver_hex" are used to create
+                a data file path. However if "file_path" is provided, all the other 2
+                parameters are ignored
+    """
+    def __init__(self, smvApp, fqn, ver_hex, file_path=None):
+        super(SmvParquetOnHdfsIoStrategy, self).__init__(smvApp, fqn, ver_hex, 'parquet', file_path)
+
+    def _read(self):
+        return self.smvApp.sparkSession.read.parquet(self._file_path)
+
+    def _write(self, rawdata):
+        rawdata.write.parquet(self._file_path)

@@ -140,11 +140,11 @@ class SmvFrameworkTest2(SmvBaseTest):
         self.df(fqn2)
 
         # Should be persisted
-        self.assertTrue(os.path.exists(m1.persistStrategy()._csv_path))
+        self.assertTrue(os.path.exists(m1.persistStrategy()._file_path))
 
         # Should be removed
         SmvModuleRunner([m2], self.smvApp).purge_persisted()
-        self.assertFalse(os.path.exists(m1.persistStrategy()._csv_path))
+        self.assertFalse(os.path.exists(m1.persistStrategy()._file_path))
         
 
     def test_publish(self):
