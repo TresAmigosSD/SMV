@@ -22,6 +22,7 @@ import json
 from collections import namedtuple
 
 from py4j.java_gateway import java_import, JavaObject
+from pyspark.java_gateway import launch_gateway
 from pyspark import SparkContext
 from pyspark.sql import SparkSession, DataFrame
 
@@ -40,6 +41,8 @@ from smv.smviostrategy import SmvJsonOnHdfsIoStrategy
 from smv.smvmetadata import SmvMetaHistory
 from smv.smvhdfs import SmvHDFS
 from py4j.protocol import Py4JJavaError
+
+
 
 class SmvApp(object):
     """The Python representation of SMV.
@@ -82,20 +85,31 @@ class SmvApp(object):
         cls._instance = app
 
     def __init__(self, arglist, _sparkSession=None, py_module_hotload=True):
-        self.sparkSession = SparkSession.builder.\
+        if (_sparkSession is None):
+            self.sparkSession = SparkSession.builder.\
                     enableHiveSupport().\
-                    getOrCreate() if _sparkSession is None else _sparkSession
+                    getOrCreate() 
+        elif (_sparkSession == "SkipSpark"):
+            self.sparkSession = None
+        else:
+            self.sparkSession = _sparkSession
 
-        sc = self.sparkSession.sparkContext
-        sc.setLogLevel("ERROR")
+        if (self.sparkSession is not None):
+            sc = self.sparkSession.sparkContext
+            sc.setLogLevel("ERROR")
 
-        self.sc = sc
-        self.sqlContext = self.sparkSession._wrapped
-        self._jvm = sc._jvm
+            self.sc = sc
+            self.sqlContext = self.sparkSession._wrapped
+            self._jvm = sc._jvm
+            self.j_smvPyClient = self._jvm.org.tresamigos.smv.python.SmvPyClientFactory.init(self.sparkSession._jsparkSession)
+            self.j_smvApp = self.j_smvPyClient.j_smvApp()
+        else:
+            _gw = launch_gateway(None)
+            self._jvm = _gw.jvm
 
+        self.log = self._jvm.org.apache.log4j.LogManager.getLogger("smv")
         self.py_module_hotload = py_module_hotload
 
-        from py4j.java_gateway import java_import
         java_import(self._jvm, "org.tresamigos.smv.ColumnHelper")
         java_import(self._jvm, "org.tresamigos.smv.SmvDFHelper")
         java_import(self._jvm, "org.tresamigos.smv.dqm.*")
@@ -105,20 +119,22 @@ class SmvApp(object):
         java_import(self._jvm, "org.tresamigos.smv.DfCreator")
 
         self.py_smvconf = SmvConfig(arglist, self._jvm)
-        self.j_smvPyClient = self.create_smv_pyclient()
 
         # configure spark sql params 
-        for k, v in self.py_smvconf.spark_sql_props().items():
-            self.sqlContext.setConf(k, v)
+        if (self.sparkSession is not None):
+            for k, v in self.py_smvconf.spark_sql_props().items():
+                self.sqlContext.setConf(k, v)
+
+        # issue #429 set application name from smv config
+        if (self.sparkSession is not None):
+            sc._conf.setAppName(self.appName())
 
         # CmdLine is static, so can be an attribute
         cl = self.py_smvconf.cmdline
         self.cmd_line = namedtuple("CmdLine", cl.keys())(*cl.values())
 
         # shortcut is meant for internal use only
-        self.j_smvApp = self.j_smvPyClient.j_smvApp()
-        self.log = self.j_smvApp.log()
-        self.dsm = DataSetMgr(self.sc, self.py_smvconf)
+        self.dsm = DataSetMgr(self._jvm, self.py_smvconf)
 
         # computed df cache, keyed by m.versioned_fqn
         self.df_cache = {}
@@ -126,9 +142,6 @@ class SmvApp(object):
         # AFTER app is available but BEFORE stages,
         # use the dynamically configured app dir to set the source path, library path
         self.prependDefaultDirs()
-
-        # issue #429 set application name from smv config
-        sc._conf.setAppName(self.appName())
 
         self.repoFactory = DataSetRepoFactory(self)
         self.dsm.register(self.repoFactory)
@@ -262,13 +275,6 @@ class SmvApp(object):
         """
         all_files = self._jvm.SmvPythonHelper.getDirList(self.inputDir())
         return [str(f) for f in all_files if f.endswith(ftype)]
-
-    def create_smv_pyclient(self):
-        '''
-        return a smvPyClient instance
-        '''
-        # convert python arglist to java String array
-        return self._jvm.org.tresamigos.smv.python.SmvPyClientFactory.init(self.sparkSession._jsparkSession)
 
     def get_graph_json(self):
         """Generate a json string representing the dependency graph.

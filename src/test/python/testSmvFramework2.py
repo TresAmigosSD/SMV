@@ -12,6 +12,7 @@
 # limitations under the License.
 
 import os
+import sys
 from test_support.smvbasetest import SmvBaseTest
 from smv import *
 from smv.error import SmvDqmValidationError, SmvRuntimeError
@@ -195,3 +196,30 @@ class SmvForceEddTest(SmvBaseTest):
         for r in edd:
             if (r['taskName'] == 'cnt' and r['colName'] == 'a'):
                 self.assertEqual(r['valueJSON'], '2')
+
+class SmvAppWithoutSparkTest(SmvBaseTest):
+    @classmethod
+    def setUpClass(cls):
+        from smv.smvapp import SmvApp
+        from test_support.testconfig import TestConfig
+
+        args = TestConfig.smv_args() + cls.smvAppInitArgs() + ['--data-dir', cls.tmpDataDir()]
+        # The test's SmvApp must be set as the singleton for correct results of some tests
+        # The original SmvApp (if any) will be restored when the test is torn down
+        cls.smvApp = SmvApp.createInstance(args, "SkipSpark")
+
+        sys.path.append(cls.resourceTestDir())
+
+        cls.mkTmpTestDir()
+
+    @classmethod
+    def smvAppInitArgs(cls):
+        return ['--smv-props', 'smv.stages=stage']
+
+    def test_load_without_sc(self):
+        fqn = "stage.modules.M2"
+        m = self.load(fqn)[0]
+        self.assertEqual(m.resolvedRequiresDS[0].fqn(), "stage.modules.M1")
+
+    def test_get_graph_without_sc(self):
+        self.smvApp.get_graph_json()
