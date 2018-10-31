@@ -44,35 +44,6 @@ class SmvOutput(object):
         return None
     
 
-class RunParams(object):
-    """Map from SmvDataSet to resulting DataFrame
-
-        We need to simulate a dict from ds to df where the same object can be
-        keyed by different datasets with the same urn. For example, in the
-        module
-
-        class X(SmvModule):
-            def requiresDS(self): return [Foo]
-            def run(self, i): return i[Foo]
-
-        the i argument of the run method should map Foo to
-        the correct DataFrame.
-
-        Args:
-            (dict): a map from urn to DataFrame
-    """
-
-    def __init__(self, urn2df):
-        self.urn2df = urn2df
-
-    def __getitem__(self, ds):
-        """Called by the '[]' operator
-        """
-        if not hasattr(ds, 'urn'):
-            raise TypeError('Argument to RunParams must be an SmvDataSet')
-        else:
-            # called df2result so that SmvModel result get returned in `i`
-            return ds.df2result(self.urn2df[ds.urn()])
 
 
 class SmvModule(SmvGenericModule):
@@ -162,10 +133,6 @@ class SmvModule(SmvGenericModule):
     #########################################################################
     # Implement of SmvGenericModule abatract methos and other private methods
     #########################################################################
-    def doRun(self, known):
-        i = RunParams(known)
-        return self.run(i)
-
     def had_action(self):
         """Check dqm overall counter to simulate an action check.
             There is no way for us to tell wether the result df is just
@@ -302,29 +269,21 @@ class SmvSqlModule(SmvModule):
         return res
 
 
-class SmvResultModule(SmvGenericModule):
-    """An SmvModule whose result is not a DataFrame
+class SmvModel(SmvGenericModule):
+    """SmvModule whose result is a data model
 
         The result must be picklable - see
         https://docs.python.org/2/library/pickle.html#what-can-be-pickled-and-unpickled.
-    """
-    def persistStrategy(self):
-        return SmvPicklableOnHdfsIoStrategy(self.smvApp, self.fqn(), self.ver_hex())
-
-    def metaStrategy(self):
-        return SmvJsonOnHdfsIoStrategy(self.smvApp, self.meta_path())
-
-    def doRun(self, known):
-        i = RunParams(known)
-        return self.run(i)
-
-class SmvModel(SmvResultModule):
-    """SmvModule whose result is a data model
     """
     # Exists only to be paired with SmvModelExec
     def dsType(self):
         return "Model"
 
+    def persistStrategy(self):
+        return SmvPicklableOnHdfsIoStrategy(self.smvApp, self.fqn(), self.ver_hex())
+
+    def metaStrategy(self):
+        return SmvJsonOnHdfsIoStrategy(self.smvApp, self.meta_path())
 
 class SmvModelExec(SmvModule):
     """SmvModule that runs a model produced by an SmvModel
@@ -357,7 +316,7 @@ class SmvModelExec(SmvModule):
         """
 
     def doRun(self, known):
-        i = RunParams(known)
+        i = self.RunParams(known)
         model = i[self.requiresModel()]
         return self.run(i, model)
 

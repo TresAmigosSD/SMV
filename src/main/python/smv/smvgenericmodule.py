@@ -236,7 +236,7 @@ class SmvGenericModule(ABC):
     # - dsType: Required
     # - persistStrategy: Required
     # - metaStrategy: Required
-    # - doRun: Required 
+    # - doRun: Optional, default call run 
     # - dependencies: Optional, default self.requiresDS()
     # - df2result: Optional, default pass though the input data
     # - had_action: Optional, default True
@@ -258,10 +258,41 @@ class SmvGenericModule(ABC):
     def metaStrategy(self):
         """Return an SmvIoStrategy for metadata persisting"""
 
-    @abc.abstractmethod
+    class RunParams(object):
+        """Map from SmvDataSet to resulting DataFrame
+
+            We need to simulate a dict from ds to df where the same object can be
+            keyed by different datasets with the same urn. For example, in the
+            module
+
+            class X(SmvModule):
+                def requiresDS(self): return [Foo]
+                def run(self, i): return i[Foo]
+
+            the i argument of the run method should map Foo to
+            the correct DataFrame.
+
+            Args:
+                (dict): a map from urn to DataFrame
+        """
+
+        def __init__(self, urn2df):
+            self.urn2df = urn2df
+
+        def __getitem__(self, ds):
+            """Called by the '[]' operator
+            """
+            if not hasattr(ds, 'urn'):
+                raise TypeError('Argument to RunParams must be an SmvDataSet')
+            else:
+                # called df2result so that SmvModel result get returned in `i`
+                return ds.df2result(self.urn2df[ds.urn()])
+
     def doRun(self, known):
         """Compute this dataset, and return the dataframe"""
-
+        i = self.RunParams(known)
+        return self.run(i)
+    
     def dependencies(self):
         """Can be overridden when a module has non-SmvDataSet dependencies (see SmvModelExec)
         """
