@@ -16,7 +16,7 @@ import smv
 RESULT_VALS = [100, "100", 100.0]
 RESULT_SCHEMA = "res0: Integer; res1: String; res2: Float"
 
-class RM(smv.smvdataset.SmvModel, smv.SmvOutput):
+class RM(smv.smvmodule.SmvModel, smv.SmvOutput):
     def requiresDS(self):
         return []
 

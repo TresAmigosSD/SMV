@@ -1,6 +1,6 @@
 # flake8: noqa
 # Smv DataSet Framework
-from smv.smvdataset import *
+from smv.smvmodule import *
 from smv.smvinput import *
 
 from smv.smvapp import SmvApp

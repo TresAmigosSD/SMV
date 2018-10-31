@@ -16,7 +16,7 @@ from stage1.modules import RM
 
 RML = smv.SmvModuleLink(RM)
 
-class M(smv.smvdataset.SmvModule):
+class M(smv.smvmodule.SmvModule):
     def requiresDS(self):
         return [RML]
 
