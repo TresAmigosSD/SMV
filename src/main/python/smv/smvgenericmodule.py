@@ -346,8 +346,8 @@ class SmvGenericModule(ABC):
         return self
 
 
-    def rdd(self, urn2df, run_set, forceRun, is_quick_run):
-        """create or get df from smvApp level cache
+    def get_data(self, urn2df, run_set, forceRun, is_quick_run):
+        """create or get data from smvApp level cache
             Args:
                 urn2df({str:DataFrame}) already run modules current module may depends
                 run_set(set(SmvGenericModule)) modules yet to run post_action
@@ -358,7 +358,7 @@ class SmvGenericModule(ABC):
         """
         if (forceRun or (self.versioned_fqn not in self.smvApp.data_cache)):
             self.smvApp.data_cache.update(
-                {self.versioned_fqn:self.computeDataFrame(urn2df, run_set, is_quick_run)}
+                {self.versioned_fqn:self.computeData(urn2df, run_set, is_quick_run)}
             )
         else:
             run_set.discard(self)
@@ -366,7 +366,7 @@ class SmvGenericModule(ABC):
         urn2df.update({self.urn(): res})
         self.data = res
 
-    def computeDataFrame(self, urn2df, run_set, is_quick_run):
+    def computeData(self, urn2df, run_set, is_quick_run):
         """When DF is not in cache, do the real calculation here
         """
         self.smvApp.log.debug("compute: {}".format(self.urn()))

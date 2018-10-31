@@ -123,7 +123,7 @@ class SmvModuleRunner(object):
         # will run on current module and all upstream modules
         def runner(m, state):
             (urn2df, run_set) = state
-            m.rdd(urn2df, run_set, forceRun, is_quick_run)
+            m.get_data(urn2df, run_set, forceRun, is_quick_run)
         self.visitor.dfs_visit(runner, (known, need_post))
 
     def _create_meta(self, need_post):
