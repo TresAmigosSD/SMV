@@ -2,7 +2,9 @@
 # smv-jupyter [--ip bind_ip] [--port portnumber]
 set -e
 
-SMV_TOOLS="$(cd "`dirname "$0"`"; pwd)"
+THIS_FILE_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
+source "${THIS_FILE_DIR}/_env.sh"
+SMV_TOOLS="$(get_smv_tools_dir)"
 
 export PYSPARK_DRIVER_PYTHON="$(which jupyter)"
 
@@ -36,4 +38,4 @@ echo "Exporting $PYSPARK_DRIVER_PYTHON_OPTS"
 # This will allow the user to specify pyspark options like:
 # `smv-jupyter -- --master=yarn-client --num-executors=10`
 # `smv-jupyter -- --conf="spark.driver.maxResultSize=0"`
-$SMV_TOOLS/smv-pyshell "${@}"
+"${SMV_TOOLS}"/smv-pyshell "${@}"

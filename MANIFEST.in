@@ -1,0 +1,12 @@
+include README.md
+include LICENSE
+include .smv_version
+include .supported_spark
+include log4j.properties
+include target/scala-2.11/*.jar
+recursive-include docker *
+recursive-include docs *
+recursive-include tools *
+recursive-include src/main/python/scripts *
+recursive-include src/main/python/test_support *
+recursive-include src/test *

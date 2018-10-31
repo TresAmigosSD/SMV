@@ -22,7 +22,7 @@ function error()
 
 function usage()
 {
-  echo "USAGE: ${PROG_NAME} [--new-branch] [--latest] build_dir branch_name github_user:github_token docker_user docker_password smv_version_to_release(a.b.c.d)"
+  echo "USAGE: ${PROG_NAME} [--new-branch] [--latest] build_dir branch_name github_user:github_token docker_user docker_password pypi_username pypi_password smv_version_to_release(a.b.c.d)"
   echo "See (https://help.github.com/articles/creating-a-personal-access-token-for-the-command-line/) for auth tokens"
   exit $1
 }
@@ -43,14 +43,16 @@ function parse_args()
     shift
   fi
 
-  [ $# -ne 6 ] && echo "ERROR: invalid number of arguments" && usage 1
+  [ $# -ne 8 ] && echo "ERROR: invalid number of arguments" && usage 1
 
   BUILD_DIR=$(cd "$1"; pwd)
   SMV_BRANCH="$2"
   GITHUB_USER_TOKEN="$3"
   DOCKERHUB_USER_NAME="$4"
   DOCKERHUB_USER_PASSWORD="$5"
-  SMV_VERSION="$6"
+  PYPI_USERNAME="$6"
+  PYPI_PASSWORD="$7"
+  SMV_VERSION="$8"
 
   validate_version "$SMV_VERSION"
   if [ ! -d "${BUILD_DIR}" ]; then
@@ -67,13 +69,10 @@ function parse_args()
   # release specific vars
   SMV_DIR_BASE="SMV_${SMV_VERSION}"
   SMV_DIR="${BUILD_DIR}/${SMV_DIR_BASE}"
-  DOCKER_SMV_DIR="/projects/${SMV_DIR_BASE}" # SMV dir inside the docker image.
   PROJ_DIR="$(dirname "$SMV_DIR")" # assume parent of SMV directory is the projects dir.
 
   GHPAGES_DIR="${HOME}/.smv/ghpages"
   SMV_REPO_URL="git@github.com:TresAmigosSD/SMV.git"
-
-
 
   local version_tag="v${SMV_VERSION}"
   BASE_DOCKER_IMAGE="local-smv-base-${version_tag}"
@@ -126,7 +125,7 @@ function create_base_docker_image()
   info "building local docker image"
 
   cd ${SMV_DIR}
-  # build local docker image 
+  # build local docker image
   make docker_base >> ${LOGFILE} 2>&1 || error "local docker build failed"
 }
 
@@ -134,7 +133,7 @@ function run_make_in_docker()
 {
   local target="$1"
   info "Running make ${target} in ${BASE_DOCKER_IMAGE}"
-  
+
   local pyenv_setup='eval "$(pyenv init -)"'
   local docker_cmd="cd /usr/lib/SMV && ${pyenv_setup} && make ${target}"
 
@@ -350,6 +349,22 @@ function push_changes_on_branch() {
   git push origin >> ${LOGFILE} 2>&1 || error "git push failed"
 }
 
+function publish_to_pypi() {
+  echo "Starting to release to PyPi"
+  local temp_dir="temp"
+
+  python -m pip install twine wheel && \
+  rm -rf "${temp_dir}" && \
+  mkdir -p "${temp_dir}" && \
+  cd "${temp_dir}" && \
+  cp "${TGZ_IMAGE}" "${temp_dir}" && \
+  tar -xzf "${TGZ_IMAGE}" && \
+  cd SMV && \
+  python setup.py sdist bdist_wheel && \
+  twine upload --username "${PYPI_USERNAME}" --password "${PYPI_PASSWORD}" dist/* && \
+  echo "Finished upload to PyPi"
+}
+
 # ---- MAIN ----
 parse_args "$@"
 info "Start Release on: $(date)"
@@ -371,4 +386,5 @@ get_latest_ghpages
 update_ghpages_docs
 push_ghpages_docs
 push_changes_on_branch
+publish_to_pypi
 info "Finish Release on: $(date)"

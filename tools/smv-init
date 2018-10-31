@@ -1,6 +1,15 @@
 #!/bin/bash
+set -eo pipefail
 
-ALL_TEMPLATES_DIR="$(cd "`dirname "$0"`"; pwd)/templates"
+# https://stackoverflow.com/a/246128
+THIS_FILE_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
+source "${THIS_FILE_DIR}/_env.sh"
+SMV_TOOLS="$(get_smv_tools_dir)"
+
+# Another way to add smv.py is through the --py-files option passed to
+# pyspark, as in `pyspark --py-files $SMV_TOOLS/../python/smv.py`
+# Not sure yet which way is best practice.
+ALL_TEMPLATES_DIR="${SMV_TOOLS}/templates"
 
 # PROJ_TYPE:
 #  - simple (default)
@@ -163,12 +172,14 @@ function substitute_tokens()
     fi
 
     echo "-- substituting tokens with project info"
+    echo "-- project directory is: ${PROJ_DIR}"
 
-    local files="$(cd $PROJ_DIR; find . -type f)"
+    local files="$(cd ${PROJ_DIR}; find . -type f -not -name "*.pyc")"
+    local files_array=( ${files} )
     local ESCAPED_FULL_PATH=$(echo ${PROJ_DIR_FULL_PATH} | sed -e 's/[\/&]/\\&/g')
     local ESCAPED_DATA_DIR=$(echo ${PROJ_DATA_DIR} | sed -e 's/[\/&]/\\&/g')
 
-    for f in $files; do
+    for f in "${files_array[@]}"; do
         sed  -e "s/_GROUP_ID_/$PROJ_GROUP_ID/" \
              -e "s/_ARTIFACT_ID_/$PROJ_ARTIFACT_ID/" \
              -e "s/_PROJ_DIR_FULL_PATH_/${ESCAPED_FULL_PATH}/g" \

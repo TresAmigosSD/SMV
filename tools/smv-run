@@ -6,9 +6,9 @@
 # user can specify optional spark args (such as --master, --executor-memory, etc)
 
 set -e
-SMV_TOOLS="$(cd "`dirname "$0"`"; pwd)"
-source $SMV_TOOLS/_env.sh
-source $SMV_TOOLS/_pyenv.sh
+THIS_FILE_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
+source "${THIS_FILE_DIR}/_env.sh"
+SMV_TOOLS="$(get_smv_tools_dir)"
 
 if [ "$1" = "-h" ]; then
   show_run_usage_message `basename $0`

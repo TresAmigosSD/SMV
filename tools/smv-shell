@@ -2,9 +2,9 @@
 
 set -e
 
-SMV_TOOLS="$(cd "`dirname "$0"`"; pwd)"
-source $SMV_TOOLS/_env.sh
-source $SMV_TOOLS/_pyenv.sh
+THIS_FILE_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
+source "${THIS_FILE_DIR}/_env.sh"
+SMV_TOOLS="$(get_smv_tools_dir)"
 
 export SPARK_PRINT_LAUNCH_COMMAND=1
 
@@ -21,7 +21,7 @@ export PYTHONSTARTUP="${SMV_TOOLS}/../src/main/python/scripts/smvpyshell.py"
 # https://issues.apache.org/jira/browse/SPARK-5185) that does not add
 # the jar file to the driver's classpath, so we need to add the jars
 # to the --driver-class-path command-line option
-"${SMV_PYSPARK_FULLPATH}"  "${SPARK_ARGS[@]}" --jars "$APP_JAR,$EXTRA_JARS" --driver-class-path "${APP_JAR}"
+SMV_LAUNCH_SCRIPT="${SMV_PYSPARK_FULLPATH}" run_pyspark_with
 
 # Reset PYTHONSTARTUP
 export PYTHONSTARTUP=$OLD_PYTHONSTARTUP

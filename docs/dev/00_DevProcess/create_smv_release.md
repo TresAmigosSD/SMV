@@ -6,13 +6,15 @@ The process has been largely automated.  The `smv-release` script will take care
 
 ## Usage:
 ```shell
-$ ./admin/smv-release [--new-branch] [--latest] -g github_user:github_token -d docker_user  docker_password new_version
+$ ./admin/smv-release [--new-branch] [--latest] build_dir branch_name github_user:github_token docker_user docker_password pypi_username pypi_password smv_version_to_release(a.b.c.d)
 ```
 
 * `--new-branch` : used if this the first release on a new branch (user must edit the ghpages index manually)
 * `--latest` : if specified, the docker hub image is marked as latest as well as the specific version.
-* `github_user','github_token` : github API access tokens
+* `build_dir`: Temporary workspcae to use to store build artifacts during the realease process
+* `github_user:github_token` : github API access tokens (single string, user and token concatenated with `:` separator)
 * `docker_user`,`docker_password` : docker hub user name/password.
+* `pypi_username`,`pypi_password` : PyPi (https://pypi.org/) user name/password.
 * `new_version` : version to release.  must be of the form "n.n.n.n"
 
 

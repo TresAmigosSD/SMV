@@ -8,7 +8,60 @@
 # SMV_APP_CLASS : user specified --class name to use for spark-submit or SmvApp as default
 # APP_JAR : user specified --jar option or the discovered application fat jar.
 # SMV_USER_SCRIPT : optional user-defined launch script
-#
+
+# This function prints to stdout the full path to the site-packages directory of the Python
+# distribution on the PATH
+function get_python_site_packages_dir() {
+  # site.getsitepackages is broken inside of virtual environments on mac os x, so we fall back to distutils
+    # https://github.com/dmlc/tensorboard/issues/38#issuecomment-343017735
+    local python_site_packages
+    python_site_packages=$( \
+      python -c "import site; print(site.getsitepackages()[0])" 2>/dev/null ||  \
+      python -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())" 2>/dev/null \
+    )
+
+    if [ -z "${python_site_packages}" ]; then
+      (>&2 echo "Could not find site-packages directory. Need to exit")
+      exit 3
+    fi
+
+    echo "${python_site_packages}"
+}
+
+# This function is used to determine where the "real" SMV_TOOLS directory lives. In the most basic case,
+# SMV_TOOLS is specifed by an environment variable, and we simply take that as the SMV_TOOLS dir.
+# If not specified as an environment variable, then we take one of two paths:
+# (1) if it appears like the get_smv_tools_dir got invoked from within a python environment (i.e. installed
+#     via pip into virtualenv_root/lib/python/site-packages, and CLI tools in virtualenv_root/bin), then
+#     we can set SMV tools to site-packages/SMV/tools
+# (2) otherwise, assume that where the called of get_smv_tools_dir is inside of the SMV_TOOLS dir
+function get_smv_tools_dir() {
+  local smv_tools_candidate=""
+  local this_file_dir
+  this_file_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
+  local bin_dir_pattern=".*/bin"
+
+  # SMV_TOOLS env var is already populated
+  if [[ ! -z "${SMV_TOOLS:-}" ]]; then
+    smv_tools_candidate="${SMV_TOOLS}"
+  # We appaer to be inside of a python distributions bin directory. Full path has
+  # bin in the name and there is a python file (executable) alongside us
+  elif [[ "${this_file_dir}" =~ $bin_dir_pattern ]]; then
+    local site_package_dir
+    site_package_dir="$(get_python_site_packages_dir)"
+    smv_tools_candidate="${site_package_dir}/smv/tools"
+  else
+    smv_tools_candidate="${this_file_dir}"
+  fi
+
+  if [[ ! -f "${smv_tools_candidate}/smv-run" ]]; then
+    (>&2 echo "Could not a suitable candidate for the SMV_TOOLS directory")
+    (>&2 echo "Best guess was ${smv_tools_candidate}, but it did not contain smv-run command")
+    exit 1
+  fi
+
+  echo "${smv_tools_candidate}"
+}
 
 # This function is used to split the command line arguments into SMV / Spark
 # arguments.  Everything before "--" are considered SMV arguments and everything
@@ -19,9 +72,9 @@ function split_smv_spark_args()
         if [ "$1" == "--" ]; then
             shift
             break
-        fi 
-        
-        if [ "$1" == "--script" ]; then 
+        fi
+
+        if [ "$1" == "--script" ]; then
           SMV_USER_SCRIPT="$2"
         fi
 
@@ -68,12 +121,16 @@ function split_smv_spark_args()
 
 function find_file_in_dir()
 {
+  local file_candidate=""
   filepat=$1
   shift
-  for dir in "$@"; do
-    APP_JAR=`ls -1t ${dir}/${filepat} 2>/dev/null | head -1`
-    if [ -n "$APP_JAR" ]; then
-      break
+  for dir in "${@}"; do
+    if [ -d $dir ]; then
+      file_candidate=$(find $dir -maxdepth 1 -name "${filepat}")
+      if [ -n "$file_candidate" ]; then
+        echo "${file_candidate}"
+        break
+      fi
     fi
   done
 }
@@ -81,20 +138,14 @@ function find_file_in_dir()
 # find latest fat jar in target directory.
 function find_fat_jar()
 {
-  # SMV_TOOLS should have been set by caller.
-  if [ -z "$SMV_TOOLS" ]; then
-    echo "ERROR: SMV_TOOLS not set by calling script!"
-    exit 1
-  fi
-  SMV_FAT_JAR="${SMV_TOOLS}/../target/scala-2.11"
+  local smv_tools_dir="$(get_smv_tools_dir)"
+  SMV_FAT_JAR="${smv_tools_dir}/../target/scala-2.11"
 
   # try sbt-build location first if not found try mvn-build location next.
   # then repeat from the parent directory, because the shell is
   # sometimes run from a notebook subdirectory of a data project
-
-  dirs=("target/scala-2.11" "target" "../target/scala-2.11" "../target" "$SMV_FAT_JAR")
-  find_file_in_dir "*jar-with-dependencies.jar" "${dirs[@]}"
-  echo APP_JAR = $APP_JAR
+  dirs=("target/scala-2.11" "target" "../target/scala-2.11" "../target" "$SMV_FAT_JAR" "${SMV_HOME}/target" "${SMV_HOME}/target/scala-2.11")
+  APP_JAR=$(find_file_in_dir "smv*jar-with-dependencies.jar" "${dirs[@]}")
 
   if [ -z "$APP_JAR" ]; then
     echo "ERROR: could not find an app jar in local target directory or SMV build target"
@@ -107,6 +158,9 @@ function find_fat_jar()
 # users can specify SMV_SPARK_SUBMIT_CMD and SMV_PYSPARK_CMD to override the
 # executable used for spark-submit and pyspark respectively.
 function set_smv_spark_paths() {
+  local this_file_dir
+  this_file_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
+
   # if user specified --spark-home, use that as prefix to all spark commands.
   local prefix=""
   if [ -n "$SPARK_HOME_OPT" ]; then
@@ -127,12 +181,34 @@ function set_smv_spark_paths() {
   if [ $valid_paths -eq 0 ]; then
     echo "ERROR: The combination of --spark-home with spark commands override"
     echo "produced invalid paths above!"
+    echo "Are you sure that pyspark and spark-submit are on your PATH?"
     exit 1
+  fi
+
+  if ! java -version &> /dev/null; then
+    echo "ERROR: java command does not appear on the PATH. Spark will not work without java8 installed"
+    exit 3
+  fi
+
+  # The reason why I added the check at all is because if you are on java !== 1.8 and spark 2.2
+  # the error message is absolutely atrocious...
+  # If `spark-submit` is run:
+  #   * In Java 1.9 you get a nasty java stacktrace that either talks about a string class exception
+  #   * In Java 1.7 you get a java stacktrace byte code version mismatch (this message is the most helpful of the lot)
+  if ! (java -version 2>&1 | grep "1.8" &>/dev/null); then
+    echo "WARNING: java command found, but version may not be supported by spark"
+    echo "WARNING: spark 2.2+ only support java 1.8. Current java version is: "
+    java -version
   fi
 }
 
 function set_smv_home() {
-  export SMV_HOME="$(cd "`dirname "$0"/`/.."; pwd)"
+  local smv_tools
+  smv_tools="$(get_smv_tools_dir)"
+
+  export SMV_HOME
+  SMV_HOME="${SMV_HOME:-$(cd $smv_tools; cd ..; pwd)}"
+  echo "SMV_HOME set to: ${SMV_HOME}"
 }
 
 # Remove trailing alphanum characters in dot-separated version text.
@@ -187,13 +263,30 @@ function print_help() {
   "${SMV_SPARK_SUBMIT_FULLPATH}" --class ${SMV_APP_CLASS}  "${APP_JAR}" --help
 }
 
+# We eagerly add the basename of the APP_JAR so that this same command
+# works in YARN Cluster mode, where the JAR gets added to the root directory
+# of the container. Also note the colon separator
+function run_pyspark_with () {
+  local tools_dir="$(get_smv_tools_dir)"
+  local SMV_HOME="$(cd ${tools_dir}/..; pwd)"
+  local PYTHONPATH="$SMV_HOME/src/main/python:$PYTHONPATH"
+  # Suppress creation of .pyc files. These cause complications with
+  # reloading code and have led to discovering deleted modules (#612)
+  local PYTHONDONTWRITEBYTECODE=1
+  local SPARK_PRINT_LAUNCH_COMMAND=1
+  local SMV_LAUNCH_SCRIPT="${SMV_LAUNCH_SCRIPT:-${SMV_SPARK_SUBMIT_FULLPATH}}"
+
+  ( export PYTHONDONTWRITEBYTECODE SPARK_PRINT_LAUNCH_COMMAND PYTHONPATH; \
+    "${SMV_LAUNCH_SCRIPT}" "${SPARK_ARGS[@]}" \
+    --jars "$APP_JAR,$EXTRA_JARS" \
+    --driver-class-path "$APP_JAR:$(basename ${APP_JAR}):$EXTRA_DRIVER_CLASSPATHS" \
+    $1 "${SMV_ARGS[@]}"
+  )
+}
+
 # --- MAIN ---
 declare -a SMV_ARGS SPARK_ARGS
-# SMV_TOOLS should have been set by caller.
-if [ -z "$SMV_TOOLS" ]; then
-    echo "ERROR: SMV_TOOLS not set by calling script!"
-    exit 1
-fi
+
 USER_CMD=`basename $0`
 SMV_APP_CLASS="org.tresamigos.smv.SmvApp"
 split_smv_spark_args "$@"

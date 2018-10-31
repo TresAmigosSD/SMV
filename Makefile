@@ -56,7 +56,7 @@ DOCKER_BASE_NAME = local-smv-base-$(SMV_VERSION)
 DOCKER_SMV_NAME = local-smv-$(SMV_VERSION)
 DOCKERFILE = docker/smv/Dockerfile
 
-docker_base: 
+docker_base:
 	docker build --build-arg PYTHON_VERSION=$(DEFAULT_PYTHON_PATCH) --target smv-build \
 		-t $(DOCKER_BASE_NAME) -f $(DOCKERFILE) .
 
@@ -105,18 +105,18 @@ $(INSTALL_SPARK_RULES) : install-spark-% : $(SPARKS_DIR)/%
 # .sparks/x.y.z
 $(SPARK_HOMES) : $(SPARKS_DIR)/% :
 	mkdir -p .sparks
-	bash tools/spark-install --spark-version $* --target-dir $(SPARKS_DIR)/$* 
+	bash tools/spark-install --spark-version $* --target-dir $(SPARKS_DIR)/$*
 
 install-spark-default: install-spark-$(DEFAULT_SPARK)
 
 install-spark-all: $(INSTALL_SPARK_RULES)
 
 
-# Quick tests are sufficient for day-to-day dev 
+# Quick tests are sufficient for day-to-day dev
 test: test-quick
 
 # Run all the basic tests tests with the default Python and Spark
-test-quick: test-scala test-python test-integration
+test-quick: test-scala test-python test-integration test-ingration-pip
 
 test-scala:
 	sbt test
@@ -126,7 +126,9 @@ test-python: install-basic
 
 test-integration: install-basic
 	tox -e $(DEFAULT_PYTHON_MAJOR) -- bash src/test/scripts/run-integration-test.sh --spark-home $(DEFAULT_SPARK_HOME)
-                               
+
+test-ingration-pip:
+	tox -e $(DEFAULT_PYTHON_MAJOR) -- bash src/test/scripts/run-integration-test.sh --pip-install
 
 # test-spark-x.y.z
 # Run python unit tests and integrations tests against target spark versions
