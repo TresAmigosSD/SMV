@@ -57,16 +57,16 @@ class DataSetRepoTest(SmvBaseTest):
     def test_repo_compiles_module_only_once(self):
         """DataSetRepo should not recompile module twice in a transaction
 
-            Loading an SmvDataSet should only cause a recompile of its module
+            Loading an SmvGenericModule should only cause a recompile of its module
             if the module has not been imported previously in this transaction.
-            This applies even when loading different SmvDataSets from the same file.
+            This applies even when loading different SmvGenericModules from the same file.
         """
         dsr = self.build_new_repo()
         with ExtraPath(self.before_dir()):
             dsA1 = dsr.loadDataSet("stage.modules.CompileOnceA").__class__
-            # load a different SmvDataSet from the same file
+            # load a different SmvGenericModule from the same file
             dsr.loadDataSet("stage.modules.CompileOnceB")
-            # get the first SmvDataSet from the second SmvDataSet's module
+            # get the first SmvGenericModule from the second SmvGenericModule's module
             # if the module wasn't recompiled these should be equal
             dsA2 = getattr(sys.modules["stage.modules"], "CompileOnceA")
             # note that the module `sys.modules["stage.modules"]` won't change
@@ -75,7 +75,7 @@ class DataSetRepoTest(SmvBaseTest):
         self.assertEqual(dsA1, dsA2)
 
     def test_new_repo_reloads_base_class(self):
-        """When DataSetRepo reloads an SmvDataSet it should reload its client ABC (if any)
+        """When DataSetRepo reloads an SmvGenericModule it should reload its client ABC (if any)
 
             Users may create ABCs (which may or may not actually use the abc module)
             for SmvModules. When an implementation SmvModule is imported for the

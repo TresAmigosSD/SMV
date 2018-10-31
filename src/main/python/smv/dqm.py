@@ -12,7 +12,7 @@
 # limitations under the License.
 """SMV DataSet Framework interface
 
-This module defines the abstract classes which formed the SmvDataSet Framework for clients' projects
+This module defines the abstract classes which formed the SmvGenericModule Framework for clients' projects
 """
 
 import traceback

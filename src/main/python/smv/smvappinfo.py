@@ -28,7 +28,7 @@ class SmvAppInfo(object):
         self.stages = smvApp.stages()
 
     def _graph(self):
-        """Build graph with nodes:list(SmvDataSet) and edges:list((SmvDataSet, SmvDataSet))
+        """Build graph with nodes:list(SmvGenericModule) and edges:list((SmvGenericModule, SmvGenericModule))
         """
         nodes = self.dsm.allDataSets()
         edges = []

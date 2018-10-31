@@ -103,10 +103,10 @@ class SmvGenericModule(ABC):
     #########################################################################
 
     def isEphemeral(self):
-        """Should this SmvDataSet skip persisting its data?
+        """Should this SmvGenericModule skip persisting its data?
 
             Returns:
-                (bool): True if this SmvDataSet should not persist its data, false otherwise
+                (bool): True if this SmvGenericModule should not persist its data, false otherwise
         """
         return False
 
@@ -117,10 +117,10 @@ class SmvGenericModule(ABC):
     def requiresDS(self):
         """User-specified list of dependencies
 
-            Override this method to specify the SmvDataSets needed as inputs.
+            Override this method to specify the SmvGenericModule needed as inputs.
 
             Returns:
-                (list(SmvDataSet)): a list of dependencies
+                (list(SmvGenericModule)): a list of dependencies
         """
         pass
 
@@ -201,7 +201,7 @@ class SmvGenericModule(ABC):
             Deprecated!
 
             Returns:
-                (str): version number of this SmvDataSet
+                (str): version number of this SmvGenericModule
         """
         return "0"
 
@@ -248,7 +248,7 @@ class SmvGenericModule(ABC):
     #########################################################################
     @abc.abstractmethod
     def dsType(self):
-        """Return SmvDataSet's type"""
+        """Return SmvGenericModule's type"""
 
     @abc.abstractmethod
     def persistStrategy(self):
@@ -259,7 +259,7 @@ class SmvGenericModule(ABC):
         """Return an SmvIoStrategy for metadata persisting"""
 
     class RunParams(object):
-        """Map from SmvDataSet to resulting DataFrame
+        """Map from SmvGenericModule to resulting DataFrame
 
             We need to simulate a dict from ds to df where the same object can be
             keyed by different datasets with the same urn. For example, in the
@@ -283,7 +283,7 @@ class SmvGenericModule(ABC):
             """Called by the '[]' operator
             """
             if not hasattr(ds, 'urn'):
-                raise TypeError('Argument to RunParams must be an SmvDataSet')
+                raise TypeError('Argument to RunParams must be an SmvGenericModule')
             else:
                 # called df2result so that SmvModel result get returned in `i`
                 return ds.df2result(self.urn2df[ds.urn()])
@@ -294,7 +294,7 @@ class SmvGenericModule(ABC):
         return self.run(i)
     
     def dependencies(self):
-        """Can be overridden when a module has non-SmvDataSet dependencies (see SmvModelExec)
+        """Can be overridden when a module has dependency other than requiresDS
         """
         return self.requiresDS()
 
@@ -360,7 +360,7 @@ class SmvGenericModule(ABC):
         """create or get df from smvApp level cache
             Args:
                 urn2df({str:DataFrame}) already run modules current module may depends
-                run_set(set(SmvDataSet)) modules yet to run post_action
+                run_set(set(SmvGenericModule)) modules yet to run post_action
                 forceRun(bool) ignore DF cache in smvApp
                 is_quick_run(bool) skip meta, dqm, persist, but use persisted as possible
 
@@ -560,8 +560,6 @@ class SmvGenericModule(ABC):
         kv_str = repr(sorted_kvs)
         return _smvhash(kv_str)
 
-    # Note that the Scala SmvDataSet will combine sourceCodeHash and instanceValHash
-    # to compute datasetHash
     def sourceCodeHash(self):
         """Hash computed based on the source code of the dataset's class
         """
@@ -577,7 +575,7 @@ class SmvGenericModule(ABC):
             traceback.print_exc()
             message = "{0}({1!r})".format(type(err).__name__, err.args)
             raise Exception(
-                message + "\n" + "SmvDataSet " +
+                message + "\n" + "SmvGenericModule " +
                 self.urn() + " defined in shell can't be persisted"
             )
 
@@ -587,8 +585,8 @@ class SmvGenericModule(ABC):
         # incorporate source code hash of module's parent classes
         for m in inspect.getmro(cls):
             try:
-                # TODO: it probably shouldn't matter if the upstream class is an SmvDataSet - it could be a mixin
-                # whose behavior matters but which doesn't inherit from SmvDataSet
+                # TODO: it probably shouldn't matter if the upstream class is an SmvGenericModule - it could be a mixin
+                # whose behavior matters but which doesn't inherit from SmvGenericModule
                 if m.IsSmvDataSet and m != cls and not m.fqn().startswith("smv."):
                     res += m(self.smvApp).sourceCodeHash()
             except: 

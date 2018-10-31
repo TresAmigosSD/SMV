@@ -128,7 +128,7 @@ class DataSetRepo(object):
     def _dataSetsForStage(self, stageName):
         urns = []
 
-        self.smvApp.log.debug("Searching for SmvDataSets in stage " + stageName)
+        self.smvApp.log.debug("Searching for SmvGenericModules in stage " + stageName)
         self.smvApp.log.debug("sys.path=" + repr(sys.path))
 
         for pymod_name in self._iter_submodules([stageName]):
@@ -140,19 +140,19 @@ class DataSetRepo(object):
                 for c in pymod_name.split('.')[1:]:
                     pymod = getattr(pymod, c)
 
-                self.smvApp.log.debug("Searching for SmvDataSets in " + repr(pymod))
+                self.smvApp.log.debug("Searching for SmvGenericModules in " + repr(pymod))
 
-                # iterate over the attributes of the module, looking for SmvDataSets
+                # iterate over the attributes of the module, looking for SmvGenericModules
                 for obj_name in dir(pymod):
                     obj = getattr(pymod, obj_name)
                     self.smvApp.log.debug("Inspecting {} ({})".format(obj_name, type(obj)))
                     # We try to access the IsSmvDataSet attribute of the object.
                     # if it does not exist, we will catch the the AttributeError
-                    # and skip the object, as it is not an SmvDataSet. We
+                    # and skip the object, as it is not an SmvGenericModules. We
                     # specifically check that IsSmvDataSet is identical to
                     # True, because some objects like Py4J's JavaObject override
                     # __getattr__ to **always** return something (so IsSmvDataSet
-                    # maybe truthy even though the object is not an SmvDataSet).
+                    # maybe truthy even though the object is not an SmvGenericModules).
                     try:
                         obj_is_smv_dataset = (obj.IsSmvDataSet is True)
                     except AttributeError:
@@ -160,7 +160,7 @@ class DataSetRepo(object):
 
                     if not obj_is_smv_dataset:
                         self.smvApp.log.debug("Ignoring {} because it is not an "
-                                              "SmvDataSet".format(obj_name))
+                                              "SmvGenericModules".format(obj_name))
                         continue
 
                     # Class should have an fqn which begins with the stageName.

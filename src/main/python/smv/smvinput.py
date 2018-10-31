@@ -11,7 +11,7 @@
 # limitations under the License.
 """SMV DataSet Framework's SmvInputBase interface
 
-This module defines the abstract classes which formed the SmvDataSet's
+This module defines the abstract classes which formed the SmvGenericModule's
 input DS Framework for clients' projects
 """
 
@@ -43,7 +43,7 @@ def _smvhash(text):
 
 
 class SmvInputBase(SmvModule, ABC):
-    """SmvDataSet representing external input
+    """SmvModule representing external input
         Concrete class need to provide:
           - readAsDF
           - dataSrcHash (optional)

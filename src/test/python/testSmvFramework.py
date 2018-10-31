@@ -97,8 +97,6 @@ class SmvFrameworkTest(SmvBaseTest):
 
         self.assertEqual(single_run_counter, 1)
 
-    #TODO: add other SmvDataSet unittests
-
 
 class SmvRunConfigTest(SmvBaseTest):
 

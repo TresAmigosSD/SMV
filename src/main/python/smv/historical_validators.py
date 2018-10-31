@@ -1,5 +1,5 @@
 def SmvHistoricalValidators(*validators):
-    """Decorator to specify set of validators to apply to an SmvDataSet.
+    """Decorator to specify set of validators to apply to an SmvGenericModule.
 
         Each validator should specify the standard `metadata` and `validateMetadata`
         methods.  In addition, each validator will have a unique key defined that
