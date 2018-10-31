@@ -72,7 +72,7 @@ class SmvApp(object):
             return cls._instance
 
     @classmethod
-    def createInstance(cls, arglist, _sparkSession=None, py_module_hotload=True):
+    def createInstance(cls, arglist, _sparkSession, py_module_hotload=True):
         """Create singleton instance. Also returns the instance.
         """
         cls._instance = cls(arglist, _sparkSession, py_module_hotload)
