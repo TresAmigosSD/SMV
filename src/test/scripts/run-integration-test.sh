@@ -32,21 +32,21 @@ function parse_args() {
     fi
   done
 
-  # If _spark_home is still unset, look for it by deciphering the spark-submit on the PATH
-  if [ -z "${_spark_home}" ]; then
-    local spark_submit
-    spark_submit="$(type -p spark-submit)"
-    local spark_bin
-    spark_bin="$(dirname "$spark_submit")"
-    _spark_home="$(cd "$spark_bin/.."; pwd)"
-  fi
-
   # In insatlling in pip, make sure eo emulate a user environment without a spark home
   if [ $PIP_INSTALL == 1 ]; then
     echo "Not setting the SPARK_HOME since this is a pip installation"
     unset SPARK_HOME
   else
     export SPARK_HOME
+    # If _spark_home is still empty, try to read if from wherever spark-submit lives
+    if [ -z "${_spark_home}" ]; then
+      local _spark_submit_path
+      local _spark_bin
+      _spark_submit_path="$(type -p spark-submit)"
+      _spark_bin="$(dirname "${_spark_submit_path}")"
+      _spark_home="$(cd "${_spark_bin}/.."; pwd)"
+    fi
+
     SPARK_HOME=$(cd "${_spark_home}"; pwd)
     echo "Using Spark installation at ${SPARK_HOME:? Expected SPARK_HOME to have been set}"
     PATH="${SPARK_HOME}/bin:${PATH}"
