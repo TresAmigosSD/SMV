@@ -55,13 +55,13 @@ class SmvModuleRunner(object):
 
         self._validate_and_persist_meta(collector)
 
-        dfs = [m.df for m in self.roots]
+        dfs = [m.data for m in self.roots]
         return (dfs, collector)
 
     def quick_run(self, forceRun=False):
         known = {}
         self._create_df(known, set(), forceRun, is_quick_run=True)
-        return [m.df for m in self.roots]
+        return [m.data for m in self.roots]
 
     def get_runinfo(self):
         collector = SmvRunInfoCollector()
@@ -71,6 +71,7 @@ class SmvModuleRunner(object):
         self.visitor.dfs_visit(add_to_coll, collector)
         return collector
 
+    # TODO: All the publish* methods below should be removed when move to generic output module
     def publish(self, publish_dir=None):
         # run before publish
         self.run()
@@ -86,7 +87,7 @@ class SmvModuleRunner(object):
             publish_meta_path = publish_base_path + ".meta"
             publish_hist_path = publish_base_path + ".hist"
 
-            SmvCsvOnHdfsIoStrategy(m.smvApp, m.fqn(), None, publish_csv_path).write(m.df)
+            SmvCsvOnHdfsIoStrategy(m.smvApp, m.fqn(), None, publish_csv_path).write(m.data)
             SmvJsonOnHdfsIoStrategy(m.smvApp, publish_meta_path).write(m.module_meta.toJson())
             hist = self.smvApp._read_meta_hist(m)
             SmvJsonOnHdfsIoStrategy(m.smvApp, publish_hist_path).write(hist.toJson())
@@ -109,7 +110,7 @@ class SmvModuleRunner(object):
 
         for m in self.roots:
             csv_path = "{}/{}".format(local_dir, m.versioned_fqn)
-            m.df.smvExportCsv(csv_path)
+            m.data.smvExportCsv(csv_path)
 
     def purge_persisted(self):
         def cleaner(m, state):

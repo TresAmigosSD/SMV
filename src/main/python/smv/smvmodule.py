@@ -146,7 +146,7 @@ class SmvModule(SmvGenericModule):
         """
         current_edd = self.module_meta.getEddResult()
         if (len(current_edd) == 0):
-            edd_json_array = self.smvApp._jvm.SmvPythonHelper.getEddJsonArray(self.df._jdf)
+            edd_json_array = self.smvApp._jvm.SmvPythonHelper.getEddJsonArray(self.data._jdf)
             self.run_ancestor_and_me_postAction(run_set)
             self.module_meta.addEddResult(edd_json_array)
 
@@ -159,7 +159,7 @@ class SmvModule(SmvGenericModule):
     # Override this method to add the dqmTimeElapsed 
     def finalize_meta(self):
         super(SmvModule, self).finalize_meta()
-        self.module_meta.addSchemaMetadata(self.df)
+        self.module_meta.addSchemaMetadata(self.data)
         # Need to add duration at the very end, just before persist
         self.module_meta.addDuration("dqm", self.dqmTimeElapsed)
 
@@ -218,12 +218,12 @@ class SmvModule(SmvGenericModule):
             for l in queries:
                 self.smvApp.sqlContext.sql(l)
         
-        self._do_action_on_df(run_query, self.df, "PUBLISH TO HIVE")
+        self._do_action_on_df(run_query, self.data, "PUBLISH TO HIVE")
     
     def publishThroughJDBC(self):
         url = self.smvApp.jdbcUrl()
         driver = self.smvApp.jdbcDriver()
-        self.smvApp.j_smvPyClient.writeThroughJDBC(self.df._jdf, url, driver, self.tableName())
+        self.smvApp.j_smvPyClient.writeThroughJDBC(self.data._jdf, url, driver, self.tableName())
 
 class SmvSqlModule(SmvModule):
     """An SMV module which executes a SQL query in place of a run method

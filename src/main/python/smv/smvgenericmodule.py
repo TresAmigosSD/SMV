@@ -72,7 +72,7 @@ class SmvGenericModule(ABC):
         self.resolvedRequiresDS = []
 
         # keep a reference to the result data
-        self.df = None
+        self.data = None
 
         self.module_meta = SmvMetaData()
         self.userMetadataTimeElapsed = None
@@ -374,7 +374,7 @@ class SmvGenericModule(ABC):
             run_set.discard(self)
         res = self.smvApp.df_cache.get(self.versioned_fqn)
         urn2df.update({self.urn(): res})
-        self.df = res
+        self.data = res
 
     def computeDataFrame(self, urn2df, run_set, is_quick_run):
         """When DF is not in cache, do the real calculation here
@@ -415,7 +415,7 @@ class SmvGenericModule(ABC):
         if (not io_strategy.isPersisted()):
             self.module_meta.addSystemMeta(self)
             (user_meta, self.userMetadataTimeElapsed) = self._do_action_on_df(
-                self.metadata, self.df, "GENERATE USER METADATA")
+                self.metadata, self.data, "GENERATE USER METADATA")
 
             if not isinstance(user_meta, dict):
                 raise SmvRuntimeError("User metadata {} is not a dict".format(repr(user_meta)))
@@ -453,7 +453,7 @@ class SmvGenericModule(ABC):
 
     def force_post_action(self, run_set):
         if (self in run_set):
-            self.force_an_action(self.df)
+            self.force_an_action(self.data)
             self.run_ancestor_and_me_postAction(run_set)
 
     def run_ancestor_and_me_postAction(self, run_set):
