@@ -22,9 +22,8 @@ class DataSetMgr(object):
     """The Python representation of DataSetMgr.
     """
 
-    def __init__(self, sc, smvconfig):
-        self.sc = sc
-        self._jvm = sc._jvm
+    def __init__(self, _jvm, smvconfig):
+        self._jvm = _jvm
 
         self.smvconfig = smvconfig
         self.dsRepoFactories = []

@@ -134,15 +134,9 @@ class SmvCsvOnHdfsIoStrategy(SmvFileOnHdfsIoStrategy):
         return DataFrame(jdf, self.smvApp.sqlContext)
 
     def isPersisted(self):
-        handler = self.smvApp.j_smvPyClient.createFileIOHandler(self._file_path)
-
         # since within the persistDF call on scala side, schema was written after
         # csv file, so we can use the schema file as a semaphore
-        try:
-            handler.readSchema()
-            return True
-        except:
-            return False
+        return self.smvApp._jvm.SmvHDFS.exists(self._schema_path)
 
     def remove(self):
         self.smvApp._jvm.SmvHDFS.deleteFile(self._file_path)
