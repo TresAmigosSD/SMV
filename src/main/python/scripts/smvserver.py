@@ -16,6 +16,7 @@ import fnmatch
 import re
 import glob
 from flask import Flask, request, jsonify
+from pyspark.sql import SparkSession
 from smv import SmvApp
 from smv.smvapp import DataSetRepoFactory
 
@@ -67,7 +68,11 @@ class Main(object):
         options = self.parseArgs()
 
         # init Smv context
-        smvApp = SmvApp.createInstance([])
+        sparkSession = SparkSession.builder.\
+                enableHiveSupport().\
+                getOrCreate() 
+
+        smvApp = SmvApp.createInstance([], sparkSession)
 
         # to reduce complexity in SmvApp, keep the rest server single-threaded
         app.run(host=options.ip, port=int(options.port), threaded=False, processes=1)

@@ -84,15 +84,8 @@ class SmvApp(object):
         """
         cls._instance = app
 
-    def __init__(self, arglist, _sparkSession=None, py_module_hotload=True):
-        if (_sparkSession is None):
-            self.sparkSession = SparkSession.builder.\
-                    enableHiveSupport().\
-                    getOrCreate() 
-        elif (_sparkSession == "SkipSpark"):
-            self.sparkSession = None
-        else:
-            self.sparkSession = _sparkSession
+    def __init__(self, arglist, _sparkSession, py_module_hotload=True):
+        self.sparkSession = _sparkSession
 
         if (self.sparkSession is not None):
             sc = self.sparkSession.sparkContext

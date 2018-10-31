@@ -206,7 +206,7 @@ class SmvAppWithoutSparkTest(SmvBaseTest):
         args = TestConfig.smv_args() + cls.smvAppInitArgs() + ['--data-dir', cls.tmpDataDir()]
         # The test's SmvApp must be set as the singleton for correct results of some tests
         # The original SmvApp (if any) will be restored when the test is torn down
-        cls.smvApp = SmvApp.createInstance(args, "SkipSpark")
+        cls.smvApp = SmvApp.createInstance(args, None)
 
         sys.path.append(cls.resourceTestDir())
 
