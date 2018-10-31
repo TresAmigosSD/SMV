@@ -156,7 +156,7 @@ def exportToHive(dsname):
     """Export dataset's running result to a Hive table
 
         Args:
-            dsname (str): The name of an SmvDataSet
+            dsname (str): The name of an SmvModule
     """
     SmvApp.getInstance().publishModuleToHiveByName(dsname)
 
@@ -167,7 +167,7 @@ def ancestors(dsname):
         in-directly, including datasets from other stages.
 
         Args:
-            dsname (str): The name of an SmvDataSet
+            dsname (str): The name of an SmvGenericModule
     """
     print(_appInfo().ls_ancestors(dsname))
 
@@ -178,7 +178,7 @@ def descendants(dsname):
         in-directly, including datasets from other stages
 
         Args:
-            dsname (str): The name of an SmvDataSet
+            dsname (str): The name of an SmvGenericModule
     """
     print(_appInfo().ls_descendants(dsname))
 

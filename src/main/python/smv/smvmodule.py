@@ -11,7 +11,7 @@
 # limitations under the License.
 """SMV DataSet Framework interface
 
-This module defines the abstract classes which formed the SmvDataSet Framework for clients' projects
+This module defines the abstract classes which formed the SmvModule Framework for clients' projects
 """
 
 from pyspark.sql import DataFrame
@@ -30,7 +30,7 @@ from smv.smvgenericmodule import SmvGenericModule, lazy_property
 class SmvOutput(object):
     """Mixin which marks an SmvModule as one of the output of its stage
 
-        SmvOutputs are distinct from other SmvDataSets in that
+        SmvOutputs are distinct from other SmvModule in that
             * The -s and --run-app options of smv-run only run SmvOutputs and their dependencies.
     """
     IsSmvOutput = True
@@ -112,8 +112,8 @@ class SmvModule(SmvGenericModule):
         """User-specified definition of the operations of this SmvModule
 
             Override this method to define the output of this module, given a map
-            'i' from inputSmvDataSet to resulting DataFrame. 'i' will have a
-            mapping for each SmvDataSet listed in requiresDS. E.g.
+            'i' from input SmvGenericModule to resulting DataFrame. 'i' will have a
+            mapping for each SmvGenericModule listed in requiresDS. E.g.
 
             def requiresDS(self):
                 return [MyDependency]
@@ -122,10 +122,10 @@ class SmvModule(SmvGenericModule):
                 return i[MyDependency].select("importantColumn")
 
             Args:
-                (RunParams): mapping from input SmvDataSet to DataFrame
+                (RunParams): mapping from input SmvGenericModule to DataFrame
 
             Returns:
-                (DataFrame): ouput of this SmvModule
+                (DataFrame): output of this SmvModule
         """
 
     #########################################################################
@@ -323,8 +323,8 @@ class SmvModelExec(SmvModule):
         """User-specified definition of the operations of this SmvModule
 
             Override this method to define the output of this module, given a map
-            'i' from inputSmvDataSet to resulting DataFrame. 'i' will have a
-            mapping for each SmvDataSet listed in requiresDS. E.g.
+            'i' from input SmvGenericModule to resulting DataFrame. 'i' will have a
+            mapping for each SmvGenericModule listed in requiresDS. E.g.
 
             def requiresDS(self):
                 return [MyDependency]
@@ -333,7 +333,7 @@ class SmvModelExec(SmvModule):
                 return i[MyDependency].select("importantColumn")
 
             Args:
-                i (RunParams): mapping from input SmvDataSet to DataFrame
+                i (RunParams): mapping from input SmvGenericModule to DataFrame
                 model (SmvModel): the model this module depends on
 
             Returns:

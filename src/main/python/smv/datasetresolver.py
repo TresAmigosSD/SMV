@@ -16,29 +16,29 @@ from smv.error import SmvRuntimeError
 
 class DataSetResolver:
     """DataSetResolver (DSR) is the entrypoint through which the DataSetMgr acquires
-        SmvDataSets. A DSR object represent a single transaction. Each DSR creates a
-        set of DataSetRepos at instantiation. When asked for an SmvDataSet, DSR queries
-        the repos for that SmvDataSet and resolves it. The SmvDataSet is responsible for
-        resolving itself, given access to the DSR to load/resolve the SmvDataSet's
-        dependencies. DSR caches the SmvDataSets it has already resolved to ensure that
-        any SmvDataSet is only resolved once.
+        SmvGenericModules. A DSR object represent a single transaction. Each DSR creates a
+        set of DataSetRepos at instantiation. When asked for an SmvGenericModules, DSR queries
+        the repos for that SmvGenericModule and resolves it. The SmvGenericModule is responsible for
+        resolving itself, given access to the DSR to load/resolve the SmvGenericModule's
+        dependencies. DSR caches the SmvGenericModule it has already resolved to ensure that
+        any SmvGenericModule is only resolved once.
     """
     def __init__(self, repo):
         self.repo = repo
 
-        # FQN to resolved SmvDataSet
+        # FQN to resolved SmvGenericModule
         self.fqn2res = {}
 
-        # Track which SmvDataSets is currently being resolved. Used to check for
+        # Track which SmvGenericModules is currently being resolved. Used to check for
         # dependency cycles. Note: we no longer have to worry about corruption of
         # resolve stack because a new stack is created per transaction.
         self.resolveStack = []
 
-        #Timestamp which will be injected into the resolved SmvDataSets
+        #Timestamp which will be injected into the resolved SmvGenericModules
         self.transaction_time = datetime.now()
 
     def loadDataSet(self, fqns):
-        """Given a list of FQNs, return cached resolved version SmvDataSets if exists, or
+        """Given a list of FQNs, return cached resolved version SmvGenericModules if exists, or
             otherwise load unresolved version from source and resolve them.
         """
         res = []
@@ -51,7 +51,7 @@ class DataSetResolver:
         return res
 
     def resolveDataSet(self, ds):
-        """Return cached resolved version of given SmvDataSet if it exists, or resolve
+        """Return cached resolved version of given SmvGenericModule if it exists, or resolve
             it otherwise.
         """
         if (ds.fqn() in self.resolveStack):

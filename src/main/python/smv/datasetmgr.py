@@ -44,13 +44,13 @@ class DataSetMgr(object):
 
 
     def load(self, *urns):
-        """Load SmvDataSets for specified URNs
+        """Load SmvGenericModules for specified URNs
         
         Args:
             *urns (str): list of URNs as strings
 
         Returns:
-            list(SmvDataSet): list of Scala SmvDataSets (j_ds)
+            list(SmvGenericModules): list of Scala SmvGenericModules (j_ds)
         """
         with self.tx() as tx:
             return tx.load(urns)
@@ -62,7 +62,7 @@ class DataSetMgr(object):
             *partial_names (str): list of partial names
 
         Returns:
-            list(SmvDataSet): list of Scala SmvDataSets (j_ds)
+            list(SmvGenericModules): list of SmvGenericModules
         """
         with self.tx() as tx:
             return tx.inferDS(partial_names)
@@ -78,7 +78,7 @@ class DataSetMgr(object):
         self.dsRepoFactories.append(repo_factory)
 
     def allDataSets(self):
-        """Return all the SmvDataSets in the app
+        """Return all the SmvGenericModules in the app
         """
         with self.tx() as tx:
             return tx.allDataSets()
@@ -115,14 +115,14 @@ class TXContext(object):
 
 
 class TX(object):
-    """Abstraction of the transaction boundary for loading SmvDataSets. 
+    """Abstraction of the transaction boundary for loading SmvGenericModules. 
         A TX object
 
         * will instantiate a set of repos when itself instantiated and will
         * reuse the same repos for all queries. This means that each new TX object will
-        * reload the SmvDataSet from source **once** during its lifetime.
+        * reload the SmvGenericModules from source **once** during its lifetime.
 
-        NOTE: Once a new TX is created, the well-formedness of the SmvDataSets provided
+        NOTE: Once a new TX is created, the well-formedness of the SmvGenericModules provided
         by the previous TX is not guaranteed. Particularly it may become impossible
         to run modules from the previous TX.
     """

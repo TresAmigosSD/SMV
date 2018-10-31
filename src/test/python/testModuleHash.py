@@ -108,9 +108,9 @@ class ModuleHashTest(SmvBaseTest):
         self.assert_hash_should_change("stage.modules.CsvFileWithAttr")
 
     def test_change_relevant_conf_value_should_change_hash(self):
-        """updating config value used by an SmvDataSet should change its hash"""
+        """updating config value used by an SmvGenericModule should change its hash"""
         self.assert_hash_should_change("stage.modules.UsesConfigValue")
 
     def test_change_irrelevant_conf_value_shouldnt_change_hash(self):
-        """updating config value not used by an SmvDataSet shouldn't change its hash"""
+        """updating config value not used by an SmvGenericModule shouldn't change its hash"""
         self.assert_hash_should_not_change("stage.modules.DoesntConfigValue")

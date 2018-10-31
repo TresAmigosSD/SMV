@@ -21,12 +21,12 @@ from smv.utils import scala_seq_to_list
 class SmvRunConfig(object):
     """DEPRECATED
 
-        Run config accessor methods have been absorbed by SmvDataSet, so `SmvRunConfig` is maintained
+        Run config accessor methods have been absorbed by SmvGenericModule, so `SmvRunConfig` is maintained
         to support existing projects. `SmvRunConfig's` influence on the dataset hash is preserved so that
-        modules do not have to transition overnight to using `SmvDataSet.requiresConfig` in order for the
+        modules do not have to transition overnight to using `SmvGenericModule.requiresConfig` in order for the
         config to influence the dataset hash.
     """
 
     def _is_smv_run_config(self):
-        """A flag method to let SmvDataSet class know SmvRunConfig is mixed-in"""
+        """A flag method to let SmvGenericModule class know SmvRunConfig is mixed-in"""
         pass
