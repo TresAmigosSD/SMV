@@ -130,7 +130,7 @@ class SmvApp(object):
         self.dsm = DataSetMgr(self._jvm, self.py_smvconf)
 
         # computed df cache, keyed by m.versioned_fqn
-        self.df_cache = {}
+        self.data_cache = {}
 
         # AFTER app is available but BEFORE stages,
         # use the dynamically configured app dir to set the source path, library path

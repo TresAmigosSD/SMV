@@ -366,13 +366,13 @@ class SmvGenericModule(ABC):
 
             urn2df will be appended, and run_set will shrink
         """
-        if (forceRun or (self.versioned_fqn not in self.smvApp.df_cache)):
-            self.smvApp.df_cache.update(
+        if (forceRun or (self.versioned_fqn not in self.smvApp.data_cache)):
+            self.smvApp.data_cache.update(
                 {self.versioned_fqn:self.computeDataFrame(urn2df, run_set, is_quick_run)}
             )
         else:
             run_set.discard(self)
-        res = self.smvApp.df_cache.get(self.versioned_fqn)
+        res = self.smvApp.data_cache.get(self.versioned_fqn)
         urn2df.update({self.urn(): res})
         self.data = res
 

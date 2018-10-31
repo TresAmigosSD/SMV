@@ -58,7 +58,7 @@ class SmvFrameworkTest2(SmvBaseTest):
     def test_cross_tx_df_caching(self):
         """run method of a module should run only once even cross run tx"""
         # Reset cache and reset counter
-        self.smvApp.df_cache = {}
+        self.smvApp.data_cache = {}
         global cross_run_counter
         cross_run_counter = 0
 
@@ -71,12 +71,12 @@ class SmvFrameworkTest2(SmvBaseTest):
     def test_persisted_df_should_run_only_once(self):
         """even reset df-cache, persisted module should only run once"""
         self.mkTmpTestDir()
-        self.smvApp.df_cache = {}
+        self.smvApp.data_cache = {}
         global persist_run_counter
         persist_run_counter = 0
 
         r1 = self.df("stage.modules.M2")
-        self.smvApp.df_cache = {}
+        self.smvApp.data_cache = {}
         r2 = self.df("stage.modules.M3")
         
         # counter is in M2 (non-ephemeral)
@@ -165,7 +165,7 @@ class SmvFrameworkTest2(SmvBaseTest):
 
 
     def test_quick_run(self):
-        self.smvApp.df_cache = {}
+        self.smvApp.data_cache = {}
         fqn1 = "stage.modules.M1"
         fqn3 = "stage.modules.M3"
         df1 = self.df(fqn1)
