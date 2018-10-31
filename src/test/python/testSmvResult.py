@@ -14,8 +14,6 @@
 from test_support.smvbasetest import SmvBaseTest
 from test_support.extrapath import ExtraPath
 
-import smv.smvdataset
-
 class SmvResultTest(SmvBaseTest):
     @classmethod
     def smvAppInitArgs(cls):

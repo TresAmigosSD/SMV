@@ -25,7 +25,7 @@ import re
 
 from smv.dqm import FailParserCountPolicy
 from smv.error import SmvRuntimeError
-from smv.smvdataset import SmvModule
+from smv.smvmodule import SmvModule
 
 if sys.version_info >= (3, 4):
     ABC = abc.ABC

@@ -44,8 +44,6 @@ class SmvOutput(object):
         return None
     
 
-
-
 class SmvModule(SmvGenericModule):
     """Base class for SmvModules written in Python
     """
