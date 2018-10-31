@@ -277,10 +277,8 @@ class SmvApp(object):
     def getModuleResult(self, urn, forceRun=False):
         """Run module and get its result, which may not be a DataFrame
         """
-        fqn = urn[urn.find(":")+1:]
-        ds = self.repoFactory.createRepo().loadDataSet(fqn)
         df, collector = self.runModule(urn, forceRun)
-        return ds.df2result(df)
+        return df
 
     def load_single_ds(self, urn):
         """Return j_ds from urn"""

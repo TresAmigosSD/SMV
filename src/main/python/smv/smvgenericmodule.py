@@ -238,7 +238,6 @@ class SmvGenericModule(ABC):
     # - metaStrategy: Required
     # - doRun: Optional, default call run 
     # - dependencies: Optional, default self.requiresDS()
-    # - df2result: Optional, default pass though the input data
     # - had_action: Optional, default True
     # - pre_action: Optional, default pass through the input data
     # - post_action: Optional, default pass
@@ -285,8 +284,7 @@ class SmvGenericModule(ABC):
             if not hasattr(ds, 'urn'):
                 raise TypeError('Argument to RunParams must be an SmvGenericModule')
             else:
-                # called df2result so that SmvModel result get returned in `i`
-                return ds.df2result(self.urn2df[ds.urn()])
+                return self.urn2df[ds.urn()]
 
     def doRun(self, known):
         """Compute this dataset, and return the dataframe"""
@@ -297,14 +295,6 @@ class SmvGenericModule(ABC):
         """Can be overridden when a module has dependency other than requiresDS
         """
         return self.requiresDS()
-
-    @classmethod
-    def df2result(cls, df):
-        """Given a datasets's persisted DataFrame, get the result object
-
-            In most cases, this is just the DataFrame itself. See SmvResultModule for the exception.
-        """
-        return df
 
     def had_action(self):
         """Check whether there is an action happend on the generated data (DF or real data)
