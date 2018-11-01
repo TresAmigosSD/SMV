@@ -181,7 +181,6 @@ class SmvPicklableOnHdfsIoStrategy(SmvFileOnHdfsIoStrategy):
         # encoding will be a bytestring object if in Python 3, so need to convert it to string
         # str.decode converts string to utf8 in python 2 and bytes to str in Python 3
         hex_encoded_pickle_as_str = hex_encoded_pickle.decode()
-        # insert the resulting serialization into a DataFrame
         self.smvApp._jvm.SmvHDFS.writeToFile(hex_encoded_pickle_as_str, self._file_path)
 
 
