@@ -226,6 +226,10 @@ class SmvSparkDfModule(SmvGenericModule):
         self.smvApp.j_smvPyClient.writeThroughJDBC(self.data._jdf, url, driver, self.tableName())
 
 class SmvModule(SmvSparkDfModule):
+    """SmvModule is the same as SmvSparkDfModule. Since it was used in all the
+        SMV projects, we will not change the its name for backward compatibility.
+        May deprecate when the full SmvGenericModule framework get adopted
+    """
     pass
 
 
