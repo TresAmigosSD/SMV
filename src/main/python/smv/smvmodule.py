@@ -44,8 +44,8 @@ class SmvOutput(object):
         return None
     
 
-class SmvModule(SmvGenericModule):
-    """Base class for SmvModules written in Python
+class SmvSparkDfModule(SmvGenericModule):
+    """Base class for SmvModules create Spark DFs
     """
 
     IsSmvModule = True
@@ -54,7 +54,7 @@ class SmvModule(SmvGenericModule):
         return "Module"
 
     def __init__(self, smvApp):
-        super(SmvModule, self).__init__(smvApp)
+        super(SmvSparkDfModule, self).__init__(smvApp)
         self.dqmTimeElapsed = None
 
     #########################################################################
@@ -158,7 +158,7 @@ class SmvModule(SmvGenericModule):
 
     # Override this method to add the dqmTimeElapsed 
     def finalize_meta(self):
-        super(SmvModule, self).finalize_meta()
+        super(SmvSparkDfModule, self).finalize_meta()
         self.module_meta.addSchemaMetadata(self.data)
         # Need to add duration at the very end, just before persist
         self.module_meta.addDuration("dqm", self.dqmTimeElapsed)
@@ -167,7 +167,7 @@ class SmvModule(SmvGenericModule):
     def _do_action_on_df(self, func, df, desc):
         name = self.fqn()
         self.smvApp.sc.setJobGroup(groupId=name, description=desc)
-        (res, secondsElapsed) = super(SmvModule, self)._do_action_on_df(func, df, desc)
+        (res, secondsElapsed) = super(SmvSparkDfModule, self)._do_action_on_df(func, df, desc)
 
         # Python api does not have clearJobGroup
         # set groupId and description to None is equivalent
@@ -224,6 +224,10 @@ class SmvModule(SmvGenericModule):
         url = self.smvApp.jdbcUrl()
         driver = self.smvApp.jdbcDriver()
         self.smvApp.j_smvPyClient.writeThroughJDBC(self.data._jdf, url, driver, self.tableName())
+
+class SmvModule(SmvSparkDfModule):
+    pass
+
 
 class SmvSqlModule(SmvModule):
     """An SMV module which executes a SQL query in place of a run method
