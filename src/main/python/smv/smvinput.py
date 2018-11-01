@@ -25,7 +25,7 @@ import re
 
 from smv.dqm import FailParserCountPolicy
 from smv.error import SmvRuntimeError
-from smv.smvmodule import SmvModule
+from smv.smvmodule import SmvSparkDfModule
 
 if sys.version_info >= (3, 4):
     ABC = abc.ABC
@@ -42,7 +42,7 @@ def _smvhash(text):
     return binascii.crc32(text.encode())
 
 
-class SmvInputBase(SmvModule, ABC):
+class SmvInputBase(SmvSparkDfModule, ABC):
     """SmvModule representing external input
         Concrete class need to provide:
           - readAsDF
