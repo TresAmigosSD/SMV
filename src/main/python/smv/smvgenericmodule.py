@@ -345,6 +345,9 @@ class SmvGenericModule(ABC):
         self.resolvedRequiresDS = resolver.loadDataSet([ds.fqn() for ds in self.dependencies()])
         return self
 
+    @lazy_property
+    def ancestor_and_me_visitor(self):
+        return ModulesVisitor([self])
 
     def get_data(self, urn2df, run_set, forceRun, is_quick_run):
         """create or get data from smvApp level cache
@@ -454,7 +457,7 @@ class SmvGenericModule(ABC):
             if (mod in _run_set):
                 mod.post_action()
                 _run_set.discard(mod)
-        ModulesVisitor([self]).dfs_visit(run_delayed_postAction, run_set)
+        self.ancestor_and_me_visitor.dfs_visit(run_delayed_postAction, run_set)
 
     def _do_action_on_df(self, func, df, desc):
         log = self.smvApp.log
