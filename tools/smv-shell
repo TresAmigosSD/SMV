@@ -12,6 +12,7 @@ export SPARK_PRINT_LAUNCH_COMMAND=1
 # Since pyspark does not take app parameters, we have to pass SMV_ARGS to the
 # startup script. A little hackish before we figure out better ways.
 echo "${SMV_ARGS[@]}" > .smv_shell_all_args
+SMV_ARGS=()
 
 OLD_PYTHONSTARTUP=$PYTHONSTARTUP
 export PYTHONSTARTUP="${SMV_TOOLS}/../src/main/python/scripts/smvpyshell.py"
