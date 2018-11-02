@@ -13,7 +13,6 @@
 
 import os
 import sys
-import time
 from test_support.smvbasetest import SmvBaseTest
 from smv import *
 from smv.error import SmvDqmValidationError, SmvRuntimeError
