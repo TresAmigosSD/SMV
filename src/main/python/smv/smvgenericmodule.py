@@ -364,6 +364,7 @@ class SmvGenericModule(ABC):
                 {self.versioned_fqn:self.computeData(urn2df, run_set, is_quick_run)}
             )
         else:
+            self.smvApp.log.debug("{} had a cache in SmvApp.data_cache".format(self.fqn()))
             run_set.discard(self)
         res = self.smvApp.data_cache.get(self.versioned_fqn)
         urn2df.update({self.urn(): res})
@@ -397,6 +398,7 @@ class SmvGenericModule(ABC):
                 if (self.had_action()):
                     self.run_ancestor_and_me_postAction(run_set)
             else:
+                self.smvApp.log.debug("{} had a persisted file".format(self.fqn()))
                 run_set.discard(self)
             return _strategy.read()
 
@@ -461,7 +463,7 @@ class SmvGenericModule(ABC):
 
     def _do_action_on_df(self, func, df, desc):
         log = self.smvApp.log
-        log.info("STARTING " + desc)
+        log.info("STARTING {} on {}".format(desc, self.fqn()))
 
         before  = datetime.now()
 
@@ -519,6 +521,12 @@ class SmvGenericModule(ABC):
         return "{}/{}.meta".format(
             self.smvApp.all_data_dirs().outputDir,
             self.versioned_fqn)
+
+    def is_persisted(self):
+        """Is current module persisted or not. Can't be lazy, since the persisted
+            file could be removed from OS
+        """
+        return self.persistStrategy().isPersisted()
 
     def needsToRun(self):
         """For non-ephemeral module, when persisted, no need to run

@@ -13,6 +13,7 @@
 
 import os
 import sys
+import time
 from test_support.smvbasetest import SmvBaseTest
 from smv import *
 from smv.error import SmvDqmValidationError, SmvRuntimeError
@@ -172,6 +173,18 @@ class SmvFrameworkTest2(SmvBaseTest):
         df3 = self.smvApp.quickRunModule(fqn3)
         self.should_be_same(df1, df3)
 
+    def test_need_to_run_list(self):
+        self.smvApp.data_cache = {}
+        self.mkTmpTestDir()
+        self.smvApp.setDynamicRunConfig({})
+        self.df("stage.modules.M2")
+
+        ds = self.load("stage.modules.M3")[0]
+        res = ModulesVisitor([ds]).modules_need_to_run()
+        names = [m.fqn()[14:] for m in res]
+        self.assertEqual(names, ['M2', 'M3'])
+
+
 class SmvForceEddTest(SmvBaseTest):
     @classmethod
     def smvAppInitArgs(cls):
@@ -179,6 +192,7 @@ class SmvForceEddTest(SmvBaseTest):
 
     def test_no_force_create_edd(self):
         self.mkTmpTestDir()
+        self.smvApp.data_cache = {}
         fqn = "stage.modules.M2"
         self.smvApp.setDynamicRunConfig({})
         (df, info) = self.smvApp.runModule("mod:" + fqn)
@@ -188,6 +202,7 @@ class SmvForceEddTest(SmvBaseTest):
 
     def test_force_create_edd(self):
         self.mkTmpTestDir()
+        self.smvApp.data_cache = {}
         fqn = "stage.modules.M2"
         self.smvApp.setDynamicRunConfig({'smv.forceEdd': 'True'})
         (df, info) = self.smvApp.runModule("mod:" + fqn)

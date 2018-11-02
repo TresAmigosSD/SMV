@@ -22,6 +22,7 @@ class ModulesVisitor(object):
         of modules given a set of roots
     """
     def __init__(self, roots):
+        self.roots = roots
         self.queue = self._build_queue(roots)
 
     def _build_queue(self, roots):
@@ -52,6 +53,16 @@ class ModulesVisitor(object):
 
         # reverse the result before output to make leafs first
         return [m for m in reversed(_sorted)]
+
+    def modules_need_to_run(self):
+        to_run = set(self.queue)
+        def get_to_run(m, _to_run):
+            if(m in _to_run and m.is_persisted()):
+                for d in m.ancestor_and_me_visitor.queue:
+                    if d != m:
+                        to_run.discard(d)
+        self.bfs_visit(get_to_run, to_run)
+        return [m for m in to_run.union(self.roots)]
 
     def dfs_visit(self, action, state):
         """Depth first visit"""
