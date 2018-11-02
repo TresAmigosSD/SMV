@@ -33,6 +33,9 @@ class M1(SmvModule):
     def run(self, i):
         testSmvFramework2.cross_run_counter += 1
         return i[I1]
+    def post_action(self):
+        super(M1, self).post_action()
+        testSmvFramework2.m1_post_counter += 1
 
 class M2(SmvModule):
     def requiresDS(self):
@@ -54,3 +57,9 @@ class M3(SmvModule):
         return i[M1]
     def metadata(self, df):
         return {'n':df.count()}
+
+class M5(SmvModule):
+    def requiresDS(self):
+        return [M2]
+    def run(self, i):
+        return i[M2]

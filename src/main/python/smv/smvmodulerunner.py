@@ -34,7 +34,7 @@ class SmvModuleRunner(object):
         # the set will be updated by _create_df, _create_meta and _force_post
         # and eventually be emptied out
         # See docs/dev/SmvGenericModule/SmvModuleRunner.md for details
-        mods_to_run_post_action = set(self.visitor.queue)
+        mods_to_run_post_action = set(self.visitor.modules_need_to_run)
 
         # a map from urn to already run DF, since the `run` interface of 
         # SmvModule takes a map of class => df, the map here have to be 
@@ -68,7 +68,7 @@ class SmvModuleRunner(object):
         def add_to_coll(m, _collector):
             hist = self.smvApp._read_meta_hist(m)
             _collector.add_runinfo(m.fqn(), m.get_metadata(), hist)
-        self.visitor.dfs_visit(add_to_coll, collector)
+        self.visitor.dfs_visit(add_to_coll, collector, need_to_run_only=True)
         return collector
 
     # TODO: All the publish* methods below should be removed when move to generic output module
@@ -124,19 +124,19 @@ class SmvModuleRunner(object):
         def runner(m, state):
             (urn2df, run_set) = state
             m.get_data(urn2df, run_set, forceRun, is_quick_run)
-        self.visitor.dfs_visit(runner, (known, need_post))
+        self.visitor.dfs_visit(runner, (known, need_post), need_to_run_only=True)
 
     def _create_meta(self, need_post):
         # run user meta. when there is actions in user meta creation,
         # post_action will run on current module and all upstream modules
         def run_meta(m, run_set):
             m.calculate_user_meta(run_set)
-        self.visitor.dfs_visit(run_meta, need_post)
+        self.visitor.dfs_visit(run_meta, need_post, need_to_run_only=True)
 
     def _create_edd(self, need_post):
         def run_edd(m, run_set):
             m.calculate_edd(run_set)
-        self.visitor.dfs_visit(run_edd, need_post)
+        self.visitor.dfs_visit(run_edd, need_post, need_to_run_only=True)
 
     def _force_post(self, need_post):
         # If there are still module left for post_action, force a run here
@@ -151,7 +151,7 @@ class SmvModuleRunner(object):
             # In case of A<-B<-C all need to run, this way will only
             # need to force action on C, and A and B's post action can 
             # also be calculated
-            self.visitor.bfs_visit(force_run, need_post)
+            self.visitor.bfs_visit(force_run, need_post, need_to_run_only=True)
 
     def _validate_and_persist_meta(self, collector):
         def do_validation(m, _collector):
@@ -175,4 +175,4 @@ class SmvModuleRunner(object):
                 hist.update(m.module_meta, m.metadataHistorySize())
                 io_strategy = self.smvApp._hist_io_strategy(m)
                 io_strategy.write(hist.toJson())
-        self.visitor.dfs_visit(do_validation, collector)
+        self.visitor.dfs_visit(do_validation, collector, need_to_run_only=True)

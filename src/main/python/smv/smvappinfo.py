@@ -137,7 +137,7 @@ class SmvAppInfo(object):
 
     def _ds_ancestors(self, m):
         """return the module's ancestors as python list"""
-        return [mod for mod in ModulesVisitor([m]).queue if mod != m]
+        return [mod for mod in m.ancestor_and_me_visitor.queue if mod != m]
 
     def _dead_nodes(self):
         """return all the dead nodes"""

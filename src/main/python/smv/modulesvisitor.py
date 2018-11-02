@@ -9,6 +9,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from smv.utils import lazy_property
 from collections import OrderedDict
 import sys
 
@@ -22,9 +23,10 @@ class ModulesVisitor(object):
         of modules given a set of roots
     """
     def __init__(self, roots):
+        self.roots = roots
         self.queue = self._build_queue(roots)
 
-    def _build_queue(self, roots):
+    def _build_queue(self, roots, un_persisted_only=False):
         """Create a depth first queue with order for multiple roots"""
 
         # to traversal the graph in bfs order
@@ -39,26 +41,43 @@ class ModulesVisitor(object):
 
         while(not _working_queue.empty()):
             mod = _working_queue.get()
-            for m in mod.resolvedRequiresDS:
-                # regardless whether seen before, add to queue, so not drop 
-                # any dependency which may change the ordering of the result
-                _working_queue.put(m)
+            if(not un_persisted_only or not mod.is_persisted()):
+                for m in mod.resolvedRequiresDS:
+                    # regardless whether seen before, add to queue, so not drop 
+                    # any dependency which may change the ordering of the result
+                    _working_queue.put(m)
 
-                # if in the result list already, remove the old, add the new, 
-                # to make sure leafs always later
-                if (m in _sorted):
-                    _sorted.pop(m)
-                _sorted.update({m: True})
+                    # if in the result list already, remove the old, add the new, 
+                    # to make sure leafs always later
+                    if (m in _sorted):
+                        _sorted.pop(m)
+                    _sorted.update({m: True})
 
         # reverse the result before output to make leafs first
         return [m for m in reversed(_sorted)]
 
-    def dfs_visit(self, action, state):
+    @lazy_property
+    def modules_need_to_run(self):
+        """For each run, if a module is persisted, all its ancestors
+            are not even needed to be visited. This method creates a
+            sub-list for the queue which need to run
+        """
+        return self._build_queue(self.roots, True)
+
+    def dfs_visit(self, action, state, need_to_run_only=False):
         """Depth first visit"""
-        for m in self.queue:
+        if (need_to_run_only):
+            l = self.modules_need_to_run
+        else:
+            l = self.queue
+        for m in l:
             action(m, state)
     
-    def bfs_visit(self, action, state):
+    def bfs_visit(self, action, state, need_to_run_only=False):
         """Breadth first visit"""
-        for m in reversed(self.queue):
+        if (need_to_run_only):
+            l = self.modules_need_to_run
+        else:
+            l = self.queue
+        for m in reversed(l):
             action(m, state)
