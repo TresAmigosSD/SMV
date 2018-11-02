@@ -360,13 +360,22 @@ class SmvGenericModule(ABC):
             urn2df will be appended, and run_set will shrink
         """
         if (forceRun or (self.versioned_fqn not in self.smvApp.data_cache)):
-            self.smvApp.data_cache.update(
-                {self.versioned_fqn:self.computeData(urn2df, run_set, is_quick_run)}
-            )
+            res = self.computeData(urn2df, run_set, is_quick_run)
+            if (self.isEphemeral()):
+                # Only cache ephemeral modules data, since non-ephemeral any how
+                # will be read from persisted result, no need to persist the logic
+                # of "read from persisted file". Actually caching on non-ephemeral
+                # could cause problems: in the life-time of an SmvApp, it's 
+                # possible some persisted files are deleted, it that case, the 
+                # cached DF will still try to read from those deleted files and 
+                # cause error. 
+                self.smvApp.data_cache.update(
+                    {self.versioned_fqn:res}
+                )
         else:
             self.smvApp.log.debug("{} had a cache in SmvApp.data_cache".format(self.fqn()))
             run_set.discard(self)
-        res = self.smvApp.data_cache.get(self.versioned_fqn)
+            res = self.smvApp.data_cache.get(self.versioned_fqn)
         urn2df.update({self.urn(): res})
         self.data = res
 

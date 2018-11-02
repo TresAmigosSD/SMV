@@ -179,10 +179,10 @@ class SmvFrameworkTest2(SmvBaseTest):
         self.smvApp.setDynamicRunConfig({})
         self.df("stage.modules.M2")
 
-        ds = self.load("stage.modules.M3")[0]
-        res = ModulesVisitor([ds]).modules_need_to_run()
+        ds = self.load("stage.modules.M5")[0]
+        res = ModulesVisitor([ds]).modules_need_to_run
         names = [m.fqn()[14:] for m in res]
-        self.assertEqual(names, ['M2', 'M3'])
+        self.assertEqual(names, ['M2', 'M5'])
 
 
 class SmvForceEddTest(SmvBaseTest):
