@@ -26,11 +26,19 @@ from pyspark.sql import DataFrame
 
 cross_run_counter = 0
 persist_run_counter = 0
+m1_post_counter = 0
 
 class SmvFrameworkTest2(SmvBaseTest):
     @classmethod
     def smvAppInitArgs(cls):
         return ['--smv-props', 'smv.stages=stage']
+
+    def setUp(self):
+        super(SmvFrameworkTest2, self).setUp()
+        # Clean up data_cache, persisted files, and dynamic conf for each test
+        self.smvApp.data_cache = {}
+        self.mkTmpTestDir()
+        self.smvApp.setDynamicRunConfig({})
 
     def test_visit_queue(self):
         fqns = ["stage.modules.M3", "stage.modules.M2"]
@@ -58,8 +66,7 @@ class SmvFrameworkTest2(SmvBaseTest):
 
     def test_cross_tx_df_caching(self):
         """run method of a module should run only once even cross run tx"""
-        # Reset cache and reset counter
-        self.smvApp.data_cache = {}
+        # Reset counter
         global cross_run_counter
         cross_run_counter = 0
 
@@ -71,8 +78,6 @@ class SmvFrameworkTest2(SmvBaseTest):
 
     def test_persisted_df_should_run_only_once(self):
         """even reset df-cache, persisted module should only run once"""
-        self.mkTmpTestDir()
-        self.smvApp.data_cache = {}
         global persist_run_counter
         persist_run_counter = 0
 
@@ -115,7 +120,6 @@ class SmvFrameworkTest2(SmvBaseTest):
         self.assertEqual(len(mods_to_run_post_action), 0)
 
     def test_metadata_persist(self):
-        self.mkTmpTestDir()
         fqn = "stage.modules.M1"
         m = self.load(fqn)[0]
         meta_path = m.meta_path()
@@ -166,7 +170,6 @@ class SmvFrameworkTest2(SmvBaseTest):
 
 
     def test_quick_run(self):
-        self.smvApp.data_cache = {}
         fqn1 = "stage.modules.M1"
         fqn3 = "stage.modules.M3"
         df1 = self.df(fqn1)
@@ -174,9 +177,6 @@ class SmvFrameworkTest2(SmvBaseTest):
         self.should_be_same(df1, df3)
 
     def test_need_to_run_list(self):
-        self.smvApp.data_cache = {}
-        self.mkTmpTestDir()
-        self.smvApp.setDynamicRunConfig({})
         self.df("stage.modules.M2")
 
         ds = self.load("stage.modules.M5")[0]
@@ -184,25 +184,39 @@ class SmvFrameworkTest2(SmvBaseTest):
         names = [m.fqn()[14:] for m in res]
         self.assertEqual(names, ['M2', 'M5'])
 
+    def test_ephemeral_dqm_will_not_run_if_not_needed(self):
+        global m1_post_counter
+        m1_post_counter = 0
+
+        # M1's post_action should run once here
+        self.df("stage.modules.M2")
+        self.assertEqual(m1_post_counter, 1)
+
+        # M1's post_action should not run again
+        self.df("stage.modules.M5")
+        self.assertEqual(m1_post_counter, 1)
+
 
 class SmvForceEddTest(SmvBaseTest):
     @classmethod
     def smvAppInitArgs(cls):
         return ['--smv-props', 'smv.stages=stage']
 
-    def test_no_force_create_edd(self):
-        self.mkTmpTestDir()
+    def setUp(self):
+        super(SmvForceEddTest, self).setUp()
+        # Clean up data_cache, persisted files, and dynamic conf for each test
         self.smvApp.data_cache = {}
-        fqn = "stage.modules.M2"
+        self.mkTmpTestDir()
         self.smvApp.setDynamicRunConfig({})
+
+    def test_no_force_create_edd(self):
+        fqn = "stage.modules.M2"
         (df, info) = self.smvApp.runModule("mod:" + fqn)
         meta = info.metadata(fqn)
         edd = meta.get('_edd')
         self.assertEqual(len(edd), 0)
 
     def test_force_create_edd(self):
-        self.mkTmpTestDir()
-        self.smvApp.data_cache = {}
         fqn = "stage.modules.M2"
         self.smvApp.setDynamicRunConfig({'smv.forceEdd': 'True'})
         (df, info) = self.smvApp.runModule("mod:" + fqn)

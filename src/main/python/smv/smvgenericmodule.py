@@ -466,6 +466,7 @@ class SmvGenericModule(ABC):
         """
         def run_delayed_postAction(mod, _run_set):
             if (mod in _run_set):
+                self.smvApp.log.debug("Run post_action of {} from {}".format(mod.fqn(), self.fqn()))
                 mod.post_action()
                 _run_set.discard(mod)
         self.ancestor_and_me_visitor.dfs_visit(run_delayed_postAction, run_set)
