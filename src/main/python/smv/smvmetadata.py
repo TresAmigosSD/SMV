@@ -104,8 +104,8 @@ class SmvMetaData(object):
 
 
 class SmvMetaHistory(object):
-    def __init__(self, meta_list=[]):
-        self._hist_list = meta_list
+    def __init__(self):
+        self._hist_list = []
 
     def update(self, new_meta, max_size):
         self._hist_list.insert(0, new_meta._metadata)
