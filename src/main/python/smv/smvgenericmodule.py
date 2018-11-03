@@ -17,8 +17,8 @@ import binascii
 import json
 from datetime import datetime
 
-from smv.utils import lazy_property
-from smv.error import SmvRuntimeError
+from smv.utils import lazy_property, is_string
+from smv.error import SmvRuntimeError, SmvMetadataValidationError
 from smv.modulesvisitor import ModulesVisitor
 from smv.smvmetadata import SmvMetaData
 
@@ -374,10 +374,10 @@ class SmvGenericModule(ABC):
                 )
         else:
             self.smvApp.log.debug("{} had a cache in SmvApp.data_cache".format(self.fqn()))
-            run_set.discard(self)
             res = self.smvApp.data_cache.get(self.versioned_fqn)
+            self.data = res
         urn2df.update({self.urn(): res})
-        self.data = res
+        return res
 
     def computeData(self, urn2df, run_set, is_quick_run):
         """When DF is not in cache, do the real calculation here
@@ -386,13 +386,13 @@ class SmvGenericModule(ABC):
 
         if (self.isEphemeral()):
             raw_df = self.doRun(urn2df)
-            return self.pre_action(raw_df)
+            self.data = self.pre_action(raw_df)
         elif(is_quick_run):
             _strategy = self.persistStrategy()
             if (not _strategy.isPersisted()):
-                return self.doRun(urn2df)
+                self.data = self.doRun(urn2df)
             else:
-                return _strategy.read()
+                self.data = _strategy.read()
         else:
             _strategy = self.persistStrategy()
             if (not _strategy.isPersisted()):
@@ -400,6 +400,8 @@ class SmvGenericModule(ABC):
                 df = self.pre_action(raw_df)
                 (res, self.persistingTimeElapsed) = self._do_action_on_df(
                     _strategy.write, df, "RUN & PERSIST OUTPUT")
+                # need to set data cache for the postActions
+                self.data = _strategy.read()
                 # There is a chance that when waiting lock in 
                 # _strategy.write, another process persisted the same module
                 # current module's persisting is canceled, so need to check
@@ -408,38 +410,37 @@ class SmvGenericModule(ABC):
                     self.run_ancestor_and_me_postAction(run_set)
             else:
                 self.smvApp.log.debug("{} had a persisted file".format(self.fqn()))
+                self.data = _strategy.read()
                 run_set.discard(self)
-            return _strategy.read()
+        return self.data
 
-    def calculate_user_meta(self, run_set):
+    def _calculate_user_meta(self):
         """Calculate user defined metadata
             could have action on the result df
         """
-        io_strategy = self.metaStrategy()
-        if (not io_strategy.isPersisted()):
-            self.module_meta.addSystemMeta(self)
-            (user_meta, self.userMetadataTimeElapsed) = self._do_action_on_df(
-                self.metadata, self.data, "GENERATE USER METADATA")
+        self.module_meta.addSystemMeta(self)
+        (user_meta, self.userMetadataTimeElapsed) = self._do_action_on_df(
+            self.metadata, self.data, "GENERATE USER METADATA")
 
-            if not isinstance(user_meta, dict):
-                raise SmvRuntimeError("User metadata {} is not a dict".format(repr(user_meta)))
+        if not isinstance(user_meta, dict):
+            raise SmvRuntimeError("User metadata {} is not a dict".format(repr(user_meta)))
 
-            self.module_meta.addUserMeta(user_meta)
-            if (self.had_action()):
-                self.smvApp.log.debug("{} metadata had an action".format(self.fqn()))
-                self.run_ancestor_and_me_postAction(run_set)
-        else:
-            meta_json = io_strategy.read()
-            self.module_meta = SmvMetaData().fromJson(meta_json)
-            # if meta persisted, no need to run post_action again
-            run_set.discard(self)
+        self.module_meta.addUserMeta(user_meta)
 
-    def finalize_meta(self):
+    def _finalize_meta(self):
         # Need to add duration at the very end, just before persist
         self.module_meta.addDuration("persisting", self.persistingTimeElapsed)
         self.module_meta.addDuration("metadata", self.userMetadataTimeElapsed)
 
-    def persist_meta(self):
+    def _validate_meta(self):
+        hist = self.smvApp._read_meta_hist(self)
+        res = self.validateMetadata(self.module_meta, hist)
+        if res is not None and not is_string(res):
+            raise SmvRuntimeError("Validation failure message {} is not a string".format(repr(res)))
+        if (is_string(res) and len(res) > 0):
+            raise SmvMetadataValidationError(res)
+
+    def _persist_meta(self):
         meta_json = self.module_meta.toJson()
         self.metaStrategy().write(meta_json)
 
@@ -464,11 +465,38 @@ class SmvGenericModule(ABC):
         """When action happens on current module, run the the delayed 
             post action of the ancestor ephemeral modules
         """
+        def not_persisted_or_no_edd_when_forced(io_strategy):
+            if (not io_strategy.isPersisted()):
+                return True
+            else:
+                meta = io_strategy.read()
+                force_edd = self.smvApp.py_smvconf.force_edd()
+                if (force_edd and len(meta.getEddResult()) == 0):
+                    return True
+                else:
+                    return False
+    
         def run_delayed_postAction(mod, _run_set):
             if (mod in _run_set):
                 self.smvApp.log.debug("Run post_action of {} from {}".format(mod.fqn(), self.fqn()))
                 mod.post_action()
+                meta_io_strategy = mod.metaStrategy()
+                if (not_persisted_or_no_edd_when_forced(meta_io_strategy)):
+                    if (mod.data is None):
+                        raise SmvRuntimeError("Module {}'s data is None, can't run postAction".format(mod.fqn()))
+                    # Since the ancestor list will be visited as depth-first, although 
+                    # user_meta may trigger actions, the upper stream modules' post action 
+                    # are already run. No need to call run_ancestor_and_me_postAction
+                    # in the calculate_user_meta() any more
+                    mod._calculate_user_meta()
+                    mod._finalize_meta()
+                    mod._validate_meta()
+                    mod._persist_meta()
+                else:
+                    meta_json = meta_io_strategy.read()
+                    self.module_meta = SmvMetaData().fromJson(meta_json)
                 _run_set.discard(mod)
+
         self.ancestor_and_me_visitor.dfs_visit(run_delayed_postAction, run_set)
 
     def _do_action_on_df(self, func, df, desc):

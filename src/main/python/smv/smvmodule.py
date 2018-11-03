@@ -138,17 +138,16 @@ class SmvSparkDfModule(SmvGenericModule):
         """
         return self.dqmValidator.totalRecords() > 0
 
-    def calculate_edd(self, run_set):
+    def calculate_edd(self):
         """When config smv.forceEdd flag is true, run edd calculation. 
-            If already in metadata (in case persisetd), skip, otherwise
-            calculate Edd and fill in to metadata, and 
-            run_ancestor_and_me_postAction
         """
-        current_edd = self.module_meta.getEddResult()
-        if (len(current_edd) == 0):
-            edd_json_array = self.smvApp._jvm.SmvPythonHelper.getEddJsonArray(self.data._jdf)
-            self.run_ancestor_and_me_postAction(run_set)
-            self.module_meta.addEddResult(edd_json_array)
+        def get_edd(df):
+            return self.smvApp._jvm.SmvPythonHelper.getEddJsonArray(df._jdf)
+
+        (edd_json_array, eddTimeElapsed) = self._do_action_on_df(
+            get_edd, self.data, "CALCULATE EDD")
+        self.module_meta.addEddResult(edd_json_array)
+        self.module_meta.addDuration("edd", eddTimeElapsed)
 
     def force_an_action(self, df):
         # Since optimization can be done on a DF actions like count, we have to convert DF
@@ -156,9 +155,15 @@ class SmvSparkDfModule(SmvGenericModule):
         (n, self.dqmTimeElapsed) = self._do_action_on_df(
             lambda d: d.rdd.count(), df, "FORCE AN ACTION FOR DQM")
 
+    # Override this method to add the edd calculation if config
+    def _calculate_user_meta(self):
+        super(SmvSparkDfModule, self)._calculate_user_meta()
+        if (self.smvApp.py_smvconf.force_edd()):
+            self.calculate_edd()
+
     # Override this method to add the dqmTimeElapsed 
-    def finalize_meta(self):
-        super(SmvSparkDfModule, self).finalize_meta()
+    def _finalize_meta(self):
+        super(SmvSparkDfModule, self)._finalize_meta()
         self.module_meta.addSchemaMetadata(self.data)
         # Need to add duration at the very end, just before persist
         self.module_meta.addDuration("dqm", self.dqmTimeElapsed)

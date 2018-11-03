@@ -46,14 +46,9 @@ class SmvModuleRunner(object):
 
         self._create_df(known, mods_to_run_post_action, forceRun)
 
-        self._create_meta(mods_to_run_post_action)
-
-        if (self.smvApp.py_smvconf.force_edd()):
-            self._create_edd(mods_to_run_post_action)
-
         self._force_post(mods_to_run_post_action)
 
-        self._validate_and_persist_meta(collector)
+        self._collect_and_update_hist(collector)
 
         dfs = [m.data for m in self.roots]
         return (dfs, collector)
@@ -126,18 +121,6 @@ class SmvModuleRunner(object):
             m.get_data(urn2df, run_set, forceRun, is_quick_run)
         self.visitor.dfs_visit(runner, (known, need_post), need_to_run_only=True)
 
-    def _create_meta(self, need_post):
-        # run user meta. when there is actions in user meta creation,
-        # post_action will run on current module and all upstream modules
-        def run_meta(m, run_set):
-            m.calculate_user_meta(run_set)
-        self.visitor.dfs_visit(run_meta, need_post, need_to_run_only=True)
-
-    def _create_edd(self, need_post):
-        def run_edd(m, run_set):
-            m.calculate_edd(run_set)
-        self.visitor.dfs_visit(run_edd, need_post, need_to_run_only=True)
-
     def _force_post(self, need_post):
         # If there are still module left for post_action, force a run here
         # to run them and all left over on their upstream
@@ -153,26 +136,12 @@ class SmvModuleRunner(object):
             # also be calculated
             self.visitor.bfs_visit(force_run, need_post, need_to_run_only=True)
 
-    def _validate_and_persist_meta(self, collector):
-        def do_validation(m, _collector):
-            io_strategy = m.metaStrategy()
-            persisted = io_strategy.isPersisted()
-            # If persisted already, skip: validation, update hist, populate runinfo_collector
-            if (not persisted):
-                # Validate
-                m.finalize_meta()
-                hist = self.smvApp._read_meta_hist(m)
-                res = m.validateMetadata(m.module_meta, hist)
-                if res is not None and not is_string(res):
-                    raise SmvRuntimeError("Validation failure message {} is not a string".format(repr(res)))
-                if (is_string(res) and len(res) > 0):
-                    raise SmvMetadataValidationError(res)
-                # Persist Meta
-                m.persist_meta()
-                # Populate collector
-                _collector.add_runinfo(m.fqn(), m.module_meta, hist)
-                # Update meta history and persist
-                hist.update(m.module_meta, m.metadataHistorySize())
-                io_strategy = self.smvApp._hist_io_strategy(m)
-                io_strategy.write(hist.toJson())
-        self.visitor.dfs_visit(do_validation, collector, need_to_run_only=True)
+    def _collect_and_update_hist(self, collector):
+        def collect(m, _collector):
+            hist = self.smvApp._read_meta_hist(m)
+            # Collect before update hist
+            _collector.add_runinfo(m.fqn(), m.module_meta, hist)
+            hist.update(m.module_meta, m.metadataHistorySize())
+            io_strategy = self.smvApp._hist_io_strategy(m)
+            io_strategy.write(hist.toJson())
+        self.visitor.dfs_visit(collect, collector, need_to_run_only=True)
