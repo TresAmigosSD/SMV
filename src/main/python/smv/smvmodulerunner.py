@@ -44,11 +44,9 @@ class SmvModuleRunner(object):
 
         collector = SmvRunInfoCollector()
 
-        self._create_df(known, mods_to_run_post_action, forceRun)
+        self._create_df(known, mods_to_run_post_action, collector, forceRun)
 
-        self._force_post(mods_to_run_post_action)
-
-        self._collect_and_update_hist(collector)
+        self._force_post(mods_to_run_post_action, collector)
 
         dfs = [m.data for m in self.roots]
         return (dfs, collector)
@@ -113,35 +111,26 @@ class SmvModuleRunner(object):
             m.metaStrategy().remove()
         self.visitor.dfs_visit(cleaner, None)
 
-    def _create_df(self, known, need_post, forceRun=False, is_quick_run=False):
+    def _create_df(self, known, need_post, collector, forceRun=False, is_quick_run=False):
         # run module and create df. when persisting, post_action 
         # will run on current module and all upstream modules
         def runner(m, state):
-            (urn2df, run_set) = state
-            m.get_data(urn2df, run_set, forceRun, is_quick_run)
-        self.visitor.dfs_visit(runner, (known, need_post), need_to_run_only=True)
+            (urn2df, run_set, collector) = state
+            m.get_data(urn2df, run_set, collector, forceRun, is_quick_run)
+        self.visitor.dfs_visit(runner, (known, need_post, collector), need_to_run_only=True)
 
-    def _force_post(self, need_post):
+    def _force_post(self, need_post, collector):
         # If there are still module left for post_action, force a run here
         # to run them and all left over on their upstream
         if (len(need_post) > 0):
             self.log.debug("leftover mods need to run post action: {}".format(
                 [m.fqn()  for m in need_post]
             ))
-            def force_run(mod, run_set):
-                mod.force_post_action(run_set)
+            def force_run(mod, state):
+                (run_set, coll) = state
+                mod.force_post_action(run_set, coll)
             # Note: we used bfs_visit here run downstream first
             # In case of A<-B<-C all need to run, this way will only
             # need to force action on C, and A and B's post action can 
             # also be calculated
-            self.visitor.bfs_visit(force_run, need_post, need_to_run_only=True)
-
-    def _collect_and_update_hist(self, collector):
-        def collect(m, _collector):
-            hist = self.smvApp._read_meta_hist(m)
-            # Collect before update hist
-            _collector.add_runinfo(m.fqn(), m.module_meta, hist)
-            hist.update(m.module_meta, m.metadataHistorySize())
-            io_strategy = self.smvApp._hist_io_strategy(m)
-            io_strategy.write(hist.toJson())
-        self.visitor.dfs_visit(collect, collector, need_to_run_only=True)
+            self.visitor.bfs_visit(force_run, (need_post, collector), need_to_run_only=True)

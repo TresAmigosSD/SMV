@@ -349,7 +349,7 @@ class SmvGenericModule(ABC):
     def ancestor_and_me_visitor(self):
         return ModulesVisitor([self])
 
-    def get_data(self, urn2df, run_set, forceRun, is_quick_run):
+    def get_data(self, urn2df, run_set, collector, forceRun, is_quick_run):
         """create or get data from smvApp level cache
             Args:
                 urn2df({str:DataFrame}) already run modules current module may depends
@@ -360,7 +360,7 @@ class SmvGenericModule(ABC):
             urn2df will be appended, and run_set will shrink
         """
         if (forceRun or (self.versioned_fqn not in self.smvApp.data_cache)):
-            res = self.computeData(urn2df, run_set, is_quick_run)
+            res = self.computeData(urn2df, run_set, collector, is_quick_run)
             if (self.isEphemeral()):
                 # Only cache ephemeral modules data, since non-ephemeral any how
                 # will be read from persisted result, no need to persist the logic
@@ -379,7 +379,7 @@ class SmvGenericModule(ABC):
         urn2df.update({self.urn(): res})
         return res
 
-    def computeData(self, urn2df, run_set, is_quick_run):
+    def computeData(self, urn2df, run_set, collector, is_quick_run):
         """When DF is not in cache, do the real calculation here
         """
         self.smvApp.log.debug("compute: {}".format(self.urn()))
@@ -407,7 +407,7 @@ class SmvGenericModule(ABC):
                 # current module's persisting is canceled, so need to check
                 # whether there is an action
                 if (self.had_action()):
-                    self.run_ancestor_and_me_postAction(run_set)
+                    self.run_ancestor_and_me_postAction(run_set, collector)
             else:
                 self.smvApp.log.debug("{} had a persisted file".format(self.fqn()))
                 self.data = _strategy.read()
@@ -444,6 +444,14 @@ class SmvGenericModule(ABC):
         meta_json = self.module_meta.toJson()
         self.metaStrategy().write(meta_json)
 
+    def _collect_runinfo_and_update_hist(self, collector):
+        hist = self.smvApp._read_meta_hist(self)
+        # Collect before update hist
+        collector.add_runinfo(self.fqn(), self.module_meta, hist)
+        hist.update(self.module_meta, self.metadataHistorySize())
+        io_strategy = self.smvApp._hist_io_strategy(self)
+        io_strategy.write(hist.toJson())
+
     def get_metadata(self):
         """Return the best meta without run. If persisted, use it, otherwise
             add info up to resolved DS"""
@@ -456,12 +464,12 @@ class SmvGenericModule(ABC):
             meta_json = io_strategy.read()
             return SmvMetaData().fromJson(meta_json)
 
-    def force_post_action(self, run_set):
+    def force_post_action(self, run_set, collector):
         if (self in run_set):
             self.force_an_action(self.data)
-            self.run_ancestor_and_me_postAction(run_set)
+            self.run_ancestor_and_me_postAction(run_set, collector)
 
-    def run_ancestor_and_me_postAction(self, run_set):
+    def run_ancestor_and_me_postAction(self, run_set, collector):
         """When action happens on current module, run the the delayed 
             post action of the ancestor ephemeral modules
         """
@@ -476,7 +484,8 @@ class SmvGenericModule(ABC):
                 else:
                     return False
     
-        def run_delayed_postAction(mod, _run_set):
+        def run_delayed_postAction(mod, state):
+            (_run_set, coll) = state
             if (mod in _run_set):
                 self.smvApp.log.debug("Run post_action of {} from {}".format(mod.fqn(), self.fqn()))
                 mod.post_action()
@@ -492,12 +501,13 @@ class SmvGenericModule(ABC):
                     mod._finalize_meta()
                     mod._validate_meta()
                     mod._persist_meta()
+                    mod._collect_runinfo_and_update_hist(coll)
                 else:
                     meta_json = meta_io_strategy.read()
                     self.module_meta = SmvMetaData().fromJson(meta_json)
                 _run_set.discard(mod)
 
-        self.ancestor_and_me_visitor.dfs_visit(run_delayed_postAction, run_set)
+        self.ancestor_and_me_visitor.dfs_visit(run_delayed_postAction, (run_set, collector))
 
     def _do_action_on_df(self, func, df, desc):
         log = self.smvApp.log
