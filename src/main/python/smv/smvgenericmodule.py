@@ -354,6 +354,7 @@ class SmvGenericModule(ABC):
             Args:
                 urn2df({str:DataFrame}) already run modules current module may depends
                 run_set(set(SmvGenericModule)) modules yet to run post_action
+                collector(SmvRunInfoCollector) collect runinfo of current run
                 forceRun(bool) ignore DF cache in smvApp
                 is_quick_run(bool) skip meta, dqm, persist, but use persisted as possible
 
@@ -491,6 +492,7 @@ class SmvGenericModule(ABC):
                 mod.post_action()
                 meta_io_strategy = mod.metaStrategy()
                 if (not_persisted_or_no_edd_when_forced(meta_io_strategy)):
+                    # data cache should be populated by this step
                     if (mod.data is None):
                         raise SmvRuntimeError("Module {}'s data is None, can't run postAction".format(mod.fqn()))
                     # Since the ancestor list will be visited as depth-first, although 

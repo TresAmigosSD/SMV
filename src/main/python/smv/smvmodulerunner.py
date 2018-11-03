@@ -44,8 +44,13 @@ class SmvModuleRunner(object):
 
         collector = SmvRunInfoCollector()
 
+        # Do the real module calculation, when there are persistence, run
+        # the post_actions and ancestor ephemeral modules post actions
         self._create_df(known, mods_to_run_post_action, collector, forceRun)
 
+        # If there are ephemeral modules who has no persisting module
+        # down stream, (must be part of roots), force an action and run
+        # post actions
         self._force_post(mods_to_run_post_action, collector)
 
         dfs = [m.data for m in self.roots]
