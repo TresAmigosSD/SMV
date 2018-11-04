@@ -77,7 +77,6 @@ class ModulesVisitor(object):
         _sorted = self._build_dict(self.roots, True)
         return [m for m in reversed(_sorted)]
 
-    @lazy_property
     def modules_need_to_run(self):
         """From current run, return a list of modules which will be run
             and persisted in the order of how they should run. This is

@@ -346,6 +346,16 @@ class SmvApp(object):
         urn = self.dsm.inferUrn(name)
         return self.runModule(urn, forceRun, quickRun)
 
+    def modules_need_to_run(self, roots):
+        """Given a list of target modules to run, return a list of modules which 
+            will run and be persisted in the order of how they should run. This 
+            is a sub-set of modules_needed_for_run, but only keep the 
+            non-ephemeral and not-persisted-yet modules.
+            Please note that some of the roots may not be in this list
+        """
+        visitor = ModulesVisitor(roots)
+        return visitor.modules_need_to_run()
+
     def getRunInfo(self, urn):
         """Returns the run information of a module and all its dependencies
         from the last run.
