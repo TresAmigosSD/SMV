@@ -179,7 +179,7 @@ class SmvFrameworkTest2(SmvBaseTest):
         self.df("stage.modules.M2")
 
         ds = self.load("stage.modules.M5")[0]
-        res = ModulesVisitor([ds]).modules_need_to_run
+        res = ModulesVisitor([ds]).modules_needed_for_run
         names = [m.fqn()[14:] for m in res]
         self.assertEqual(names, ['M2', 'M5'])
 

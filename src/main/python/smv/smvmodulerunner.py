@@ -34,7 +34,7 @@ class SmvModuleRunner(object):
         # the set will be updated by _create_df, _create_meta and _force_post
         # and eventually be emptied out
         # See docs/dev/SmvGenericModule/SmvModuleRunner.md for details
-        mods_to_run_post_action = set(self.visitor.modules_need_to_run)
+        mods_to_run_post_action = set(self.visitor.modules_needed_for_run)
 
         # a map from urn to already run DF, since the `run` interface of 
         # SmvModule takes a map of class => df, the map here have to be 

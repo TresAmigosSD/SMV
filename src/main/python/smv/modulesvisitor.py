@@ -26,8 +26,15 @@ class ModulesVisitor(object):
         self.roots = roots
         self.queue = self._build_queue(roots)
 
-    def _build_queue(self, roots, un_persisted_only=False):
-        """Create a depth first queue with order for multiple roots"""
+    def _build_dict(self, roots, un_persisted_only):
+        """Create a breadth first ordered dict for multiple roots,
+            when un_persisted_only==False
+            including all the modules up stream of the roots
+            otherwise
+            only include modules needed to calculate roots, in other
+            words if a module is persisted already, its upper steam
+            modules will be excluded
+         """
 
         # to traversal the graph in bfs order
         _working_queue = queue.Queue()
@@ -53,21 +60,39 @@ class ModulesVisitor(object):
                         _sorted.pop(m)
                     _sorted.update({m: True})
 
+        return _sorted
+
+    def _build_queue(self, roots):
+        """Create a depth first queue for multiple roots"""
+        _sorted = self._build_dict(roots, False)
         # reverse the result before output to make leafs first
         return [m for m in reversed(_sorted)]
 
     @lazy_property
-    def modules_need_to_run(self):
+    def modules_needed_for_run(self):
         """For each run, if a module is persisted, all its ancestors
             are not even needed to be visited. This method creates a
-            sub-list for the queue which need to run
+            sub-list for the queue which are needed for current run
         """
-        return self._build_queue(self.roots, True)
+        _sorted = self._build_dict(self.roots, True)
+        return [m for m in reversed(_sorted)]
+
+    @lazy_property
+    def modules_need_to_run(self):
+        """From current run, return a list of modules which will be run
+            and persisted in the order of how they should run. This is
+            a sub-set of modules_needed_for_run, but only keep the 
+            non-ephemeral and not-persisted-yet modules.
+            Please note that some of the roots may not be in this list
+        """
+        return [m for m in self.modules_needed_for_run 
+            if (not m.is_persisted() and not m.isEphemeral())
+        ]
 
     def dfs_visit(self, action, state, need_to_run_only=False):
         """Depth first visit"""
         if (need_to_run_only):
-            l = self.modules_need_to_run
+            l = self.modules_needed_for_run
         else:
             l = self.queue
         for m in l:
@@ -76,7 +101,7 @@ class ModulesVisitor(object):
     def bfs_visit(self, action, state, need_to_run_only=False):
         """Breadth first visit"""
         if (need_to_run_only):
-            l = self.modules_need_to_run
+            l = self.modules_needed_for_run
         else:
             l = self.queue
         for m in reversed(l):
