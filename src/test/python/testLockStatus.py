@@ -16,16 +16,19 @@ import threading
 import time
 import os
 
+lock_exist = None
+
 class SmvLockStatusTest(SmvBaseTest):
     @classmethod
     def smvAppInitArgs(cls):
         return [
             "--smv-props", 
-            "smv.stages=stage"
+            "smv.stages=stage",
+            "smv.lock=true"
         ]
 
     def assert_lock(self, m, status):
-        lock_file = m.persistStrategy()._lock_path
+        lock_file = m._lock_path()
         print(lock_file)
         if (status):
             self.assertTrue(os.path.exists(lock_file))
@@ -38,3 +41,11 @@ class SmvLockStatusTest(SmvBaseTest):
         self.assert_lock(m, False)
         self.df(fqn, True)
         self.assert_lock(m, False)
+
+    def test_locked_when_calc_meta(self):
+        self.smvApp.data_cache = {}
+        self.mkTmpTestDir()
+        global lock_exist
+        lock_exist = False
+        self.df("stage.modules.X")
+        self.assertTrue(lock_exist)

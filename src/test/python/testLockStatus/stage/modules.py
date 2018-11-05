@@ -12,17 +12,14 @@
 # limitations under the License.
 
 from smv import SmvModule, SmvOutput
+import testLockStatus
+import os
 
 class X(SmvModule):
     def requiresDS(self): return []
     def run(self, i):
         return self.smvApp.createDF("k:String;v:Integer", "a,;b,2")
-
-class Y(SmvModule):
-    def requiresDS(self): return []
-    def run(self, i):
-        import time
-        print("start sleep")
-        time.sleep(1)
-        print("end sleep")
-        return self.smvApp.createDF("k:String;v:Integer", "a,;b,2")
+    def metadata(self, df):
+        testLockStatus.lock_exist = os.path.exists(self._lock_path())
+        print(self._lock_path())
+        return {}
