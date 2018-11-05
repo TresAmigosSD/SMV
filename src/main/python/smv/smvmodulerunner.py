@@ -44,16 +44,14 @@ class SmvModuleRunner(object):
 
         collector = SmvRunInfoCollector()
 
-        self._create_df(known, mods_to_run_post_action, forceRun)
+        # Do the real module calculation, when there are persistence, run
+        # the post_actions and ancestor ephemeral modules post actions
+        self._create_df(known, mods_to_run_post_action, collector, forceRun)
 
-        self._create_meta(mods_to_run_post_action)
-
-        if (self.smvApp.py_smvconf.force_edd()):
-            self._create_edd(mods_to_run_post_action)
-
-        self._force_post(mods_to_run_post_action)
-
-        self._validate_and_persist_meta(collector)
+        # If there are ephemeral modules who has no persisting module
+        # down stream, (must be part of roots), force an action and run
+        # post actions
+        self._force_post(mods_to_run_post_action, collector)
 
         dfs = [m.data for m in self.roots]
         return (dfs, collector)
@@ -118,61 +116,26 @@ class SmvModuleRunner(object):
             m.metaStrategy().remove()
         self.visitor.dfs_visit(cleaner, None)
 
-    def _create_df(self, known, need_post, forceRun=False, is_quick_run=False):
+    def _create_df(self, known, need_post, collector, forceRun=False, is_quick_run=False):
         # run module and create df. when persisting, post_action 
         # will run on current module and all upstream modules
         def runner(m, state):
-            (urn2df, run_set) = state
-            m.get_data(urn2df, run_set, forceRun, is_quick_run)
-        self.visitor.dfs_visit(runner, (known, need_post), need_to_run_only=True)
+            (urn2df, run_set, collector) = state
+            m.get_data(urn2df, run_set, collector, forceRun, is_quick_run)
+        self.visitor.dfs_visit(runner, (known, need_post, collector), need_to_run_only=True)
 
-    def _create_meta(self, need_post):
-        # run user meta. when there is actions in user meta creation,
-        # post_action will run on current module and all upstream modules
-        def run_meta(m, run_set):
-            m.calculate_user_meta(run_set)
-        self.visitor.dfs_visit(run_meta, need_post, need_to_run_only=True)
-
-    def _create_edd(self, need_post):
-        def run_edd(m, run_set):
-            m.calculate_edd(run_set)
-        self.visitor.dfs_visit(run_edd, need_post, need_to_run_only=True)
-
-    def _force_post(self, need_post):
+    def _force_post(self, need_post, collector):
         # If there are still module left for post_action, force a run here
         # to run them and all left over on their upstream
         if (len(need_post) > 0):
             self.log.debug("leftover mods need to run post action: {}".format(
                 [m.fqn()  for m in need_post]
             ))
-            def force_run(mod, run_set):
-                mod.force_post_action(run_set)
+            def force_run(mod, state):
+                (run_set, coll) = state
+                mod.force_post_action(run_set, coll)
             # Note: we used bfs_visit here run downstream first
             # In case of A<-B<-C all need to run, this way will only
             # need to force action on C, and A and B's post action can 
             # also be calculated
-            self.visitor.bfs_visit(force_run, need_post, need_to_run_only=True)
-
-    def _validate_and_persist_meta(self, collector):
-        def do_validation(m, _collector):
-            io_strategy = m.metaStrategy()
-            persisted = io_strategy.isPersisted()
-            # If persisted already, skip: validation, update hist, populate runinfo_collector
-            if (not persisted):
-                # Validate
-                m.finalize_meta()
-                hist = self.smvApp._read_meta_hist(m)
-                res = m.validateMetadata(m.module_meta, hist)
-                if res is not None and not is_string(res):
-                    raise SmvRuntimeError("Validation failure message {} is not a string".format(repr(res)))
-                if (is_string(res) and len(res) > 0):
-                    raise SmvMetadataValidationError(res)
-                # Persist Meta
-                m.persist_meta()
-                # Populate collector
-                _collector.add_runinfo(m.fqn(), m.module_meta, hist)
-                # Update meta history and persist
-                hist.update(m.module_meta, m.metadataHistorySize())
-                io_strategy = self.smvApp._hist_io_strategy(m)
-                io_strategy.write(hist.toJson())
-        self.visitor.dfs_visit(do_validation, collector, need_to_run_only=True)
+            self.visitor.bfs_visit(force_run, (need_post, collector), need_to_run_only=True)
