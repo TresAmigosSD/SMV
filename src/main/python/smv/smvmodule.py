@@ -24,7 +24,7 @@ from datetime import datetime
 from smv.dqm import SmvDQM
 from smv.error import SmvRuntimeError
 from smv.utils import pickle_lib, lazy_property
-from smv.smviostrategy import SmvCsvOnHdfsIoStrategy, SmvJsonOnHdfsIoStrategy, SmvPicklableOnHdfsIoStrategy
+from smv.smviostrategy import SmvCsvOnHdfsIoStrategy, SmvJsonOnHdfsIoStrategy, SmvPicklableOnHdfsIoStrategy, SmvParquetOnHdfsIoStrategy
 from smv.smvgenericmodule import SmvGenericModule, lazy_property
 
 class SmvOutput(object):
@@ -175,7 +175,11 @@ class SmvSparkDfModule(SmvGenericModule):
         return (res, secondsElapsed)
 
     def persistStrategy(self):
-        return SmvCsvOnHdfsIoStrategy(self.smvApp, self.fqn(), self.ver_hex())
+        _format = self.smvApp.py_smvconf.df_persist_format()
+        if (_format == "smvcsv_on_hdfs"):
+            return SmvCsvOnHdfsIoStrategy(self.smvApp, self.fqn(), self.ver_hex())
+        elif (_format == "parquet_on_hdfs"):
+            return SmvParquetOnHdfsIoStrategy(self.smvApp, self.fqn(), self.ver_hex())
     
     def metaStrategy(self):
         return SmvJsonOnHdfsIoStrategy(self.smvApp, self.meta_path())

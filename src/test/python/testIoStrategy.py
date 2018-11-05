@@ -11,6 +11,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import os
 from test_support.smvbasetest import SmvBaseTest
 from smv import *
 
@@ -20,7 +21,19 @@ class SmvIoStrategyTest(SmvBaseTest):
         return ['--smv-props', 'smv.stages=stage']
 
     def test_parquet_strategy(self):
+        self.smvApp.setDynamicRunConfig({})
         fqn = "stage.modules.M2"
         res = self.df(fqn)
         exp = self.createDF("k:String;v:Integer", "a,1;b,2")
         self.should_be_same(res, exp)
+
+    def test_default_strategy_to_parquet(self):
+        self.smvApp.setDynamicRunConfig({
+            'smv.sparkdf.defaultPersistFormat': 'parquet_on_hdfs'
+        })
+        fqn = "stage.modules.M2"
+        res = self.df(fqn)
+        mod = self.load(fqn)[0]
+        self.assertTrue(mod.persistStrategy()._file_path.endswith(".parquet"))
+        self.assertTrue(os.path.exists(mod.persistStrategy()._file_path))
+

@@ -130,6 +130,14 @@ class SmvConfig(object):
     def force_edd(self):
         return self._get_prop_as_bool("smv.forceEdd")
     
+    def df_persist_format(self):
+        """Spark DF's default persisted format. Available values:
+
+            - smvcsv_on_hdfs (default)
+            - parquet_on_hdfs
+        """
+        return self.merged_props().get("smv.sparkdf.defaultPersistFormat", "smvcsv_on_hdfs")
+
     def get_run_config(self, key):
         """Run config will be accessed within client modules. Return 
             run-config value of the given key.
