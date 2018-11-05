@@ -346,6 +346,20 @@ class SmvApp(object):
         urn = self.dsm.inferUrn(name)
         return self.runModule(urn, forceRun, quickRun)
 
+    def get_need_to_run(self, roots, keep_roots=False):
+        """Given a list of target modules to run, return a list of modules which 
+            will run and be persisted in the order of how they should run. This 
+            is a sub-set of modules_needed_for_run, but only keep the 
+            non-ephemeral and not-persisted-yet modules.
+            Please note that some of the roots may not be in this list, to include
+            all roots, set `keep_roots` to True
+        """
+        visitor = ModulesVisitor(roots)
+        return [m for m in visitor.modules_needed_for_run 
+            if ((not m.is_persisted() and not m.isEphemeral())
+                or (keep_roots and m in roots))
+        ]
+
     def getRunInfo(self, urn):
         """Returns the run information of a module and all its dependencies
         from the last run.
@@ -521,10 +535,6 @@ class SmvApp(object):
             hist = SmvMetaHistory()
         return hist
 
-    def _modules_with_ancestors(self, mods):
-        visitor = ModulesVisitor(mods)
-        return visitor.queue
-
     def _purge_current_output_files(self, mods):
         SmvModuleRunner(mods, self).purge_persisted()
         
@@ -533,16 +543,12 @@ class SmvApp(object):
             This will show which modules are not yet persisted that need to run, without
             actually running the modules.
         """
-        
-        # Find all ancestors inclusive,
-        # filter the modules that are not yet persisted and not ephemeral.
-        # this yields all the modules that will need to be run with the given command
-        mods_with_ancestors = self._modules_with_ancestors(mods)
-        mods_not_persisted = [ m for m in mods_with_ancestors if m.needsToRun() ]
+
+        mods_need_to_run = self.get_need_to_run(mods, keep_roots=True) 
 
         print("Dry run - modules not persisted:")
         print("----------------------")
-        print("\n".join([m.fqn() for m in mods_not_persisted]))
+        print("\n".join([m.fqn() for m in mods_need_to_run]))
         print("----------------------")
 
     def _generate_dot_graph(self):
