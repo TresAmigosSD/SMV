@@ -195,6 +195,17 @@ class SmvFrameworkTest2(SmvBaseTest):
         self.df("stage.modules.M5")
         self.assertEqual(m1_post_counter, 1)
 
+    def test_try_to_load_non_exit_module(self):
+        with self.assertRaisesRegexp(SmvRuntimeError, "Module .*NonExist does not exist"):
+            self.load("stage.modules.NonExist")
+
+    def test_app_get_need_to_run(self):
+        self.df("stage.modules.I1")
+
+        ms = self.load("stage.modules.M5")
+        names = [m.fqn()[14:] for m in self.smvApp.get_need_to_run(ms)]
+        self.assertEqual(names, ['M2', 'M5'])
+
 
 class SmvForceEddTest(SmvBaseTest):
     @classmethod

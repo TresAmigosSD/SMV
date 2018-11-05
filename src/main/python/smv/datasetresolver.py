@@ -44,9 +44,13 @@ class DataSetResolver:
         res = []
         for fqn in fqns:
             # Caller need to check whether the urn is in a stage of the SmvConfig stages
-            ds = self.fqn2res.get(fqn,
-                self.resolveDataSet(self.repo.loadDataSet(fqn))
-            )
+            if (fqn in self.fqn2res):
+                ds = self.fqn2res.get(fqn)
+            else:
+                mod = self.repo.loadDataSet(fqn)
+                if (mod is None):
+                    raise SmvRuntimeError("Module {} does not exist".format(fqn))
+                ds = self.resolveDataSet(mod)
             res.append(ds)
         return res
 
