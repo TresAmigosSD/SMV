@@ -109,6 +109,13 @@ Note that for sequence/list type parameters (e.g. smv.stages), a "," or ":" can 
 </tr>
 
 <tr>
+<td>smv.sparkdf.defaultPersistFormat</td>
+<td>smvcsv_on_hdfs</td>
+<td>Optional</td>
+<td>Specify default data persisting format for Spark DF data, either `smvcsv_on_hdfs` or `parquet_on_hdfs`.</td>
+</tr>
+
+<tr>
 <td>smv.maxCbsPortRetries</td>
 <td>10</td>
 <td>Optional</td>
