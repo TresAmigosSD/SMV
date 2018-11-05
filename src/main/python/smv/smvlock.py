@@ -12,7 +12,7 @@
 # limitations under the License.
 
 class SmvLock(object):
-    """Create a lock context 
+    """Create a lock context
     """
     def __init__(self, _jvm, _lock_path):
         self._jvm = _jvm
@@ -20,6 +20,7 @@ class SmvLock(object):
         self.slock = None
 
     def __enter__(self):
+        # create a lock file with timeout as 1 hour
         self.slock = self._jvm.org.tresamigos.smv.SmvLock(
             self._lock_path,
             3600 * 1000 

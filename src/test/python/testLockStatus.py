@@ -47,5 +47,7 @@ class SmvLockStatusTest(SmvBaseTest):
         self.mkTmpTestDir()
         global lock_exist
         lock_exist = False
+        # Lock is around run and metadata calculation, so when check 
+        # lock file in metadata method will return exist
         self.df("stage.modules.X")
         self.assertTrue(lock_exist)
