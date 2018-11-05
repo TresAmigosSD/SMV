@@ -30,7 +30,7 @@ class SmvIoStrategyTest(SmvBaseTest):
         # M1 is parquet
         mod = self.load("stage.modules.M1")[0]
         smphr = mod.persistStrategy()._semaphore_path
-        self.assertTrue(smphr)
+        self.assertTrue(os.path.exists(smphr))
 
     def test_default_strategy_to_parquet(self):
         self.smvApp.setDynamicRunConfig({
