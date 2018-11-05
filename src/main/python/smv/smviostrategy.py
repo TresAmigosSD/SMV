@@ -198,8 +198,16 @@ class SmvParquetOnHdfsIoStrategy(SmvFileOnHdfsIoStrategy):
     def __init__(self, smvApp, fqn, ver_hex, file_path=None):
         super(SmvParquetOnHdfsIoStrategy, self).__init__(smvApp, fqn, ver_hex, 'parquet', file_path)
 
+    @property
+    def _semaphore_path(self):
+        return re.sub("\.parquet$", ".semaphore", self._file_path)
+
     def _read(self):
         return self.smvApp.sparkSession.read.parquet(self._file_path)
 
     def _write(self, rawdata):
         rawdata.write.parquet(self._file_path)
+        self.smvApp._jvm.SmvHDFS.createFileAtomic(self._semaphore_path)
+
+    def isPersisted(self):
+        return self.smvApp._jvm.SmvHDFS.exists(self._semaphore_path)
