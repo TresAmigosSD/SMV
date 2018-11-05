@@ -102,6 +102,13 @@ Note that for sequence/list type parameters (e.g. smv.stages), a "," or ":" can 
 </tr>
 
 <tr>
+<td>smv.lock</td>
+<td>False</td>
+<td>Optional</td>
+<td>When set to "true" or "True", data persisting and metadata persisting will be combined in an atom with file base lock. The lock files will be under <code>smv.lockDir</code></td>
+</tr>
+
+<tr>
 <td>smv.user_libraries</td>
 <td>empty</td>
 <td>Optional</td>
@@ -148,6 +155,13 @@ Can be overridden using <code>--input-dir</code> command line option</td>
 <td>Optional</td>
 <td>Data output directory
 Can be overridden using <code>--output-dir</code> command line option</td>
+</tr>
+
+<tr>
+<td>smv.lockDir</td>
+<td>dataDir<code>/lock</code></td>
+<td>Optional</td>
+<td>If <code>smv.lock</code> specified, dir for lock files</td>
 </tr>
 
 <tr>
