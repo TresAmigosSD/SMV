@@ -77,17 +77,6 @@ class ModulesVisitor(object):
         _sorted = self._build_dict(self.roots, True)
         return [m for m in reversed(_sorted)]
 
-    def modules_need_to_run(self):
-        """From current run, return a list of modules which will be run
-            and persisted in the order of how they should run. This is
-            a sub-set of modules_needed_for_run, but only keep the 
-            non-ephemeral and not-persisted-yet modules.
-            Please note that some of the roots may not be in this list
-        """
-        return [m for m in self.modules_needed_for_run 
-            if (not m.is_persisted() and not m.isEphemeral())
-        ]
-
     def dfs_visit(self, action, state, need_to_run_only=False):
         """Depth first visit"""
         if (need_to_run_only):
