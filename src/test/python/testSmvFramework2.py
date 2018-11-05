@@ -187,6 +187,10 @@ class SmvFrameworkTest2(SmvBaseTest):
         names = [m.fqn()[14:] for m in self.smvApp.get_need_to_run(ms)]
         self.assertEqual(names, ['M2', 'M5'])
 
+    def test_with_lock_should_also_run(self):
+        self.smvApp.setDynamicRunConfig({"smv.lock": "True"})
+        self.df("stage.modules.M5")
+
 
 class SmvForceEddTest(SmvBaseTest):
     @classmethod
