@@ -70,15 +70,6 @@ class SmvFileOnHdfsIoStrategy(SmvIoStrategy):
         else:
             self._file_path = file_path
 
-        self._lock_path = self._file_path + ".lock"
-
-    def _smvLock(self):
-        # get a lock for 1 hour
-        return self.smvApp._jvm.org.tresamigos.smv.SmvLock(
-            self._lock_path,
-            3600 * 1000 
-        )
-    
     @abc.abstractmethod
     def _read(self):
         """The raw io read action"""
@@ -92,19 +83,8 @@ class SmvFileOnHdfsIoStrategy(SmvIoStrategy):
         """The raw io write action"""
 
     def write(self, dataframe):
-        slock = self._smvLock()
-        slock.lock()
-        try:
-            if (self.isPersisted()):
-                self.smvApp.log.info("Relying on cached result {} found after lock acquired".format(self._file_path))
-            else:
-                self.smvApp.log.info("No cached result found. Caching result at {}".format(self._file_path))
-                # Delete outputs in case data was partially written previously
-                # since `isPersisted` test on schema file, this case only happens when schema was written half way
-                self.remove()
-                self._write(dataframe)
-        finally:
-            slock.unlock()
+        # May add lock or other logic here in future
+        self._write(dataframe)
 
     def isPersisted(self):
         return self.smvApp._jvm.SmvHDFS.exists(self._file_path)

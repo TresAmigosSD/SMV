@@ -21,6 +21,7 @@ from smv.utils import lazy_property, is_string
 from smv.error import SmvRuntimeError, SmvMetadataValidationError
 from smv.modulesvisitor import ModulesVisitor
 from smv.smvmetadata import SmvMetaData
+from smv.smvlock import SmvLock, NonOpLock
 
 if sys.version_info >= (3, 4):
     ABC = abc.ABC
@@ -399,16 +400,19 @@ class SmvGenericModule(ABC):
             if (not _strategy.isPersisted()):
                 raw_df = self.doRun(urn2df)
                 df = self.pre_action(raw_df)
-                (res, self.persistingTimeElapsed) = self._do_action_on_df(
-                    _strategy.write, df, "RUN & PERSIST OUTPUT")
-                # need to set data cache for the postActions
-                self.data = _strategy.read()
-                # There is a chance that when waiting lock in 
-                # _strategy.write, another process persisted the same module
-                # current module's persisting is canceled, so need to check
-                # whether there is an action
-                if (self.had_action()):
-                    self.run_ancestor_and_me_postAction(run_set, collector)
+                # Acquire lock on persist to ensure write is atomic
+                with self._smvLock():
+                    if (_strategy.isPersisted()):
+                        # There is a chance that when waiting lock, another process persisted the same 
+                        # module. In that case just read back
+                        self.data = _strategy.read()
+                        run_set.discard(self)
+                    else:
+                        (res, self.persistingTimeElapsed) = self._do_action_on_df(
+                            _strategy.write, df, "RUN & PERSIST OUTPUT")
+                        # Need to populate self.data, since postAction need it
+                        self.data = _strategy.read()
+                        self.run_ancestor_and_me_postAction(run_set, collector)
             else:
                 self.smvApp.log.debug("{} had a persisted file".format(self.fqn()))
                 self.data = _strategy.read()
@@ -572,6 +576,17 @@ class SmvGenericModule(ABC):
             self.smvApp.all_data_dirs().outputDir,
             self.versioned_fqn)
 
+    def _lock_path(self):
+        return "{}/{}.lock".format(
+            self.smvApp.all_data_dirs().lockDir,
+            self.versioned_fqn)
+
+    def _smvLock(self):
+        if (self.smvApp.py_smvconf.use_lock()):
+            return SmvLock(self.smvApp._jvm, self._lock_path())
+        else:
+            return NonOpLock()
+ 
     def is_persisted(self):
         """Is current module persisted or not. Can't be lazy, since the persisted
             file could be removed from OS

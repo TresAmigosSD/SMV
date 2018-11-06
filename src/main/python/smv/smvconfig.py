@@ -110,6 +110,7 @@ class SmvConfig(object):
             'dataDir': data_dir,
             'inputDir': get_sub_dir('inputDir', "input"),
             'outputDir': get_sub_dir('outputDir', "output"),
+            'lockDir': get_sub_dir('lockDir', "lock"),
             'historyDir': get_sub_dir('historyDir', "history"),
             'publishDir': get_sub_dir('publishDir', 'publish'),
             'publishVersion': self.cmdline.get('publish')
@@ -137,6 +138,9 @@ class SmvConfig(object):
             - parquet_on_hdfs
         """
         return self.merged_props().get("smv.sparkdf.defaultPersistFormat", "smvcsv_on_hdfs")
+
+    def use_lock(self):
+        return self._get_prop_as_bool("smv.lock")
 
     def get_run_config(self, key):
         """Run config will be accessed within client modules. Return 

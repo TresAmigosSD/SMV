@@ -187,7 +187,6 @@ class SmvFrameworkTest2(SmvBaseTest):
         names = [m.fqn()[14:] for m in self.smvApp.get_need_to_run(ms)]
         self.assertEqual(names, ['M2', 'M5'])
 
-
 class SmvForceEddTest(SmvBaseTest):
     @classmethod
     def smvAppInitArgs(cls):
