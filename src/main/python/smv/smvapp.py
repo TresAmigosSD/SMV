@@ -274,6 +274,11 @@ class SmvApp(object):
         """
         return SmvAppInfo(self).create_graph_json()
 
+    def get_module_state_json(self):
+        """Generate a json string for all modules' needToRun state of the app
+        """
+        return SmvAppInfo(self).create_module_state_json()
+
     def getModuleResult(self, urn, forceRun=False):
         """Run module and get its result, which may not be a DataFrame
         """

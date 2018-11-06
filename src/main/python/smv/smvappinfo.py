@@ -75,6 +75,7 @@ class SmvAppInfo(object):
                 return t[:1].lower() + t[1:]
 
         def node_dict(n):
+            # TODO: Will remove "needsToRun" from here, when client code changes
             return {
                 "fqn": n.fqn(),
                 "type": node_type(n),
@@ -90,6 +91,16 @@ class SmvAppInfo(object):
             "nodes": [node_dict(n) for n in nodes],
             "edges": [edge_pair(p[0], p[1]) for p in edges]
         })
+
+    def create_module_state_json(self):
+        """Create all modules needToRun state Json string
+        """
+        nodes = self.dsm.allDataSets()
+        res = {}
+        for m in nodes:
+            res.update({m.fqn(): {'needsToRun': m.needsToRun()}})
+
+        return json.dumps(res)
 
     def create_graph_dot(self):
         """Create graphviz dot graph string for the whole app
