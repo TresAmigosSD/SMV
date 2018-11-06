@@ -27,6 +27,11 @@ class SmvIoStrategyTest(SmvBaseTest):
         exp = self.createDF("k:String;v:Integer", "a,1;b,2")
         self.should_be_same(res, exp)
 
+        # M1 is parquet
+        mod = self.load("stage.modules.M1")[0]
+        smphr = mod.persistStrategy()._semaphore_path
+        self.assertTrue(os.path.exists(smphr))
+
     def test_default_strategy_to_parquet(self):
         self.smvApp.setDynamicRunConfig({
             'smv.sparkdf.defaultPersistFormat': 'parquet_on_hdfs'
