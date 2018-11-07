@@ -90,18 +90,39 @@ class TestConfig(object):
             cls.parse_args()
         return cls._test_names
 
+    @classmethod
+    def test_path(cls):
+        if not hasattr(cls, '_test_path'):
+            cls.parse_args()
+        return cls._test_path
+
+    @classmethod
+    def usage(cls):
+        print("""Usage: PROGRAM [-d test_dir] [-t test_name]
+        -d: provids a test dir, default: ./src/test/python
+        -t: provids a test name, basically the py file's base name
+            Multiple -t can be provided\n"""
+        )
+        sys.exit(1)
+
     # Parse argv to split up the the smv args and the test names
     @classmethod
     def parse_args(cls):
         args = sys.argv[1:]
         test_names = []
+        test_path = "./src/test/python"
         smv_args = []
         while(len(args) > 0):
             next_arg = args.pop(0)
             if(next_arg == "-t"):
                 test_names.append( args.pop(0) )
+            elif(next_arg == "-d"):
+                test_path = args.pop(0)
+            elif(next_arg == "-h"):
+                cls.usage()
             else:
                 smv_args.append(next_arg)
 
         cls._test_names = test_names
+        cls._test_path = test_path
         cls._smv_args = smv_args
