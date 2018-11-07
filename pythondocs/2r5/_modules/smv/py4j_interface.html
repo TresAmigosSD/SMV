@@ -1,0 +1,163 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>smv.py4j_interface &#8212; Spark Modularized View v2r5 documentation</title>
+    <link rel="stylesheet" href="../../_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Spark Modularized View v2r5 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for smv.py4j_interface</h1><div class="highlight"><pre>
+<span></span><span class="c1"># This file is licensed under the Apache License, Version 2.0</span>
+<span class="c1"># (the &quot;License&quot;); you may not use this file except in compliance with</span>
+<span class="c1"># the License.  You may obtain a copy of the License at</span>
+<span class="c1">#</span>
+<span class="c1">#    http://www.apache.org/licenses/LICENSE-2.0</span>
+<span class="c1">#</span>
+<span class="c1"># Unless required by applicable law or agreed to in writing, software</span>
+<span class="c1"># distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
+<span class="c1"># See the License for the specific language governing permissions and</span>
+<span class="c1"># limitations under the License.</span>
+<span class="kn">import</span> <span class="nn">traceback</span>
+
+<div class="viewcode-block" id="create_py4j_interface_method"><a class="viewcode-back" href="../../smv.html#smv.datasetrepo.create_py4j_interface_method">[docs]</a><span class="k">def</span> <span class="nf">create_py4j_interface_method</span><span class="p">(</span><span class="n">interface_method_name</span><span class="p">,</span> <span class="n">impl_method_name</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Create a method that implements a Java interface for Py4J callback</span>
+
+<span class="sd">        Given the name of a method which needs to be called from Scala code</span>
+<span class="sd">        (e.g. SmvModule.doRun), creates a wrapper for the method which returns</span>
+<span class="sd">        an appropriate SmvPy4JResponse object. For example, ISmvModule declares</span>
+<span class="sd">        getDoRun which should call doRun and return an SmvPy4JResponse object</span>
+<span class="sd">        indicating success or failure. SmvDataSet implements doRun, then calls</span>
+<span class="sd">        create_py4j_interface_method to create getDoRun. See SmvDataSet for more</span>
+<span class="sd">        examples.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            interface_method_name (str): name of the interface method (e.g. getDoRun)</span>
+<span class="sd">            impl_method_name (str): name of the implementation of the interface method (e.g. doRun)</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            (method): new interface method</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">interface_method</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
+        <span class="n">impl_method</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">impl_method_name</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">impl_method</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span>
+            <span class="n">response</span> <span class="o">=</span> <span class="n">SmvPy4JValidResponse</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">error</span> <span class="o">=</span> <span class="n">traceback</span><span class="o">.</span><span class="n">format_exc</span><span class="p">()</span>
+            <span class="n">response</span> <span class="o">=</span> <span class="n">SmvPy4JErrorResponse</span><span class="p">(</span><span class="n">error</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">response</span>
+    <span class="n">interface_method</span><span class="o">.</span><span class="vm">__name__</span> <span class="o">=</span> <span class="n">interface_method_name</span>
+    <span class="k">return</span> <span class="n">interface_method</span></div>
+
+<div class="viewcode-block" id="SmvPy4JResponse"><a class="viewcode-back" href="../../smv.html#smv.datasetrepo.SmvPy4JResponse">[docs]</a><span class="k">class</span> <span class="nc">SmvPy4JResponse</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;A response to a Py4J callback from Scala code</span>
+
+<span class="sd">        A tiny container for results and errors from running a callback.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">_successful</span><span class="p">,</span> <span class="n">_result</span><span class="p">,</span> <span class="n">_error</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_successful</span> <span class="o">=</span> <span class="n">_successful</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_result</span> <span class="o">=</span> <span class="n">_result</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_error</span> <span class="o">=</span> <span class="n">_error</span>
+
+<div class="viewcode-block" id="SmvPy4JResponse.successful"><a class="viewcode-back" href="../../smv.html#smv.datasetrepo.SmvPy4JResponse.successful">[docs]</a>    <span class="k">def</span> <span class="nf">successful</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;True if there was no error, False otherwise</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_successful</span></div>
+
+<div class="viewcode-block" id="SmvPy4JResponse.result"><a class="viewcode-back" href="../../smv.html#smv.datasetrepo.SmvPy4JResponse.result">[docs]</a>    <span class="k">def</span> <span class="nf">result</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;The result of the callback (if it was successful)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_result</span></div>
+
+<div class="viewcode-block" id="SmvPy4JResponse.error"><a class="viewcode-back" href="../../smv.html#smv.datasetrepo.SmvPy4JResponse.error">[docs]</a>    <span class="k">def</span> <span class="nf">error</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;The error message produced by the callback (if it wasn&#39;t successful)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_error</span></div>
+
+<div class="viewcode-block" id="SmvPy4JResponse.Java"><a class="viewcode-back" href="../../smv.html#smv.datasetrepo.SmvPy4JResponse.Java">[docs]</a>    <span class="k">class</span> <span class="nc">Java</span><span class="p">:</span>
+        <span class="n">implements</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;org.tresamigos.smv.IPythonResponsePy4J&quot;</span><span class="p">]</span></div></div>
+
+<div class="viewcode-block" id="SmvPy4JErrorResponse"><a class="viewcode-back" href="../../smv.html#smv.datasetrepo.SmvPy4JErrorResponse">[docs]</a><span class="k">class</span> <span class="nc">SmvPy4JErrorResponse</span><span class="p">(</span><span class="n">SmvPy4JResponse</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;An SmvPy4JResponse for error responses</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">error</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">SmvPy4JErrorResponse</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="kc">False</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="n">error</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SmvPy4JValidResponse"><a class="viewcode-back" href="../../smv.html#smv.datasetrepo.SmvPy4JValidResponse">[docs]</a><span class="k">class</span> <span class="nc">SmvPy4JValidResponse</span><span class="p">(</span><span class="n">SmvPy4JResponse</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;An SmvPy4JResponse for successful responses</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">result</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">SmvPy4JValidResponse</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">result</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Spark Modularized View v2r5 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2017, TresAmigosSD.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.1.
+    </div>
+  </body>
+</html>
