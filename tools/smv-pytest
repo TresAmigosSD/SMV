@@ -11,14 +11,19 @@
 # the rest of the arguments are the standard SmvApp arguments.
 
 set -e
+
+if [ "$1" = "-h" ]; then
+  echo "USAGE: $0 [-h] [-d test_dir] [-t test_name]"
+  echo "      -d: provids a test dir, default: ./src/test/python"
+  echo "      -t: provids a test name, basically the py file's basename"
+  echo "Multiple -t can be provided"
+
+  exit 0
+fi
+
 THIS_FILE_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
 source "${THIS_FILE_DIR}/_env.sh"
 SMV_TOOLS="$(get_smv_tools_dir)"
-
-if [ "$1" = "-h" ]; then
-  show_run_usage_message `basename $0`
-  exit 0
-fi
 
 # When run test, use local log4j config so that we can turn on DEBUG log level
 LOG_CONF_FILE="${SMV_HOME}/log4j.properties"
