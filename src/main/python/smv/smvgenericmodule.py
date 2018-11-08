@@ -690,3 +690,7 @@ class SmvGenericModule(ABC):
 
         # ensure python's numeric type can fit in a java.lang.Integer
         return res & 0x7fffffff
+
+
+class SmvProcessModule(SmvGenericModule):
+    pass

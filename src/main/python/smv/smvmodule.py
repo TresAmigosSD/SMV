@@ -25,7 +25,7 @@ from smv.dqm import SmvDQM
 from smv.error import SmvRuntimeError
 from smv.utils import pickle_lib, lazy_property
 from smv.smviostrategy import SmvCsvOnHdfsIoStrategy, SmvJsonOnHdfsIoStrategy, SmvPicklableOnHdfsIoStrategy, SmvParquetOnHdfsIoStrategy
-from smv.smvgenericmodule import SmvGenericModule, lazy_property
+from smv.smvgenericmodule import SmvProcessModule
 
 class SmvOutput(object):
     """Mixin which marks an SmvModule as one of the output of its stage
@@ -44,7 +44,7 @@ class SmvOutput(object):
         return None
     
 
-class SmvSparkDfModule(SmvGenericModule):
+class SmvSparkDfModule(SmvProcessModule):
     """Base class for SmvModules create Spark DFs
     """
 
@@ -284,7 +284,7 @@ class SmvSqlModule(SmvModule):
         return res
 
 
-class SmvModel(SmvGenericModule):
+class SmvModel(SmvProcessModule):
     """SmvModule whose result is a data model
 
         The result must be picklable - see
