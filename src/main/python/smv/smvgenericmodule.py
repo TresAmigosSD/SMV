@@ -95,8 +95,6 @@ class SmvGenericModule(ABC):
     # - isEphemeral: Optional, default False
     # - description: Optional, default class docstr
     # - requiresDS: Required 
-    # - requiresConfig: Optional, default []
-    # - requiresLib: Optional, default []
     # - metadata: Optional, default {}
     # - validateMetadata: Optional, default None
     # - metadataHistorySize: Optional, default 5
@@ -124,40 +122,6 @@ class SmvGenericModule(ABC):
                 (list(SmvGenericModule)): a list of dependencies
         """
         pass
-
-    def requiresConfig(self):
-        """User-specified list of config keys this module depends on
-
-            The given keys and their values will influence the dataset hash
-        """
-        try:
-            self._is_smv_run_config()
-            is_run_conf = True
-        except:
-            is_run_conf = False
-
-        if (is_run_conf):
-            return self.smvApp.py_smvconf.get_run_config_keys()
-        else:
-            return []
-    
-    def requiresLib(self):
-        """User-specified list of 'library' dependencies. These are code, other than
-            the DataSet's run method that impact its output or behaviour.
-
-            Override this method to assist in re-running this module based on changes
-            in other python objects (functions, classes, packages).
-
-            Limitations: For python modules and packages, the 'requiresLib()' method is
-            limited to registering changes on the main file of the package (for module
-            'foo', that's 'foo.py', for package 'bar', that's 'bar/__init__.py'). This
-            means that if a module or package imports other modules, the imported
-            module's changes will not impact DataSet hashes.
-
-            Returns:
-                (list(module)): a list of library dependencies
-        """
-        return []
 
     def metadata(self, df):
         """User-defined metadata
@@ -207,37 +171,12 @@ class SmvGenericModule(ABC):
         return "0"
 
 
-    ####################################################################################
-    # Methods can be called from client code (in run method)
-    ####################################################################################
-    def smvGetRunConfig(self, key):
-        """return the current user run configuration value for the given key."""
-        if (key not in self.requiresConfig()):
-            raise SmvRuntimeError("RunConfig key {} was not specified in requiresConfig method{}.".format(key, self.requiresConfig()))
-
-        return self.smvApp.getConf(key)
-    
-    def smvGetRunConfigAsInt(self, key):
-        runConfig = self.smvGetRunConfig(key)
-        if runConfig is None:
-            return None
-        return int(runConfig)
-
-    def smvGetRunConfigAsBool(self, key):
-        runConfig = self.smvGetRunConfig(key);
-        if runConfig is None:
-            return None
-        sval = runConfig.strip().lower()
-        return (sval == "1" or sval == "true")
-
-
     #########################################################################
     # Methods for sub-classes to implement and/or override
     #
     # - dsType: Required
     # - persistStrategy: Required
     # - metaStrategy: Required
-    # - doRun: Optional, default call run 
     # - dependencies: Optional, default self.requiresDS()
     # - had_action: Optional, default True
     # - pre_action: Optional, default pass through the input data
@@ -258,40 +197,7 @@ class SmvGenericModule(ABC):
     def metaStrategy(self):
         """Return an SmvIoStrategy for metadata persisting"""
 
-    class RunParams(object):
-        """Map from SmvGenericModule to resulting DataFrame
-
-            We need to simulate a dict from ds to df where the same object can be
-            keyed by different datasets with the same urn. For example, in the
-            module
-
-            class X(SmvModule):
-                def requiresDS(self): return [Foo]
-                def run(self, i): return i[Foo]
-
-            the i argument of the run method should map Foo to
-            the correct DataFrame.
-
-            Args:
-                (dict): a map from urn to DataFrame
-        """
-
-        def __init__(self, urn2df):
-            self.urn2df = urn2df
-
-        def __getitem__(self, ds):
-            """Called by the '[]' operator
-            """
-            if not hasattr(ds, 'urn'):
-                raise TypeError('Argument to RunParams must be an SmvGenericModule')
-            else:
-                return self.urn2df[ds.urn()]
-
-    def doRun(self, known):
-        """Compute this dataset, and return the dataframe"""
-        i = self.RunParams(known)
-        return self.run(i)
-    
+   
     def dependencies(self):
         """Can be overridden when a module has dependency other than requiresDS
         """
@@ -350,74 +256,10 @@ class SmvGenericModule(ABC):
     def ancestor_and_me_visitor(self):
         return ModulesVisitor([self])
 
+    @abc.abstractmethod
     def get_data(self, urn2df, run_set, collector, forceRun, is_quick_run):
-        """create or get data from smvApp level cache
-            Args:
-                urn2df({str:DataFrame}) already run modules current module may depends
-                run_set(set(SmvGenericModule)) modules yet to run post_action
-                collector(SmvRunInfoCollector) collect runinfo of current run
-                forceRun(bool) ignore DF cache in smvApp
-                is_quick_run(bool) skip meta, dqm, persist, but use persisted as possible
-
-            urn2df will be appended, and run_set will shrink
         """
-        if (forceRun or (self.versioned_fqn not in self.smvApp.data_cache)):
-            res = self.computeData(urn2df, run_set, collector, is_quick_run)
-            if (self.isEphemeral()):
-                # Only cache ephemeral modules data, since non-ephemeral any how
-                # will be read from persisted result, no need to persist the logic
-                # of "read from persisted file". Actually caching on non-ephemeral
-                # could cause problems: in the life-time of an SmvApp, it's 
-                # possible some persisted files are deleted, it that case, the 
-                # cached DF will still try to read from those deleted files and 
-                # cause error. 
-                self.smvApp.data_cache.update(
-                    {self.versioned_fqn:res}
-                )
-        else:
-            self.smvApp.log.debug("{} had a cache in SmvApp.data_cache".format(self.fqn()))
-            res = self.smvApp.data_cache.get(self.versioned_fqn)
-            self.data = res
-        urn2df.update({self.urn(): res})
-        return res
-
-    def computeData(self, urn2df, run_set, collector, is_quick_run):
-        """When DF is not in cache, do the real calculation here
         """
-        self.smvApp.log.debug("compute: {}".format(self.urn()))
-
-        if (self.isEphemeral()):
-            raw_df = self.doRun(urn2df)
-            self.data = self.pre_action(raw_df)
-        elif(is_quick_run):
-            _strategy = self.persistStrategy()
-            if (not _strategy.isPersisted()):
-                self.data = self.doRun(urn2df)
-            else:
-                self.data = _strategy.read()
-        else:
-            _strategy = self.persistStrategy()
-            if (not _strategy.isPersisted()):
-                raw_df = self.doRun(urn2df)
-                df = self.pre_action(raw_df)
-                # Acquire lock on persist to ensure write is atomic
-                with self._smvLock():
-                    if (_strategy.isPersisted()):
-                        # There is a chance that when waiting lock, another process persisted the same 
-                        # module. In that case just read back
-                        self.data = _strategy.read()
-                        run_set.discard(self)
-                    else:
-                        (res, self.persistingTimeElapsed) = self._do_action_on_df(
-                            _strategy.write, df, "RUN & PERSIST OUTPUT")
-                        # Need to populate self.data, since postAction need it
-                        self.data = _strategy.read()
-                        self.run_ancestor_and_me_postAction(run_set, collector)
-            else:
-                self.smvApp.log.debug("{} had a persisted file".format(self.fqn()))
-                self.data = _strategy.read()
-                run_set.discard(self)
-        return self.data
 
     def _calculate_user_meta(self):
         """Calculate user defined metadata
@@ -543,7 +385,10 @@ class SmvGenericModule(ABC):
         _sourceCodeHash = self.sourceCodeHash()
         log.debug("{}.sourceCodeHash = ${}".format(self.fqn(), _sourceCodeHash))
 
-        return _instanceValHash + _sourceCodeHash
+        res = _instanceValHash + _sourceCodeHash
+
+        # ensure python's numeric type can fit in a java.lang.Integer
+        return res & 0x7fffffff
     
     @lazy_property
     def hash_of_hash(self):
@@ -576,17 +421,7 @@ class SmvGenericModule(ABC):
             self.smvApp.all_data_dirs().outputDir,
             self.versioned_fqn)
 
-    def _lock_path(self):
-        return "{}/{}.lock".format(
-            self.smvApp.all_data_dirs().lockDir,
-            self.versioned_fqn)
 
-    def _smvLock(self):
-        if (self.smvApp.py_smvconf.use_lock()):
-            return SmvLock(self.smvApp._jvm, self._lock_path())
-        else:
-            return NonOpLock()
- 
     def is_persisted(self):
         """Is current module persisted or not. Can't be lazy, since the persisted
             file could be removed from OS
@@ -611,20 +446,6 @@ class SmvGenericModule(ABC):
             return self.IsSmvOutput
         except:
             return False
-
-    def config_hash(self):
-        """Integer value representing the SMV config's contribution to the dataset hash
-
-            Only the keys declared in requiresConfig will be considered.
-        """
-        kvs = [(k, self.smvGetRunConfig(k)) for k in self.requiresConfig()]
-        # the config_hash should change IFF the config changes
-        # sort keys to ensure config hash is independent from key order
-        sorted_kvs = sorted(kvs)
-        # we need a unique string representation of sorted_kvs to hash
-        # repr should change iff sorted_kvs changes
-        kv_str = repr(sorted_kvs)
-        return _smvhash(kv_str)
 
     def sourceCodeHash(self):
         """Hash computed based on the source code of the dataset's class
@@ -658,11 +479,207 @@ class SmvGenericModule(ABC):
             except: 
                 pass
 
-        # NOTE: Until SmvRunConfig (now deprecated) is removed entirely, we consider 2 source code hashes, 
-        # config_hash and _smvGetRunConfigHash. The former is influenced by KVs for all keys listed in requiresConfig
-        # while latter is influenced by KVs for all keys listed in smv.config.keys.
-        # TODO: Is the config really a component of the "source code"? This method is called `sourceCodeHash`, after all.
+        return res
 
+class SmvProcessModule(SmvGenericModule):
+    
+    #########################################################################
+    # User interface methods
+    # - requiresConfig: Optional, default []
+    # - requiresLib: Optional, default []
+    #########################################################################
+    def requiresConfig(self):
+        """User-specified list of config keys this module depends on
+
+            The given keys and their values will influence the dataset hash
+        """
+        try:
+            self._is_smv_run_config()
+            is_run_conf = True
+        except:
+            is_run_conf = False
+
+        if (is_run_conf):
+            return self.smvApp.py_smvconf.get_run_config_keys()
+        else:
+            return []
+    
+    def requiresLib(self):
+        """User-specified list of 'library' dependencies. These are code, other than
+            the DataSet's run method that impact its output or behaviour.
+
+            Override this method to assist in re-running this module based on changes
+            in other python objects (functions, classes, packages).
+
+            Limitations: For python modules and packages, the 'requiresLib()' method is
+            limited to registering changes on the main file of the package (for module
+            'foo', that's 'foo.py', for package 'bar', that's 'bar/__init__.py'). This
+            means that if a module or package imports other modules, the imported
+            module's changes will not impact DataSet hashes.
+
+            Returns:
+                (list(module)): a list of library dependencies
+        """
+        return []
+
+
+    ####################################################################################
+    # Methods can be called from client code (in run method)
+    ####################################################################################
+    def smvGetRunConfig(self, key):
+        """return the current user run configuration value for the given key."""
+        if (key not in self.requiresConfig()):
+            raise SmvRuntimeError("RunConfig key {} was not specified in requiresConfig method{}.".format(key, self.requiresConfig()))
+
+        return self.smvApp.getConf(key)
+    
+    def smvGetRunConfigAsInt(self, key):
+        runConfig = self.smvGetRunConfig(key)
+        if runConfig is None:
+            return None
+        return int(runConfig)
+
+    def smvGetRunConfigAsBool(self, key):
+        runConfig = self.smvGetRunConfig(key);
+        if runConfig is None:
+            return None
+        sval = runConfig.strip().lower()
+        return (sval == "1" or sval == "true")
+
+    #########################################################################
+    # Methods for sub-classes to implement and/or override
+    #
+    # - doRun: Optional, default call run 
+    #########################################################################
+    class RunParams(object):
+        """Map from SmvGenericModule to resulting DataFrame
+
+            We need to simulate a dict from ds to df where the same object can be
+            keyed by different datasets with the same urn. For example, in the
+            module
+
+            class X(SmvModule):
+                def requiresDS(self): return [Foo]
+                def run(self, i): return i[Foo]
+
+            the i argument of the run method should map Foo to
+            the correct DataFrame.
+
+            Args:
+                (dict): a map from urn to DataFrame
+        """
+
+        def __init__(self, urn2df):
+            self.urn2df = urn2df
+
+        def __getitem__(self, ds):
+            """Called by the '[]' operator
+            """
+            if not hasattr(ds, 'urn'):
+                raise TypeError('Argument to RunParams must be an SmvGenericModule')
+            else:
+                return self.urn2df[ds.urn()]
+
+    def doRun(self, known):
+        """Compute this dataset, and return the dataframe"""
+        i = self.RunParams(known)
+        return self.run(i)
+
+    ####################################################################################
+    # Private methods: not expect to be overrided by sub-classes, but could be
+    ####################################################################################
+    def get_data(self, urn2df, run_set, collector, forceRun, is_quick_run):
+        """create or get data from smvApp level cache
+            Args:
+                urn2df({str:DataFrame}) already run modules current module may depends
+                run_set(set(SmvGenericModule)) modules yet to run post_action
+                collector(SmvRunInfoCollector) collect runinfo of current run
+                forceRun(bool) ignore DF cache in smvApp
+                is_quick_run(bool) skip meta, dqm, persist, but use persisted as possible
+
+            urn2df will be appended, and run_set will shrink
+        """
+        if (forceRun or (self.versioned_fqn not in self.smvApp.data_cache)):
+            res = self.computeData(urn2df, run_set, collector, is_quick_run)
+            if (self.isEphemeral()):
+                # Only cache ephemeral modules data, since non-ephemeral any how
+                # will be read from persisted result, no need to persist the logic
+                # of "read from persisted file". Actually caching on non-ephemeral
+                # could cause problems: in the life-time of an SmvApp, it's 
+                # possible some persisted files are deleted, it that case, the 
+                # cached DF will still try to read from those deleted files and 
+                # cause error. 
+                self.smvApp.data_cache.update(
+                    {self.versioned_fqn:res}
+                )
+        else:
+            self.smvApp.log.debug("{} had a cache in SmvApp.data_cache".format(self.fqn()))
+            res = self.smvApp.data_cache.get(self.versioned_fqn)
+            self.data = res
+        urn2df.update({self.urn(): res})
+        return res
+
+    def computeData(self, urn2df, run_set, collector, is_quick_run):
+        """When DF is not in cache, do the real calculation here
+        """
+        self.smvApp.log.debug("compute: {}".format(self.urn()))
+
+        if (self.isEphemeral()):
+            raw_df = self.doRun(urn2df)
+            self.data = self.pre_action(raw_df)
+        elif(is_quick_run):
+            _strategy = self.persistStrategy()
+            if (not _strategy.isPersisted()):
+                self.data = self.doRun(urn2df)
+            else:
+                self.data = _strategy.read()
+        else:
+            _strategy = self.persistStrategy()
+            if (not _strategy.isPersisted()):
+                raw_df = self.doRun(urn2df)
+                df = self.pre_action(raw_df)
+                # Acquire lock on persist to ensure write is atomic
+                with self._smvLock():
+                    if (_strategy.isPersisted()):
+                        # There is a chance that when waiting lock, another process persisted the same 
+                        # module. In that case just read back
+                        self.data = _strategy.read()
+                        run_set.discard(self)
+                    else:
+                        (res, self.persistingTimeElapsed) = self._do_action_on_df(
+                            _strategy.write, df, "RUN & PERSIST OUTPUT")
+                        # Need to populate self.data, since postAction need it
+                        self.data = _strategy.read()
+                        self.run_ancestor_and_me_postAction(run_set, collector)
+            else:
+                self.smvApp.log.debug("{} had a persisted file".format(self.fqn()))
+                self.data = _strategy.read()
+                run_set.discard(self)
+        return self.data
+
+
+    def config_hash(self):
+        """Integer value representing the SMV config's contribution to the dataset hash
+
+            Only the keys declared in requiresConfig will be considered.
+        """
+        kvs = [(k, self.smvGetRunConfig(k)) for k in self.requiresConfig()]
+        # the config_hash should change IFF the config changes
+        # sort keys to ensure config hash is independent from key order
+        sorted_kvs = sorted(kvs)
+        # we need a unique string representation of sorted_kvs to hash
+        # repr should change iff sorted_kvs changes
+        kv_str = repr(sorted_kvs)
+        return _smvhash(kv_str)
+
+    def sourceCodeHash(self):
+        """Hash computed based on the source code of and config, lib usage
+            Adding config and lib to base class's soruce code hash
+        """
+
+        res = super(SmvProcessModule, self).sourceCodeHash()
+
+        cls = self.__class__
         # incorporate hash of KVs for config keys listed in requiresConfig
         config_hash = self.config_hash()
         self.smvApp.log.debug("{} config_hash: {}".format(self.fqn(), config_hash))
@@ -674,12 +691,6 @@ class SmvGenericModule(ABC):
             self.smvApp.log.debug("{} sourceHash: {}".format(lib.__name__, lib_src_hash))
             res += lib_src_hash
 
-        # if module inherits from SmvRunConfig, then add hash of all config values to module hash
-        try:
-            res += self._smvGetRunConfigHash()
-        except: 
-            pass
-
         # if module has high order historical validation rules, add their hash to sum.
         # they key() of a validator should change if its parameters change.
         if hasattr(cls, "_smvHistoricalValidatorsList"):
@@ -688,9 +699,16 @@ class SmvGenericModule(ABC):
             self.smvApp.log.debug("{} historical keys hash: {}".format(historical_keys_hash))
             res += historical_keys_hash
 
-        # ensure python's numeric type can fit in a java.lang.Integer
-        return res & 0x7fffffff
+        return res
 
+    def _lock_path(self):
+        return "{}/{}.lock".format(
+            self.smvApp.all_data_dirs().lockDir,
+            self.versioned_fqn)
 
-class SmvProcessModule(SmvGenericModule):
-    pass
+    def _smvLock(self):
+        if (self.smvApp.py_smvconf.use_lock()):
+            return SmvLock(self.smvApp._jvm, self._lock_path())
+        else:
+            return NonOpLock()
+ 
