@@ -47,6 +47,19 @@ class SmvIoStrategy(ABC):
     def remove(self):
         """Remove persisted file(s)"""
 
+class SmvNonOpIoStrategy(SmvIoStrategy):
+    """Never persist, isPersisted always returns false"""
+    def read(self):
+        pass
+
+    def write(self, raw_data):
+        pass
+
+    def isPersisted(self):
+        return False
+
+    def remove(self):
+        pass
 
 class SmvFileOnHdfsIoStrategy(SmvIoStrategy):
     """Abstract class for persisting data to Hdfs file system
