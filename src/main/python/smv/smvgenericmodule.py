@@ -184,6 +184,7 @@ class SmvGenericModule(ABC):
     # - force_an_action: Optional, default pass
     # - calculate_edd: Optional, default pass
     # - instanceValHash: Optional, default 0
+    # - doRun: Required
     #########################################################################
     @abc.abstractmethod
     def dsType(self):
@@ -237,6 +238,9 @@ class SmvGenericModule(ABC):
         """
         return 0
     
+    @abc.abstractmethod
+    def doRun(self, known):
+        """Do the real data calculation or the task of this module"""
 
     ####################################################################################
     # Private methods: not expect to be overrided by sub-classes, but could be
@@ -256,10 +260,76 @@ class SmvGenericModule(ABC):
     def ancestor_and_me_visitor(self):
         return ModulesVisitor([self])
 
-    @abc.abstractmethod
+
     def get_data(self, urn2df, run_set, collector, forceRun, is_quick_run):
+        """create or get data from smvApp level cache
+            Args:
+                urn2df({str:DataFrame}) already run modules current module may depends
+                run_set(set(SmvGenericModule)) modules yet to run post_action
+                collector(SmvRunInfoCollector) collect runinfo of current run
+                forceRun(bool) ignore DF cache in smvApp
+                is_quick_run(bool) skip meta, dqm, persist, but use persisted as possible
+
+            urn2df will be appended, and run_set will shrink
         """
+        if (forceRun or (self.versioned_fqn not in self.smvApp.data_cache)):
+            res = self.computeData(urn2df, run_set, collector, is_quick_run)
+            if (self.isEphemeral()):
+                # Only cache ephemeral modules data, since non-ephemeral any how
+                # will be read from persisted result, no need to persist the logic
+                # of "read from persisted file". Actually caching on non-ephemeral
+                # could cause problems: in the life-time of an SmvApp, it's 
+                # possible some persisted files are deleted, it that case, the 
+                # cached DF will still try to read from those deleted files and 
+                # cause error. 
+                self.smvApp.data_cache.update(
+                    {self.versioned_fqn:res}
+                )
+        else:
+            self.smvApp.log.debug("{} had a cache in SmvApp.data_cache".format(self.fqn()))
+            res = self.smvApp.data_cache.get(self.versioned_fqn)
+            self.data = res
+        urn2df.update({self.urn(): res})
+        return res
+
+    def computeData(self, urn2df, run_set, collector, is_quick_run):
+        """When DF is not in cache, do the real calculation here
         """
+        self.smvApp.log.debug("compute: {}".format(self.urn()))
+
+        if (self.isEphemeral()):
+            raw_df = self.doRun(urn2df)
+            self.data = self.pre_action(raw_df)
+        elif(is_quick_run):
+            _strategy = self.persistStrategy()
+            if (not _strategy.isPersisted()):
+                self.data = self.doRun(urn2df)
+            else:
+                self.data = _strategy.read()
+        else:
+            _strategy = self.persistStrategy()
+            if (not _strategy.isPersisted()):
+                raw_df = self.doRun(urn2df)
+                df = self.pre_action(raw_df)
+                # Acquire lock on persist to ensure write is atomic
+                with self._smvLock():
+                    if (_strategy.isPersisted()):
+                        # There is a chance that when waiting lock, another process persisted the same 
+                        # module. In that case just read back
+                        self.data = _strategy.read()
+                        run_set.discard(self)
+                    else:
+                        (res, self.persistingTimeElapsed) = self._do_action_on_df(
+                            _strategy.write, df, "RUN & PERSIST OUTPUT")
+                        # Need to populate self.data, since postAction need it
+                        self.data = _strategy.read()
+                        self.run_ancestor_and_me_postAction(run_set, collector)
+            else:
+                self.smvApp.log.debug("{} had a persisted file".format(self.fqn()))
+                self.data = _strategy.read()
+                run_set.discard(self)
+        return self.data
+
 
     def _calculate_user_meta(self):
         """Calculate user defined metadata
@@ -421,6 +491,16 @@ class SmvGenericModule(ABC):
             self.smvApp.all_data_dirs().outputDir,
             self.versioned_fqn)
 
+    def _lock_path(self):
+        return "{}/{}.lock".format(
+            self.smvApp.all_data_dirs().lockDir,
+            self.versioned_fqn)
+
+    def _smvLock(self):
+        if (self.smvApp.py_smvconf.use_lock()):
+            return SmvLock(self.smvApp._jvm, self._lock_path())
+        else:
+            return NonOpLock()
 
     def is_persisted(self):
         """Is current module persisted or not. Can't be lazy, since the persisted
@@ -588,75 +668,6 @@ class SmvProcessModule(SmvGenericModule):
     ####################################################################################
     # Private methods: not expect to be overrided by sub-classes, but could be
     ####################################################################################
-    def get_data(self, urn2df, run_set, collector, forceRun, is_quick_run):
-        """create or get data from smvApp level cache
-            Args:
-                urn2df({str:DataFrame}) already run modules current module may depends
-                run_set(set(SmvGenericModule)) modules yet to run post_action
-                collector(SmvRunInfoCollector) collect runinfo of current run
-                forceRun(bool) ignore DF cache in smvApp
-                is_quick_run(bool) skip meta, dqm, persist, but use persisted as possible
-
-            urn2df will be appended, and run_set will shrink
-        """
-        if (forceRun or (self.versioned_fqn not in self.smvApp.data_cache)):
-            res = self.computeData(urn2df, run_set, collector, is_quick_run)
-            if (self.isEphemeral()):
-                # Only cache ephemeral modules data, since non-ephemeral any how
-                # will be read from persisted result, no need to persist the logic
-                # of "read from persisted file". Actually caching on non-ephemeral
-                # could cause problems: in the life-time of an SmvApp, it's 
-                # possible some persisted files are deleted, it that case, the 
-                # cached DF will still try to read from those deleted files and 
-                # cause error. 
-                self.smvApp.data_cache.update(
-                    {self.versioned_fqn:res}
-                )
-        else:
-            self.smvApp.log.debug("{} had a cache in SmvApp.data_cache".format(self.fqn()))
-            res = self.smvApp.data_cache.get(self.versioned_fqn)
-            self.data = res
-        urn2df.update({self.urn(): res})
-        return res
-
-    def computeData(self, urn2df, run_set, collector, is_quick_run):
-        """When DF is not in cache, do the real calculation here
-        """
-        self.smvApp.log.debug("compute: {}".format(self.urn()))
-
-        if (self.isEphemeral()):
-            raw_df = self.doRun(urn2df)
-            self.data = self.pre_action(raw_df)
-        elif(is_quick_run):
-            _strategy = self.persistStrategy()
-            if (not _strategy.isPersisted()):
-                self.data = self.doRun(urn2df)
-            else:
-                self.data = _strategy.read()
-        else:
-            _strategy = self.persistStrategy()
-            if (not _strategy.isPersisted()):
-                raw_df = self.doRun(urn2df)
-                df = self.pre_action(raw_df)
-                # Acquire lock on persist to ensure write is atomic
-                with self._smvLock():
-                    if (_strategy.isPersisted()):
-                        # There is a chance that when waiting lock, another process persisted the same 
-                        # module. In that case just read back
-                        self.data = _strategy.read()
-                        run_set.discard(self)
-                    else:
-                        (res, self.persistingTimeElapsed) = self._do_action_on_df(
-                            _strategy.write, df, "RUN & PERSIST OUTPUT")
-                        # Need to populate self.data, since postAction need it
-                        self.data = _strategy.read()
-                        self.run_ancestor_and_me_postAction(run_set, collector)
-            else:
-                self.smvApp.log.debug("{} had a persisted file".format(self.fqn()))
-                self.data = _strategy.read()
-                run_set.discard(self)
-        return self.data
-
 
     def config_hash(self):
         """Integer value representing the SMV config's contribution to the dataset hash
@@ -700,15 +711,3 @@ class SmvProcessModule(SmvGenericModule):
             res += historical_keys_hash
 
         return res
-
-    def _lock_path(self):
-        return "{}/{}.lock".format(
-            self.smvApp.all_data_dirs().lockDir,
-            self.versioned_fqn)
-
-    def _smvLock(self):
-        if (self.smvApp.py_smvconf.use_lock()):
-            return SmvLock(self.smvApp._jvm, self._lock_path())
-        else:
-            return NonOpLock()
- 
