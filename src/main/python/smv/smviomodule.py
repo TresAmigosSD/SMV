@@ -20,10 +20,6 @@ from smv.smvconnectioninfo import SmvJdbcConnectionInfo
 
 
 class SmvIoModule(SmvGenericModule):
-    def isEphemeral(self):
-        """SmvIoModules are always ephemeral"""
-        return True
-
     def persistStrategy(self):
         return SmvNonOpIoStrategy()
 
@@ -47,6 +43,10 @@ class SmvIoModule(SmvGenericModule):
 
 
 class SmvInput(SmvIoModule):
+    def isEphemeral(self):
+        """SmvInoput are always ephemeral"""
+        return True
+
     def requiresDS(self):
         return []
 
@@ -74,6 +74,14 @@ class SmvOutput(SmvIoModule):
 
     def dsType(self):
         return "Output"
+
+    def isEphemeral(self):
+        """SmvOutput are always non-ephemeral.
+        
+            However since its persistStrategy always SmvNonOpIoStrategy,
+            SmvOutput module will not be persisted either
+        """
+        return False
 
     def tableName(self):
         """The user-specified table name to write to
