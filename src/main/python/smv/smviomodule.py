@@ -55,25 +55,44 @@ class SmvInput(SmvIoModule):
 
     @abc.abstractmethod
     def tableName(self):
-        """
+        """The user-specified table name to read in from the connection
+
+            Returns:
+                (string)
         """
 
-class SmvOutput(object):
-    """Mixin which marks an SmvModule as one of the output of its stage
+class SmvOutput(SmvIoModule):
+    """Reuse the output marker mixin, should work for old mixin and new base class.
+        Will make it symmetric to SmvInput when mixin usage is deprecated.
+        
+        Mixin which marks an SmvModule as one of the output of its stage
 
         SmvOutputs are distinct from other SmvModule in that
             * The -s and --run-app options of smv-run only run SmvOutputs and their dependencies.
     """
     IsSmvOutput = True
 
+    def dsType(self):
+        return "Output"
+
     def tableName(self):
-        """The user-specified table name used when exporting data to Hive (optional)
+        """The user-specified table name to write to
 
             Returns:
                 (string)
         """
+        # Implemented as None to be backword compatable as the mixin marker
+        return None
+
+    def connectionName(self):
+        # Implemented as None to be backword compatable as the mixin marker
         return None
     
+    def assert_single_input(self):
+        if (len(self.requiresDS()) != 1):
+            raise SmvRuntimeError("SmvOutput modules depend on a single input, more are given: {}"\
+                .format(", ".join([m.fqn() for m in self.requiresDS()]))
+            )
 
 
 class SmvJdbcInputTable(SmvInput):
@@ -101,7 +120,60 @@ class SmvJdbcInputTable(SmvInput):
             .option('dbtable', self.tableName())\
             .load()
 
+
+class SmvJdbcOutputTable(SmvOutput):
+    """
+        User need to implement 
+
+            - requiresDS
+            - connectionName
+            - tableName
+            - writeMode: optional, default "errorifexists"
+    """
+
+    def writeMode(self):
+        """
+            Write mode for Spark DataFrameWriter.
+            Valid values:
+
+                - "append"
+                - "overwrite"
+                - "ignore"
+                - "error" or "errorifexists" (default)
+        """
+        return "errorifexists"
+
+
+    def doRun(self, known):
+        self.assert_single_input()
+        i = self.RunParams(known)
+
+        conn = self.get_connection()
+        data = i[self.requiresDS()[0]]
+
+        builder = data.write\
+            .format("jdbc") \
+            .mode(self.writeMode()) \
+            .option('url', conn.url)
+
+        if (conn.driver is not None):
+            builder = builder.option('driver', conn.driver)
+        if (conn.user is not None):
+            builder = builder.option('user', conn.user)
+        if (conn.password is not None):
+            builder = builder.option('password', conn.password)
+
+        builder \
+            .option("dbtable", self.tableName()) \
+            .save()
+
+        # return data back for meta calculation
+        # TODO: need to review whether we should even calculate meta for output
+        return data
+
+
 __all__ = [
     'SmvJdbcInputTable',
+    'SmvJdbcOutputTable',
     'SmvOutput',
 ]

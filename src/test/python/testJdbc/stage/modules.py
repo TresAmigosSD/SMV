@@ -49,3 +49,16 @@ class NewJdbcTable(SmvJdbcInputTable):
 
     def connectionName(self):
         return "myjdbc_conn"
+
+class NewJdbcOutputTable(SmvJdbcOutputTable):
+    def requiresDS(self):
+        return [MyJdbcModule]
+    
+    def tableName(self):
+        return "MyJdbcTable"
+
+    def writeMode(self):
+        return "overwrite"
+
+    def connectionName(self):
+        return "myjdbc_conn"

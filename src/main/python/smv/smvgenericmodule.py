@@ -242,6 +242,36 @@ class SmvGenericModule(ABC):
     def doRun(self, known):
         """Do the real data calculation or the task of this module"""
 
+    # Sub-class implementation of doRun may use RunParams
+    class RunParams(object):
+        """Map from SmvGenericModule to resulting DataFrame
+
+            We need to simulate a dict from ds to df where the same object can be
+            keyed by different datasets with the same urn. For example, in the
+            module
+
+            class X(SmvModule):
+                def requiresDS(self): return [Foo]
+                def run(self, i): return i[Foo]
+
+            the i argument of the run method should map Foo to
+            the correct DataFrame.
+
+            Args:
+                (dict): a map from urn to DataFrame
+        """
+
+        def __init__(self, urn2df):
+            self.urn2df = urn2df
+
+        def __getitem__(self, ds):
+            """Called by the '[]' operator
+            """
+            if not hasattr(ds, 'urn'):
+                raise TypeError('Argument to RunParams must be an SmvGenericModule')
+            else:
+                return self.urn2df[ds.urn()]
+
     ####################################################################################
     # Private methods: not expect to be overrided by sub-classes, but could be
     ####################################################################################
@@ -631,35 +661,6 @@ class SmvProcessModule(SmvGenericModule):
     #
     # - doRun: Optional, default call run 
     #########################################################################
-    class RunParams(object):
-        """Map from SmvGenericModule to resulting DataFrame
-
-            We need to simulate a dict from ds to df where the same object can be
-            keyed by different datasets with the same urn. For example, in the
-            module
-
-            class X(SmvModule):
-                def requiresDS(self): return [Foo]
-                def run(self, i): return i[Foo]
-
-            the i argument of the run method should map Foo to
-            the correct DataFrame.
-
-            Args:
-                (dict): a map from urn to DataFrame
-        """
-
-        def __init__(self, urn2df):
-            self.urn2df = urn2df
-
-        def __getitem__(self, ds):
-            """Called by the '[]' operator
-            """
-            if not hasattr(ds, 'urn'):
-                raise TypeError('Argument to RunParams must be an SmvGenericModule')
-            else:
-                return self.urn2df[ds.urn()]
-
     def doRun(self, known):
         """Compute this dataset, and return the dataframe"""
         i = self.RunParams(known)
