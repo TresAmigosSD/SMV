@@ -90,3 +90,13 @@ class NewJdbcTest(SmvBaseTest):
         res = self.df("stage.modules.NewJdbcTable")
         self.should_be_same(res, df)
 
+
+    def test_SmvJdbcOutputTable(self):
+        df = self.df("stage.modules.NewJdbcOutputTable")
+        res = self.smvApp.sqlContext.read\
+            .format("jdbc")\
+            .option("url", self.url())\
+            .option("dbtable", "MyJdbcTable")\
+            .load()
+        self.should_be_same(res, df)
+    
