@@ -78,6 +78,11 @@ class SmvInput(SmvIoModule):
                 (string)
         """
 
+    def instanceValHash(self):
+        """TODO: need to implement this to depends on connection and 
+            also table itself"""
+        return 0
+
 class SmvOutput(SmvIoModule):
     """Reuse the output marker mixin, should work for old mixin and new base class.
         Will make it symmetric to SmvInput when mixin usage is deprecated.
