@@ -41,3 +41,11 @@ class MyJdbcModule(SmvModule):
 
     def run(self, i):
         return self.smvApp.createDF("a:String", "1")
+
+
+class NewJdbcTable(SmvJdbcInputTable):
+    def table_name(self):
+        return "MyJdbcTable"
+
+    def connection_name(self):
+        return "myjdbc_conn"

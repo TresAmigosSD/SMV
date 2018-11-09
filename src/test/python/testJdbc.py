@@ -58,3 +58,35 @@ class JdbcTest(SmvBaseTest):
             .load()
 
         self.should_be_same(res, readback)
+
+
+class NewJdbcTest(SmvBaseTest):
+    @classmethod
+    def setUpClass(cls):
+        super(NewJdbcTest, cls).setUpClass()
+        cls.smvApp._jvm.org.tresamigos.smv.jdbc.JdbcDialectHelper.registerDerby()
+
+    @classmethod
+    def url(cls):
+        return "jdbc:derby:" + cls.tmpTestDir() + "/derby;create=true"
+
+    @classmethod
+    def driver(cls):
+        return "org.apache.derby.jdbc.EmbeddedDriver"
+
+    @classmethod
+    def smvAppInitArgs(cls):
+        return [
+            "--smv-props", 
+            "smv.stages=stage", 
+            "smv.con.myjdbc_conn.type=jdbc",
+            "smv.con.myjdbc_conn.url=" + cls.url(),
+            "smv.con.myjdbc_conn.driver=" + cls.driver()
+        ]
+
+    def test_SmvJdbcInputTable(self):
+        df = self.createDF("K:String", "xxx")
+        df.write.jdbc(self.url(), "MyJdbcTable", properties={"driver": "org.apache.derby.jdbc.EmbeddedDriver"})
+        res = self.df("stage.modules.NewJdbcTable")
+        self.should_be_same(res, df)
+
