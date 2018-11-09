@@ -27,23 +27,6 @@ from smv.utils import pickle_lib, lazy_property
 from smv.smviostrategy import SmvCsvOnHdfsIoStrategy, SmvJsonOnHdfsIoStrategy, SmvPicklableOnHdfsIoStrategy, SmvParquetOnHdfsIoStrategy
 from smv.smvgenericmodule import SmvProcessModule
 
-class SmvOutput(object):
-    """Mixin which marks an SmvModule as one of the output of its stage
-
-        SmvOutputs are distinct from other SmvModule in that
-            * The -s and --run-app options of smv-run only run SmvOutputs and their dependencies.
-    """
-    IsSmvOutput = True
-
-    def tableName(self):
-        """The user-specified table name used when exporting data to Hive (optional)
-
-            Returns:
-                (string)
-        """
-        return None
-    
-
 class SmvSparkDfModule(SmvProcessModule):
     """Base class for SmvModules create Spark DFs
     """
@@ -363,7 +346,6 @@ def SmvModuleLink(target):
 
 
 __all__ = [
-    'SmvOutput',
     'SmvModule',
     'SmvSqlModule',
     'SmvModel',

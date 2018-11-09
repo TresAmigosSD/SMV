@@ -31,12 +31,12 @@ class SmvIoModule(SmvGenericModule):
         return SmvJsonOnHdfsIoStrategy(self.smvApp, self.meta_path())
 
     @abc.abstractmethod
-    def connection_name(self):
+    def connectionName(self):
         """Name of the connection to read/write"""
     
     def get_connection(self):
         """Get connection instance from name"""
-        name = self.connection_name()
+        name = self.connectionName()
         props = self.smvApp.py_smvconf.merged_props()
         type_key = "smv.con.{}.type".format(name)
         con_type = props.get(type_key).lower()
@@ -46,24 +46,43 @@ class SmvIoModule(SmvGenericModule):
             raise SmvRuntimeError("Connection type {} is not implemented".format(con_type))
 
 
-class SmvJdbcInputTable(SmvIoModule):
-    """
-        User need to implement 
-
-            - connection_name
-            - table_name
-    """
-
-    @abc.abstractmethod
-    def table_name(self):
-        """
-        """
-
+class SmvInput(SmvIoModule):
     def requiresDS(self):
         return []
 
     def dsType(self):
         return "Input"
+
+    @abc.abstractmethod
+    def tableName(self):
+        """
+        """
+
+class SmvOutput(object):
+    """Mixin which marks an SmvModule as one of the output of its stage
+
+        SmvOutputs are distinct from other SmvModule in that
+            * The -s and --run-app options of smv-run only run SmvOutputs and their dependencies.
+    """
+    IsSmvOutput = True
+
+    def tableName(self):
+        """The user-specified table name used when exporting data to Hive (optional)
+
+            Returns:
+                (string)
+        """
+        return None
+    
+
+
+class SmvJdbcInputTable(SmvInput):
+    """
+        User need to implement 
+
+            - connectionName
+            - tableName
+    """
 
     def doRun(self, known):
         conn = self.get_connection()
@@ -79,9 +98,10 @@ class SmvJdbcInputTable(SmvIoModule):
             builder = builder.option('password', conn.password)
 
         return builder\
-            .option('dbtable', self.table_name())\
+            .option('dbtable', self.tableName())\
             .load()
 
 __all__ = [
     'SmvJdbcInputTable',
+    'SmvOutput',
 ]
