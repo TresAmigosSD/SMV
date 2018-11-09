@@ -20,14 +20,23 @@ from smv.smvconnectioninfo import getConnection
 
 
 class SmvIoModule(SmvGenericModule):
+    """Base class for input and output modules
+
+        Has two sub-classes:
+
+            - SmvInput: no dependency module, single output data
+            - SmvOutput: single dependency module, no output data
+    """
     def isEphemeral(self):
         """SmvIoModules are always ephemeral"""
         return True
 
     def persistStrategy(self):
+        """Never persisting input/output modules"""
         return SmvNonOpIoStrategy()
 
     def metaStrategy(self):
+        """Still persist meta for input/output modules"""
         return SmvJsonOnHdfsIoStrategy(self.smvApp, self.meta_path())
 
     @abc.abstractmethod
@@ -44,6 +53,17 @@ class SmvIoModule(SmvGenericModule):
 
 
 class SmvInput(SmvIoModule):
+    """Base class for all Input modules
+
+        Sub-class need to implement:
+
+            - doRun
+    
+        User need to implement 
+
+            - connectionName
+            - tableName
+    """
     def requiresDS(self):
         return []
 
