@@ -44,8 +44,8 @@ class MyJdbcModule(SmvModule):
 
 
 class NewJdbcTable(SmvJdbcInputTable):
-    def table_name(self):
+    def tableName(self):
         return "MyJdbcTable"
 
-    def connection_name(self):
+    def connectionName(self):
         return "myjdbc_conn"
