@@ -592,6 +592,21 @@ class SmvGenericModule(ABC):
         return res
 
 class SmvProcessModule(SmvGenericModule):
+    """Base class for all intermediate data process modules
+
+        This is a sub-class of SmvGenericModule and as a sibling class of
+        SmvIoModule.
+
+            - SmvProcessModule: multiple input, single output
+            - SmvInput: non-input, single output
+            - SmvOutput: single-input, non-output
+
+        User need to implement:
+
+            - requiresDS
+            - run
+    """
+
     def isEphemeral(self):
         """Default SmvProcessModule's ephemeral flag to false
             so when mixin SmvOutput, will still be non-ephemeral"""
