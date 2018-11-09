@@ -15,7 +15,7 @@ import abc
 
 from smv.error import SmvRuntimeError
 from smv.smvgenericmodule import SmvGenericModule
-from smv.smviostrategy import SmvNonOpIoStrategy
+from smv.smviostrategy import SmvNonOpIoStrategy, SmvJsonOnHdfsIoStrategy
 from smv.smvconnectioninfo import SmvJdbcConnectionInfo
 
 
@@ -81,3 +81,7 @@ class SmvJdbcInputTable(SmvIoModule):
         return builder\
             .option('dbtable', self.table_name())\
             .load()
+
+__all__ = [
+    'SmvJdbcInputTable',
+]
