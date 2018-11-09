@@ -16,10 +16,14 @@ import abc
 from smv.error import SmvRuntimeError
 from smv.smvgenericmodule import SmvGenericModule
 from smv.smviostrategy import SmvNonOpIoStrategy, SmvJsonOnHdfsIoStrategy
-from smv.smvconnectioninfo import SmvJdbcConnectionInfo
+from smv.smvconnectioninfo import getConnection
 
 
 class SmvIoModule(SmvGenericModule):
+    def isEphemeral(self):
+        """SmvIoModules are always ephemeral"""
+        return True
+
     def persistStrategy(self):
         return SmvNonOpIoStrategy()
 
@@ -36,17 +40,10 @@ class SmvIoModule(SmvGenericModule):
         props = self.smvApp.py_smvconf.merged_props()
         type_key = "smv.con.{}.type".format(name)
         con_type = props.get(type_key).lower()
-        if (con_type == "jdbc"):
-            return SmvJdbcConnectionInfo(name, props)
-        else:
-            raise SmvRuntimeError("Connection type {} is not implemented".format(con_type))
+        return getConnection(con_type)(name, props)
 
 
 class SmvInput(SmvIoModule):
-    def isEphemeral(self):
-        """SmvInoput are always ephemeral"""
-        return True
-
     def requiresDS(self):
         return []
 
@@ -74,14 +71,6 @@ class SmvOutput(SmvIoModule):
 
     def dsType(self):
         return "Output"
-
-    def isEphemeral(self):
-        """SmvOutput are always non-ephemeral.
-        
-            However since its persistStrategy always SmvNonOpIoStrategy,
-            SmvOutput module will not be persisted either
-        """
-        return False
 
     def tableName(self):
         """The user-specified table name to write to

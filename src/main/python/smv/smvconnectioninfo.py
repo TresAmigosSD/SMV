@@ -15,9 +15,25 @@ import abc
 
 
 class SmvConnectionInfo(object):
+    """Base class for all IO connection info
+
+        A connection is defined by a group of attributes, and those attributes 
+        are provided from smv props. For example:
+
+            - smv.con.myjdbc.type = jdbc
+            - smv.con.myjdbc.url = postgress://localhost:1000/...
+
+        Args:
+            name(str) connection name, in the example is "myjdbc"
+            props(dict(str:str)) key-value pairs from smvconf.merged_props()
+    """
     @abc.abstractmethod
     def attributes(self):
-        """a list of attributes as strings"""
+        """a list of attributes as strings for the concrete connection type"""
+
+    @abc.abstractmethod
+    def connection_type(cls):
+        """abstract class method to specify connection type as a string"""
 
     def __init__(self, name, props):
         self.name = name
@@ -31,5 +47,21 @@ class SmvConnectionInfo(object):
 
 
 class SmvJdbcConnectionInfo(SmvConnectionInfo):
+    @classmethod
+    def connection_type(cls):
+        return "jdbc"
+
     def attributes(self):
         return ["url", "driver", "user", "password"]
+
+
+_all_connections = [
+    SmvJdbcConnectionInfo,
+]
+
+def getConnection(con_type):
+    con_map = {c.connection_type(): c for c in _all_connections}
+    if (con_type in con_map):
+        return con_map.get(con_type)
+    else:
+        raise SmvRuntimeError("Connection type {} is not implemented".format(con_type))

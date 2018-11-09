@@ -92,7 +92,7 @@ class SmvGenericModule(ABC):
     #########################################################################
     # User interface methods
     #
-    # - isEphemeral: Optional, default False
+    # - isEphemeral: Required
     # - description: Optional, default class docstr
     # - requiresDS: Required 
     # - metadata: Optional, default {}
@@ -101,13 +101,13 @@ class SmvGenericModule(ABC):
     # - version: Optional, default "0" --- Deprecated!
     #########################################################################
 
+    @abc.abstractmethod
     def isEphemeral(self):
         """Should this SmvGenericModule skip persisting its data?
 
             Returns:
                 (bool): True if this SmvGenericModule should not persist its data, false otherwise
         """
-        return False
 
     def description(self):
         return self.__doc__
@@ -592,7 +592,11 @@ class SmvGenericModule(ABC):
         return res
 
 class SmvProcessModule(SmvGenericModule):
-    
+    def isEphemeral(self):
+        """Default SmvProcessModule's ephemeral flag to false
+            so when mixin SmvOutput, will still be non-ephemeral"""
+        return False
+
     #########################################################################
     # User interface methods
     # - requiresConfig: Optional, default []
