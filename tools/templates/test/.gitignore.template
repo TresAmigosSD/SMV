@@ -1,4 +1,5 @@
 conf/smv-user-conf.props
+.smv_shell_all_args
 
 data/output
 data/history
@@ -35,3 +36,6 @@ project/plugins/project/
 # Scala-IDE specific
 .scala_dependencies
 .worksheet
+
+# IPython Notebook
+.ipynb_checkpoints

@@ -1,4 +1,5 @@
 conf/smv-user-conf.props
+.smv_shell_all_args
 
 data/output
 data/history
