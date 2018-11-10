@@ -27,4 +27,4 @@ SMV_LAUNCH_SCRIPT="${SMV_PYSPARK_FULLPATH}" run_pyspark_with
 # Reset PYTHONSTARTUP
 export PYTHONSTARTUP=$OLD_PYTHONSTARTUP
 
-rm -f smv_shell_all_args
+rm -f .smv_shell_all_args
