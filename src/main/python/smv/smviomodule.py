@@ -48,8 +48,11 @@ class SmvIoModule(SmvGenericModule):
         name = self.connectionName()
         props = self.smvApp.py_smvconf.merged_props()
         type_key = "smv.con.{}.type".format(name)
-        con_type = props.get(type_key).lower()
-        return getConnection(con_type)(name, props)
+        if (type_key in props):
+            con_type = props.get(type_key).lower()
+            return getConnection(con_type)(name, props)
+        else:
+            raise SmvRuntimeError("Connection name {} is not configured with a type".format(name))
 
 
 class SmvInput(SmvIoModule):
@@ -59,7 +62,7 @@ class SmvInput(SmvIoModule):
 
             - doRun
     
-        User need to implement 
+        User need to implement:
 
             - connectionName
             - tableName
@@ -84,13 +87,25 @@ class SmvInput(SmvIoModule):
         return 0
 
 class SmvOutput(SmvIoModule):
-    """Reuse the output marker mixin, should work for old mixin and new base class.
-        Will make it symmetric to SmvInput when mixin usage is deprecated.
-        
-        Mixin which marks an SmvModule as one of the output of its stage
+    """Mixin which marks an SmvModule as one of the output & Reused as a base class
+        for all Output modules
 
-        SmvOutputs are distinct from other SmvModule in that
+        Reuse the output marker mixin, should work for old mixin and new base class.
+        Will make it symmetric to SmvInput when mixin usage is deprecated.
+
+        As used for Mixin, SmvOutputs are distinct from other SmvModule in that
             * The -s and --run-app options of smv-run only run SmvOutputs and their dependencies.
+
+        As used for base class, sub-class need to implement:
+        
+            - doRun
+
+        Within doRun, assert_single_input should be called.
+
+        User need to implement:
+
+            - connectionName
+            - tableName
     """
     IsSmvOutput = True
 
@@ -107,10 +122,20 @@ class SmvOutput(SmvIoModule):
         return None
 
     def connectionName(self):
+        """The user-specified connection name
+
+            Returns:
+                (string)
+        """
         # Implemented as None to be backword compatable as the mixin marker
         return None
     
     def assert_single_input(self):
+        """Make sure SmvOutput only depends on a single module
+            This method will not be called, when SmvOutput is used for mixin.
+            It should be called by the doRun method when SmvOutput is used for
+            base class
+        """
         if (len(self.requiresDS()) != 1):
             raise SmvRuntimeError("SmvOutput modules depend on a single input, more are given: {}"\
                 .format(", ".join([m.fqn() for m in self.requiresDS()]))
