@@ -40,6 +40,11 @@ class SmvConnectionInfo(object):
         self._from_props(props)
 
     def _from_props(self, props):
+        """Create an SmvConnectionInfo instance from smv props
+            The props for connections all start with "smv.con.{connection_name}.".
+            Each connection must have a "smv.con.{connection_name}.type" prop.
+            For different connections, other props may exists for the attributes
+        """
         prop_prefix = "smv.con.{}.".format(self.name)
         for a in self.attributes():
             prop_key = prop_prefix + a
@@ -60,6 +65,8 @@ _all_connections = [
 ]
 
 def getConnection(con_type):
+    """Get an instance of SmvConnectionInfo from a con_type as a string
+    """
     con_map = {c.connection_type(): c for c in _all_connections}
     if (con_type in con_map):
         return con_map.get(con_type)
