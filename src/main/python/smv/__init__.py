@@ -2,7 +2,6 @@
 # Smv DataSet Framework
 from smv.smvmodule import *
 from smv.smvinput import *
-from smv.smviomodule import *
 
 from smv.smvapp import SmvApp
 
