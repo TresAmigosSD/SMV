@@ -189,5 +189,9 @@ class SmvParquetOnHdfsIoStrategy(SmvFileOnHdfsIoStrategy):
         rawdata.write.parquet(self._file_path)
         self.smvApp._jvm.SmvHDFS.createFileAtomic(self._semaphore_path)
 
+    def remove(self):
+        self.smvApp._jvm.SmvHDFS.deleteFile(self._file_path)
+        self.smvApp._jvm.SmvHDFS.deleteFile(self._semaphore_path)
+
     def isPersisted(self):
         return self.smvApp._jvm.SmvHDFS.exists(self._semaphore_path)
