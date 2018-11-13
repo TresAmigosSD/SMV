@@ -79,9 +79,9 @@ class NewJdbcTest(SmvBaseTest):
         return [
             "--smv-props", 
             "smv.stages=stage", 
-            "smv.con.myjdbc_conn.class=smv.conn.SmvJdbcConnectionInfo",
-            "smv.con.myjdbc_conn.url=" + cls.url(),
-            "smv.con.myjdbc_conn.driver=" + cls.driver()
+            "smv.conn.myjdbc_conn.class=smv.conn.SmvJdbcConnectionInfo",
+            "smv.conn.myjdbc_conn.url=" + cls.url(),
+            "smv.conn.myjdbc_conn.driver=" + cls.driver()
         ]
 
     def test_SmvJdbcInputTable(self):
