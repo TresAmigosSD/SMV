@@ -16,7 +16,7 @@ import abc
 from smv.error import SmvRuntimeError
 from smv.smvgenericmodule import SmvGenericModule
 from smv.smviostrategy import SmvNonOpIoStrategy, SmvJsonOnHdfsIoStrategy
-from smv.smvconnectioninfo import getConnection
+from smv.smvconnectioninfo import getConnectionInfo
 
 
 class SmvIoModule(SmvGenericModule):
@@ -50,7 +50,7 @@ class SmvIoModule(SmvGenericModule):
         type_key = "smv.con.{}.type".format(name)
         if (type_key in props):
             con_type = props.get(type_key).lower()
-            return getConnection(con_type)(name, props)
+            return getConnectionInfo(con_type)(name, props)
         else:
             raise SmvRuntimeError("Connection name {} is not configured with a type".format(name))
 
