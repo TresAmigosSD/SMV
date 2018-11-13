@@ -17,7 +17,6 @@ import importlib
 from smv.error import SmvRuntimeError
 from smv.smvgenericmodule import SmvGenericModule
 from smv.smviostrategy import SmvNonOpIoStrategy, SmvJsonOnHdfsIoStrategy
-from smv.smvconnectioninfo import getConnectionInfo
 
 
 class SmvIoModule(SmvGenericModule):
@@ -49,7 +48,7 @@ class SmvIoModule(SmvGenericModule):
             
             Connetion should be configured in conf file with at least a class FQN
 
-            Ex: smv.con.con_name.class=smv.smvconnectioninfo.SmvJdbcConnectionInfo
+            Ex: smv.con.con_name.class=smv.conn.SmvJdbcConnectionInfo
         """
         name = self.connectionName()
         props = self.smvApp.py_smvconf.merged_props()
