@@ -79,7 +79,7 @@ class NewJdbcTest(SmvBaseTest):
         return [
             "--smv-props", 
             "smv.stages=stage", 
-            "smv.con.myjdbc_conn.class=smv.smvconnectioninfo.SmvJdbcConnectionInfo",
+            "smv.con.myjdbc_conn.class=smv.conn.SmvJdbcConnectionInfo",
             "smv.con.myjdbc_conn.url=" + cls.url(),
             "smv.con.myjdbc_conn.driver=" + cls.driver()
         ]
