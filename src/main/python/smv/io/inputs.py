@@ -11,10 +11,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from smv.io.base import SmvInput
+from smv.io.base import SmvInput, AsTable
 
 
-class SmvJdbcInputTable(SmvInput):
+class SmvJdbcInputTable(SmvInput, AsTable):
     """
         User need to implement 
 

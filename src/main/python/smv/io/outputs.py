@@ -11,10 +11,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from smv.io.base import SmvOutput
+from smv.io.base import SmvOutput, AsTable
 
 
-class SmvJdbcOutputTable(SmvOutput):
+class SmvJdbcOutputTable(SmvOutput, AsTable):
     """
         User need to implement 
 

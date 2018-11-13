@@ -74,21 +74,12 @@ class SmvInput(SmvIoModule):
         User need to implement:
 
             - connectionName
-            - tableName
     """
     def requiresDS(self):
         return []
 
     def dsType(self):
         return "Input"
-
-    @abc.abstractmethod
-    def tableName(self):
-        """The user-specified table name to read in from the connection
-
-            Returns:
-                (string)
-        """
 
     def instanceValHash(self):
         """TODO: need to implement this to depends on connection and 
@@ -107,20 +98,11 @@ class SmvOutput(SmvIoModule):
         User need to implement:
 
             - connectionName
-            - tableName
     """
     IsSmvOutput = True
 
     def dsType(self):
         return "Output"
-
-    @abc.abstractmethod
-    def tableName(self):
-        """The user-specified table name to write to
-
-            Returns:
-                (string)
-        """
 
     def assert_single_input(self):
         """Make sure SmvOutput only depends on a single module
@@ -132,3 +114,15 @@ class SmvOutput(SmvIoModule):
             raise SmvRuntimeError("SmvOutput modules depend on a single input, more are given: {}"\
                 .format(", ".join([m.fqn() for m in self.requiresDS()]))
             )
+
+
+class AsTable(object):
+    """Mixin to provide tableName method"""
+    @abc.abstractmethod
+    def tableName(self):
+        """The user-specified table name to write to
+
+            Returns:
+                (string)
+        """
+
