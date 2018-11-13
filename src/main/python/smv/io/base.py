@@ -96,16 +96,9 @@ class SmvInput(SmvIoModule):
         return 0
 
 class SmvOutput(SmvIoModule):
-    """Mixin which marks an SmvModule as one of the output & Reused as a base class
-        for all Output modules
+    """Base class for all Output modules
 
-        Reuse the output marker mixin, should work for old mixin and new base class.
-        Will make it symmetric to SmvInput when mixin usage is deprecated.
-
-        As used for Mixin, SmvOutputs are distinct from other SmvModule in that
-            * The -s and --run-app options of smv-run only run SmvOutputs and their dependencies.
-
-        As used for base class, sub-class need to implement:
+        Sub-class need to implement:
         
             - doRun
 
@@ -121,24 +114,14 @@ class SmvOutput(SmvIoModule):
     def dsType(self):
         return "Output"
 
+    @abc.abstractmethod
     def tableName(self):
         """The user-specified table name to write to
 
             Returns:
                 (string)
         """
-        # Implemented as None to be backword compatable as the mixin marker
-        return None
 
-    def connectionName(self):
-        """The user-specified connection name
-
-            Returns:
-                (string)
-        """
-        # Implemented as None to be backword compatable as the mixin marker
-        return None
-    
     def assert_single_input(self):
         """Make sure SmvOutput only depends on a single module
             This method will not be called, when SmvOutput is used for mixin.
