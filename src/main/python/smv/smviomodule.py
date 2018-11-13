@@ -61,7 +61,7 @@ class SmvIoModule(SmvGenericModule):
             ConnClass = getattr(importlib.import_module(module_name), class_name)
             return ConnClass(name, props)
         else:
-            raise SmvRuntimeError("Connection name {} is not configured with a type".format(name))
+            raise SmvRuntimeError("Connection name {} is not configured with a class".format(name))
 
 
 class SmvInput(SmvIoModule):
