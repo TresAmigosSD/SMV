@@ -11,10 +11,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from smv.io.base import SmvOutput, AsTable
+from smv.io.base import SmvSparkDfOutput, AsTable
 
 
-class SmvJdbcOutputTable(SmvOutput, AsTable):
+class SmvJdbcOutputTable(SmvSparkDfOutput, AsTable):
     """
         User need to implement 
 
@@ -38,11 +38,8 @@ class SmvJdbcOutputTable(SmvOutput, AsTable):
 
 
     def doRun(self, known):
-        self.assert_single_input()
-        i = self.RunParams(known)
-
+        data = self.get_spark_df(known)
         conn = self.get_connection()
-        data = i[self.requiresDS()[0]]
 
         builder = data.write\
             .format("jdbc") \

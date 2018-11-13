@@ -14,6 +14,8 @@
 import abc
 import importlib
 
+from pyspark.sql import DataFrame
+
 from smv.error import SmvRuntimeError
 from smv.smvgenericmodule import SmvGenericModule
 from smv.smviostrategy import SmvNonOpIoStrategy, SmvJsonOnHdfsIoStrategy
@@ -117,7 +119,7 @@ class SmvOutput(SmvIoModule):
 
 
 class AsTable(object):
-    """Mixin to provide tableName method"""
+    """Mixin to assure a tableName method"""
     @abc.abstractmethod
     def tableName(self):
         """The user-specified table name to write to
@@ -126,3 +128,22 @@ class AsTable(object):
                 (string)
         """
 
+
+class SmvSparkDfOutput(SmvOutput):
+    """SmvOutput which write out Spark DF
+    """
+    def _assert_data_is_df(self, data):
+        if not isinstance(data, DataFrame):
+            raise SmvRuntimeError(
+                "Data provided to {} has type {}, should be a DataFrame"
+                .format(self.fqn(), type(data).__name__)
+            )
+
+    def get_spark_df(self, known):
+        self.assert_single_input()
+        i = self.RunParams(known)
+
+        data = i[self.requiresDS()[0]]
+        self._assert_data_is_df(data)
+
+        return data
