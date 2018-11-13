@@ -11,39 +11,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from smv.io.base import SmvSparkDfOutput, AsTable
+from smv.iomod.base import SmvInput, AsTable
 
 
-class SmvJdbcOutputTable(SmvSparkDfOutput, AsTable):
+class SmvJdbcInputTable(SmvInput, AsTable):
     """
         User need to implement 
 
-            - requiresDS
             - connectionName
             - tableName
-            - writeMode: optional, default "errorifexists"
     """
 
-    def writeMode(self):
-        """
-            Write mode for Spark DataFrameWriter.
-            Valid values:
-
-                - "append"
-                - "overwrite"
-                - "ignore"
-                - "error" or "errorifexists" (default)
-        """
-        return "errorifexists"
-
-
     def doRun(self, known):
-        data = self.get_spark_df(known)
         conn = self.get_connection()
-
-        builder = data.write\
-            .format("jdbc") \
-            .mode(self.writeMode()) \
+        builder = self.smvApp.sqlContext.read\
+            .format('jdbc')\
             .option('url', conn.url)
 
         if (conn.driver is not None):
@@ -53,15 +35,10 @@ class SmvJdbcOutputTable(SmvSparkDfOutput, AsTable):
         if (conn.password is not None):
             builder = builder.option('password', conn.password)
 
-        builder \
-            .option("dbtable", self.tableName()) \
-            .save()
-
-        # return data back for meta calculation
-        # TODO: need to review whether we should even calculate meta for output
-        return data
-
+        return builder\
+            .option('dbtable', self.tableName())\
+            .load()
 
 __all__ = [
-    'SmvJdbcOutputTable',
+    'SmvJdbcInputTable',
 ]

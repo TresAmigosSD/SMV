@@ -12,7 +12,7 @@
 # limitations under the License.
 
 from smv import *
-from smv.io import SmvJdbcInputTable, SmvJdbcOutputTable
+from smv.iomod import SmvJdbcInputTable, SmvJdbcOutputTable
 
 class MyJdbcTable(SmvJdbcTable):
     def tableName(self):
