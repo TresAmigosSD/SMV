@@ -133,10 +133,13 @@ function test_integration_app() {
   test_custom_driver
 }
 
+# TODO: when implement the generic output, should create csv output modules
+# and inspect the output, instead of inspect the persisted csv
 function run_integration_app() {
   echo "--------- RUN INTEGRATION APP -------------"
   ${SMV_RUN} \
       --smv-props \
+      smv.sparkdf.defaultPersistFormat=smvcsv_on_hdfs \
       smv.inputDir="file://$(pwd)/data/input" \
       smv.outputDir="file://$(pwd)/data/output" --run-app \
       -- --master 'local[*]'
@@ -174,10 +177,14 @@ function validate_integration_app_output() {
 function validate_hash_test_module_cache_invalidation() {
   echo "--------- RUN HASH TEST MODULE -------------"
   rm -rf data/output/*
-  ${SMV_RUN} -m $HASH_TEST_MOD
+  ${SMV_RUN} -m $HASH_TEST_MOD \
+      --smv-props \
+      smv.sparkdf.defaultPersistFormat=smvcsv_on_hdfs
 
   echo "--------- RERUN UNCHANGED TEST MODULE -------------"
-  ${SMV_RUN} -m $HASH_TEST_MOD
+  ${SMV_RUN} -m $HASH_TEST_MOD \
+      --smv-props \
+      smv.sparkdf.defaultPersistFormat=smvcsv_on_hdfs
 
   echo "--------- VERIFY HASH UNCHANGED -------------"
   verify_hash_unchanged
@@ -188,7 +195,9 @@ function validate_hash_test_module_cache_invalidation() {
   sed -i"" -e "s/table1/table2/" $HASH_TEST_MOD_FILE
 
   echo "--------- RUN CHANGED MODULE -------------"
-  ${SMV_RUN} -m hashtest.modules.M
+  ${SMV_RUN} -m hashtest.modules.M \
+      --smv-props \
+      smv.sparkdf.defaultPersistFormat=smvcsv_on_hdfs
 
   echo "--------- VERIFY HASH CHANGED -------------"
   verify_hash_changed 1
@@ -197,7 +206,9 @@ function validate_hash_test_module_cache_invalidation() {
   touch data/input/hashtest/table.csv
 
   echo "--------- RUN MODULE WITH UPDATED CSV -------------"
-  ${SMV_RUN} -m hashtest.modules.M
+  ${SMV_RUN} -m hashtest.modules.M \
+      --smv-props \
+      smv.sparkdf.defaultPersistFormat=smvcsv_on_hdfs
 
   echo "--------- VERIFY HASH CHANGED -------------"
   verify_hash_changed 2
@@ -206,7 +217,10 @@ function validate_hash_test_module_cache_invalidation() {
   sed -i"" -e "s/String/Integer/" data/input/hashtest/table.schema
 
   echo "--------- RUN MODULE WITH UPDATED SCHEMA -------------"
-  ${SMV_RUN} -m hashtest.modules.M
+  ${SMV_RUN} -m hashtest.modules.M \
+      --smv-props \
+      smv.sparkdf.defaultPersistFormat=smvcsv_on_hdfs
+
   echo "--------- VERIFY HASH CHANGED -------------"
   verify_hash_changed 3
 }
