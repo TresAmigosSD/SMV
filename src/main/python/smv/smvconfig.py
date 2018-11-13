@@ -134,8 +134,8 @@ class SmvConfig(object):
     def df_persist_format(self):
         """Spark DF's default persisted format. Available values:
 
-            - smvcsv_on_hdfs (default)
-            - parquet_on_hdfs
+            - smvcsv_on_hdfs
+            - parquet_on_hdfs (default)
         """
         return self.merged_props().get("smv.sparkdf.defaultPersistFormat", "parquet_on_hdfs")
 
