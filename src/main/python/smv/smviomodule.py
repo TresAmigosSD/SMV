@@ -48,11 +48,11 @@ class SmvIoModule(SmvGenericModule):
             
             Connetion should be configured in conf file with at least a class FQN
 
-            Ex: smv.con.con_name.class=smv.conn.SmvJdbcConnectionInfo
+            Ex: smv.conn.con_name.class=smv.conn.SmvJdbcConnectionInfo
         """
         name = self.connectionName()
         props = self.smvApp.py_smvconf.merged_props()
-        class_key = "smv.con.{}.class".format(name)
+        class_key = "smv.conn.{}.class".format(name)
 
         if (class_key in props):
             con_class = props.get(class_key)
