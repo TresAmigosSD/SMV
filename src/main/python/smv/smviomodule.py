@@ -12,6 +12,7 @@
 # limitations under the License.
 
 import abc
+import importlib
 
 from smv.error import SmvRuntimeError
 from smv.smvgenericmodule import SmvGenericModule
@@ -47,10 +48,12 @@ class SmvIoModule(SmvGenericModule):
         """Get connection instance from name"""
         name = self.connectionName()
         props = self.smvApp.py_smvconf.merged_props()
-        type_key = "smv.con.{}.type".format(name)
-        if (type_key in props):
-            con_type = props.get(type_key).lower()
-            return getConnectionInfo(con_type)(name, props)
+        class_key = "smv.con.{}.class".format(name)
+        if (class_key in props):
+            con_class = props.get(class_key)
+            module_name, class_name = con_class.rsplit(".", 1)
+            ConnClass = getattr(importlib.import_module(module_name), class_name)
+            return ConnClass(name, props)
         else:
             raise SmvRuntimeError("Connection name {} is not configured with a type".format(name))
 
