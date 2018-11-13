@@ -137,7 +137,7 @@ class SmvConfig(object):
             - smvcsv_on_hdfs (default)
             - parquet_on_hdfs
         """
-        return self.merged_props().get("smv.sparkdf.defaultPersistFormat", "smvcsv_on_hdfs")
+        return self.merged_props().get("smv.sparkdf.defaultPersistFormat", "parquet_on_hdfs")
 
     def use_lock(self):
         return self._get_prop_as_bool("smv.lock")
