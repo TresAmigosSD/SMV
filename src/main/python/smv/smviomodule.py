@@ -45,12 +45,19 @@ class SmvIoModule(SmvGenericModule):
         """Name of the connection to read/write"""
     
     def get_connection(self):
-        """Get connection instance from name"""
+        """Get connection instance from name
+            
+            Connetion should be configured in conf file with at least a class FQN
+
+            Ex: smv.con.con_name.class=smv.smvconnectioninfo.SmvJdbcConnectionInfo
+        """
         name = self.connectionName()
         props = self.smvApp.py_smvconf.merged_props()
         class_key = "smv.con.{}.class".format(name)
+
         if (class_key in props):
             con_class = props.get(class_key)
+            # Load the class from its FQN
             module_name, class_name = con_class.rsplit(".", 1)
             ConnClass = getattr(importlib.import_module(module_name), class_name)
             return ConnClass(name, props)

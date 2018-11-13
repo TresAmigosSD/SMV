@@ -58,17 +58,3 @@ class SmvJdbcConnectionInfo(SmvConnectionInfo):
 
     def attributes(self):
         return ["url", "driver", "user", "password"]
-
-
-_all_connections = [
-    SmvJdbcConnectionInfo,
-]
-
-def getConnectionInfo(con_type):
-    """Get an instance of SmvConnectionInfo from a con_type as a string
-    """
-    con_map = {c.connection_type(): c for c in _all_connections}
-    if (con_type in con_map):
-        return con_map.get(con_type)
-    else:
-        raise SmvRuntimeError("Connection type {} is not implemented".format(con_type))
