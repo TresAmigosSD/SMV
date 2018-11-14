@@ -156,7 +156,7 @@ class SmvCsvInputFile(InputFileWithSchema, WithCsvParser):
         smv_schema = smvSchemaObj.fromString(self.get_schema_string())
         csv_attr = smv_schema.extractCsvAttributes()
 
-        df = self.smvApp.j_smvPyClient.readCsvFromFile(
+        jdf = self.smvApp.j_smvPyClient.readCsvFromFile(
             file_path,
             smv_schema,
             csv_attr,

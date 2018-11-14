@@ -14,6 +14,8 @@
 from smv import *
 from smv.dqm import *
 from smv.functions import smvStrCat
+from smv.iomod import SmvCsvInputFile
+
 import pyspark.sql.functions as F
 
 class D1(SmvCsvStringData):
@@ -137,3 +139,11 @@ class Csv2(SmvCsvFile):
         return CsvAttributes(",", '"', True)
     def userSchema(self):
         return "eman:String;di:integer"
+
+
+class NewCsvFile1(SmvCsvInputFile):
+    def connectionName(self):
+        return "my_hdfs"
+
+    def fileName(self):
+        return "csvtest/csv1.csv"

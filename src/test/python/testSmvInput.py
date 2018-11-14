@@ -257,3 +257,30 @@ id:integer"""
             Fred,2"""
         )
         self.should_be_same(res, expected)
+
+
+class SmvNewInputTest(SmvBaseTest):
+    @classmethod
+    def smvAppInitArgs(cls):
+        data_path = cls.tmpInputDir()
+        return [
+            '--smv-props', 
+            'smv.stages=stage',
+            'smv.conn.my_hdfs.class=smv.conn.SmvHdfsConnectionInfo',
+            'smv.conn.my_hdfs.path=' + data_path,
+        ]
+
+    def setUp(self):
+        super(SmvNewInputTest, self).setUp()
+        self.createTempInputFile("csvtest/csv1.csv",
+            """"Name","ID"
+Bob,1
+Fred,2""")
+        self.createTempInputFile("csvtest/csv1.schema",
+            """name:string
+id:integer""")
+
+    def test_basic_csv_input(self):
+        res = self.df("stage.modules.NewCsvFile1")
+        exp = self.createDF("name:String;id:Integer", "Bob,1;Fred,2")
+        self.should_be_same(res, exp)
