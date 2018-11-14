@@ -306,3 +306,9 @@ id:integer"""
         res = self.df("stage.modules.NewCsvFile3")
         exp = self.createDF("name:String;id:Integer", "Bob,1;Fred,2")
         self.should_be_same(res, exp)
+
+    def test_csv_user_schema(self):
+        self._create_csv_file("csvtest/csv1.csv")
+        res = self.df("stage.modules.NewCsvFile4")
+        exp = self.createDF("name2:String;id2:Integer", "Bob,1;Fred,2")
+        self.should_be_same(res, exp)

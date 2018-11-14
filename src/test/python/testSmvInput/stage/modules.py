@@ -170,3 +170,13 @@ class NewCsvFile3(SmvCsvInputFile):
 
     def schemaFileName(self):
         return "csv1.csv.schema"
+
+class NewCsvFile4(SmvCsvInputFile):
+    def connectionName(self):
+        return "my_hdfs"
+
+    def fileName(self):
+        return "csvtest/csv1.csv"
+
+    def userSchema(self):
+        return "name2:String;id2:Integer"
