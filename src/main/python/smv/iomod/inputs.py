@@ -11,9 +11,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from smv.iomod.base import SmvInput, AsTable, AsHiveTable
+from smv.iomod.base import SmvInput, AsTable
 
-from smv.smviostrategy import SmvJdbcIoStractegy
+from smv.smviostrategy import SmvJdbcIoStrategy, SmvHiveIoStrategy
 
 
 class SmvJdbcInputTable(SmvInput, AsTable):
@@ -26,10 +26,10 @@ class SmvJdbcInputTable(SmvInput, AsTable):
 
     def doRun(self, known):
         conn = self.get_connection()
-        return SmvJdbcIoStractegy(self.smvApp, conn, self.tableName()).read()
+        return SmvJdbcIoStrategy(self.smvApp, conn, self.tableName()).read()
 
 
-class SmvHiveInputTable(SmvInput, AsHiveTable):
+class SmvHiveInputTable(SmvInput, AsTable):
     """
         User need to implement:
 
@@ -38,8 +38,8 @@ class SmvHiveInputTable(SmvInput, AsHiveTable):
     """
 
     def doRun(self, known):
-        query = "select * from {}".format(self.table_with_schema())
-        return self.smvApp.sqlContext.sql(query)
+        conn = self.get_connection()
+        return SmvHiveIoStrategy(self.smvApp, conn, self.tableName()).read()
 
 __all__ = [
     'SmvJdbcInputTable',

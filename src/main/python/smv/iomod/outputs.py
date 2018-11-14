@@ -11,8 +11,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from smv.iomod.base import SmvSparkDfOutput, AsTable, AsHiveTable
-from smv.smviostrategy import SmvJdbcIoStractegy
+from smv.iomod.base import SmvSparkDfOutput, AsTable
+from smv.smviostrategy import SmvJdbcIoStrategy, SmvHiveIoStrategy
 
 
 class WithSparkDfWriter(object):
@@ -44,7 +44,7 @@ class SmvJdbcOutputTable(SmvSparkDfOutput, WithSparkDfWriter, AsTable):
         data = self.get_spark_df(known)
         conn = self.get_connection()
 
-        SmvJdbcIoStractegy(self.smvApp, conn, self.tableName(), self.writeMode())\
+        SmvJdbcIoStrategy(self.smvApp, conn, self.tableName(), self.writeMode())\
             .write(data)
 
         # return data back for meta calculation
@@ -52,7 +52,7 @@ class SmvJdbcOutputTable(SmvSparkDfOutput, WithSparkDfWriter, AsTable):
         return data
 
 
-class SmvHiveOutputTable(SmvSparkDfOutput, WithSparkDfWriter, AsHiveTable):
+class SmvHiveOutputTable(SmvSparkDfOutput, WithSparkDfWriter, AsTable):
     """
         User need to implement
 
@@ -64,10 +64,10 @@ class SmvHiveOutputTable(SmvSparkDfOutput, WithSparkDfWriter, AsHiveTable):
 
     def doRun(self, known):
         data = self.get_spark_df(known)
+        conn = self.get_connection()
 
-        data.write\
-            .mode(self.writeMode())\
-            .saveAsTable(self.table_with_schema())
+        SmvHiveIoStrategy(self.smvApp, conn, self.tableName(), self.writeMode())\
+            .write(data)
 
         return data
 

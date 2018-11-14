@@ -210,7 +210,15 @@ class SmvParquetOnHdfsIoStrategy(SmvFileOnHdfsIoStrategy):
         return self.smvApp._jvm.SmvHDFS.exists(self._semaphore_path)
 
 
-class SmvJdbcIoStractegy(SmvIoStrategy):
+class SmvJdbcIoStrategy(SmvIoStrategy):
+    """Persist strategy for spark JDBC IO
+
+        Args:
+            smvApp(SmvApp):
+            conn_info(SmvConnectionInfo): Jdbc connection info
+            table_name(str): the table to read from/write to
+            write_mode(str): spark df writer's SaveMode
+    """
     def __init__(self, smvApp, conn_info, table_name, write_mode="errorifexists"):
         self.smvApp = smvApp
         self.conn = conn_info
@@ -253,8 +261,47 @@ class SmvJdbcIoStractegy(SmvIoStrategy):
             .save()
 
     def isPersisted(self):
-        raise NotImplementedError("SmvJdbcIoStractegy is only for I/O, not for data persisting")
+        raise NotImplementedError("SmvJdbcIoStrategy is only for I/O, not for data persisting")
 
     def remove(self):
-        raise NotImplementedError("SmvJdbcIoStractegy is only for I/O, can't remove")
+        raise NotImplementedError("SmvJdbcIoStrategy is only for I/O, can't remove")
 
+
+class SmvHiveIoStrategy(SmvIoStrategy):
+    """Persist strategy for spark JDBC IO
+
+        Args:
+            smvApp(SmvApp):
+            conn_info(SmvConnectionInfo): Jdbc connection info
+            table_name(str): the table to read from/write to
+            write_mode(str): spark df writer's SaveMode
+    """
+    def __init__(self, smvApp, conn_info, table_name, write_mode="errorifexists"):
+        self.smvApp = smvApp
+        self.conn = conn_info
+        self.table = table_name
+        self.write_mode = write_mode
+
+    def _table_with_schema(self):
+        conn = self.conn
+        if (conn.schema is None):
+            return self.table
+        else:
+            return "{}.{}".format(conn.schema, self.table)
+
+    def read(self):
+        query = "select * from {}".format(self._table_with_schema())
+        return self.smvApp.sqlContext.sql(query)
+
+    def write(self, raw_data):
+        raw_data.write\
+            .mode(self.write_mode)\
+            .saveAsTable(self._table_with_schema())
+
+    # TODO: we should allow persisting intermidiate results in Hive also
+    # For that case, however need to specify a convention to store semaphore
+    def isPersisted(self):
+        raise NotImplementedError("SmvHiveIoStrategy is only for I/O, not for data persisting")
+
+    def remove(self):
+        raise NotImplementedError("SmvHiveIoStrategy is only for I/O, can't remove")
