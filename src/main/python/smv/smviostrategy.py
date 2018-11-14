@@ -63,15 +63,15 @@ class SmvNonOpIoStrategy(SmvIoStrategy):
 
 class SmvFileOnHdfsIoStrategy(SmvIoStrategy):
     """Abstract class for persisting data to Hdfs file system
-        handling general tasks as file name creation, locking when write, etc. 
+        handling general tasks as file name creation, locking when write, etc.
 
         Args:
-            smvApp(SmvApp): 
+            smvApp(SmvApp):
             fqn(str): data/module's FQN/Name
             ver_hex(str): data/module's version hex string
             postfix(str): persisted file's postfix
             file_path(str): parameters "fqn", "ver_hex" and "postfix" are used to create
-                a data file path. However if "file_path" is provided, all the other 3 
+                a data file path. However if "file_path" is provided, all the other 3
                 parameters are ignored
     """
     def __init__(self, smvApp, fqn=None, ver_hex=None, postfix=None, file_path=None):
@@ -151,7 +151,7 @@ class SmvJsonOnHdfsIoStrategy(SmvFileOnHdfsIoStrategy):
 
     def _read(self):
         return self.smvApp._jvm.SmvHDFS.readFromFile(self._file_path)
-    
+
     def _write(self, rawdata):
         self.smvApp._jvm.SmvHDFS.writeToFile(rawdata, self._file_path)
 
@@ -208,3 +208,53 @@ class SmvParquetOnHdfsIoStrategy(SmvFileOnHdfsIoStrategy):
 
     def isPersisted(self):
         return self.smvApp._jvm.SmvHDFS.exists(self._semaphore_path)
+
+
+class SmvJdbcIoStractegy(SmvIoStrategy):
+    def __init__(self, smvApp, conn_info, table_name, write_mode="errorifexists"):
+        self.smvApp = smvApp
+        self.conn = conn_info
+        self.table = table_name
+        self.write_mode = write_mode
+
+    def read(self):
+        conn = self.conn
+        builder = self.smvApp.sqlContext.read\
+            .format('jdbc')\
+            .option('url', conn.url)
+
+        if (conn.driver is not None):
+            builder = builder.option('driver', conn.driver)
+        if (conn.user is not None):
+            builder = builder.option('user', conn.user)
+        if (conn.password is not None):
+            builder = builder.option('password', conn.password)
+
+        return builder\
+            .option('dbtable', self.table)\
+            .load()
+
+    def write(self, raw_data):
+        conn = self.conn
+        builder = raw_data.write\
+            .format("jdbc") \
+            .mode(self.write_mode) \
+            .option('url', conn.url)
+
+        if (conn.driver is not None):
+            builder = builder.option('driver', conn.driver)
+        if (conn.user is not None):
+            builder = builder.option('user', conn.user)
+        if (conn.password is not None):
+            builder = builder.option('password', conn.password)
+
+        builder \
+            .option("dbtable", self.table) \
+            .save()
+
+    def isPersisted(self):
+        raise NotImplementedError("SmvJdbcIoStractegy is only for I/O, not for data persisting")
+
+    def remove(self):
+        raise NotImplementedError("SmvJdbcIoStractegy is only for I/O, can't remove")
+
