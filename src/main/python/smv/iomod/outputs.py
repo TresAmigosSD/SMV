@@ -11,9 +11,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from smv.iomod.base import SmvSparkDfOutput, AsTable
-from smv.smviostrategy import SmvJdbcIoStrategy, SmvHiveIoStrategy
-
+from smv.iomod.base import SmvSparkDfOutput, AsTable, AsFile
+from smv.smviostrategy import SmvCsvOnHdfsIoStrategy, SmvJdbcIoStrategy, SmvHiveIoStrategy
 
 class WithSparkDfWriter(object):
     """Mixin for output modules using spark df writer"""
@@ -71,6 +70,21 @@ class SmvHiveOutputTable(SmvSparkDfOutput, WithSparkDfWriter, AsTable):
 
         return data
 
+
+class SmvCsvOutputFile(SmvSparkDfOutput, AsFile):
+    """
+        User need to implement
+
+            - requiresDS
+            - connectionName
+            - fileName
+    """
+    def doRun(self, known):
+        data = self.get_spark_df(known)
+        file_path = "{}/{}".format(self.get_connection().path, self.fileName())
+
+        SmvCsvOnHdfsIoStrategy(self.smvApp, self.fqn(), None, file_path).write(data)
+        return data
 
 __all__ = [
     'SmvJdbcOutputTable',
