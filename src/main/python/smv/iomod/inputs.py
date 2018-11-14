@@ -222,7 +222,6 @@ class SmvMultiCsvInputFiles(InputFileWithSchema, WithCsvParser):
         return DataFrame(combinedJdf, self.smvApp.sqlContext)
 
 
-
 __all__ = [
     'SmvJdbcInputTable',
     'SmvHiveInputTable',
