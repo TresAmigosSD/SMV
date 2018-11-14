@@ -268,19 +268,34 @@ class SmvNewInputTest(SmvBaseTest):
             'smv.stages=stage',
             'smv.conn.my_hdfs.class=smv.conn.SmvHdfsConnectionInfo',
             'smv.conn.my_hdfs.path=' + data_path,
+            'smv.conn.my_hdfs_2.class=smv.conn.SmvHdfsConnectionInfo',
+            'smv.conn.my_hdfs_2.path=' + data_path + "/conn2",
         ]
 
-    def setUp(self):
-        super(SmvNewInputTest, self).setUp()
-        self.createTempInputFile("csvtest/csv1.csv",
+    def _create_csv_file(self, name):
+        self.createTempInputFile(name,
             """"Name","ID"
 Bob,1
-Fred,2""")
-        self.createTempInputFile("csvtest/csv1.schema",
-            """name:string
-id:integer""")
+Fred,2"""
+        )
+
+    def _create_csv_schema(self, name):
+        self.createTempInputFile(name,
+        """name:string
+id:integer"""
+        )
+
 
     def test_basic_csv_input(self):
+        self._create_csv_file("csvtest/csv1.csv")
+        self._create_csv_schema("csvtest/csv1.schema")
         res = self.df("stage.modules.NewCsvFile1")
+        exp = self.createDF("name:String;id:Integer", "Bob,1;Fred,2")
+        self.should_be_same(res, exp)
+
+    def test_csv_diff_schema_conn(self):
+        self._create_csv_file("csvtest/csv1.csv")
+        self._create_csv_schema("conn2/csvtest/csv1.schema")
+        res = self.df("stage.modules.NewCsvFile2")
         exp = self.createDF("name:String;id:Integer", "Bob,1;Fred,2")
         self.should_be_same(res, exp)
