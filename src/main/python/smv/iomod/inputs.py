@@ -73,7 +73,7 @@ class InputFileWithSchema(SmvInput, AsFile):
         """
         return None
 
-    def get_schema_connection(self):
+    def _get_schema_connection(self):
         """Return a schema connection with the following priority:
 
             - User specified in current module through schemaConnectionName method
@@ -90,27 +90,31 @@ class InputFileWithSchema(SmvInput, AsFile):
         else:
             return self.get_connection()
 
+    def _get_schema_file_name(self):
+        """The schema_file_name is determined by the following logic
+
+                - schemaFileName
+                - fileName replace the post-fix to schema
+        """
+        if (self.schemaFileName() is not None):
+            return self.schemaFileName()
+        else:
+            return self.fileName().rsplit(".", 1)[0] + ".schema"
+        
     def get_schema_string(self):
         """Return the schema string specified by user either through
             userSchema method, or through a schema file. The priority is the following:
 
                 - userSchema
-                - schema_file_name under schema_connection (logic is in get_schema_connection)
+                - schema_file_name under schema_connection
 
-            The schema_file_name is determined by the following logic
-
-                - schemaFileName
-                - fileName replace the post-fix to schema
         """
         if (self.userSchema() is not None):
             return self.userSchema()
         else:
-            if (self.schemaFileName() is not None):
-                schema_file_name = self.schemaFileName()
-            else:
-                schema_file_name = self.fileName().rsplit(".", 1)[0] + ".schema"
+            schema_file_name = self._get_schema_file_name()
 
-            conn = self.get_schema_connection()
+            conn = self._get_schema_connection()
             abs_file_path = "{}/{}".format(conn.path, schema_file_name)
 
             return ";".join(self.smvApp.sc.textFile(abs_file_path).collect())
