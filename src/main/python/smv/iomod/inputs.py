@@ -13,10 +13,12 @@
 
 from smv.iomod.base import SmvInput, AsTable
 
+from smv.smviostrategy import SmvJdbcIoStractegy
+
 
 class SmvJdbcInputTable(SmvInput, AsTable):
     """
-        User need to implement 
+        User need to implement
 
             - connectionName
             - tableName
@@ -24,20 +26,7 @@ class SmvJdbcInputTable(SmvInput, AsTable):
 
     def doRun(self, known):
         conn = self.get_connection()
-        builder = self.smvApp.sqlContext.read\
-            .format('jdbc')\
-            .option('url', conn.url)
-
-        if (conn.driver is not None):
-            builder = builder.option('driver', conn.driver)
-        if (conn.user is not None):
-            builder = builder.option('user', conn.user)
-        if (conn.password is not None):
-            builder = builder.option('password', conn.password)
-
-        return builder\
-            .option('dbtable', self.tableName())\
-            .load()
+        return SmvJdbcIoStractegy(self.smvApp, conn, self.tableName()).read()
 
 __all__ = [
     'SmvJdbcInputTable',

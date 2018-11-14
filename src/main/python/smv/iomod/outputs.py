@@ -12,11 +12,12 @@
 # limitations under the License.
 
 from smv.iomod.base import SmvSparkDfOutput, AsTable
+from smv.smviostrategy import SmvJdbcIoStractegy
 
 
 class SmvJdbcOutputTable(SmvSparkDfOutput, AsTable):
     """
-        User need to implement 
+        User need to implement
 
             - requiresDS
             - connectionName
@@ -41,21 +42,8 @@ class SmvJdbcOutputTable(SmvSparkDfOutput, AsTable):
         data = self.get_spark_df(known)
         conn = self.get_connection()
 
-        builder = data.write\
-            .format("jdbc") \
-            .mode(self.writeMode()) \
-            .option('url', conn.url)
-
-        if (conn.driver is not None):
-            builder = builder.option('driver', conn.driver)
-        if (conn.user is not None):
-            builder = builder.option('user', conn.user)
-        if (conn.password is not None):
-            builder = builder.option('password', conn.password)
-
-        builder \
-            .option("dbtable", self.tableName()) \
-            .save()
+        SmvJdbcIoStractegy(self.smvApp, conn, self.tableName(), self.writeMode())\
+            .write(data)
 
         # return data back for meta calculation
         # TODO: need to review whether we should even calculate meta for output
