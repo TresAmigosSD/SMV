@@ -11,9 +11,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from smv.iomod.base import SmvInput, AsTable
+import abc
 
+from pyspark.sql import DataFrame
+
+from smv.iomod.base import SmvInput, AsTable, AsFile
 from smv.smviostrategy import SmvJdbcIoStrategy, SmvHiveIoStrategy
+from smv.dqm import SmvDQM
+from smv.utils import lazy_property
 
 
 class SmvJdbcInputTable(SmvInput, AsTable):
@@ -41,7 +46,126 @@ class SmvHiveInputTable(SmvInput, AsTable):
         conn = self.get_connection()
         return SmvHiveIoStrategy(self.smvApp, conn, self.tableName()).read()
 
+
+class InputFileWithSchema(SmvInput, AsFile):
+    """Base class for input files which has input schema"""
+
+    def schemaConnectionName(self):
+        """Optional method to specify a schema connection"""
+        return None
+
+    def schemaFileName(self):
+        """Optional name of the schema file relative to the
+            schema connection path
+        """
+        return None
+
+    def userSchema(self):
+        """User-defined schema
+
+            Override this method to define your own schema for the target file.
+            Schema declared in this way take priority over .schema files. For Csv
+            input, Schema should be specified in the format
+            "colName1:colType1;colName2:colType2"
+
+            Returns:
+                (string):
+        """
+        return None
+
+    def get_schema_connection(self):
+        """Return a schema connection with the following priority:
+
+            - User specified in current module through schemaConnectionName method
+            - Configured in the global props files with prop key "smv.schemaConn"
+            - Connection for data (user specified through connectionName method)
+        """
+        name = self.schemaConnectionName()
+        props = self.smvApp.py_smvconf.merged_props()
+        global_schema_conn = props.get('smv.schemaConn')
+        if (name is not None):
+            return self._get_connection_by_name(name)
+        elif (global_schema_conn is not None):
+            return self._get_connection_by_name(global_schema_conn)
+        else:
+            return self.get_connection()
+
+    def get_schema_string(self):
+        """Return the schema string specified by user either through
+            userSchema method, or through a schema file. The priority is the following:
+
+                - userSchema
+                - schema_file_name under schema_connection (logic is in get_schema_connection)
+
+            The schema_file_name is determined by the following logic
+
+                - schemaFileName
+                - fileName replace the post-fix to schema
+        """
+        if (self.userSchema() is not None):
+            return self.userSchema()
+        else:
+            if (self.schemaFileName() is not None):
+                schema_file_name = self.schemaFileName()
+            else:
+                schema_file_name = self.fileName().rsplit(".", 1)[0] + ".schema"
+
+            conn = self.get_schema_connection()
+            abs_file_path = "{}/{}".format(conn.path, schema_file_name)
+
+            return ";".join(self.smvApp.sc.textFile(abs_file_path).collect())
+
+class WithCsvParser(SmvInput):
+    """Mixin for input modules to parse csv data"""
+
+    def failAtParsingError(self):
+        """When set, any parsing error will throw an exception to make sure we can stop early.
+            To tolerant some parsing error, user can
+
+            - Override failAtParsingError to False
+            - Set dqm to SmvDQM().add(FailParserCountPolicy(10))
+                for tolerant <=10 parsing errors
+        """
+        return True
+
+    def dqm(self):
+        """DQM policy
+
+            Override this method to define your own DQM policy (optional).
+            Default is an empty policy.
+
+            Returns:
+                (SmvDQM): a DQM policy
+        """
+        return SmvDQM()
+
+    @lazy_property
+    def dqmValidator(self):
+        return self.smvApp._jvm.DQMValidator(self.dqm())
+
+    def readerLogger(self):
+        if (self.failAtParsingError()):
+            return self.smvApp._jvm.SmvPythonHelper.getTerminateParserLogger()
+        else:
+            return self.dqmValidator.createParserValidator()
+
+class SmvCsvInputFile(InputFileWithSchema, WithCsvParser):
+    def doRun(self, known):
+        file_path = "{}/{}".format(self.get_connection().path, self.fileName())
+        smvSchemaObj = self.smvApp.j_smvPyClient.getSmvSchema()
+        smv_schema = smvSchemaObj.fromString(self.get_schema_string())
+        csv_attr = smv_schema.extractCsvAttributes()
+
+        df = self.smvApp.j_smvPyClient.readCsvFromFile(
+            file_path,
+            smv_schema,
+            csv_attr,
+            self.readerLogger()
+        )
+        return DataFrame(jdf, self.smvApp.sqlContext)
+
 __all__ = [
     'SmvJdbcInputTable',
     'SmvHiveInputTable',
+    'SmvCsvInputFile',
 ]

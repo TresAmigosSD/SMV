@@ -45,14 +45,9 @@ class SmvIoModule(SmvGenericModule):
     def connectionName(self):
         """Name of the connection to read/write"""
 
-    def get_connection(self):
+    def _get_connection_by_name(self, name):
         """Get connection instance from name
-
-            Connetion should be configured in conf file with at least a class FQN
-
-            Ex: smv.conn.con_name.class=smv.conn.SmvJdbcConnectionInfo
         """
-        name = self.connectionName()
         props = self.smvApp.py_smvconf.merged_props()
         class_key = "smv.conn.{}.class".format(name)
 
@@ -64,6 +59,16 @@ class SmvIoModule(SmvGenericModule):
             return ConnClass(name, props)
         else:
             raise SmvRuntimeError("Connection name {} is not configured with a class".format(name))
+
+    def get_connection(self):
+        """Get data connection instance from connectionName()
+
+            Connetion should be configured in conf file with at least a class FQN
+
+            Ex: smv.conn.con_name.class=smv.conn.SmvJdbcConnectionInfo
+        """
+        name = self.connectionName()
+        return self._get_connection_by_name(name)
 
 
 class SmvInput(SmvIoModule):
@@ -123,6 +128,17 @@ class AsTable(object):
     @abc.abstractmethod
     def tableName(self):
         """The user-specified table name to write to
+
+            Returns:
+                (string)
+        """
+
+
+class AsFile(object):
+    """Mixin to assure a fileName method"""
+    @abc.abstractmethod
+    def fileName(self):
+        """User-specified file name relative to the path defined in the connection
 
             Returns:
                 (string)

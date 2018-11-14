@@ -21,3 +21,7 @@ class SmvJdbcConnectionInfo(SmvConnectionInfo):
 class SmvHiveConnectionInfo(SmvConnectionInfo):
     def attributes(self):
         return ['schema']
+
+class SmvHdfsConnectionInfo(SmvConnectionInfo):
+    def attributes(self):
+        return ['path']
