@@ -299,3 +299,10 @@ id:integer"""
         res = self.df("stage.modules.NewCsvFile2")
         exp = self.createDF("name:String;id:Integer", "Bob,1;Fred,2")
         self.should_be_same(res, exp)
+
+    def test_csv_diff_schema_file_name(self):
+        self._create_csv_file("csvtest/csv1.csv")
+        self._create_csv_schema("conn2/csv1.csv.schema")
+        res = self.df("stage.modules.NewCsvFile3")
+        exp = self.createDF("name:String;id:Integer", "Bob,1;Fred,2")
+        self.should_be_same(res, exp)
