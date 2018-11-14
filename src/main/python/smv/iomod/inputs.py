@@ -100,7 +100,7 @@ class InputFileWithSchema(SmvInput, AsFile):
             return self.schemaFileName()
         else:
             return self.fileName().rsplit(".", 1)[0] + ".schema"
-        
+
     def get_schema_string(self):
         """Return the schema string specified by user either through
             userSchema method, or through a schema file. The priority is the following:
@@ -168,8 +168,64 @@ class SmvCsvInputFile(InputFileWithSchema, WithCsvParser):
         )
         return DataFrame(jdf, self.smvApp.sqlContext)
 
+
+class SmvMultiCsvInputFiles(InputFileWithSchema, WithCsvParser):
+    # Override schema_file_name logic
+
+    @abc.abstractmethod
+    def dirName(self):
+        """Path to the directory containing the csv files
+            relative to the path defined in the connection
+
+            Returns:
+                (str)
+        """
+
+    def _get_schema_file_name(self):
+        """The schema_file_name is determined by the following logic
+
+                - schemaFileName
+                - dirName with post-fix schema
+        """
+        if (self.schemaFileName() is not None):
+            return self.schemaFileName()
+        else:
+            return self.dirName() + ".schema"
+
+    def fileName(self):
+        return None
+
+    def doRun(self, known):
+        dir_path = "{}/{}".format(self.get_connection().path, self.dirName())
+        smvSchemaObj = self.smvApp.j_smvPyClient.getSmvSchema()
+        smv_schema = smvSchemaObj.fromString(self.get_schema_string())
+        csv_attr = smv_schema.extractCsvAttributes()
+
+        flist = self.smvApp._jvm.SmvHDFS.dirList(dir_path).array()
+        # ignore all hidden files in the data dir
+        filesInDir = ["{}/{}".format(dir_path, n) for n in flist if not n.startswith(".")]
+
+        if (not filesInDir):
+            raise SmvRuntimeError("There are no data files in {}".format(dir_path))
+
+        combinedJdf = None
+        reader_logger = self.readerLogger()
+        for filePath in filesInDir:
+            jdf = self.smvApp.j_smvPyClient.readCsvFromFile(
+                filePath,
+                smv_schema,
+                csv_attr,
+                reader_logger
+            )
+            combinedJdf = jdf if (combinedJdf is None) else combinedJdf.unionAll(jdf)
+
+        return DataFrame(combinedJdf, self.smvApp.sqlContext)
+
+
+
 __all__ = [
     'SmvJdbcInputTable',
     'SmvHiveInputTable',
     'SmvCsvInputFile',
+    'SmvMultiCsvInputFiles',
 ]
