@@ -89,4 +89,5 @@ class SmvCsvOutputFile(SmvSparkDfOutput, AsFile):
 __all__ = [
     'SmvJdbcOutputTable',
     'SmvHiveOutputTable',
+    'SmvCsvOutputFile',
 ]
