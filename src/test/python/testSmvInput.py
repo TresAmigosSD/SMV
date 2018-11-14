@@ -312,3 +312,12 @@ id:integer"""
         res = self.df("stage.modules.NewCsvFile4")
         exp = self.createDF("name2:String;id2:Integer", "Bob,1;Fred,2")
         self.should_be_same(res, exp)
+
+    def test_multi_csv_basic(self):
+        self.createTempInputFile("multi_csv/f1", "col1\na\n")
+        self.createTempInputFile("multi_csv/f2", "col1\nb\n")
+        self.createTempInputFile("multi_csv.schema", "col1: String\n")
+
+        res = self.df("stage.modules.NewMultiCsvFiles1")
+        exp = self.createDF("col1:String", "a;b")
+        self.should_be_same(res, exp)

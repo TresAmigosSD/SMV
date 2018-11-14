@@ -14,7 +14,7 @@
 from smv import *
 from smv.dqm import *
 from smv.functions import smvStrCat
-from smv.iomod import SmvCsvInputFile
+from smv.iomod import SmvCsvInputFile, SmvMultiCsvInputFiles
 
 import pyspark.sql.functions as F
 
@@ -180,3 +180,10 @@ class NewCsvFile4(SmvCsvInputFile):
 
     def userSchema(self):
         return "name2:String;id2:Integer"
+
+class NewMultiCsvFiles1(SmvMultiCsvInputFiles):
+    def connectionName(self):
+        return "my_hdfs"
+    
+    def dirName(self):
+        return "multi_csv"
