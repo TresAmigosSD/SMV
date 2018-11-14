@@ -11,7 +11,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from smv.iomod.base import SmvSparkDfOutput, AsTable
+from smv.iomod.base import SmvSparkDfOutput, AsTable, AsHiveTable
 from smv.smviostrategy import SmvJdbcIoStractegy
 
 
@@ -52,7 +52,7 @@ class SmvJdbcOutputTable(SmvSparkDfOutput, WithSparkDfWriter, AsTable):
         return data
 
 
-class SmvHiveOutputTable(SmvSparkDfOutput, WithSparkDfWriter, AsTable):
+class SmvHiveOutputTable(SmvSparkDfOutput, WithSparkDfWriter, AsHiveTable):
     """
         User need to implement
 

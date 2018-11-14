@@ -12,6 +12,7 @@
 # limitations under the License.
 
 from smv import SmvApp, SmvModule, SmvOutput, SmvHiveTable
+from smv.iomod import SmvHiveInputTable, SmvHiveOutputTable
 
 class M(SmvModule, SmvOutput):
     def requiresDS(self): return []
@@ -33,3 +34,14 @@ class MyHive(SmvHiveTable):
 class MyHiveWithQuery(SmvHiveTable):
     def tableName(self): return "M"
     def tableQuery(self): return "from M select k"
+
+
+class NewHiveInput(SmvHiveInputTable):
+    def tableName(self): return "M"
+    def connectionName(self): return "my_hive"
+
+class NewHiveOutput(SmvHiveOutputTable):
+    def requiresDS(self):
+        return [NewHiveInput]
+    def tableName(self): return "WriteOutM"
+    def connectionName(self): return "my_hive"
