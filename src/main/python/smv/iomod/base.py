@@ -147,3 +147,14 @@ class SmvSparkDfOutput(SmvOutput):
         self._assert_data_is_df(data)
 
         return data
+
+
+class AsHiveTable(SmvIoModule, AsTable):
+    """Mixin for Hive table I/O class for common hive conn handling"""
+
+    def table_with_schema(self):
+        conn = self.get_connection()
+        if (conn.schema is None):
+            return self.tableName()
+        else:
+            return "{}.{}".format(conn.schema, self.tableName())

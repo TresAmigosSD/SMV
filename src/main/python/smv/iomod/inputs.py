@@ -11,7 +11,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from smv.iomod.base import SmvInput, AsTable
+from smv.iomod.base import SmvInput, AsTable, AsHiveTable
 
 from smv.smviostrategy import SmvJdbcIoStractegy
 
@@ -28,6 +28,20 @@ class SmvJdbcInputTable(SmvInput, AsTable):
         conn = self.get_connection()
         return SmvJdbcIoStractegy(self.smvApp, conn, self.tableName()).read()
 
+
+class SmvHiveInputTable(SmvInput, AsHiveTable):
+    """
+        User need to implement:
+
+            - connectionName
+            - tableName
+    """
+
+    def doRun(self, known):
+        query = "select * from {}".format(self.table_with_schema())
+        return self.smvApp.sqlContext.sql(query)
+
 __all__ = [
     'SmvJdbcInputTable',
+    'SmvHiveInputTable',
 ]
