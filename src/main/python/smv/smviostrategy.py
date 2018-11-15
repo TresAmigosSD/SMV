@@ -31,6 +31,7 @@ except ImportError:
     import pickle as pickle_lib
 
 class SmvIoStrategy(ABC):
+    """Base class for all module I/O, including read, write and persistence"""
     @abc.abstractmethod
     def read(self):
         """Read data from persisted"""
@@ -40,6 +41,7 @@ class SmvIoStrategy(ABC):
         """Write data to persist file/db"""
 
 class SmvPersistenceStrategy(SmvIoStrategy):
+    """Base class for IO strategy which used for persisting data"""
     @abc.abstractmethod
     def isPersisted(self):
         """Whether the data got successfully persisted before"""
