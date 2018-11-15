@@ -12,7 +12,7 @@
 # limitations under the License.
 
 from smv.modulesvisitor import ModulesVisitor
-from smv.smviostrategy import SmvCsvOnHdfsIoStrategy, SmvJsonOnHdfsIoStrategy
+from smv.smviostrategy import SmvCsvPersistenceStrategy, SmvJsonOnHdfsPersistenceStrategy
 from smv.smvmetadata import SmvMetaHistory
 from smv.runinfo import SmvRunInfoCollector
 from smv.utils import scala_seq_to_list, is_string
@@ -29,16 +29,16 @@ class SmvModuleRunner(object):
         self.visitor = ModulesVisitor(modules)
 
     def run(self, forceRun=False):
-        # a set of modules which need to run post_action, keep tracking 
+        # a set of modules which need to run post_action, keep tracking
         # to make sure post_action run one and only one time for each TX
         # the set will be updated by _create_df, _create_meta and _force_post
         # and eventually be emptied out
         # See docs/dev/SmvGenericModule/SmvModuleRunner.md for details
         mods_to_run_post_action = set(self.visitor.modules_needed_for_run)
 
-        # a map from urn to already run DF, since the `run` interface of 
-        # SmvModule takes a map of class => df, the map here have to be 
-        # keyed by class method instead of `versioned_fqn`, which is only 
+        # a map from urn to already run DF, since the `run` interface of
+        # SmvModule takes a map of class => df, the map here have to be
+        # keyed by class method instead of `versioned_fqn`, which is only
         # in the resolved instance
         known = {}
 
@@ -85,10 +85,10 @@ class SmvModuleRunner(object):
             publish_meta_path = publish_base_path + ".meta"
             publish_hist_path = publish_base_path + ".hist"
 
-            SmvCsvOnHdfsIoStrategy(m.smvApp, m.fqn(), None, publish_csv_path).write(m.data)
-            SmvJsonOnHdfsIoStrategy(m.smvApp, publish_meta_path).write(m.module_meta.toJson())
+            SmvCsvPersistenceStrategy(m.smvApp, m.fqn(), None, publish_csv_path).write(m.data)
+            SmvJsonOnHdfsPersistenceStrategy(m.smvApp, publish_meta_path).write(m.module_meta.toJson())
             hist = self.smvApp._read_meta_hist(m)
-            SmvJsonOnHdfsIoStrategy(m.smvApp, publish_hist_path).write(hist.toJson())
+            SmvJsonOnHdfsPersistenceStrategy(m.smvApp, publish_hist_path).write(hist.toJson())
 
     def publish_to_hive(self):
         # run before publish
@@ -117,7 +117,7 @@ class SmvModuleRunner(object):
         self.visitor.dfs_visit(cleaner, None)
 
     def _create_df(self, known, need_post, collector, forceRun=False, is_quick_run=False):
-        # run module and create df. when persisting, post_action 
+        # run module and create df. when persisting, post_action
         # will run on current module and all upstream modules
         def runner(m, state):
             (urn2df, run_set, collector) = state
@@ -136,6 +136,6 @@ class SmvModuleRunner(object):
                 mod.force_post_action(run_set, coll)
             # Note: we used bfs_visit here run downstream first
             # In case of A<-B<-C all need to run, this way will only
-            # need to force action on C, and A and B's post action can 
+            # need to force action on C, and A and B's post action can
             # also be calculated
             self.visitor.bfs_visit(force_run, (need_post, collector), need_to_run_only=True)

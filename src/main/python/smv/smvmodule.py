@@ -24,7 +24,7 @@ from datetime import datetime
 from smv.dqm import SmvDQM
 from smv.error import SmvRuntimeError
 from smv.utils import pickle_lib, lazy_property
-from smv.smviostrategy import SmvCsvOnHdfsIoStrategy, SmvJsonOnHdfsIoStrategy, SmvPicklableOnHdfsIoStrategy, SmvParquetOnHdfsIoStrategy
+from smv.smviostrategy import SmvCsvPersistenceStrategy, SmvJsonOnHdfsPersistenceStrategy, SmvPicklablePersistenceStrategy, SmvParquetPersistenceStrategy
 from smv.smvgenericmodule import SmvProcessModule
 
 class SmvOutput(object):
@@ -42,7 +42,7 @@ class SmvOutput(object):
                 (string)
         """
         return None
-    
+
 
 class SmvSparkDfModule(SmvProcessModule):
     """Base class for SmvModules create Spark DFs
@@ -64,7 +64,7 @@ class SmvSparkDfModule(SmvProcessModule):
     #
     # - isEphemeral: Optional, default False
     # - description: Optional, default class docstr
-    # - requiresDS: Required 
+    # - requiresDS: Required
     # - requiresConfig: Optional, default []
     # - requiresLib: Optional, default []
     # - metadata: Optional, default {}
@@ -139,7 +139,7 @@ class SmvSparkDfModule(SmvProcessModule):
         return self.dqmValidator.totalRecords() > 0
 
     def calculate_edd(self):
-        """When config smv.forceEdd flag is true, run edd calculation. 
+        """When config smv.forceEdd flag is true, run edd calculation.
         """
         def get_edd(df):
             return self.smvApp._jvm.SmvPythonHelper.getEddJsonArray(df._jdf)
@@ -161,7 +161,7 @@ class SmvSparkDfModule(SmvProcessModule):
         if (self.smvApp.py_smvconf.force_edd()):
             self.calculate_edd()
 
-    # Override this method to add the dqmTimeElapsed 
+    # Override this method to add the dqmTimeElapsed
     def _finalize_meta(self):
         super(SmvSparkDfModule, self)._finalize_meta()
         self.module_meta.addSchemaMetadata(self.data)
@@ -182,12 +182,12 @@ class SmvSparkDfModule(SmvProcessModule):
     def persistStrategy(self):
         _format = self.smvApp.py_smvconf.df_persist_format()
         if (_format == "smvcsv_on_hdfs"):
-            return SmvCsvOnHdfsIoStrategy(self.smvApp, self.fqn(), self.ver_hex())
+            return SmvCsvPersistenceStrategy(self.smvApp, self.fqn(), self.ver_hex())
         elif (_format == "parquet_on_hdfs"):
-            return SmvParquetOnHdfsIoStrategy(self.smvApp, self.fqn(), self.ver_hex())
-    
+            return SmvParquetPersistenceStrategy(self.smvApp, self.fqn(), self.ver_hex())
+
     def metaStrategy(self):
-        return SmvJsonOnHdfsIoStrategy(self.smvApp, self.meta_path())
+        return SmvJsonOnHdfsPersistenceStrategy(self.smvApp, self.meta_path())
 
     @lazy_property
     def dqmValidator(self):
@@ -226,9 +226,9 @@ class SmvSparkDfModule(SmvProcessModule):
             df.createOrReplaceTempView("dftable")
             for l in queries:
                 self.smvApp.sqlContext.sql(l)
-        
+
         self._do_action_on_df(run_query, self.data, "PUBLISH TO HIVE")
-    
+
     def publishThroughJDBC(self):
         url = self.smvApp.jdbcUrl()
         driver = self.smvApp.jdbcDriver()
@@ -295,10 +295,10 @@ class SmvModel(SmvProcessModule):
         return "Model"
 
     def persistStrategy(self):
-        return SmvPicklableOnHdfsIoStrategy(self.smvApp, self.fqn(), self.ver_hex())
+        return SmvPicklablePersistenceStrategy(self.smvApp, self.fqn(), self.ver_hex())
 
     def metaStrategy(self):
-        return SmvJsonOnHdfsIoStrategy(self.smvApp, self.meta_path())
+        return SmvJsonOnHdfsPersistenceStrategy(self.smvApp, self.meta_path())
 
 class SmvModelExec(SmvModule):
     """SmvModule that runs a model produced by an SmvModel

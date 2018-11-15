@@ -18,7 +18,7 @@ from pyspark.sql import DataFrame
 
 from smv.error import SmvRuntimeError
 from smv.smvgenericmodule import SmvGenericModule
-from smv.smviostrategy import SmvNonOpIoStrategy, SmvJsonOnHdfsIoStrategy
+from smv.smviostrategy import SmvNonOpPersistenceStrategy, SmvJsonOnHdfsPersistenceStrategy
 
 
 class SmvIoModule(SmvGenericModule):
@@ -35,11 +35,11 @@ class SmvIoModule(SmvGenericModule):
 
     def persistStrategy(self):
         """Never persisting input/output modules"""
-        return SmvNonOpIoStrategy()
+        return SmvNonOpPersistenceStrategy()
 
     def metaStrategy(self):
         """Still persist meta for input/output modules"""
-        return SmvJsonOnHdfsIoStrategy(self.smvApp, self.meta_path())
+        return SmvJsonOnHdfsPersistenceStrategy(self.smvApp, self.meta_path())
 
     @abc.abstractmethod
     def connectionName(self):

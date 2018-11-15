@@ -12,7 +12,7 @@
 # limitations under the License.
 
 from smv import *
-from smv.smviostrategy import SmvParquetOnHdfsIoStrategy
+from smv.smviostrategy import SmvParquetPersistenceStrategy
 
 class M1(SmvModule):
     def requiresDS(self):
@@ -21,7 +21,7 @@ class M1(SmvModule):
         return self.smvApp.createDF("k:String;v:Integer", "a,1;b,2")
 
     def persistStrategy(self):
-        return SmvParquetOnHdfsIoStrategy(self.smvApp, self.fqn(), self.ver_hex())
+        return SmvParquetPersistenceStrategy(self.smvApp, self.fqn(), self.ver_hex())
 
 class M2(SmvModule):
     def requiresDS(self):

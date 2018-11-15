@@ -50,7 +50,7 @@ class SmvPersistenceStrategy(SmvIoStrategy):
     def remove(self):
         """Remove persisted file(s)"""
 
-class SmvNonOpIoStrategy(SmvPersistenceStrategy):
+class SmvNonOpPersistenceStrategy(SmvPersistenceStrategy):
     """Never persist, isPersisted always returns false"""
     def read(self):
         pass
@@ -64,7 +64,7 @@ class SmvNonOpIoStrategy(SmvPersistenceStrategy):
     def remove(self):
         pass
 
-class SmvFileOnHdfsIoStrategy(SmvPersistenceStrategy):
+class SmvFileOnHdfsPersistenceStrategy(SmvPersistenceStrategy):
     """Abstract class for persisting data to Hdfs file system
         handling general tasks as file name creation, locking when write, etc.
 
@@ -109,7 +109,7 @@ class SmvFileOnHdfsIoStrategy(SmvPersistenceStrategy):
         self.smvApp._jvm.SmvHDFS.deleteFile(self._file_path)
 
 
-class SmvCsvOnHdfsIoStrategy(SmvFileOnHdfsIoStrategy):
+class SmvCsvPersistenceStrategy(SmvFileOnHdfsPersistenceStrategy):
     """Persist strategy for using Smv CSV IO handler
 
         Args:
@@ -121,7 +121,7 @@ class SmvCsvOnHdfsIoStrategy(SmvFileOnHdfsIoStrategy):
                 parameters are ignored
     """
     def __init__(self, smvApp, fqn, ver_hex, file_path=None):
-        super(SmvCsvOnHdfsIoStrategy, self).__init__(smvApp, fqn, ver_hex, 'csv', file_path)
+        super(SmvCsvPersistenceStrategy, self).__init__(smvApp, fqn, ver_hex, 'csv', file_path)
 
     @property
     def _schema_path(self):
@@ -148,9 +148,9 @@ class SmvCsvOnHdfsIoStrategy(SmvFileOnHdfsIoStrategy):
         self.smvApp._jvm.SmvHDFS.deleteFile(self._schema_path)
 
 
-class SmvJsonOnHdfsIoStrategy(SmvFileOnHdfsIoStrategy):
+class SmvJsonOnHdfsPersistenceStrategy(SmvFileOnHdfsPersistenceStrategy):
     def __init__(self, smvApp, path):
-        super(SmvJsonOnHdfsIoStrategy, self).__init__(smvApp, None, None, None, path)
+        super(SmvJsonOnHdfsPersistenceStrategy, self).__init__(smvApp, None, None, None, path)
 
     def _read(self):
         return self.smvApp._jvm.SmvHDFS.readFromFile(self._file_path)
@@ -159,9 +159,9 @@ class SmvJsonOnHdfsIoStrategy(SmvFileOnHdfsIoStrategy):
         self.smvApp._jvm.SmvHDFS.writeToFile(rawdata, self._file_path)
 
 
-class SmvPicklableOnHdfsIoStrategy(SmvFileOnHdfsIoStrategy):
+class SmvPicklablePersistenceStrategy(SmvFileOnHdfsPersistenceStrategy):
     def __init__(self, smvApp, fqn, ver_hex, file_path=None):
-        super(SmvPicklableOnHdfsIoStrategy, self).__init__(smvApp, fqn, ver_hex, 'pickle', file_path)
+        super(SmvPicklablePersistenceStrategy, self).__init__(smvApp, fqn, ver_hex, 'pickle', file_path)
 
     def _read(self):
         # reverses result of applying _write. see _write for explanation.
@@ -180,7 +180,7 @@ class SmvPicklableOnHdfsIoStrategy(SmvFileOnHdfsIoStrategy):
         self.smvApp._jvm.SmvHDFS.writeToFile(hex_encoded_pickle_as_str, self._file_path)
 
 
-class SmvParquetOnHdfsIoStrategy(SmvFileOnHdfsIoStrategy):
+class SmvParquetPersistenceStrategy(SmvFileOnHdfsPersistenceStrategy):
     """Persist strategy for using Spark native parquet
 
         Args:
@@ -192,7 +192,7 @@ class SmvParquetOnHdfsIoStrategy(SmvFileOnHdfsIoStrategy):
                 parameters are ignored
     """
     def __init__(self, smvApp, fqn, ver_hex, file_path=None):
-        super(SmvParquetOnHdfsIoStrategy, self).__init__(smvApp, fqn, ver_hex, 'parquet', file_path)
+        super(SmvParquetPersistenceStrategy, self).__init__(smvApp, fqn, ver_hex, 'parquet', file_path)
 
     @property
     def _semaphore_path(self):
