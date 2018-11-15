@@ -272,7 +272,7 @@ class SmvHiveIoStrategy(SmvIoStrategy):
 
         Args:
             smvApp(SmvApp):
-            conn_info(SmvConnectionInfo): Jdbc connection info
+            conn_info(SmvConnectionInfo): Hive connection info
             table_name(str): the table to read from/write to
             write_mode(str): spark df writer's SaveMode
     """
