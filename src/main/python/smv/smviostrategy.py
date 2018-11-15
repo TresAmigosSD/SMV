@@ -39,6 +39,7 @@ class SmvIoStrategy(ABC):
     def write(self, raw_data):
         """Write data to persist file/db"""
 
+class SmvPersistenceStrategy(SmvIoStrategy):
     @abc.abstractmethod
     def isPersisted(self):
         """Whether the data got successfully persisted before"""
@@ -47,7 +48,7 @@ class SmvIoStrategy(ABC):
     def remove(self):
         """Remove persisted file(s)"""
 
-class SmvNonOpIoStrategy(SmvIoStrategy):
+class SmvNonOpIoStrategy(SmvPersistenceStrategy):
     """Never persist, isPersisted always returns false"""
     def read(self):
         pass
@@ -61,7 +62,7 @@ class SmvNonOpIoStrategy(SmvIoStrategy):
     def remove(self):
         pass
 
-class SmvFileOnHdfsIoStrategy(SmvIoStrategy):
+class SmvFileOnHdfsIoStrategy(SmvPersistenceStrategy):
     """Abstract class for persisting data to Hdfs file system
         handling general tasks as file name creation, locking when write, etc.
 
@@ -260,12 +261,6 @@ class SmvJdbcIoStrategy(SmvIoStrategy):
             .option("dbtable", self.table) \
             .save()
 
-    def isPersisted(self):
-        raise NotImplementedError("SmvJdbcIoStrategy is only for I/O, not for data persisting")
-
-    def remove(self):
-        raise NotImplementedError("SmvJdbcIoStrategy is only for I/O, can't remove")
-
 
 class SmvHiveIoStrategy(SmvIoStrategy):
     """Persist strategy for spark Hive IO
@@ -300,8 +295,3 @@ class SmvHiveIoStrategy(SmvIoStrategy):
 
     # TODO: we should allow persisting intermidiate results in Hive also
     # For that case, however need to specify a convention to store semaphore
-    def isPersisted(self):
-        raise NotImplementedError("SmvHiveIoStrategy is only for I/O, not for data persisting")
-
-    def remove(self):
-        raise NotImplementedError("SmvHiveIoStrategy is only for I/O, can't remove")
