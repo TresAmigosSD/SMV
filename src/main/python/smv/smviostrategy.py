@@ -268,7 +268,7 @@ class SmvJdbcIoStrategy(SmvIoStrategy):
 
 
 class SmvHiveIoStrategy(SmvIoStrategy):
-    """Persist strategy for spark JDBC IO
+    """Persist strategy for spark Hive IO
 
         Args:
             smvApp(SmvApp):
