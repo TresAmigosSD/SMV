@@ -28,11 +28,7 @@ private[smv] class FileIOHandler(
     schemaPath: Option[String] = None,
     parserValidator: ParserLogger = TerminateParserLogger
 ) {
-  import sparkSession.implicits._
-
   private def fullSchemaPath = schemaPath.getOrElse(SmvSchema.dataPathToSchemaPath(dataPath))
-
-  def readSchema(): SmvSchema = SmvSchema.fromFile(sparkSession.sparkContext, fullSchemaPath)
 
   /**
    * Create a DataFrame from the given data/schema path and CSV attributes.
@@ -99,14 +95,11 @@ private[smv] class FileIOHandler(
   // guaranteed in order when read back in, we need to only store the body w/o the header
   private[smv] def saveAsCsvWithSchema(
       df: DataFrame,
-      schemaWithMeta: SmvSchema = null,
       csvAttributes: CsvAttributes = CsvAttributes.defaultCsv,
       strNullValue: String = ""
   ) {
 
-    val schema = if (schemaWithMeta == null) { SmvSchema.fromDataFrame(df, strNullValue) } else {
-      schemaWithMeta
-    }
+    val schema = SmvSchema.fromDataFrame(df, strNullValue)
     val schemaWithAttributes = schema.addCsvAttributes(csvAttributes)
     val qc                   = csvAttributes.quotechar
 
@@ -116,7 +109,7 @@ private[smv] class FileIOHandler(
       fieldNames.map(_.trim).map(fn => qc + fn + qc).mkString(csvAttributes.delimiter.toString)
 
     val csvHeaderRDD = df.sqlContext.sparkContext.parallelize(Array(headerStr), 1)
-    val csvBodyRDD   = df.map(schema.rowToCsvString(_, csvAttributes)).rdd
+    val csvBodyRDD   = df.rdd.map(schema.rowToCsvString(_, csvAttributes))
 
     //As far as I know the union maintain the order. So the header will end up being the
     //first line in the saved file.
@@ -182,22 +175,4 @@ private[smv] class CSVStringParser[U](
       .collect { case Some(l) => l }
   }
 
-  def parseFrl(iterator: Iterator[String], startLenPairs: Seq[(Int, Int)]): Iterator[U] = {
-    val add: (Exception, String) => Unit = { (e, r) =>
-      parserV.addWithReason(e, r)
-    }
-    iterator
-      .map { r =>
-        try {
-          val parsed = startLenPairs.map {
-            case (start, len) =>
-              r.substring(start, start + len)
-          }
-          Some(f(r, parsed))
-        } catch {
-          case e: Exception => add(e, r); None
-        }
-      }
-      .collect { case Some(l) => l }
-  }
 }

@@ -40,10 +40,9 @@ class SmvDFHelper(df: DataFrame) {
    */
   def saveAsCsvWithSchema(dataPath: String,
                           ca: CsvAttributes = CsvAttributes.defaultCsv,
-                          schemaWithMeta: SmvSchema = null,
                           strNullValue: String = "") {
     val handler = new FileIOHandler(df.sparkSession, dataPath)
-    handler.saveAsCsvWithSchema(df, schemaWithMeta, ca, strNullValue)
+    handler.saveAsCsvWithSchema(df, ca, strNullValue)
   }
 
   def _smvDumpDF(): String = {
@@ -317,7 +316,7 @@ class SmvDFHelper(df: DataFrame) {
    * Note the use of the `SmvJoinType.Inner` const instead of the naked "inner" string.
    *
    * When either of the left or the right table has null keys, those records will not be in
-   * the output table. However sometimes user may expect null keys on the left join with 
+   * the output table. However sometimes user may expect null keys on the left join with
    * null key on the right. In that case, need to specify `isNullSafe = true`.
    */
 
@@ -325,7 +324,7 @@ class SmvDFHelper(df: DataFrame) {
       otherPlan: DataFrame,
       keys: Seq[String],
       joinType: String,
-      isNullSafe: Boolean = false): DataFrame = 
+      isNullSafe: Boolean = false): DataFrame =
     df.joinByKey(otherPlan, keys, joinType, isNullSafe = isNullSafe)
 
   private[smv] def joinByKey(
@@ -353,7 +352,7 @@ class SmvDFHelper(df: DataFrame) {
     val joinedKeys    = keys zip rightKeys
     val renamedFields = joinedKeys.map { case (l, r) => (l -> r) }
     val renamedOther  = otherPlan.smvRenameField(renamedFields: _*)
-    val joinOpt       = joinedKeys.map { case (l, r) => 
+    val joinOpt       = joinedKeys.map { case (l, r) =>
       if(isNullSafe) ($"$l" <=> $"$r") else ($"$l" === $"$r")
     }.reduce(_ && _)
 
