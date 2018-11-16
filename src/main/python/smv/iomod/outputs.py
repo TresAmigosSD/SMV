@@ -12,19 +12,11 @@
 # limitations under the License.
 
 from smv.iomod.base import SmvSparkDfOutput, AsTable
-from smv.smviostrategy import SmvJdbcIoStractegy
+from smv.smviostrategy import SmvJdbcIoStrategy, SmvHiveIoStrategy
 
 
-class SmvJdbcOutputTable(SmvSparkDfOutput, AsTable):
-    """
-        User need to implement
-
-            - requiresDS
-            - connectionName
-            - tableName
-            - writeMode: optional, default "errorifexists"
-    """
-
+class WithSparkDfWriter(object):
+    """Mixin for output modules using spark df writer"""
     def writeMode(self):
         """
             Write mode for Spark DataFrameWriter.
@@ -38,11 +30,21 @@ class SmvJdbcOutputTable(SmvSparkDfOutput, AsTable):
         return "errorifexists"
 
 
+class SmvJdbcOutputTable(SmvSparkDfOutput, WithSparkDfWriter, AsTable):
+    """
+        User need to implement
+
+            - requiresDS
+            - connectionName
+            - tableName
+            - writeMode: optional, default "errorifexists"
+    """
+
     def doRun(self, known):
         data = self.get_spark_df(known)
         conn = self.get_connection()
 
-        SmvJdbcIoStractegy(self.smvApp, conn, self.tableName(), self.writeMode())\
+        SmvJdbcIoStrategy(self.smvApp, conn, self.tableName(), self.writeMode())\
             .write(data)
 
         # return data back for meta calculation
@@ -50,6 +52,27 @@ class SmvJdbcOutputTable(SmvSparkDfOutput, AsTable):
         return data
 
 
+class SmvHiveOutputTable(SmvSparkDfOutput, WithSparkDfWriter, AsTable):
+    """
+        User need to implement
+
+            - requiresDS
+            - connectionName
+            - tableName
+            - writeMode: optional, default "errorifexists"
+    """
+
+    def doRun(self, known):
+        data = self.get_spark_df(known)
+        conn = self.get_connection()
+
+        SmvHiveIoStrategy(self.smvApp, conn, self.tableName(), self.writeMode())\
+            .write(data)
+
+        return data
+
+
 __all__ = [
     'SmvJdbcOutputTable',
+    'SmvHiveOutputTable',
 ]

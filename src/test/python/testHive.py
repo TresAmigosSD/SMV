@@ -95,3 +95,30 @@ class ReadHiveTableTest(HiveTest):
         mDf = self.df("stage.modules.M").select("k")
         hiveDf = self.df("stage.modules.MyHiveWithQuery")
         self.should_be_same(mDf,hiveDf)
+
+class NewHiveTableTest(HiveTest):
+    @classmethod
+    def smvAppInitArgs(cls):
+        return super(NewHiveTableTest, cls).smvAppInitArgs()\
+            + [
+                'smv.conn.my_hive.class=smv.conn.SmvHiveConnectionInfo',
+                '--publish-hive',
+                '-m',
+                "stage.modules.M"
+            ]
+
+    @classmethod
+    def setUpClass(cls):
+        super(NewHiveTableTest, cls).setUpClass()
+        cls.smvApp.run()
+
+    def test_new_hive_input(self):
+        res = self.df("stage.modules.NewHiveInput")
+        exp = self.smvApp.sqlContext.sql("select * from M")
+        self.should_be_same(res, exp)
+
+    def test_new_hive_output(self):
+        res = self.df("stage.modules.NewHiveOutput")
+        readBack = self.smvApp.sqlContext.sql("select * from WriteOutM")
+        self.should_be_same(res, readBack)
+

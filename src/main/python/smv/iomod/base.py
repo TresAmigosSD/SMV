@@ -18,7 +18,7 @@ from pyspark.sql import DataFrame
 
 from smv.error import SmvRuntimeError
 from smv.smvgenericmodule import SmvGenericModule
-from smv.smviostrategy import SmvNonOpIoStrategy, SmvJsonOnHdfsIoStrategy
+from smv.smviostrategy import SmvNonOpPersistenceStrategy, SmvJsonOnHdfsPersistenceStrategy
 
 
 class SmvIoModule(SmvGenericModule):
@@ -35,19 +35,19 @@ class SmvIoModule(SmvGenericModule):
 
     def persistStrategy(self):
         """Never persisting input/output modules"""
-        return SmvNonOpIoStrategy()
+        return SmvNonOpPersistenceStrategy()
 
     def metaStrategy(self):
         """Still persist meta for input/output modules"""
-        return SmvJsonOnHdfsIoStrategy(self.smvApp, self.meta_path())
+        return SmvJsonOnHdfsPersistenceStrategy(self.smvApp, self.meta_path())
 
     @abc.abstractmethod
     def connectionName(self):
         """Name of the connection to read/write"""
-    
+
     def get_connection(self):
         """Get connection instance from name
-            
+
             Connetion should be configured in conf file with at least a class FQN
 
             Ex: smv.conn.con_name.class=smv.conn.SmvJdbcConnectionInfo
@@ -72,7 +72,7 @@ class SmvInput(SmvIoModule):
         Sub-class need to implement:
 
             - doRun
-    
+
         User need to implement:
 
             - connectionName
@@ -84,7 +84,7 @@ class SmvInput(SmvIoModule):
         return "Input"
 
     def instanceValHash(self):
-        """TODO: need to implement this to depends on connection and 
+        """TODO: need to implement this to depends on connection and
             also table itself"""
         return 0
 
@@ -92,7 +92,7 @@ class SmvOutput(SmvIoModule):
     """Base class for all Output modules
 
         Sub-class need to implement:
-        
+
             - doRun
 
         Within doRun, assert_single_input should be called.

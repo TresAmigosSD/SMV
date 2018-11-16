@@ -31,6 +31,7 @@ except ImportError:
     import pickle as pickle_lib
 
 class SmvIoStrategy(ABC):
+    """Base class for all module I/O, including read, write and persistence"""
     @abc.abstractmethod
     def read(self):
         """Read data from persisted"""
@@ -39,6 +40,8 @@ class SmvIoStrategy(ABC):
     def write(self, raw_data):
         """Write data to persist file/db"""
 
+class SmvPersistenceStrategy(SmvIoStrategy):
+    """Base class for IO strategy which used for persisting data"""
     @abc.abstractmethod
     def isPersisted(self):
         """Whether the data got successfully persisted before"""
@@ -47,7 +50,7 @@ class SmvIoStrategy(ABC):
     def remove(self):
         """Remove persisted file(s)"""
 
-class SmvNonOpIoStrategy(SmvIoStrategy):
+class SmvNonOpPersistenceStrategy(SmvPersistenceStrategy):
     """Never persist, isPersisted always returns false"""
     def read(self):
         pass
@@ -61,7 +64,7 @@ class SmvNonOpIoStrategy(SmvIoStrategy):
     def remove(self):
         pass
 
-class SmvFileOnHdfsIoStrategy(SmvIoStrategy):
+class SmvFileOnHdfsPersistenceStrategy(SmvPersistenceStrategy):
     """Abstract class for persisting data to Hdfs file system
         handling general tasks as file name creation, locking when write, etc.
 
@@ -106,7 +109,7 @@ class SmvFileOnHdfsIoStrategy(SmvIoStrategy):
         self.smvApp._jvm.SmvHDFS.deleteFile(self._file_path)
 
 
-class SmvCsvOnHdfsIoStrategy(SmvFileOnHdfsIoStrategy):
+class SmvCsvPersistenceStrategy(SmvFileOnHdfsPersistenceStrategy):
     """Persist strategy for using Smv CSV IO handler
 
         Args:
@@ -118,7 +121,7 @@ class SmvCsvOnHdfsIoStrategy(SmvFileOnHdfsIoStrategy):
                 parameters are ignored
     """
     def __init__(self, smvApp, fqn, ver_hex, file_path=None):
-        super(SmvCsvOnHdfsIoStrategy, self).__init__(smvApp, fqn, ver_hex, 'csv', file_path)
+        super(SmvCsvPersistenceStrategy, self).__init__(smvApp, fqn, ver_hex, 'csv', file_path)
 
     @property
     def _schema_path(self):
@@ -145,9 +148,9 @@ class SmvCsvOnHdfsIoStrategy(SmvFileOnHdfsIoStrategy):
         self.smvApp._jvm.SmvHDFS.deleteFile(self._schema_path)
 
 
-class SmvJsonOnHdfsIoStrategy(SmvFileOnHdfsIoStrategy):
+class SmvJsonOnHdfsPersistenceStrategy(SmvFileOnHdfsPersistenceStrategy):
     def __init__(self, smvApp, path):
-        super(SmvJsonOnHdfsIoStrategy, self).__init__(smvApp, None, None, None, path)
+        super(SmvJsonOnHdfsPersistenceStrategy, self).__init__(smvApp, None, None, None, path)
 
     def _read(self):
         return self.smvApp._jvm.SmvHDFS.readFromFile(self._file_path)
@@ -156,9 +159,9 @@ class SmvJsonOnHdfsIoStrategy(SmvFileOnHdfsIoStrategy):
         self.smvApp._jvm.SmvHDFS.writeToFile(rawdata, self._file_path)
 
 
-class SmvPicklableOnHdfsIoStrategy(SmvFileOnHdfsIoStrategy):
+class SmvPicklablePersistenceStrategy(SmvFileOnHdfsPersistenceStrategy):
     def __init__(self, smvApp, fqn, ver_hex, file_path=None):
-        super(SmvPicklableOnHdfsIoStrategy, self).__init__(smvApp, fqn, ver_hex, 'pickle', file_path)
+        super(SmvPicklablePersistenceStrategy, self).__init__(smvApp, fqn, ver_hex, 'pickle', file_path)
 
     def _read(self):
         # reverses result of applying _write. see _write for explanation.
@@ -177,7 +180,7 @@ class SmvPicklableOnHdfsIoStrategy(SmvFileOnHdfsIoStrategy):
         self.smvApp._jvm.SmvHDFS.writeToFile(hex_encoded_pickle_as_str, self._file_path)
 
 
-class SmvParquetOnHdfsIoStrategy(SmvFileOnHdfsIoStrategy):
+class SmvParquetPersistenceStrategy(SmvFileOnHdfsPersistenceStrategy):
     """Persist strategy for using Spark native parquet
 
         Args:
@@ -189,7 +192,7 @@ class SmvParquetOnHdfsIoStrategy(SmvFileOnHdfsIoStrategy):
                 parameters are ignored
     """
     def __init__(self, smvApp, fqn, ver_hex, file_path=None):
-        super(SmvParquetOnHdfsIoStrategy, self).__init__(smvApp, fqn, ver_hex, 'parquet', file_path)
+        super(SmvParquetPersistenceStrategy, self).__init__(smvApp, fqn, ver_hex, 'parquet', file_path)
 
     @property
     def _semaphore_path(self):
@@ -210,7 +213,15 @@ class SmvParquetOnHdfsIoStrategy(SmvFileOnHdfsIoStrategy):
         return self.smvApp._jvm.SmvHDFS.exists(self._semaphore_path)
 
 
-class SmvJdbcIoStractegy(SmvIoStrategy):
+class SmvJdbcIoStrategy(SmvIoStrategy):
+    """Persist strategy for spark JDBC IO
+
+        Args:
+            smvApp(SmvApp):
+            conn_info(SmvConnectionInfo): Jdbc connection info
+            table_name(str): the table to read from/write to
+            write_mode(str): spark df writer's SaveMode
+    """
     def __init__(self, smvApp, conn_info, table_name, write_mode="errorifexists"):
         self.smvApp = smvApp
         self.conn = conn_info
@@ -252,9 +263,37 @@ class SmvJdbcIoStractegy(SmvIoStrategy):
             .option("dbtable", self.table) \
             .save()
 
-    def isPersisted(self):
-        raise NotImplementedError("SmvJdbcIoStractegy is only for I/O, not for data persisting")
 
-    def remove(self):
-        raise NotImplementedError("SmvJdbcIoStractegy is only for I/O, can't remove")
+class SmvHiveIoStrategy(SmvIoStrategy):
+    """Persist strategy for spark Hive IO
 
+        Args:
+            smvApp(SmvApp):
+            conn_info(SmvConnectionInfo): Hive connection info
+            table_name(str): the table to read from/write to
+            write_mode(str): spark df writer's SaveMode
+    """
+    def __init__(self, smvApp, conn_info, table_name, write_mode="errorifexists"):
+        self.smvApp = smvApp
+        self.conn = conn_info
+        self.table = table_name
+        self.write_mode = write_mode
+
+    def _table_with_schema(self):
+        conn = self.conn
+        if (conn.schema is None):
+            return self.table
+        else:
+            return "{}.{}".format(conn.schema, self.table)
+
+    def read(self):
+        query = "select * from {}".format(self._table_with_schema())
+        return self.smvApp.sqlContext.sql(query)
+
+    def write(self, raw_data):
+        raw_data.write\
+            .mode(self.write_mode)\
+            .saveAsTable(self._table_with_schema())
+
+    # TODO: we should allow persisting intermidiate results in Hive also
+    # For that case, however need to specify a convention to store semaphore

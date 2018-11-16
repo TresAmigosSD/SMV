@@ -37,7 +37,7 @@ from smv.runinfo import SmvRunInfoCollector
 from smv.modulesvisitor import ModulesVisitor
 from smv.smvmodulerunner import SmvModuleRunner
 from smv.smvconfig import SmvConfig
-from smv.smviostrategy import SmvJsonOnHdfsIoStrategy
+from smv.smviostrategy import SmvJsonOnHdfsPersistenceStrategy
 from smv.smvmetadata import SmvMetaHistory
 from smv.smvhdfs import SmvHDFS
 from py4j.protocol import Py4JJavaError
@@ -529,7 +529,7 @@ class SmvApp(object):
             instances does not need to know it"""
         hist_dir = self.all_data_dirs().historyDir
         hist_path = "{}/{}.hist".format(hist_dir, m.fqn())
-        return SmvJsonOnHdfsIoStrategy(self, hist_path)
+        return SmvJsonOnHdfsPersistenceStrategy(self, hist_path)
 
     def _read_meta_hist(self, m):
         io_strategy = self._hist_io_strategy(m)

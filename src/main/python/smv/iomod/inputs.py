@@ -13,7 +13,7 @@
 
 from smv.iomod.base import SmvInput, AsTable
 
-from smv.smviostrategy import SmvJdbcIoStractegy
+from smv.smviostrategy import SmvJdbcIoStrategy, SmvHiveIoStrategy
 
 
 class SmvJdbcInputTable(SmvInput, AsTable):
@@ -26,8 +26,22 @@ class SmvJdbcInputTable(SmvInput, AsTable):
 
     def doRun(self, known):
         conn = self.get_connection()
-        return SmvJdbcIoStractegy(self.smvApp, conn, self.tableName()).read()
+        return SmvJdbcIoStrategy(self.smvApp, conn, self.tableName()).read()
+
+
+class SmvHiveInputTable(SmvInput, AsTable):
+    """
+        User need to implement:
+
+            - connectionName
+            - tableName
+    """
+
+    def doRun(self, known):
+        conn = self.get_connection()
+        return SmvHiveIoStrategy(self.smvApp, conn, self.tableName()).read()
 
 __all__ = [
     'SmvJdbcInputTable',
+    'SmvHiveInputTable',
 ]

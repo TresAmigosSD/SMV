@@ -16,3 +16,8 @@ from smv.conn.smvconnectioninfo import SmvConnectionInfo
 class SmvJdbcConnectionInfo(SmvConnectionInfo):
     def attributes(self):
         return ["url", "driver", "user", "password"]
+
+
+class SmvHiveConnectionInfo(SmvConnectionInfo):
+    def attributes(self):
+        return ['schema']
