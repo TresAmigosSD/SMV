@@ -240,7 +240,7 @@ trait SmvTestUtil extends SparkTestUtil {
   def open(path: String, csvAttr: CsvAttributes = CsvAttributes.defaultCsv) = {
     val fullSchemaPath = SmvSchema.dataPathToSchemaPath(path)
     val smvSchema = SmvSchema.fromFile(sparkSession.sparkContext, fullSchemaPath)
-    val handler = new FileIOHandler(sparkSession, path, None, dqm.TerminateParserLogger)
+    val handler = new FileIOHandler(sparkSession, path, dqm.TerminateParserLogger)
     handler.csvFileWithSchema(csvAttr, smvSchema)
   }
 

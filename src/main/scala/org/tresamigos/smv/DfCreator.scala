@@ -28,7 +28,7 @@ private[smv] object DfCreator {
   def createDFWithLogger(sparkSession: SparkSession, schemaStr: String, data: String, parserLogger: ParserLogger) = {
     val schema    = SmvSchema.fromString(schemaStr)
     val dataArray = if (null == data) Array.empty[String] else data.split(";").map(_.trim)
-    val handler = new FileIOHandler(sparkSession, null, None, parserLogger)
+    val handler = new FileIOHandler(sparkSession, null, parserLogger)
     val sc = sparkSession.sparkContext
     handler.csvStringRDDToDF(sc.makeRDD(dataArray), schema, schema.extractCsvAttributes())
   }

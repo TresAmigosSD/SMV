@@ -25,11 +25,8 @@ import org.tresamigos.smv.dqm._
 private[smv] class FileIOHandler(
     sparkSession: SparkSession,
     dataPath: String,
-    schemaPath: Option[String] = None,
     parserValidator: ParserLogger = TerminateParserLogger
 ) {
-  private def fullSchemaPath = schemaPath.getOrElse(SmvSchema.dataPathToSchemaPath(dataPath))
-
   /**
    * Create a DataFrame from the given data/schema path and CSV attributes.
    * If CSV attributes are null, then they are extracted from the schema directly.
@@ -135,6 +132,8 @@ private[smv] class FileIOHandler(
 
     val schema = createSchemaFromDf(df, csvAttributes, strNullValue)
     saveAsCsv(df, schema)
+
+    val fullSchemaPath = SmvSchema.dataPathToSchemaPath(dataPath)
     schema.saveToFile(df.sqlContext.sparkContext, fullSchemaPath)
   }
 
