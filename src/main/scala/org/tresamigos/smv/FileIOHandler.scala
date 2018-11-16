@@ -55,18 +55,6 @@ private[smv] class FileIOHandler(
     csvStringRDDToDF(noHeadRDD, schema, ca)
   }
 
-  private[smv] def frlFileWithSchema(schemaOpt: Option[SmvSchema] = None): DataFrame = {
-    val sc     = sparkSession.sparkContext
-    val slices = SmvSchema.slicesFromFile(sc, fullSchemaPath)
-    val schema = schemaOpt.getOrElse { readSchema() }
-
-    require(slices.size == schema.getSize)
-
-    // TODO: show we allow header in Frl files?
-    val strRDD = sc.textFile(dataPath)
-    frlStringRDDToDF(strRDD, schema, slices)
-  }
-
   private def seqStringRDDToDF(
       rdd: RDD[Seq[String]],
       schema: SmvSchema
@@ -104,19 +92,6 @@ private[smv] class FileIOHandler(
       new CSVStringParser[Seq[String]]((r: String, parsed: Seq[String]) => parsed, parserV)
     val _ca          = csvAttributes
     val seqStringRdd = rdd.mapPartitions { parser.parseCSV(_)(_ca) }
-    seqStringRDDToDF(seqStringRdd, schema)
-  }
-
-  private[smv] def frlStringRDDToDF(
-      rdd: RDD[String],
-      schema: SmvSchema,
-      slices: Seq[Int]
-  ) = {
-    val parserV  = parserValidator
-    val startLen = slices.scanLeft(0) { _ + _ }.dropRight(1).zip(slices)
-    val parser =
-      new CSVStringParser[Seq[String]]((r: String, parsed: Seq[String]) => parsed, parserV)
-    val seqStringRdd = rdd.mapPartitions { parser.parseFrl(_, startLen) }
     seqStringRDDToDF(seqStringRdd, schema)
   }
 
