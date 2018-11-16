@@ -21,7 +21,7 @@ from smv.datasetrepo import DataSetRepo
 class ModuleHashTest(SmvBaseTest):
     @classmethod
     def smvAppInitArgs(cls):
-        return ["--smv-props", "smv.stages=stage", "smv.user_libraries=udl:same"]
+        return ["--smv-props", "smv.stages=stage"]
 
     @classmethod
     def before_dir(cls):
@@ -34,14 +34,14 @@ class ModuleHashTest(SmvBaseTest):
     class Resource(object):
         def __init__(self, smvApp, target_path, fqn):
             self.smvApp = smvApp
-            self.dsr = DataSetRepo(smvApp)
             self.orig_path = os.getcwd()
             self.target_path = target_path
             self.fqn = fqn
 
         def __enter__(self):
             self.smvApp.setAppDir(self.target_path)
-            return self.dsr.loadDataSet(self.fqn)
+            dsr = DataSetRepo(self.smvApp)
+            return dsr.loadDataSet(self.fqn)
 
         def __exit__(self, type, value, traceback):
             self.smvApp.setAppDir(self.orig_path)

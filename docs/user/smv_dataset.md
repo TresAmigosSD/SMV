@@ -38,17 +38,9 @@ This means cached data will be invalidated if the external code is changed, etc.
 
 > **Limitations:** For python modules and packages, the `requiresLib()` method is limited to registering changes on the main file of the package (for module `foo`, that's `foo.py`, for package `bar`, that's `bar/__init__.py`). This means that if a module or package imports other modules, the imported module's changes will not impact DataSet hashes.
 
-There are two steps to setting this up for your project:
-
-1. Add the `smv.user_libraries` prop to your [app configuration](./app_config.md).
-
-2. Import the library in all files that depend on it (like `import udl as lib`) and then in the class defs of DataSets that depend on it, implement the `requiresLib()` method and make it return an array of the libraries that that DataSet depends on (for the first example, `requiresLib()` would return `[lib]`).
+Import the library in all files that depend on it (like `import udl as lib`) and then in the class defs of DataSets that depend on it, implement the `requiresLib()` method and make it return an array of the libraries that that DataSet depends on (for the first example, `requiresLib()` would return `[lib]`).
 
 ```py
-# in smv-app-conf.props:
-smv.stages = stage
-smv.user_libraries = lib, pandas
-
 # in src/main/python/stage/someFile.py:
 import some_library as lib
 import pandas

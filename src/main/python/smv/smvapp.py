@@ -19,6 +19,7 @@ from datetime import datetime
 import os
 import sys
 import json
+import pkgutil
 from collections import namedtuple
 
 from py4j.java_gateway import java_import, JavaObject
@@ -238,8 +239,11 @@ class SmvApp(object):
         return self.py_smvconf.stage_names()
 
     def userLibs(self):
-        """Return dynamically set smv.user_libraries from conf"""
-        return self.py_smvconf.user_libs()
+        """Use introspection to determine list of availabe user libs."""
+        lib_dir = os.path.join(self.appDir(), self.SRC_LIB_PATH)
+        lib_walker = pkgutil.walk_packages([lib_dir])
+        lib_names = [name for (_, name, is_pkg) in lib_walker if not is_pkg]
+        return lib_names
 
     def appId(self):
         return self.py_smvconf.app_id()
