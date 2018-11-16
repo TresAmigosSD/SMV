@@ -90,21 +90,24 @@ private[smv] class FileIOHandler(
     seqStringRDDToDF(seqStringRdd, schema)
   }
 
-  // TODO: add schema file path as well.
-  // Since on Linux, when file stored on local file system, the partitions are not
-  // guaranteed in order when read back in, we need to only store the body w/o the header
-  private[smv] def saveAsCsvWithSchema(
+  private[smv] def createSchemaFromDf(
       df: DataFrame,
-      csvAttributes: CsvAttributes = CsvAttributes.defaultCsv,
-      strNullValue: String = ""
-  ) {
-
+      csvAttributes: CsvAttributes,
+      strNullValue: String
+  ) = {
     val schema = SmvSchema.fromDataFrame(df, strNullValue)
-    val schemaWithAttributes = schema.addCsvAttributes(csvAttributes)
-    val qc                   = csvAttributes.quotechar
+    schema.addCsvAttributes(csvAttributes)
+  }
+
+  private[smv] def saveAsCsv(
+    df: DataFrame,
+    schema: SmvSchema
+  ) {
+    val csvAttributes = schema.extractCsvAttributes()
+    val qc = csvAttributes.quotechar
 
     //Adding the header to the saved file if ca.hasHeader is true.
-    val fieldNames = df.schema.fieldNames
+    val fieldNames = schema.toStructType.fieldNames
     val headerStr =
       fieldNames.map(_.trim).map(fn => qc + fn + qc).mkString(csvAttributes.delimiter.toString)
 
@@ -120,7 +123,19 @@ private[smv] class FileIOHandler(
 
     //Need to save schema last, because the schema file is treated as a success marker
     csvRDD.saveAsTextFile(dataPath)
-    schemaWithAttributes.saveToFile(df.sqlContext.sparkContext, fullSchemaPath)
+  }
+
+  // Since on Linux, when file stored on local file system, the partitions are not
+  // guaranteed in order when read back in, we need to only store the body w/o the header
+  private[smv] def saveAsCsvWithSchema(
+      df: DataFrame,
+      csvAttributes: CsvAttributes = CsvAttributes.defaultCsv,
+      strNullValue: String = ""
+  ) {
+
+    val schema = createSchemaFromDf(df, csvAttributes, strNullValue)
+    saveAsCsv(df, schema)
+    schema.saveToFile(df.sqlContext.sparkContext, fullSchemaPath)
   }
 
 }
