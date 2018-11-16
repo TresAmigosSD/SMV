@@ -182,11 +182,11 @@ object SmvPythonHelper {
   def smvHashKey(prefix: String, cols: Array[Column]): Column =
     smvfuncs.smvHashKey(prefix, cols: _*)
 
-  def getTerminateParserLogger() = 
+  def getTerminateParserLogger() =
     dqm.TerminateParserLogger
 
   //Since SmvHDFS.dirList returns a Seq, which is hard to use on python side directly
-  //and some case dirList(...).array() works, some other case doesn't, so convert 
+  //and some case dirList(...).array() works, some other case doesn't, so convert
   //here to java.util.List
   def getDirList(dirPath: String): java.util.List[String] = SmvHDFS.dirList(dirPath)
 
@@ -265,13 +265,13 @@ class SmvPyClient(val j_smvApp: SmvApp) {
   ) = {
     // Python side always provide schema instead of schemaPath
     val handler = new FileIOHandler(j_smvApp.sparkSession, fullPath, None, parserLogger)
-    handler.csvFileWithSchema(csvAttr, Some(schema))
+    handler.csvFileWithSchema(csvAttr, schema)
   }
 
   /**
    * Map the data file path to schema file path,
    * and then try to read the schema from schema file.
-   * 
+   *
    * Return the schema as a SmvSchema instance.
    * If the schema file does not exist, return null.
    */

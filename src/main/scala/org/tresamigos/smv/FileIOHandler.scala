@@ -42,10 +42,9 @@ private[smv] class FileIOHandler(
    */
   private[smv] def csvFileWithSchema(
       csvAttributes: CsvAttributes,
-      schemaOpt: Option[SmvSchema] = None
+      schema: SmvSchema
   ): DataFrame = {
     val sc     = sparkSession.sparkContext
-    val schema = schemaOpt.getOrElse { readSchema() }
 
     val ca = if (csvAttributes == null) schema.extractCsvAttributes() else csvAttributes
 

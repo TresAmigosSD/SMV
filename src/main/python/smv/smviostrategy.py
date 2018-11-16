@@ -138,7 +138,7 @@ class SmvCsvPersistenceStrategy(SmvFileOnHdfsPersistenceStrategy):
 
         handler = self.smvApp.j_smvPyClient.createFileIOHandler(self._file_path)
 
-        jdf = handler.csvFileWithSchema(None, self.smvApp.scalaOption(smv_schema))
+        jdf = handler.csvFileWithSchema(None, smv_schema)
         return DataFrame(jdf, self.smvApp.sqlContext)
 
     def isPersisted(self):
@@ -326,7 +326,7 @@ class SmvCsvOnHdfsIoStrategy(SmvIoStrategy):
     def read(self):
         handler = self.smvApp.j_smvPyClient.createFileIOHandler(self._file_path)
 
-        jdf = handler.csvFileWithSchema(None, self.smvApp.scalaOption(self._smv_schema))
+        jdf = handler.csvFileWithSchema(None, self._smv_schema)
         return DataFrame(jdf, self.smvApp.sqlContext)
 
     def write(self, raw_data):
