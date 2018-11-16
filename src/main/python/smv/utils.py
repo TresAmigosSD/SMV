@@ -13,6 +13,7 @@
 
 from pyspark.sql.column import Column
 from pyspark.sql import DataFrame
+import sys
 import itertools
 import pkgutil
 from smv.error import SmvRuntimeError
@@ -129,3 +130,20 @@ try:
     pickle_lib = __import__("cPickle")
 except ImportError:
     pickle_lib = __import__("pickle")
+
+
+def smvhash(text):
+    """Python's hash function will return different numbers from run to
+    from, starting from 3.  Provide a deterministic hash function for
+    use to calculate sourceCodeHash.
+    """
+    import binascii
+
+    # Python 2* has "str" type the same as bytes, while Python 3 has
+    # to covert "str" to bytes through "str".encode("utf-8")
+    if sys.version_info >= (3, 0):
+        byte_str = text.encode("utf-8")
+    else:
+        byte_str = text
+
+    return binascii.crc32(byte_str)

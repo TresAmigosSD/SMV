@@ -17,7 +17,7 @@ import binascii
 import json
 from datetime import datetime
 
-from smv.utils import lazy_property, is_string
+from smv.utils import lazy_property, is_string, smvhash
 from smv.error import SmvRuntimeError, SmvMetadataValidationError
 from smv.modulesvisitor import ModulesVisitor
 from smv.smvmetadata import SmvMetaData
@@ -27,15 +27,6 @@ if sys.version_info >= (3, 4):
     ABC = abc.ABC
 else:
     ABC = abc.ABCMeta('ABC', (), {})
-
-
-def _smvhash(text):
-    """Python's hash function will return different numbers from run to
-    from, starting from 3.  Provide a deterministic hash function for
-    use to calculate sourceCodeHash.
-    """
-    import binascii
-    return binascii.crc32(text)
 
 
 def _stripComments(code):
@@ -49,7 +40,7 @@ def _sourceHash(module):
     # it doesn't change when constant values are changed.  For example,
     # "a = 5" and "a = 6" compile to same byte code.
     # co_code = compile(src, inspect.getsourcefile(cls), 'exec').co_code
-    return _smvhash(src_no_comm)
+    return smvhash(src_no_comm)
 
 
 class SmvGenericModule(ABC):
@@ -567,7 +558,6 @@ class SmvGenericModule(ABC):
             sourceHash = _sourceHash(cls)
         except Exception as err:  # `inspect` will raise error for classes defined in the REPL
             # Instead of handle the case that module defined in REPL, just raise Exception here
-            # res = _smvhash(_disassemble(cls))
             traceback.print_exc()
             message = "{0}({1!r})".format(type(err).__name__, err.args)
             raise Exception(
@@ -700,7 +690,7 @@ class SmvProcessModule(SmvGenericModule):
         # we need a unique string representation of sorted_kvs to hash
         # repr should change iff sorted_kvs changes
         kv_str = repr(sorted_kvs)
-        return _smvhash(kv_str)
+        return smvhash(kv_str)
 
     def sourceCodeHash(self):
         """Hash computed based on the source code of and config, lib usage
@@ -724,7 +714,7 @@ class SmvProcessModule(SmvGenericModule):
         # if module has high order historical validation rules, add their hash to sum.
         # they key() of a validator should change if its parameters change.
         if hasattr(cls, "_smvHistoricalValidatorsList"):
-            keys_hash = [_smvhash(v._key()) for v in cls._smvHistoricalValidatorsList]
+            keys_hash = [smvhash(v._key()) for v in cls._smvHistoricalValidatorsList]
             historical_keys_hash = sum(keys_hash)
             self.smvApp.log.debug("{} historical keys hash: {}".format(historical_keys_hash))
             res += historical_keys_hash
