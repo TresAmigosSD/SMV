@@ -297,3 +297,37 @@ class SmvHiveIoStrategy(SmvIoStrategy):
 
     # TODO: we should allow persisting intermidiate results in Hive also
     # For that case, however need to specify a convention to store semaphore
+
+
+class SmvTextOnHdfsIoStrategy(SmvIoStrategy):
+    """Simple read/write a text file on Hdfs"""
+    def __init__(self, smvApp, path):
+        self.smvApp = smvApp
+        self._file_path = path
+
+    def read(self):
+        return self.smvApp._jvm.SmvHDFS.readFromFile(self._file_path)
+
+    def write(self, rawdata):
+        self.smvApp._jvm.SmvHDFS.writeToFile(rawdata, self._file_path)
+
+
+class SmvCsvOnHdfsIoStrategy(SmvIoStrategy):
+    """Simply read/write of csv, given schema. Not for persisting,
+        which should be handled by SmvCsvPersistenceStrategy"""
+    def __init__(self, smvApp, path, smvSchema):
+        self.smvApp = smvApp
+        self._file_path = path
+        self._smv_schema = smvSchema
+
+    def read(self):
+        handler = self.smvApp.j_smvPyClient.createFileIOHandler(self._file_path)
+
+        jdf = handler.csvFileWithSchema(None, self.smvApp.scalaOption(self._smv_schema))
+        return DataFrame(jdf, self.smvApp.sqlContext)
+
+    def write(self, raw_data):
+        jdf = raw_data._jdf
+
+        handler = self.smvApp.j_smvPyClient.createFileIOHandler(self._file_path)
+        handler.saveAsCsvWithSchema(jdf)
