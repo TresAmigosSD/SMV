@@ -16,6 +16,7 @@ import re
 import binascii
 
 from pyspark.sql import DataFrame
+from smv.utils import scala_seq_to_list
 
 if sys.version_info >= (3, 4):
     ABC = abc.ABC
@@ -303,17 +304,21 @@ class SmvHiveIoStrategy(SmvIoStrategy):
     # For that case, however need to specify a convention to store semaphore
 
 
-class SmvTextOnHdfsIoStrategy(SmvIoStrategy):
+class SmvSchemaOnHdfsIoStrategy(SmvIoStrategy):
     """Simple read/write a text file on Hdfs"""
     def __init__(self, smvApp, path):
         self.smvApp = smvApp
         self._file_path = path
 
     def read(self):
-        return self.smvApp._jvm.SmvHDFS.readFromFile(self._file_path)
+        schema_file_str = self.smvApp._jvm.SmvHDFS.readFromFile(self._file_path)
+        smvSchemaObj = self.smvApp.j_smvPyClient.getSmvSchema()
+        smv_schema = smvSchemaObj.fromString(";".join(schema_file_str.split("\n")))
+        return smv_schema
 
     def write(self, rawdata):
-        self.smvApp._jvm.SmvHDFS.writeToFile(rawdata, self._file_path)
+        schema_str = "\n".join(scala_seq_to_list(self.smvApp._jvm, rawdata.toStringsWithMeta()))
+        self.smvApp._jvm.SmvHDFS.writeToFile(schema_str, self._file_path)
 
 
 class SmvCsvOnHdfsIoStrategy(SmvIoStrategy):
@@ -335,4 +340,4 @@ class SmvCsvOnHdfsIoStrategy(SmvIoStrategy):
         jdf = raw_data._jdf
 
         handler = self.smvApp.j_smvPyClient.createFileIOHandler(self._file_path)
-        handler.saveAsCsvWithSchema(jdf)
+        handler.saveAsCsv(jdf, self._smv_schema)

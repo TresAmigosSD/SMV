@@ -89,15 +89,6 @@ private[smv] class FileIOHandler(
     seqStringRDDToDF(seqStringRdd, schema, parserValidator)
   }
 
-  private[smv] def createSchemaFromDf(
-      df: DataFrame,
-      csvAttributes: CsvAttributes,
-      strNullValue: String
-  ) = {
-    val schema = SmvSchema.fromDataFrame(df, strNullValue)
-    schema.addCsvAttributes(csvAttributes)
-  }
-
   private[smv] def saveAsCsv(
     df: DataFrame,
     schema: SmvSchema
@@ -132,7 +123,7 @@ private[smv] class FileIOHandler(
       strNullValue: String = ""
   ) {
 
-    val schema = createSchemaFromDf(df, csvAttributes, strNullValue)
+    val schema = SmvSchema.fromDataFrame(df, strNullValue, Some(csvAttributes))
     saveAsCsv(df, schema)
 
     val fullSchemaPath = SmvSchema.dataPathToSchemaPath(dataPath)

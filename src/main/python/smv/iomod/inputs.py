@@ -16,9 +16,10 @@ import abc
 from pyspark.sql import DataFrame
 
 from smv.iomod.base import SmvInput, AsTable, AsFile
-from smv.smviostrategy import SmvJdbcIoStrategy, SmvHiveIoStrategy
+from smv.smviostrategy import SmvJdbcIoStrategy, SmvHiveIoStrategy, SmvSchemaOnHdfsIoStrategy, SmvCsvOnHdfsIoStrategy
 from smv.dqm import SmvDQM
 from smv.utils import lazy_property
+from smv.error import SmvRuntimeError
 
 
 class SmvJdbcInputTable(SmvInput, AsTable):
@@ -101,24 +102,6 @@ class InputFileWithSchema(SmvInput, AsFile):
         else:
             return self.fileName().rsplit(".", 1)[0] + ".schema"
 
-    def get_schema_string(self):
-        """Return the schema string specified by user either through
-            userSchema method, or through a schema file. The priority is the following:
-
-                - userSchema
-                - schema_file_name under schema_connection
-
-        """
-        if (self.userSchema() is not None):
-            return self.userSchema()
-        else:
-            schema_file_name = self._get_schema_file_name()
-
-            conn = self._get_schema_connection()
-            abs_file_path = "{}/{}".format(conn.path, schema_file_name)
-
-            return ";".join(self.smvApp.sc.textFile(abs_file_path).collect())
-
 class WithCsvParser(SmvInput):
     """Mixin for input modules to parse csv data"""
 
@@ -153,23 +136,39 @@ class WithCsvParser(SmvInput):
         else:
             return self.dqmValidator.createParserValidator()
 
-class SmvCsvInputFile(InputFileWithSchema, WithCsvParser):
+class WithSmvSchema(InputFileWithSchema):
+    def _smv_schema(self):
+        """Return the schema specified by user either through
+            userSchema method, or through a schema file. The priority is the following:
+
+                - userSchema
+                - schema_file_name under schema_connection
+
+        """
+        smvSchemaObj = self.smvApp.j_smvPyClient.getSmvSchema()
+        if (self.userSchema() is not None):
+            return smvSchemaObj.fromString(self.userSchema())
+        else:
+            schema_file_name = self._get_schema_file_name()
+            conn = self._get_schema_connection()
+            abs_file_path = "{}/{}".format(conn.path, schema_file_name)
+
+            return SmvSchemaOnHdfsIoStrategy(self.smvApp, abs_file_path).read()
+
+
+class SmvCsvInputFile(WithSmvSchema, WithCsvParser):
     def doRun(self, known):
         file_path = "{}/{}".format(self.get_connection().path, self.fileName())
-        smvSchemaObj = self.smvApp.j_smvPyClient.getSmvSchema()
-        smv_schema = smvSchemaObj.fromString(self.get_schema_string())
-        csv_attr = smv_schema.extractCsvAttributes()
 
-        jdf = self.smvApp.j_smvPyClient.readCsvFromFile(
+        return SmvCsvOnHdfsIoStrategy(
+            self.smvApp,
             file_path,
-            smv_schema,
-            csv_attr,
+            self._smv_schema(),
             self.readerLogger()
-        )
-        return DataFrame(jdf, self.smvApp.sqlContext)
+        ).read()
 
 
-class SmvMultiCsvInputFiles(InputFileWithSchema, WithCsvParser):
+class SmvMultiCsvInputFiles(WithSmvSchema, WithCsvParser):
     # Override schema_file_name logic
 
     @abc.abstractmethod
@@ -197,9 +196,7 @@ class SmvMultiCsvInputFiles(InputFileWithSchema, WithCsvParser):
 
     def doRun(self, known):
         dir_path = "{}/{}".format(self.get_connection().path, self.dirName())
-        smvSchemaObj = self.smvApp.j_smvPyClient.getSmvSchema()
-        smv_schema = smvSchemaObj.fromString(self.get_schema_string())
-        csv_attr = smv_schema.extractCsvAttributes()
+        smv_schema = self._smv_schema()
 
         flist = self.smvApp._jvm.SmvHDFS.dirList(dir_path).array()
         # ignore all hidden files in the data dir
@@ -208,18 +205,18 @@ class SmvMultiCsvInputFiles(InputFileWithSchema, WithCsvParser):
         if (not filesInDir):
             raise SmvRuntimeError("There are no data files in {}".format(dir_path))
 
-        combinedJdf = None
+        combinedDf = None
         reader_logger = self.readerLogger()
         for filePath in filesInDir:
-            jdf = self.smvApp.j_smvPyClient.readCsvFromFile(
+            df = SmvCsvOnHdfsIoStrategy(
+                self.smvApp,
                 filePath,
                 smv_schema,
-                csv_attr,
                 reader_logger
-            )
-            combinedJdf = jdf if (combinedJdf is None) else combinedJdf.unionAll(jdf)
+            ).read()
+            combinedDf = df if (combinedDf is None) else combinedDf.unionAll(df)
 
-        return DataFrame(combinedJdf, self.smvApp.sqlContext)
+        return combinedDf
 
 
 __all__ = [
