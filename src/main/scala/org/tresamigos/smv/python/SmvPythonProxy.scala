@@ -285,8 +285,8 @@ class SmvPyClient(val j_smvApp: SmvApp) {
     }
   }
 
-  def createFileIOHandler(path: String) =
-    new FileIOHandler(j_smvApp.sparkSession, path)
+  def createFileIOHandler(path: String, parserLogger: ParserLogger) =
+    new FileIOHandler(j_smvApp.sparkSession, path, parserLogger)
 
   def persistDF(path: String, dataframe: DataFrame): Unit = {
     val counter = j_smvApp.sparkSession.sparkContext.longAccumulator
