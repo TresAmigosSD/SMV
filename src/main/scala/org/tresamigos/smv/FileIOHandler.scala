@@ -24,8 +24,7 @@ import org.tresamigos.smv.dqm._
  **/
 private[smv] class FileIOHandler(
     sparkSession: SparkSession,
-    dataPath: String,
-    parserValidator: ParserLogger = TerminateParserLogger
+    dataPath: String
 ) {
   /**
    * Create a DataFrame from the given data/schema path and CSV attributes.
@@ -35,7 +34,8 @@ private[smv] class FileIOHandler(
    */
   private[smv] def csvFileWithSchema(
       csvAttributes: CsvAttributes,
-      schema: SmvSchema
+      schema: SmvSchema,
+      parserValidator: ParserLogger
   ): DataFrame = {
     val sc     = sparkSession.sparkContext
 
@@ -44,12 +44,13 @@ private[smv] class FileIOHandler(
     val strRDD    = sc.textFile(dataPath)
     val noHeadRDD = if (ca.hasHeader) CsvAttributes.dropHeader(strRDD) else strRDD
 
-    csvStringRDDToDF(noHeadRDD, schema, ca)
+    csvStringRDDToDF(noHeadRDD, schema, ca, parserValidator)
   }
 
   private def seqStringRDDToDF(
       rdd: RDD[Seq[String]],
-      schema: SmvSchema
+      schema: SmvSchema,
+      parserValidator: ParserLogger
   ) = {
     val parserV = parserValidator
     val add: (Exception, Seq[_]) => Option[Row] = { (e, r) =>
@@ -77,14 +78,15 @@ private[smv] class FileIOHandler(
   private[smv] def csvStringRDDToDF(
       rdd: RDD[String],
       schema: SmvSchema,
-      csvAttributes: CsvAttributes
+      csvAttributes: CsvAttributes,
+      parserValidator: ParserLogger
   ) = {
     val parserV = parserValidator
     val parser =
       new CSVStringParser[Seq[String]]((r: String, parsed: Seq[String]) => parsed, parserV)
     val _ca          = csvAttributes
     val seqStringRdd = rdd.mapPartitions { parser.parseCSV(_)(_ca) }
-    seqStringRDDToDF(seqStringRdd, schema)
+    seqStringRDDToDF(seqStringRdd, schema, parserValidator)
   }
 
   private[smv] def createSchemaFromDf(

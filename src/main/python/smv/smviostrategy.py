@@ -319,13 +319,14 @@ class SmvTextOnHdfsIoStrategy(SmvIoStrategy):
 class SmvCsvOnHdfsIoStrategy(SmvIoStrategy):
     """Simply read/write of csv, given schema. Not for persisting,
         which should be handled by SmvCsvPersistenceStrategy"""
-    def __init__(self, smvApp, path, smvSchema):
+    def __init__(self, smvApp, path, smvSchema, logger):
         self.smvApp = smvApp
         self._file_path = path
         self._smv_schema = smvSchema
+        self._logger = logger
 
     def read(self):
-        handler = self.smvApp.j_smvPyClient.createFileIOHandler(self._file_path)
+        handler = self.smvApp.j_smvPyClient.createFileIOHandler(self._file_path, self._logger)
 
         jdf = handler.csvFileWithSchema(None, self._smv_schema)
         return DataFrame(jdf, self.smvApp.sqlContext)

@@ -264,8 +264,8 @@ class SmvPyClient(val j_smvApp: SmvApp) {
     parserLogger: ParserLogger
   ) = {
     // Python side always provide schema instead of schemaPath
-    val handler = new FileIOHandler(j_smvApp.sparkSession, fullPath, parserLogger)
-    handler.csvFileWithSchema(csvAttr, schema)
+    val handler = new FileIOHandler(j_smvApp.sparkSession, fullPath)
+    handler.csvFileWithSchema(csvAttr, schema, parserLogger)
   }
 
   /**
@@ -285,8 +285,8 @@ class SmvPyClient(val j_smvApp: SmvApp) {
     }
   }
 
-  def createFileIOHandler(path: String, parserLogger: ParserLogger) =
-    new FileIOHandler(j_smvApp.sparkSession, path, parserLogger)
+  def createFileIOHandler(path: String) =
+    new FileIOHandler(j_smvApp.sparkSession, path)
 
   def persistDF(path: String, dataframe: DataFrame): Unit = {
     val counter = j_smvApp.sparkSession.sparkContext.longAccumulator
