@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 #
 # This file is licensed under the Apache License, Version 2.0
 # (the "License"); you may not use this file except in compliance with
@@ -10,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
 
 import unittest
 import json
@@ -46,7 +48,7 @@ class SmvFrameworkTest(SmvBaseTest):
         with self.assertRaises(SmvDqmValidationError) as cm:
             df = self.df(fqn)
             df.smvDumpDF()
-        
+
         e = cm.exception
         self.assertEqual(e.dqmValidationResult["passed"], False)
         self.assertEqual(e.dqmValidationResult["dqmStateSnapshot"]["totalRecords"], 3)
@@ -224,7 +226,7 @@ class SmvPublishTest(SmvBaseTest):
      @classmethod
      def smvAppInitArgs(cls):
          return [
-             '--smv-props', 
+             '--smv-props',
              'smv.stages=stage',
              '-m',
              'stage.modules.CsvFile',
@@ -257,8 +259,8 @@ class SmvAppPyHotLoadTest(SmvBaseTest):
         self.load(fqn)
         self.load(fqn)
         # module_load_count is defined in this file. It is imported by python module hotload.modules.
-        # When the fqn is loaded, the module hotload.modules is loaded. When we don't do hotload on 
-        # python modules, python itself will only load each module once, but when we have hotload 
+        # When the fqn is loaded, the module hotload.modules is loaded. When we don't do hotload on
+        # python modules, python itself will only load each module once, but when we have hotload
         # switched on, we clean up sys.modules each time when call self.load(fqn), so here the counter
         # get accumulated twice as the fqn is loaded twice
         self.assertEqual(module_load_count, 2)
@@ -291,8 +293,24 @@ class SmvAppNoPyHotLoadTest(SmvBaseTest):
         fqn = "hotload.modules.M1"
         self.load(fqn)
         self.load(fqn)
-        # As we switched off module hotload, the hotload.modules python module 
+        # As we switched off module hotload, the hotload.modules python module
         # will be only load once. If it was loaded once before this test run
-        # module_load_count will be 0, otherwise, will be 1. It will not be 
+        # module_load_count will be 0, otherwise, will be 1. It will not be
         # 2 as in test_with_hotload
         self.assertTrue(module_load_count <= 1)
+
+
+class SmvUnicodeTest(SmvBaseTest):
+    @classmethod
+    def smvAppInitArgs(cls):
+         return [
+             '--smv-props',
+             'smv.stages=unicode'
+        ]
+
+    def test_unicode_in_code(self):
+        res = self.df("unicode.modules.ModWithUnicode")
+        exp = self.createDF("a:String", "哈哈")
+        self.should_be_same(res, exp)
+
+

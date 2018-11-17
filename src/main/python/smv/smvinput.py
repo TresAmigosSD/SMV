@@ -26,20 +26,12 @@ import re
 from smv.dqm import FailParserCountPolicy
 from smv.error import SmvRuntimeError
 from smv.smvmodule import SmvSparkDfModule
+from smv.utils import smvhash
 
 if sys.version_info >= (3, 4):
     ABC = abc.ABC
 else:
     ABC = abc.ABCMeta('ABC', (), {})
-
-
-def _smvhash(text):
-    """Python's hash function will return different numbers from run to
-    from, starting from 3.  Provide a deterministic hash function for
-    use to calculate sourceCodeHash.
-    """
-    import binascii
-    return binascii.crc32(text.encode())
 
 
 class SmvInputBase(SmvSparkDfModule, ABC):
@@ -153,11 +145,11 @@ class SmvInputFromFile(SmvInputBase):
         full_path = self.fullPath()
         self.smvApp.log.debug("{} input path: {}".format(self.fqn(), full_path))
 
-        path_hash = _smvhash(full_path)
+        path_hash = smvhash(full_path)
 
         m_time = self.smvApp._jvm.SmvHDFS.modificationTime(full_path)
         self.smvApp.log.debug("{} input m_time: {}".format(self.fqn(), m_time))
-        
+
         return m_time + path_hash
 
     def schemaHash(self):
@@ -166,9 +158,9 @@ class SmvInputFromFile(SmvInputBase):
         """
         schema = self.schema()
         self.smvApp.log.debug("{} schema: {}".format(self.fqn(), schema))
-        
+
         if schema is not None:
-            return _smvhash(self.schema().simpleString())
+            return smvhash(self.schema().simpleString())
         else:
             return 0
 
@@ -382,7 +374,7 @@ class SmvCsvStringData(WithParser):
         return self.smvApp.createDFWithLogger(self.schemaStr(), self.dataStr(), self.readerLogger())
 
     def dataSrcHash(self):
-        return _smvhash(self.dataStr())
+        return smvhash(self.dataStr())
 
     @abc.abstractmethod
     def schemaStr(self):
