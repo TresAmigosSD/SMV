@@ -157,6 +157,18 @@ class WithSmvSchema(InputFileWithSchema):
 
 
 class SmvCsvInputFile(WithSmvSchema, WithCsvParser):
+    """Csv file input
+        User need to implement:
+
+            - connectionName: required
+            - fileName: required
+            - schemaConnectionName: optional
+            - schemaFileName: optional
+            - userSchema: optional
+            - failAtParsingError: optional, default True
+            - dqm: optional, default SmvDQM()
+    """
+
     def doRun(self, known):
         file_path = "{}/{}".format(self.get_connection().path, self.fileName())
 
@@ -169,7 +181,17 @@ class SmvCsvInputFile(WithSmvSchema, WithCsvParser):
 
 
 class SmvMultiCsvInputFiles(WithSmvSchema, WithCsvParser):
-    # Override schema_file_name logic
+    """Multiple Csv files under the same dir input
+        User need to implement:
+
+            - connectionName: required
+            - dirName: required
+            - schemaConnectionName: optional
+            - schemaFileName: optional
+            - userSchema: optional
+            - failAtParsingError: optional, default True
+            - dqm: optional, default SmvDQM()
+    """
 
     @abc.abstractmethod
     def dirName(self):
@@ -180,6 +202,7 @@ class SmvMultiCsvInputFiles(WithSmvSchema, WithCsvParser):
                 (str)
         """
 
+    # Override schema_file_name logic
     def _get_schema_file_name(self):
         """The schema_file_name is determined by the following logic
 
