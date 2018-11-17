@@ -122,9 +122,6 @@ class SmvConfig(object):
     def app_name(self):
         return self.merged_props().get("smv.appName")
     
-    def user_libs(self):
-        return self._split_prop("smv.user_libraries")
-
     def stage_names(self):
         return self._split_prop("smv.stages")
 
@@ -268,7 +265,6 @@ class SmvConfig(object):
             "smv.stages"             : "",
             "smv.config.keys"        : "",
             "smv.class_dir"          : "./target/classes",
-            "smv.user_libraries"     : "",
             "smv.maxCbsPortRetries"  : "10"
         }
 

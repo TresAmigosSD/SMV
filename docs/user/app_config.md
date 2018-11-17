@@ -109,13 +109,6 @@ Note that for sequence/list type parameters (e.g. smv.stages), a "," or ":" can 
 </tr>
 
 <tr>
-<td>smv.user_libraries</td>
-<td>empty</td>
-<td>Optional</td>
-<td>A list of external python modules, functions and/or objects that should be reloaded with the project</td>
-</tr>
-
-<tr>
 <td>smv.sparkdf.defaultPersistFormat</td>
 <td>parquet_on_hdfs</td>
 <td>Optional</td>
