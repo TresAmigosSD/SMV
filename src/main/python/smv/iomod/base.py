@@ -146,7 +146,7 @@ class AsFile(object):
 
     def _assert_file_postfix(self, postfix):
         """Make sure that file name provided has the desired postfix"""
-        if (not self.fileName().endswith(postfix)):
+        if (not self.fileName().lower().endswith(postfix)):
             raise SmvRuntimeError(
                 "Input file provided {} does not have postfix {}"
                 .format(self.fileName(), postfix)
