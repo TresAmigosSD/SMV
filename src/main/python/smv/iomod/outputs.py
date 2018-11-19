@@ -11,6 +11,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import os
 import re
 
 from smv.iomod.base import SmvSparkDfOutput, AsTable, AsFile
@@ -85,7 +86,7 @@ class SmvCsvOutputFile(SmvSparkDfOutput, AsFile):
     """
     def doRun(self, known):
         data = self.get_spark_df(known)
-        file_path = "{}/{}".format(self.get_connection().path, self.fileName())
+        file_path = os.path.join(self.get_connection().path, self.fileName())
         schema_path = re.sub("\.csv$", ".schema", file_path)
 
         smvSchemaObj = self.smvApp.j_smvPyClient.getSmvSchema()

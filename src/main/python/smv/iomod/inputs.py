@@ -12,6 +12,7 @@
 # limitations under the License.
 
 import abc
+import os
 
 from pyspark.sql import DataFrame
 
@@ -151,7 +152,7 @@ class WithSmvSchema(InputFileWithSchema):
         else:
             schema_file_name = self._get_schema_file_name()
             conn = self._get_schema_connection()
-            abs_file_path = "{}/{}".format(conn.path, schema_file_name)
+            abs_file_path = os.path.join(conn.path, schema_file_name)
 
             return SmvSchemaOnHdfsIoStrategy(self.smvApp, abs_file_path).read()
 
@@ -170,7 +171,7 @@ class SmvCsvInputFile(WithSmvSchema, WithCsvParser):
     """
 
     def doRun(self, known):
-        file_path = "{}/{}".format(self.get_connection().path, self.fileName())
+        file_path = os.path.join(self.get_connection().path, self.fileName())
 
         return SmvCsvOnHdfsIoStrategy(
             self.smvApp,
@@ -218,12 +219,12 @@ class SmvMultiCsvInputFiles(WithSmvSchema, WithCsvParser):
         return None
 
     def doRun(self, known):
-        dir_path = "{}/{}".format(self.get_connection().path, self.dirName())
+        dir_path = os.path.join(self.get_connection().path, self.dirName())
         smv_schema = self._smv_schema()
 
         flist = self.smvApp._jvm.SmvHDFS.dirList(dir_path).array()
         # ignore all hidden files in the data dir
-        filesInDir = ["{}/{}".format(dir_path, n) for n in flist if not n.startswith(".")]
+        filesInDir = [os.path.join(dir_path, n) for n in flist if not n.startswith(".")]
 
         if (not filesInDir):
             raise SmvRuntimeError("There are no data files in {}".format(dir_path))
