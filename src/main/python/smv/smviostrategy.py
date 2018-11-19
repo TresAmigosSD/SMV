@@ -305,7 +305,7 @@ class SmvHiveIoStrategy(SmvIoStrategy):
 
 
 class SmvSchemaOnHdfsIoStrategy(SmvIoStrategy):
-    """Simple read/write a text file on Hdfs"""
+    """Simple read/write for SmvSchema file"""
     def __init__(self, smvApp, path):
         self.smvApp = smvApp
         self._file_path = path
@@ -316,8 +316,8 @@ class SmvSchemaOnHdfsIoStrategy(SmvIoStrategy):
         smv_schema = smvSchemaObj.fromString(";".join(schema_file_str.split("\n")))
         return smv_schema
 
-    def write(self, rawdata):
-        schema_str = "\n".join(scala_seq_to_list(self.smvApp._jvm, rawdata.toStringsWithMeta()))
+    def write(self, smvSchema):
+        schema_str = "\n".join(scala_seq_to_list(self.smvApp._jvm, smvSchema.toStringsWithMeta()))
         self.smvApp._jvm.SmvHDFS.writeToFile(schema_str, self._file_path)
 
 
