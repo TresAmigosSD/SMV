@@ -210,7 +210,7 @@ function create_git_structure()
     if [ "$DO_GIT_INIT" = 1 ]; then
         echo "-- initializing git repository"
 
-        cd ${PROJ_DIR_FULL_PATH} && git init && git add . && git commit -m "init commit"
+        cd ${PROJ_DIR_FULL_PATH} && python ${SMV_TOOLS}/git_helper.py -o init
     fi
 }
 
