@@ -171,6 +171,8 @@ class SmvCsvInputFile(WithSmvSchema, WithCsvParser):
     """
 
     def doRun(self, known):
+        self._assert_file_postfix(".csv")
+
         file_path = os.path.join(self.get_connection().path, self.fileName())
 
         return SmvCsvOnHdfsIoStrategy(
@@ -203,7 +205,7 @@ class SmvMultiCsvInputFiles(WithSmvSchema, WithCsvParser):
                 (str)
         """
 
-    # Override schema_file_name logic
+    # Override schema_file_name logic to depend on dir name instead of file name
     def _get_schema_file_name(self):
         """The schema_file_name is determined by the following logic
 

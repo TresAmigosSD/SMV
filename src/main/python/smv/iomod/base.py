@@ -144,6 +144,14 @@ class AsFile(object):
                 (string)
         """
 
+    def _assert_file_postfix(self, postfix):
+        """Make sure that file name provided has the desired postfix"""
+        if (not self.fileName().endswith(postfix)):
+            raise SmvRuntimeError(
+                "Input file provided {} does not have postfix {}"
+                .format(self.fileName(), postfix)
+            )
+
 
 class SmvSparkDfOutput(SmvOutput):
     """SmvOutput which write out Spark DF
