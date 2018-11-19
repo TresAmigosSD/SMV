@@ -81,6 +81,9 @@ class InputFileWithSchema(SmvInput, AsFile):
             - User specified in current module through schemaConnectionName method
             - Configured in the global props files with prop key "smv.schemaConn"
             - Connection for data (user specified through connectionName method)
+
+            Since in some cases user may not have write access to the data folder,
+            need to provide more flexibility on where the schema files can come from.
         """
         name = self.schemaConnectionName()
         props = self.smvApp.py_smvconf.merged_props()
