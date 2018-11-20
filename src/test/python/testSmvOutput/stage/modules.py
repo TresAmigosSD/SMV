@@ -11,17 +11,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from smv.conn.smvconnectioninfo import SmvConnectionInfo
+from smv import *
+from smv.iomod import SmvCsvOutputFile
 
-class SmvJdbcConnectionInfo(SmvConnectionInfo):
-    def attributes(self):
-        return ["url", "driver", "user", "password"]
+class MyData(SmvModule):
+    def requiresDS(self):
+        return []
 
+    def run(self, i):
+        return self.smvApp.createDF("a:String", "1")
 
-class SmvHiveConnectionInfo(SmvConnectionInfo):
-    def attributes(self):
-        return ['schema']
+class CsvOut(SmvCsvOutputFile):
+    def connectionName(self):
+        return "my_out_conn"
 
-class SmvHdfsConnectionInfo(SmvConnectionInfo):
-    def attributes(self):
-        return ['path']
+    def fileName(self):
+        return "csv_out_test.csv"
+
+    def requiresDS(self):
+        return [MyData]

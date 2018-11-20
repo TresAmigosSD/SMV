@@ -16,6 +16,7 @@ import re
 import binascii
 
 from pyspark.sql import DataFrame
+from smv.utils import scala_seq_to_list
 
 if sys.version_info >= (3, 4):
     ABC = abc.ABC
@@ -133,9 +134,13 @@ class SmvCsvPersistenceStrategy(SmvFileOnHdfsPersistenceStrategy):
         self.smvApp.j_smvPyClient.persistDF(self._file_path, jdf)
 
     def _read(self):
+        smvSchemaObj = self.smvApp.j_smvPyClient.getSmvSchema()
+        smv_schema = smvSchemaObj.fromFile(self.smvApp.j_smvApp.sc(), self._schema_path)
+
+        terminateLogger = self.smvApp._jvm.SmvPythonHelper.getTerminateParserLogger()
         handler = self.smvApp.j_smvPyClient.createFileIOHandler(self._file_path)
 
-        jdf = handler.csvFileWithSchema(None, self.smvApp.scalaNone())
+        jdf = handler.csvFileWithSchema(None, smv_schema, terminateLogger)
         return DataFrame(jdf, self.smvApp.sqlContext)
 
     def isPersisted(self):
@@ -297,3 +302,42 @@ class SmvHiveIoStrategy(SmvIoStrategy):
 
     # TODO: we should allow persisting intermidiate results in Hive also
     # For that case, however need to specify a convention to store semaphore
+
+
+class SmvSchemaOnHdfsIoStrategy(SmvIoStrategy):
+    """Simple read/write for SmvSchema file"""
+    def __init__(self, smvApp, path):
+        self.smvApp = smvApp
+        self._file_path = path
+
+    def read(self):
+        schema_file_str = self.smvApp._jvm.SmvHDFS.readFromFile(self._file_path)
+        smvSchemaObj = self.smvApp.j_smvPyClient.getSmvSchema()
+        smv_schema = smvSchemaObj.fromString(";".join(schema_file_str.split("\n")))
+        return smv_schema
+
+    def write(self, smvSchema):
+        schema_str = "\n".join(scala_seq_to_list(self.smvApp._jvm, smvSchema.toStringsWithMeta()))
+        self.smvApp._jvm.SmvHDFS.writeToFile(schema_str, self._file_path)
+
+
+class SmvCsvOnHdfsIoStrategy(SmvIoStrategy):
+    """Simply read/write of csv, given schema. Not for persisting,
+        which should be handled by SmvCsvPersistenceStrategy"""
+    def __init__(self, smvApp, path, smvSchema, logger):
+        self.smvApp = smvApp
+        self._file_path = path
+        self._smv_schema = smvSchema
+        self._logger = logger
+
+    def read(self):
+        handler = self.smvApp.j_smvPyClient.createFileIOHandler(self._file_path)
+
+        jdf = handler.csvFileWithSchema(None, self._smv_schema, self._logger)
+        return DataFrame(jdf, self.smvApp.sqlContext)
+
+    def write(self, raw_data):
+        jdf = raw_data._jdf
+
+        handler = self.smvApp.j_smvPyClient.createFileIOHandler(self._file_path)
+        handler.saveAsCsv(jdf, self._smv_schema)

@@ -11,9 +11,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from smv.iomod.base import SmvSparkDfOutput, AsTable
-from smv.smviostrategy import SmvJdbcIoStrategy, SmvHiveIoStrategy
+import os
+import re
 
+from smv.iomod.base import SmvSparkDfOutput, AsTable, AsFile
+from smv.smviostrategy import SmvCsvOnHdfsIoStrategy, SmvJdbcIoStrategy, SmvHiveIoStrategy, SmvSchemaOnHdfsIoStrategy
+from smv.csv_attributes import CsvAttributes
+from smv.utils import scala_seq_to_list
 
 class WithSparkDfWriter(object):
     """Mixin for output modules using spark df writer"""
@@ -72,7 +76,28 @@ class SmvHiveOutputTable(SmvSparkDfOutput, WithSparkDfWriter, AsTable):
         return data
 
 
+class SmvCsvOutputFile(SmvSparkDfOutput, AsFile):
+    """
+        User need to implement
+
+            - requiresDS
+            - connectionName
+            - fileName
+    """
+    def doRun(self, known):
+        data = self.get_spark_df(known)
+        file_path = os.path.join(self.get_connection().path, self.fileName())
+        schema_path = re.sub("\.csv$", ".schema", file_path)
+
+        smvSchemaObj = self.smvApp.j_smvPyClient.getSmvSchema()
+        schema = smvSchemaObj.fromDataFrame(data._jdf, "_SmvStrNull_", self.smvApp.scalaOption(CsvAttributes()))
+
+        SmvCsvOnHdfsIoStrategy(self.smvApp, file_path, schema, None).write(data)
+        SmvSchemaOnHdfsIoStrategy(self.smvApp, schema_path).write(schema)
+        return data
+
 __all__ = [
     'SmvJdbcOutputTable',
     'SmvHiveOutputTable',
+    'SmvCsvOutputFile',
 ]

@@ -257,3 +257,67 @@ id:integer"""
             Fred,2"""
         )
         self.should_be_same(res, expected)
+
+
+class SmvNewInputTest(SmvBaseTest):
+    @classmethod
+    def smvAppInitArgs(cls):
+        data_path = cls.tmpInputDir()
+        return [
+            '--smv-props', 
+            'smv.stages=stage',
+            'smv.conn.my_hdfs.class=smv.conn.SmvHdfsConnectionInfo',
+            'smv.conn.my_hdfs.path=' + data_path,
+            'smv.conn.my_hdfs_2.class=smv.conn.SmvHdfsConnectionInfo',
+            'smv.conn.my_hdfs_2.path=' + data_path + "/conn2",
+        ]
+
+    def _create_csv_file(self, name):
+        self.createTempInputFile(name,
+            """"Name","ID"
+Bob,1
+Fred,2"""
+        )
+
+    def _create_csv_schema(self, name):
+        self.createTempInputFile(name,
+        """name:string
+id:integer"""
+        )
+
+
+    def test_basic_csv_input(self):
+        self._create_csv_file("csvtest/csv1.csv")
+        self._create_csv_schema("csvtest/csv1.schema")
+        res = self.df("stage.modules.NewCsvFile1")
+        exp = self.createDF("name:String;id:Integer", "Bob,1;Fred,2")
+        self.should_be_same(res, exp)
+
+    def test_csv_diff_schema_conn(self):
+        self._create_csv_file("csvtest/csv1.csv")
+        self._create_csv_schema("conn2/csvtest/csv1.schema")
+        res = self.df("stage.modules.NewCsvFile2")
+        exp = self.createDF("name:String;id:Integer", "Bob,1;Fred,2")
+        self.should_be_same(res, exp)
+
+    def test_csv_diff_schema_file_name(self):
+        self._create_csv_file("csvtest/csv1.csv")
+        self._create_csv_schema("conn2/csv1.csv.schema")
+        res = self.df("stage.modules.NewCsvFile3")
+        exp = self.createDF("name:String;id:Integer", "Bob,1;Fred,2")
+        self.should_be_same(res, exp)
+
+    def test_csv_user_schema(self):
+        self._create_csv_file("csvtest/csv1.csv")
+        res = self.df("stage.modules.NewCsvFile4")
+        exp = self.createDF("name2:String;id2:Integer", "Bob,1;Fred,2")
+        self.should_be_same(res, exp)
+
+    def test_multi_csv_basic(self):
+        self.createTempInputFile("multi_csv/f1", "col1\na\n")
+        self.createTempInputFile("multi_csv/f2", "col1\nb\n")
+        self.createTempInputFile("multi_csv.schema", "col1: String\n")
+
+        res = self.df("stage.modules.NewMultiCsvFiles1")
+        exp = self.createDF("col1:String", "a;b")
+        self.should_be_same(res, exp)

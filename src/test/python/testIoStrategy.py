@@ -42,3 +42,12 @@ class SmvIoStrategyTest(SmvBaseTest):
         self.assertTrue(mod.persistStrategy()._file_path.endswith(".parquet"))
         self.assertTrue(os.path.exists(mod.persistStrategy()._file_path))
 
+    def test_default_strategy_to_csv(self):
+        self.smvApp.setDynamicRunConfig({
+            'smv.sparkdf.defaultPersistFormat': 'smvcsv_on_hdfs'
+        })
+        fqn = "stage.modules.M2"
+        res = self.df(fqn)
+        mod = self.load(fqn)[0]
+        self.assertTrue(mod.persistStrategy()._file_path.endswith(".csv"))
+        self.assertTrue(os.path.exists(mod.persistStrategy()._file_path))

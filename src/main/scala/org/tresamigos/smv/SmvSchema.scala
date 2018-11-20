@@ -19,7 +19,7 @@ import org.apache.spark.annotation.DeveloperApi
 import org.apache.spark.sql.types._
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.DataFrame
- 
+
 import java.sql.Date
 import java.text.{DateFormat, SimpleDateFormat}
 
@@ -545,13 +545,21 @@ object SmvSchema {
     schemaFromEntryStrings(sc.textFile(path).collect)
   }
 
-  def fromDataFrame(df: DataFrame, strNullValue: String = "") = {
-    new SmvSchema(
+  def fromDataFrame(
+    df: DataFrame,
+    strNullValue: String = "",
+    caOpt: Option[CsvAttributes] = None
+  ) = {
+    val sch = new SmvSchema(
       df.schema.fields.map { a =>
         SchemaEntry(a, strNullValue)
       },
       Map.empty
     )
+    caOpt match {
+      case Some(ca) => sch.addCsvAttributes(ca)
+      case None => sch
+    }
   }
 
   /**

@@ -14,6 +14,8 @@
 from smv import *
 from smv.dqm import *
 from smv.functions import smvStrCat
+from smv.iomod import SmvCsvInputFile, SmvMultiCsvInputFiles
+
 import pyspark.sql.functions as F
 
 class D1(SmvCsvStringData):
@@ -137,3 +139,51 @@ class Csv2(SmvCsvFile):
         return CsvAttributes(",", '"', True)
     def userSchema(self):
         return "eman:String;di:integer"
+
+
+class NewCsvFile1(SmvCsvInputFile):
+    def connectionName(self):
+        return "my_hdfs"
+
+    def fileName(self):
+        return "csvtest/csv1.csv"
+
+class NewCsvFile2(SmvCsvInputFile):
+    def connectionName(self):
+        return "my_hdfs"
+
+    def schemaConnectionName(self):
+        return "my_hdfs_2"
+
+    def fileName(self):
+        return "csvtest/csv1.csv"
+
+class NewCsvFile3(SmvCsvInputFile):
+    def connectionName(self):
+        return "my_hdfs"
+
+    def schemaConnectionName(self):
+        return "my_hdfs_2"
+
+    def fileName(self):
+        return "csvtest/csv1.csv"
+
+    def schemaFileName(self):
+        return "csv1.csv.schema"
+
+class NewCsvFile4(SmvCsvInputFile):
+    def connectionName(self):
+        return "my_hdfs"
+
+    def fileName(self):
+        return "csvtest/csv1.csv"
+
+    def userSchema(self):
+        return "name2:String;id2:Integer"
+
+class NewMultiCsvFiles1(SmvMultiCsvInputFiles):
+    def connectionName(self):
+        return "my_hdfs"
+    
+    def dirName(self):
+        return "multi_csv"

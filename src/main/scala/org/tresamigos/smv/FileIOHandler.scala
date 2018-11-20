@@ -24,16 +24,8 @@ import org.tresamigos.smv.dqm._
  **/
 private[smv] class FileIOHandler(
     sparkSession: SparkSession,
-    dataPath: String,
-    schemaPath: Option[String] = None,
-    parserValidator: ParserLogger = TerminateParserLogger
+    dataPath: String
 ) {
-  import sparkSession.implicits._
-
-  private def fullSchemaPath = schemaPath.getOrElse(SmvSchema.dataPathToSchemaPath(dataPath))
-
-  def readSchema(): SmvSchema = SmvSchema.fromFile(sparkSession.sparkContext, fullSchemaPath)
-
   /**
    * Create a DataFrame from the given data/schema path and CSV attributes.
    * If CSV attributes are null, then they are extracted from the schema directly.
@@ -42,34 +34,23 @@ private[smv] class FileIOHandler(
    */
   private[smv] def csvFileWithSchema(
       csvAttributes: CsvAttributes,
-      schemaOpt: Option[SmvSchema] = None
+      schema: SmvSchema,
+      parserValidator: ParserLogger
   ): DataFrame = {
     val sc     = sparkSession.sparkContext
-    val schema = schemaOpt.getOrElse { readSchema() }
 
     val ca = if (csvAttributes == null) schema.extractCsvAttributes() else csvAttributes
 
     val strRDD    = sc.textFile(dataPath)
     val noHeadRDD = if (ca.hasHeader) CsvAttributes.dropHeader(strRDD) else strRDD
 
-    csvStringRDDToDF(noHeadRDD, schema, ca)
-  }
-
-  private[smv] def frlFileWithSchema(schemaOpt: Option[SmvSchema] = None): DataFrame = {
-    val sc     = sparkSession.sparkContext
-    val slices = SmvSchema.slicesFromFile(sc, fullSchemaPath)
-    val schema = schemaOpt.getOrElse { readSchema() }
-
-    require(slices.size == schema.getSize)
-
-    // TODO: show we allow header in Frl files?
-    val strRDD = sc.textFile(dataPath)
-    frlStringRDDToDF(strRDD, schema, slices)
+    csvStringRDDToDF(noHeadRDD, schema, ca, parserValidator)
   }
 
   private def seqStringRDDToDF(
       rdd: RDD[Seq[String]],
-      schema: SmvSchema
+      schema: SmvSchema,
+      parserValidator: ParserLogger
   ) = {
     val parserV = parserValidator
     val add: (Exception, Seq[_]) => Option[Row] = { (e, r) =>
@@ -97,52 +78,31 @@ private[smv] class FileIOHandler(
   private[smv] def csvStringRDDToDF(
       rdd: RDD[String],
       schema: SmvSchema,
-      csvAttributes: CsvAttributes
+      csvAttributes: CsvAttributes,
+      parserValidator: ParserLogger
   ) = {
     val parserV = parserValidator
     val parser =
       new CSVStringParser[Seq[String]]((r: String, parsed: Seq[String]) => parsed, parserV)
     val _ca          = csvAttributes
     val seqStringRdd = rdd.mapPartitions { parser.parseCSV(_)(_ca) }
-    seqStringRDDToDF(seqStringRdd, schema)
+    seqStringRDDToDF(seqStringRdd, schema, parserValidator)
   }
 
-  private[smv] def frlStringRDDToDF(
-      rdd: RDD[String],
-      schema: SmvSchema,
-      slices: Seq[Int]
-  ) = {
-    val parserV  = parserValidator
-    val startLen = slices.scanLeft(0) { _ + _ }.dropRight(1).zip(slices)
-    val parser =
-      new CSVStringParser[Seq[String]]((r: String, parsed: Seq[String]) => parsed, parserV)
-    val seqStringRdd = rdd.mapPartitions { parser.parseFrl(_, startLen) }
-    seqStringRDDToDF(seqStringRdd, schema)
-  }
-
-  // TODO: add schema file path as well.
-  // Since on Linux, when file stored on local file system, the partitions are not
-  // guaranteed in order when read back in, we need to only store the body w/o the header
-  private[smv] def saveAsCsvWithSchema(
-      df: DataFrame,
-      schemaWithMeta: SmvSchema = null,
-      csvAttributes: CsvAttributes = CsvAttributes.defaultCsv,
-      strNullValue: String = ""
+  private[smv] def saveAsCsv(
+    df: DataFrame,
+    schema: SmvSchema
   ) {
-
-    val schema = if (schemaWithMeta == null) { SmvSchema.fromDataFrame(df, strNullValue) } else {
-      schemaWithMeta
-    }
-    val schemaWithAttributes = schema.addCsvAttributes(csvAttributes)
-    val qc                   = csvAttributes.quotechar
+    val csvAttributes = schema.extractCsvAttributes()
+    val qc = csvAttributes.quotechar
 
     //Adding the header to the saved file if ca.hasHeader is true.
-    val fieldNames = df.schema.fieldNames
+    val fieldNames = schema.toStructType.fieldNames
     val headerStr =
       fieldNames.map(_.trim).map(fn => qc + fn + qc).mkString(csvAttributes.delimiter.toString)
 
     val csvHeaderRDD = df.sqlContext.sparkContext.parallelize(Array(headerStr), 1)
-    val csvBodyRDD   = df.map(schema.rowToCsvString(_, csvAttributes)).rdd
+    val csvBodyRDD   = df.rdd.map(schema.rowToCsvString(_, csvAttributes))
 
     //As far as I know the union maintain the order. So the header will end up being the
     //first line in the saved file.
@@ -153,7 +113,21 @@ private[smv] class FileIOHandler(
 
     //Need to save schema last, because the schema file is treated as a success marker
     csvRDD.saveAsTextFile(dataPath)
-    schemaWithAttributes.saveToFile(df.sqlContext.sparkContext, fullSchemaPath)
+  }
+
+  // Since on Linux, when file stored on local file system, the partitions are not
+  // guaranteed in order when read back in, we need to only store the body w/o the header
+  private[smv] def saveAsCsvWithSchema(
+      df: DataFrame,
+      csvAttributes: CsvAttributes = CsvAttributes.defaultCsv,
+      strNullValue: String = ""
+  ) {
+
+    val schema = SmvSchema.fromDataFrame(df, strNullValue, Some(csvAttributes))
+    saveAsCsv(df, schema)
+
+    val fullSchemaPath = SmvSchema.dataPathToSchemaPath(dataPath)
+    schema.saveToFile(df.sqlContext.sparkContext, fullSchemaPath)
   }
 
 }
@@ -208,22 +182,4 @@ private[smv] class CSVStringParser[U](
       .collect { case Some(l) => l }
   }
 
-  def parseFrl(iterator: Iterator[String], startLenPairs: Seq[(Int, Int)]): Iterator[U] = {
-    val add: (Exception, String) => Unit = { (e, r) =>
-      parserV.addWithReason(e, r)
-    }
-    iterator
-      .map { r =>
-        try {
-          val parsed = startLenPairs.map {
-            case (start, len) =>
-              r.substring(start, start + len)
-          }
-          Some(f(r, parsed))
-        } catch {
-          case e: Exception => add(e, r); None
-        }
-      }
-      .collect { case Some(l) => l }
-  }
 }
