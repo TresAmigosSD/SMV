@@ -13,11 +13,15 @@
 
 import abc
 import os
+import json
 
 from pyspark.sql import DataFrame
+from pyspark.sql.types import StructType
 
 from smv.iomod.base import SmvInput, AsTable, AsFile
-from smv.smviostrategy import SmvJdbcIoStrategy, SmvHiveIoStrategy, SmvSchemaOnHdfsIoStrategy, SmvCsvOnHdfsIoStrategy
+from smv.smviostrategy import SmvJdbcIoStrategy, SmvHiveIoStrategy, \
+    SmvSchemaOnHdfsIoStrategy, SmvCsvOnHdfsIoStrategy, SmvTextOnHdfsIoStrategy,\
+    SmvXmlOnHdfsIoStrategy
 from smv.dqm import SmvDQM
 from smv.utils import lazy_property
 from smv.error import SmvRuntimeError
@@ -105,6 +109,49 @@ class InputFileWithSchema(SmvInput, AsFile):
             return self.schemaFileName()
         else:
             return self.fileName().rsplit(".", 1)[0] + ".schema"
+
+
+class SmvXmlInputFile(InputFileWithSchema):
+    """Input from file in XML format
+        User need to implement:
+
+            - rowTag: required
+            - connectionName: required
+            - fileName: required
+            - schemaConnectionName: optional
+            - schemaFileName: optional
+            - userSchema: optional
+    """
+
+    @abc.abstractmethod
+    def rowTag(self):
+        """XML tag for identifying a record (row)"""
+        pass
+
+    def _schema(self):
+        """load schema from userSchema (as a json string) or a json file"""
+        def str_to_schema(s):
+            return StructType.fromJson(json.loads(s))
+
+        if (self.userSchema() is not None):
+            return str_to_schema(self.userSchema())
+        else:
+            s_path = self._get_schema_file_name()
+            try:
+                s = SmvTextOnHdfsIoStrategy(self.smvApp, s_path).read()
+                return str_to_schema(s)
+            except:
+                return None
+
+    def doRun(self, known):
+        """readin xml data"""
+        file_path = "{}/{}".format(self.get_connection().path, self.fileName())
+        return SmvXmlOnHdfsIoStrategy(
+            self.smvApp,
+            file_path,
+            self.rowTag(),
+            self._schema()
+        ).read()
 
 class WithCsvParser(SmvInput):
     """Mixin for input modules to parse csv data"""
@@ -251,6 +298,7 @@ class SmvMultiCsvInputFiles(WithSmvSchema, WithCsvParser):
 __all__ = [
     'SmvJdbcInputTable',
     'SmvHiveInputTable',
+    'SmvXmlInputFile',
     'SmvCsvInputFile',
     'SmvMultiCsvInputFiles',
 ]
