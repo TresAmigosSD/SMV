@@ -22,7 +22,13 @@ from smv.error import SmvDqmValidationError
 class SmvInputTest(SmvBaseTest):
     @classmethod
     def smvAppInitArgs(cls):
-        return ['--smv-props', 'smv.stages=stage']
+        xml_path = cls.tmpInputDir() + "/xmltest"
+        return [
+            '--smv-props',
+            'smv.stages=stage',
+            'smv.conn.my_xml.class=smv.conn.SmvHdfsConnectionInfo',
+            'smv.conn.my_xml.path=' + xml_path,
+        ]
 
     class Resource(object):
         def __init__(self, smvApp, fqn):
@@ -201,39 +207,6 @@ id:integer"""
                 Go get one now they are going fast,Ford,E350,1997""")
         self.should_be_same(expect, df)
 
-    def test_SmvXmvFile_path_only(self):
-        fqn = "stage.modules.Xml3"
-        self._create_xml_file('xmltest/f1.xml')
-        self._create_xml_schema('xmltest/f1.schema')
-        df = self.df(fqn)
-        expect = self.createDF("comment: String;make: String;model: String;year: Long",
-            """No comment,Tesla,S,2012;
-                Go get one now they are going fast,Ford,E350,1997""")
-        self.should_be_same(expect, df)
-
-    def test_SmvInputFromFile_instanceValHash_mtime(self):
-        fqn = "stage.modules.Xml1"
-        self._create_xml_file('xmltest/f1.xml')
-        self._create_xml_schema('xmltest/f1.xml.json')
-        with self.Resource(self.smvApp, fqn) as ds:
-            hash1 = ds.instanceValHash()
-
-        # Need to sleep to make sure mtime changes
-        import time
-        time.sleep(1)
-        self._create_xml_file('xmltest/f1.xml')
-        self._create_xml_schema('xmltest/f1.xml.json')
-        with self.Resource(self.smvApp, fqn) as ds:
-            hash2 = ds.instanceValHash()
-        self.assertNotEqual(hash1, hash2)
-
-    def test_SmvInputFromFile_schemaPath(self):
-        fqn = "stage.modules.IFF1"
-        with self.Resource(self.smvApp, fqn) as ds:
-            spath = ds.fullSchemaPath()
-        expected = self.tmpInputDir() + "/xmltest/f1.schema"
-        self.assertEqual(spath, expected)
-
     def test_SmvCsvFile_run_method(self):
         fqn = "stage.modules.Csv1"
         self._create_csv_file('csvtest/csv1.csv')
@@ -245,7 +218,7 @@ id:integer"""
             Fred,2,Fred2"""
         )
         self.should_be_same(res, expected)
-            
+
     def test_SmvCsvFile_with_userSchema(self):
         fqn = "stage.modules.Csv2"
         self._create_csv_file('csvtest/csv1.csv')
@@ -264,7 +237,7 @@ class SmvNewInputTest(SmvBaseTest):
     def smvAppInitArgs(cls):
         data_path = cls.tmpInputDir()
         return [
-            '--smv-props', 
+            '--smv-props',
             'smv.stages=stage',
             'smv.conn.my_hdfs.class=smv.conn.SmvHdfsConnectionInfo',
             'smv.conn.my_hdfs.path=' + data_path,
