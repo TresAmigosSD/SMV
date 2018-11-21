@@ -14,7 +14,7 @@
 from smv import *
 from smv.dqm import *
 from smv.functions import smvStrCat
-from smv.iomod import SmvCsvInputFile, SmvMultiCsvInputFiles
+from smv.iomod import SmvCsvInputFile, SmvMultiCsvInputFiles, SmvXmlInputFile
 
 import pyspark.sql.functions as F
 
@@ -94,33 +94,24 @@ class SqlInputB(SmvModule):
         return self.smvApp.createDF("idb: Integer; b: String", "2,jkl;1,mno")
 
 
-class Xml1(SmvXmlFile):
-    def fullPath(self):
-        return self.smvApp.inputDir() + '/' + 'xmltest/f1.xml'
-    def fullSchemaPath(self):
-        return None
+class Xml1(SmvXmlInputFile):
+    def connectionName(self):
+        return "my_xml"
+    def fileName(self):
+        return "f1.xml"
     def rowTag(self):
         return 'ROW'
 
-class Xml2(SmvXmlFile):
-    def fullPath(self):
-        return self.smvApp.inputDir() + '/' + 'xmltest/f1.xml'
-    def fullSchemaPath(self):
-        return self.smvApp.inputDir() + '/' + 'xmltest/f1.xml.json'
+class Xml2(SmvXmlInputFile):
+    def connectionName(self):
+        return "my_xml"
+    def fileName(self):
+        return "f1.xml"
+    def schemaFileName(self):
+        return "f1.xml.json"
     def rowTag(self):
         return 'ROW'
 
-class Xml3(SmvXmlFile):
-    def path(self):
-        return 'xmltest/f1.xml'
-    def rowTag(self):
-        return 'ROW'
-
-class IFF1(SmvInputFromFile):
-    def path(self):
-        return "xmltest/f1.xml.gz"
-    def readAsDF(self):
-        pass
 
 class Csv1(SmvCsvFile):
     def path(self):
@@ -184,6 +175,6 @@ class NewCsvFile4(SmvCsvInputFile):
 class NewMultiCsvFiles1(SmvMultiCsvInputFiles):
     def connectionName(self):
         return "my_hdfs"
-    
+
     def dirName(self):
         return "multi_csv"
