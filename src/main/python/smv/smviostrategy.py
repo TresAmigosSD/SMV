@@ -304,8 +304,45 @@ class SmvHiveIoStrategy(SmvIoStrategy):
     # For that case, however need to specify a convention to store semaphore
 
 
+class SmvTextOnHdfsIoStrategy(SmvIoStrategy):
+    """Simple read/write a small text file on Hdfs"""
+    def __init__(self, smvApp, path):
+        self.smvApp = smvApp
+        self._file_path = path
+
+    def read(self):
+        return self.smvApp._jvm.SmvHDFS.readFromFile(self._file_path)
+
+    def write(self, rawdata):
+        self.smvApp._jvm.SmvHDFS.writeToFile(rawdata, self._file_path)
+
+
+class SmvXmlOnHdfsIoStrategy(SmvIoStrategy):
+    """Read/write Xml file on Hdfs using Spark DF reader/writer"""
+    def __init__(self, smvApp, path, rowTag, schema=None):
+        self.smvApp = smvApp
+        self._file_path = path
+        self._rowTag = rowTag
+        self._schema = schema
+
+    def read(self):
+        # TODO: look for possibilities to feed to readerLogger
+        reader = self.smvApp.sqlContext\
+            .read.format('com.databricks.spark.xml')\
+            .options(rowTag=self._rowTag)
+
+        # If no schema specified, infer from data
+        if (self._schema is not None):
+            return reader.load(self._file_path, schema=self._schema)
+        else:
+            return reader.load(self._file_path)
+
+    def write(self, rawdata):
+        raise NotImplementedError("SmvXmlOnHdfsIoStrategy's write method is not implemented")
+
+
 class SmvSchemaOnHdfsIoStrategy(SmvIoStrategy):
-    """Simple read/write for SmvSchema file"""
+    """Read/write of an SmvSchema file on Hdfs"""
     def __init__(self, smvApp, path):
         self.smvApp = smvApp
         self._file_path = path
