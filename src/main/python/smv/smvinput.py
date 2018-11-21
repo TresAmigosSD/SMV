@@ -358,53 +358,6 @@ class SmvCsvStringData(WithParser):
         """
 
 
-class SmvJdbcTable(SmvInputBase):
-    """Input from a table read through JDBC
-    """
-    def description(self):
-        return "JDBC table {}".format(self.tableName())
-
-    def jdbcUrl(self):
-        """User can override this, default use the jdbcUrl setting in smvConfig"""
-        return self.smvApp.jdbcUrl()
-
-    def readAsDF(self):
-        if (self.tableQuery() is None):
-            tableNameOrQuery = self.tableName()
-        else:
-            tableNameOrQuery = "({}) as TMP_{}".format(
-                self.tableQuery(), self.tableName()
-            )
-
-        return self.smvApp.sqlContext.read\
-            .format('jdbc')\
-            .option('url', self.jdbcUrl())\
-            .option('dbtable', tableNameOrQuery)\
-            .load()
-
-    @abc.abstractmethod
-    def tableName(self):
-        """User-specified name for the table to extract input from
-
-            Override this to specify your own table name.
-
-            Returns:
-                (str): table name
-        """
-        pass
-
-    def tableQuery(self):
-        """Query used to extract data from Hive table
-
-            Override this to specify your own query (optional). Default is
-            equivalent to 'select * from ' + tableName().
-
-            Returns:
-                (str): query
-        """
-        return None
-
-
 class SmvHiveTable(SmvInputBase):
     """Input from a Hive table
     """
