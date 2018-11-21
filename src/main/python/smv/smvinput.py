@@ -165,45 +165,6 @@ class SmvInputFromFile(SmvInputBase):
             return 0
 
 
-class SmvXmlFile(SmvInputFromFile):
-    """Input from file in XML format
-        Concrete class need to provide:
-
-            * rowTag (str): XML tag for identifying a row
-            * path (str): File path relative to smv.InputDir. Or
-            * fullPath (str): file full path with protocol
-            * fullSchemaPath (str): full path of the schema JSON file or None (infer schema)
-    """
-
-    @abc.abstractmethod
-    def rowTag(self):
-        """XML tag for identifying a record (row)"""
-        pass
-
-    def schema(self):
-        """load schema from the json file"""
-        if (self.fullSchemaPath() is None):
-            return None
-        else:
-            with open(self.fullSchemaPath(), "r") as sj:
-                schema_st = sj.read()
-            return StructType.fromJson(json.loads(schema_st))
-
-    def readAsDF(self):
-        """readin xml data"""
-
-        # TODO: look for possibilities to feed to readerLogger
-        reader = self.smvApp.sqlContext\
-            .read.format('com.databricks.spark.xml')\
-            .options(rowTag=self.rowTag())
-
-        # If no schema specified, infer from data
-        if (self.schema() is not None):
-            return reader.load(self.fullPath(), schema=self.schema())
-        else:
-            return reader.load(self.fullPath())
-
-
 class WithParser(SmvInputBase):
     """Input uses SmvSchema and Csv parser"""
 
@@ -480,7 +441,6 @@ class SmvHiveTable(SmvInputBase):
 
 __all__ = [
     'SmvInputFromFile',
-    'SmvXmlFile',
     'SmvMultiCsvFiles',
     'SmvCsvFile',
     'SmvSqlCsvFile',
