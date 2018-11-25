@@ -101,7 +101,8 @@ class SmvApp(object):
             _gw = launch_gateway(None)
             self._jvm = _gw.jvm
 
-        self.log = self._jvm.org.apache.log4j.LogManager.getLogger("smv")
+        self.log = smv.logger
+
         self.py_module_hotload = py_module_hotload
 
         java_import(self._jvm, "org.tresamigos.smv.ColumnHelper")

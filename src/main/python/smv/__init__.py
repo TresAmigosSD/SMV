@@ -16,3 +16,12 @@ SmvPyCsvFile = SmvCsvFile
 SmvPyModule = SmvModule
 SmvPyOutput = SmvOutput
 SmvPyModuleLink = SmvModuleLink
+
+import logging
+logger = logging.getLogger(__name__)
+stderr_appender = logging.StreamHandler()
+
+# Default logging setting
+# These may be overridden when SmvApp initializes
+logger.setLevel("INFO")
+logger.addHandler(stderr_appender)
