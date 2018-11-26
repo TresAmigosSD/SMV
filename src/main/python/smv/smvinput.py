@@ -28,6 +28,9 @@ from smv.error import SmvRuntimeError
 from smv.smvmodule import SmvSparkDfModule
 from smv.utils import smvhash
 
+from smv.iomod import SmvHiveInputTable
+from smv.conn import SmvHiveConnectionInfo
+
 if sys.version_info >= (3, 4):
     ABC = abc.ABC
 else:
@@ -358,63 +361,18 @@ class SmvCsvStringData(WithParser):
         """
 
 
-class SmvJdbcTable(SmvInputBase):
-    """Input from a table read through JDBC
-    """
-    def description(self):
-        return "JDBC table {}".format(self.tableName())
-
-    def jdbcUrl(self):
-        """User can override this, default use the jdbcUrl setting in smvConfig"""
-        return self.smvApp.jdbcUrl()
-
-    def readAsDF(self):
-        if (self.tableQuery() is None):
-            tableNameOrQuery = self.tableName()
-        else:
-            tableNameOrQuery = "({}) as TMP_{}".format(
-                self.tableQuery(), self.tableName()
-            )
-
-        return self.smvApp.sqlContext.read\
-            .format('jdbc')\
-            .option('url', self.jdbcUrl())\
-            .option('dbtable', tableNameOrQuery)\
-            .load()
-
-    @abc.abstractmethod
-    def tableName(self):
-        """User-specified name for the table to extract input from
-
-            Override this to specify your own table name.
-
-            Returns:
-                (str): table name
-        """
-        pass
-
-    def tableQuery(self):
-        """Query used to extract data from Hive table
-
-            Override this to specify your own query (optional). Default is
-            equivalent to 'select * from ' + tableName().
-
-            Returns:
-                (str): query
-        """
-        return None
-
-
-class SmvHiveTable(SmvInputBase):
+class SmvHiveTable(SmvHiveInputTable):
     """Input from a Hive table
-    """
+        This is for backward compatability. Will be deprecated. Please use
+        iomod.SmvHiveInputTable instead.
 
-    def readAsDF(self):
-        if (self.tableQuery() is None):
-            query = "select * from {}".format(self.tableName())
-        else:
-            query = self.tableQuery()
-        return self.smvApp.sqlContext.sql(query)
+        User need to implement:
+
+            - tableName
+
+        Custom query at reading is no more supported, please use downstream
+        module to process data
+    """
 
     @abc.abstractmethod
     def tableName(self):
@@ -427,16 +385,15 @@ class SmvHiveTable(SmvInputBase):
         """
         pass
 
-    def tableQuery(self):
-        """Query used to extract data from Hive table
-
-            Override this to specify your own query (optional). Default is
-            equivalent to 'select * from ' + tableName().
-
-            Returns:
-                (str): query
-        """
+    def connectionName(self):
+        # Since old hive interface does not support separate schema
+        # specification, no need for a connection name
         return None
+
+    def get_connection(self):
+        # Create and empty connection info so SmvHiveInputTable will
+        # default to refer to the tableName without a schema name
+        return SmvHiveConnectionInfo("hiveschema", {})
 
 
 __all__ = [
@@ -445,6 +402,5 @@ __all__ = [
     'SmvCsvFile',
     'SmvSqlCsvFile',
     'SmvCsvStringData',
-    'SmvJdbcTable',
     'SmvHiveTable'
 ]

@@ -31,10 +31,6 @@ class MAdv(SmvModule, SmvOutput):
 class MyHive(SmvHiveTable):
     def tableName(self): return "M"
 
-class MyHiveWithQuery(SmvHiveTable):
-    def tableName(self): return "M"
-    def tableQuery(self): return "from M select k"
-
 
 class NewHiveInput(SmvHiveInputTable):
     def tableName(self): return "M"

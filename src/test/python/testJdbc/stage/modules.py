@@ -14,31 +14,9 @@
 from smv import *
 from smv.iomod import SmvJdbcInputTable, SmvJdbcOutputTable
 
-class MyJdbcTable(SmvJdbcTable):
-    def tableName(self):
-        return "MyJdbcTable"
-
-class MyJdbcWithQuery(SmvJdbcTable):
-    def tableQuery(self):
-        return "select K from MyJdbcTable"
-    def tableName(self):
-        return "MyJdbcTable"
-
-class MyJdbcCsvString(SmvCsvStringData, SmvOutput):
-    def tableName(self):
-        return "MyJdbcOutput"
-
-    def schemaStr(self):
-        return "a:String;b:Integer"
-    def dataStr(self):
-        return "x,10;y,1"
-
 class MyJdbcModule(SmvModule):
     def requiresDS(self):
         return []
-
-    def tableName(self):
-        return "MyJdbcModule"
 
     def run(self, i):
         return self.smvApp.createDF("a:String", "1")
@@ -54,7 +32,7 @@ class NewJdbcTable(SmvJdbcInputTable):
 class NewJdbcOutputTable(SmvJdbcOutputTable):
     def requiresDS(self):
         return [MyJdbcModule]
-    
+
     def tableName(self):
         return "MyJdbcTable"
 

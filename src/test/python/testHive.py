@@ -91,11 +91,6 @@ class ReadHiveTableTest(HiveTest):
         hiveDf = self.df("stage.modules.MyHive")
         self.should_be_same(mDf,hiveDf)
 
-    def test_smv_hive_table_can_use_custom_query(self):
-        mDf = self.df("stage.modules.M").select("k")
-        hiveDf = self.df("stage.modules.MyHiveWithQuery")
-        self.should_be_same(mDf,hiveDf)
-
 class NewHiveTableTest(HiveTest):
     @classmethod
     def smvAppInitArgs(cls):
