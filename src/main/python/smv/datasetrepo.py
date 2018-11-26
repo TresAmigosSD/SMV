@@ -17,7 +17,7 @@ import sys
 import traceback
 
 from smv.error import SmvRuntimeError
-from smv.utils import smv_copy_array
+from smv.utils import smv_copy_array, lazy_property
 
 """Python implementations of IDataSetRepoPy4J and IDataSetRepoFactoryPy4J interfaces
 """
@@ -56,30 +56,6 @@ class DataSetRepo(object):
                 if loaded_mod_fqn == stubbed_fqn or loaded_mod_fqn.startswith(stubbed_fqn + '.'):
                     sys.modules.pop(loaded_mod_fqn)
 
-
-    def _iter_submodules(self, stages):
-        """Yield the names of all submodules of the packages corresponding to the given stages
-        """
-        file_iters_by_stage = (self._iter_submodules_in_stage(stage) for stage in stages)
-        file_iter = itertools.chain(*file_iters_by_stage)
-        return (name for (_, name, is_pkg) in file_iter if not is_pkg)
-
-    def _iter_submodules_in_stage(self, stage):
-        """Yield info on the submodules of the package corresponding with a given stage
-        """
-        try:
-            stagemod = __import__(stage)
-        except:
-            self.smvApp.log.warn("Package does not exist for stage: " + stage)
-            return []
-        # `walk_packages` can generate AttributeError if the system has
-        # Gtk modules, which are not designed to use with reflection or
-        # introspection. Best action to take in this situation is probably
-        # to simply suppress the error.
-        def onerror(name):
-            self.smvApp.log.error("Skipping due to error during walk_packages: " + name)
-        return pkgutil.walk_packages(stagemod.__path__, stagemod.__name__ + '.' , onerror=onerror)
-
     def _for_name(self, name):
         """Dynamically load a module in a stage by its name.
 
@@ -87,22 +63,18 @@ class DataSetRepo(object):
         """
         lastdot = name.rfind('.')
         file_name = name[ : lastdot]
-        mod_name = name[lastdot+1 : ]
+        ds_name = name[lastdot+1 : ]
 
-        mod = None
+        ds = None
 
-        # if file doesnt exist, module doesn't exist
-        if file_name in self._iter_submodules(self.smvApp.stages()):
-            # __import__ instantiates the module hierarchy but returns the root module
-            f = __import__(file_name)
-            # iterate to get the file that should contain the desired module
-            for subname in file_name.split('.')[1:]:
-                f = getattr(f, subname)
-            # leave mod as None if the file exists but doesnt have an attribute with that name
-            if hasattr(f, mod_name):
-                mod = getattr(f, mod_name)
+        # if file isn't discoverable, module doesn't exist
+        if file_name in self.all_project_pymodules:
+            pymod = self.all_project_pymodules[file_name]
+            # leave ds as None if the file exists but doesnt have an attribute with that name
+            if hasattr(pymod, ds_name):
+                ds = getattr(pymod, ds_name)
 
-        return mod
+        return ds
 
     # Implementation of IDataSetRepoPy4J loadDataSet, which loads the dataset
     # from the most recent source. If the dataset does not exist, returns None.
@@ -124,6 +96,59 @@ class DataSetRepo(object):
 
         return ds
 
+    @lazy_property
+    def all_project_pymodules(self):
+        """An index of discoverable Python modules by fqn
+
+            A Python module is discoverable if it is importable and belongs to a stage. We cache this information
+            because walk_packages is slow and walking packages repeatedly while loading many datasets explodes
+            the running time of operations like getting the graph of a project. 
+        """
+        def load_pymodule(fqn):
+            mod = __import__(fqn)
+            for subname in fqn.split('.')[1:]:
+                mod = getattr(mod, subname)
+            return mod
+        
+        def packages_in_stage(stage_name):
+            stage_pymod = load_pymodule(stage_name)
+            
+            # where to recursively search for pymodules
+            search_path = stage_pymod.__path__
+            
+            # Prefix of all pymodules and packages found in this dir. This is a little strange - suppose we are
+            # searching in stage foo.bar which has the following structure:
+            # |-foo
+            #   |-bar
+            #     |-buzz.py
+            #     |-baz
+            #       |-file.py
+            # When walk_packages finds the directory `baz`, it won't know that the package's name is `foo.bar.baz` -
+            # it's not aware that bar is contained within another package. Unless we provide a prefix, it will think 
+            # that `foo.bar.baz's` name is just `baz`.  This sort of makes sense, because if you added foo/bar to the 
+            # path then you could `import baz`. However, walk_packages will actually fail because it cannot 
+            # `import baz`, which it needs to do in order to get package details that inform the recursive search.
+            # If there are no packages (only pymodules) in foo/bar, then `walk_packages` will succeed, but the output
+            # names will be wrong (e.g. `buzz` instead of `foo.bar.buzz`).
+            found_module_prefix = stage_pymod.__name__
+
+            # `walk_packages` can generate AttributeError if the system has
+            # Gtk modules, which are not designed to use with reflection or
+            # introspection. Best action to take in this situation is probably
+            # to simply suppress the error.
+            def onerror(name):
+                self.smvApp.log.error("Skipping due to error during walk_packages: " + name)
+            
+            return pkgutil.walk_packages(
+                path=search_path,
+                prefix=stage_name + '.',
+                onerror=onerror)
+
+        stage_walker = itertools.chain(*(packages_in_stage(stage) for stage in self.smvApp.stages()))
+
+        module_iter = (load_pymodule(name) for (_, name, is_pkg) in stage_walker if not is_pkg)
+
+        return {pymod.__name__: pymod for pymod in module_iter}
 
     def _dataSetsForStage(self, stageName):
         urns = []
@@ -131,15 +156,9 @@ class DataSetRepo(object):
         self.smvApp.log.debug("Searching for SmvGenericModules in stage " + stageName)
         self.smvApp.log.debug("sys.path=" + repr(sys.path))
 
-        for pymod_name in self._iter_submodules([stageName]):
+        for pymod_name, pymod in self.all_project_pymodules.items():
             # The additional "." is necessary to prevent false positive, e.g. stage_2.M1 matches stage
             if pymod_name.startswith(stageName + "."):
-                # __import__('a.b.c') returns the module a, just like import a.b.c
-                pymod = __import__(pymod_name)
-                # After import a.b.c we got a. Now we traverse from a to b to c
-                for c in pymod_name.split('.')[1:]:
-                    pymod = getattr(pymod, c)
-
                 self.smvApp.log.debug("Searching for SmvGenericModules in " + repr(pymod))
 
                 # iterate over the attributes of the module, looking for SmvGenericModules
