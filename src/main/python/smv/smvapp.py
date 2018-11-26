@@ -101,8 +101,6 @@ class SmvApp(object):
             _gw = launch_gateway(None)
             self._jvm = _gw.jvm
 
-        self.log = smv.logger
-
         self.py_module_hotload = py_module_hotload
 
         java_import(self._jvm, "org.tresamigos.smv.ColumnHelper")
@@ -218,8 +216,8 @@ class SmvApp(object):
         # the app properties to be read from disk and reevaluated
         self.py_smvconf.set_app_dir(appDir)
 
-        self.log.info("Set app dir to " + appDir)
-        self.log.debug("Current SMV configuration: {}".format(self.py_smvconf.merged_props()))
+        smv.logger.info("Set app dir to " + appDir)
+        smv.logger.debug("Current SMV configuration: {}".format(self.py_smvconf.merged_props()))
 
         # this call will use the dynamic appDir that we just set ^
         # to change sys.path, allowing py modules, UDL's to be discovered by python
@@ -517,13 +515,13 @@ class SmvApp(object):
         abs_path = self.abs_path_for_project_path(project_path)
         # Source must be added to front of path to make sure it is found first
         sys.path.insert(1, abs_path)
-        self.log.debug("Prepended {} to sys.path".format(abs_path))
+        smv.logger.debug("Prepended {} to sys.path".format(abs_path))
 
     def remove_source(self, project_path):
         try:
             abs_path = self.abs_path_for_project_path(project_path)
             sys.path.remove(abs_path)
-            self.log.debug("Removed {} from sys.path".format(abs_path))
+            smv.logger.debug("Removed {} from sys.path".format(abs_path))
         except ValueError:
             # ValueError will be raised if the project path was not previously
             # added to the sys.path

@@ -23,6 +23,7 @@ import sys
 import json
 import re
 
+import smv
 from smv.dqm import FailParserCountPolicy
 from smv.error import SmvRuntimeError
 from smv.smvmodule import SmvSparkDfModule
@@ -95,7 +96,7 @@ class SmvInputBase(SmvSparkDfModule, ABC):
         data_src_hash = self.dataSrcHash()
         res = data_src_hash + schema_hash
 
-        self.smvApp.log.debug("{}.instanceValHash = {}".format(self.fqn(), res))
+        smv.logger.debug("{}.instanceValHash = {}".format(self.fqn(), res))
 
         # ensure python's numeric type can fit in a java.lang.Integer
         return int(res) & 0x7fffffff
@@ -143,12 +144,12 @@ class SmvInputFromFile(SmvInputBase):
             Based on file's mtime, and file's full path
         """
         full_path = self.fullPath()
-        self.smvApp.log.debug("{} input path: {}".format(self.fqn(), full_path))
+        smv.logger.debug("{} input path: {}".format(self.fqn(), full_path))
 
         path_hash = smvhash(full_path)
 
         m_time = self.smvApp._jvm.SmvHDFS.modificationTime(full_path)
-        self.smvApp.log.debug("{} input m_time: {}".format(self.fqn(), m_time))
+        smv.logger.debug("{} input m_time: {}".format(self.fqn(), m_time))
 
         return m_time + path_hash
 
@@ -157,7 +158,7 @@ class SmvInputFromFile(SmvInputBase):
             Based on input schema as a StructType
         """
         schema = self.schema()
-        self.smvApp.log.debug("{} schema: {}".format(self.fqn(), schema))
+        smv.logger.debug("{} schema: {}".format(self.fqn(), schema))
 
         if schema is not None:
             return smvhash(self.schema().simpleString())
