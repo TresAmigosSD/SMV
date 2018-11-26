@@ -78,8 +78,12 @@ setuptools.setup(
     python_requires=REQUIRES_PYTHON,
     url=URL,
     tests_require=['sphinx', 'tox'],
-    packages=[
-        'smv',
+    # Need to call find_packages so that newly introduced
+    # sub-packages will be included
+    packages=setuptools.find_packages(
+        "src/main/python",
+        exclude=['test_support', 'scripts']
+    ) + [
         'smv.target',
         'smv.docker',
         'smv.docs',
