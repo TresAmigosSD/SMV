@@ -145,7 +145,7 @@ class SmvXmlInputFile(InputFileWithSchema):
 
     def doRun(self, known):
         """readin xml data"""
-        file_path = "{}/{}".format(self.get_connection().path, self.fileName())
+        file_path = os.path.join(self.get_connection().path, self.fileName())
         return SmvXmlOnHdfsIoStrategy(
             self.smvApp,
             file_path,
