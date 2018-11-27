@@ -288,17 +288,15 @@ class SmvPyClient(val j_smvApp: SmvApp) {
   def createFileIOHandler(path: String) =
     new FileIOHandler(j_smvApp.sparkSession, path)
 
-  def persistDF(path: String, dataframe: DataFrame): Unit = {
+  def persistDF(path: String, dataframe: DataFrame): Long = {
     val counter = j_smvApp.sparkSession.sparkContext.longAccumulator
 
     val df      = dataframe.smvPipeCount(counter)
     val handler = new FileIOHandler(j_smvApp.sparkSession, path)
 
     handler.saveAsCsvWithSchema(df, strNullValue = "_SmvStrNull_")
-    j_smvApp.log.info(f"Output path: ${path}")
 
-    val n       = counter.value
-    j_smvApp.log.info(f"N: ${n}")
+    counter.value
   }
 
   private[smv] def writeThroughJDBC(df: DataFrame, url: String, driver: String, tableName: String) = {

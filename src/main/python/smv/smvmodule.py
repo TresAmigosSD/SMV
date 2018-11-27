@@ -21,6 +21,7 @@ import binascii
 import json
 from datetime import datetime
 
+import smv
 from smv.dqm import SmvDQM
 from smv.error import SmvRuntimeError
 from smv.utils import pickle_lib, lazy_property
@@ -206,7 +207,7 @@ class SmvSparkDfModule(SmvProcessModule):
                 json.loads(validation_result.toJSON()),
                 indent=2, separators=(',', ': ')
             )
-            self.smvApp.log.warn("Nontrivial DQM result:\n{}".format(msg))
+            smv.logger.warn("Nontrivial DQM result:\n{}".format(msg))
         self.module_meta.addDqmValidationResult(validation_result.toJSON())
 
     # All publish related methods should be moved to generic output module class
@@ -221,7 +222,7 @@ class SmvSparkDfModule(SmvProcessModule):
         else:
             queries = [l.strip() for l in self.publishHiveSql().split(";")]
 
-        self.smvApp.log.info("Hive publish query: {}".format(";".join(queries)))
+        smv.logger.info("Hive publish query: {}".format(";".join(queries)))
         def run_query(df):
             # register the dataframe as a temp table.  Will be overwritten on next register.
             df.createOrReplaceTempView("dftable")
