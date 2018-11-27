@@ -22,3 +22,16 @@ class ExtraPath(object):
 
     def __exit__(self, type, value, traceback):
         sys.path.remove(self.extra_path)
+
+class AppDir(object):
+    """temporary set of application dir during testing"""
+    def __init__(self, smvApp, app_path):
+        self.smvApp = smvApp
+        self.app_path = app_path
+
+    def __enter__(self):
+        self.orig_app_path = self.smvApp.appDir()
+        self.smvApp.setAppDir(self.app_path)
+
+    def __exit__(self, type, value, traceback):
+        self.smvApp.setAppDir(self.orig_app_path)

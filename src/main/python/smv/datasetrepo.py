@@ -96,6 +96,12 @@ class DataSetRepo(object):
 
         return ds
 
+    def load_pymodule(self, fqn):
+        mod = __import__(fqn)
+        for subname in fqn.split('.')[1:]:
+            mod = getattr(mod, subname)
+        return mod
+
     @lazy_property
     def all_project_pymodules(self):
         """An index of discoverable Python modules by fqn
@@ -104,14 +110,8 @@ class DataSetRepo(object):
             because walk_packages is slow and walking packages repeatedly while loading many datasets explodes
             the running time of operations like getting the graph of a project. 
         """
-        def load_pymodule(fqn):
-            mod = __import__(fqn)
-            for subname in fqn.split('.')[1:]:
-                mod = getattr(mod, subname)
-            return mod
-        
         def packages_in_stage(stage_name):
-            stage_pymod = load_pymodule(stage_name)
+            stage_pymod = self.load_pymodule(stage_name)
             
             # where to recursively search for pymodules
             search_path = stage_pymod.__path__
@@ -130,7 +130,6 @@ class DataSetRepo(object):
             # `import baz`, which it needs to do in order to get package details that inform the recursive search.
             # If there are no packages (only pymodules) in foo/bar, then `walk_packages` will succeed, but the output
             # names will be wrong (e.g. `buzz` instead of `foo.bar.buzz`).
-            found_module_prefix = stage_pymod.__name__
 
             # `walk_packages` can generate AttributeError if the system has
             # Gtk modules, which are not designed to use with reflection or
@@ -146,11 +145,74 @@ class DataSetRepo(object):
 
         stage_walker = itertools.chain(*(packages_in_stage(stage) for stage in self.smvApp.stages()))
 
-        module_iter = (load_pymodule(name) for (_, name, is_pkg) in stage_walker if not is_pkg)
+        module_iter = (self.load_pymodule(name) for (_, name, is_pkg) in stage_walker if not is_pkg)
 
         return {pymod.__name__: pymod for pymod in module_iter}
 
+    def _matchingClassesInPyModule(self, pymod, is_matching):
+        """Finds all matching classes in a given python module.
+
+           `is_matching` is called on each candidate object in the module.  Only non-abstract
+           classes where `is_matching` returned true are returned.
+        """
+        matching_classes = []
+        pymod_name = pymod.__name__
+
+        # iterate over the attributes of the module, looking for SmvGenericModules
+        for obj_name in dir(pymod):
+            obj = getattr(pymod, obj_name)
+            self.smvApp.log.debug("Inspecting {} ({})".format(obj_name, type(obj)))
+
+            if not is_matching(obj):
+                self.smvApp.log.debug("Ignoring {} because it is not a match.".format(obj_name))
+                continue
+
+            obj_fqn = obj.__module__ + "." + obj.__name__
+            # Class should have an fqn which begins with the module name.
+            # Each package will contain all of the modules, classes, etc.
+            # that were imported into it, and we need to exclude these
+            # (so that we only count each module once)
+            obj_declared_in_pymod = obj_fqn.startswith(pymod_name)
+
+            if not obj_declared_in_pymod:
+                self.smvApp.log.debug("Ignoring {} because it was not "
+                                        "declared in {}. (Note: it may "
+                                        "be collected from another module)"
+                                        .format(obj_name, pymod_name))
+                continue
+
+            # Class should not be an ABC
+            obj_is_abstract = inspect.isabstract(obj)
+
+            if obj_is_abstract:
+                # abc labels methods as abstract via the attribute __isabstractmethod__
+                is_abstract_method = lambda attr: getattr(attr, "__isabstractmethod__", False)
+                abstract_methods = [name for name, _ in inspect.getmembers(obj, is_abstract_method)]
+                self.smvApp.log.debug("Ignoring {} because it is abstract ({} undefined)"
+                                        .format(obj_name, ", ".join(abstract_methods)))
+
+                continue
+
+            self.smvApp.log.debug("Collecting " + obj_name)
+            matching_classes.append(obj)
+
+        return matching_classes
+
     def _dataSetsForStage(self, stageName):
+        def is_generic_module(klass):
+            # We try to access the IsSmvDataSet attribute of the object.
+            # if it does not exist, we will catch the the AttributeError
+            # and skip the object, as it is not an SmvGenericModules. We
+            # specifically check that IsSmvDataSet is identical to
+            # True, because some objects like Py4J's JavaObject override
+            # __getattr__ to **always** return something (so IsSmvDataSet
+            # maybe truthy even though the object is not an SmvGenericModules).
+            try:
+                klass_is_smv_dataset = (klass.IsSmvDataSet is True)
+            except AttributeError:
+                klass_is_smv_dataset = False
+            return klass_is_smv_dataset
+
         urns = []
 
         self.smvApp.log.debug("Searching for SmvGenericModules in stage " + stageName)
@@ -161,60 +223,33 @@ class DataSetRepo(object):
             if pymod_name.startswith(stageName + "."):
                 self.smvApp.log.debug("Searching for SmvGenericModules in " + repr(pymod))
 
-                # iterate over the attributes of the module, looking for SmvGenericModules
-                for obj_name in dir(pymod):
-                    obj = getattr(pymod, obj_name)
-                    self.smvApp.log.debug("Inspecting {} ({})".format(obj_name, type(obj)))
-                    # We try to access the IsSmvDataSet attribute of the object.
-                    # if it does not exist, we will catch the the AttributeError
-                    # and skip the object, as it is not an SmvGenericModules. We
-                    # specifically check that IsSmvDataSet is identical to
-                    # True, because some objects like Py4J's JavaObject override
-                    # __getattr__ to **always** return something (so IsSmvDataSet
-                    # maybe truthy even though the object is not an SmvGenericModules).
-                    try:
-                        obj_is_smv_dataset = (obj.IsSmvDataSet is True)
-                    except AttributeError:
-                        obj_is_smv_dataset = False
-
-                    if not obj_is_smv_dataset:
-                        self.smvApp.log.debug("Ignoring {} because it is not an "
-                                              "SmvGenericModules".format(obj_name))
-                        continue
-
-                    # Class should have an fqn which begins with the stageName.
-                    # Each package will contain all of the modules, classes, etc.
-                    # that were imported into it, and we need to exclude these
-                    # (so that we only count each module once)
-                    obj_declared_in_stage = obj.fqn().startswith(pymod_name)
-
-                    if not obj_declared_in_stage:
-                        self.smvApp.log.debug("Ignoring {} because it was not "
-                                              "declared in {}. (Note: it may "
-                                              "be collected from another stage)"
-                                              .format(obj_name, pymod_name))
-                        continue
-
-                    # Class should not be an ABC
-                    obj_is_abstract = inspect.isabstract(obj)
-
-                    if obj_is_abstract:
-                        # abc labels methods as abstract via the attribute __isabstractmethod__
-                        is_abstract_method = lambda attr: getattr(attr, "__isabstractmethod__", False)
-                        abstract_methods = [name for name, _ in inspect.getmembers(obj, is_abstract_method)]
-                        self.smvApp.log.debug("Ignoring {} because it is abstract ({} undefined)"
-                                              .format(obj_name, ", ".join(abstract_methods)))
-
-                        continue
-
-                    self.smvApp.log.debug("Collecting " + obj_name)
-                    urns.append(obj.urn())
+                gen_modules = self._matchingClassesInPyModule(pymod, is_generic_module)
+                urns.extend([obj.urn() for obj in gen_modules])
 
         return urns
 
     def dataSetsForStage(self, stageName):
         urns = self._dataSetsForStage(stageName)
         return smv_copy_array(self.smvApp.sc, *urns)
+
+    def all_providers(self):
+        def is_provider(klass):
+            try:
+                klass_is_provider = (klass.IS_PROVIDER is True) and (klass.provider_type())
+            except AttributeError:
+                klass_is_provider = False
+            return klass_is_provider
+
+        # providers can be in user libs dir or builtin smv
+        prov_libs_names = self.smvApp.userLibs() + self.smvApp.smvLibs()
+        prov_list = []
+
+        for prov_lib_name in prov_libs_names:
+            prov_lib = self.load_pymodule(prov_lib_name)
+            providers = self._matchingClassesInPyModule(prov_lib, is_provider)
+            prov_list.extend(providers)
+
+        return prov_list
 
     def notFound(self, modUrn, msg):
         raise ValueError("dataset [{0}] is not found in {1}: {2}".format(modUrn, self.__class__.__name__, msg))
