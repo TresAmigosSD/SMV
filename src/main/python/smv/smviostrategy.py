@@ -17,6 +17,7 @@ import binascii
 
 from pyspark.sql import DataFrame
 from smv.utils import scala_seq_to_list
+import smv
 
 if sys.version_info >= (3, 4):
     ABC = abc.ABC
@@ -129,10 +130,11 @@ class SmvCsvPersistenceStrategy(SmvFileOnHdfsPersistenceStrategy):
         return re.sub("\.csv$", ".schema", self._file_path)
 
     def _write(self, raw_data):
-        jdf = raw_data._jdf
+        smv.logger.info("Output path: {}".format(self._file_path))
         # this call creates both .csv and .schema file from the scala side
-        self.smvApp.j_smvPyClient.persistDF(self._file_path, jdf)
-
+        record_count = self.smvApp.j_smvPyClient.persistDF(self._file_path, raw_data._jdf)
+        smv.logger.info("N: {}".format(record_count))
+    
     def _read(self):
         smvSchemaObj = self.smvApp.j_smvPyClient.getSmvSchema()
         smv_schema = smvSchemaObj.fromFile(self.smvApp.j_smvApp.sc(), self._schema_path)

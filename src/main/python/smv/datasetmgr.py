@@ -14,6 +14,7 @@
 """DataSetMgr entry class
 This module provides the python entry point to DataSetMgr on scala side
 """
+import smv
 
 from smv.utils import smv_copy_array, scala_seq_to_list, list_distinct, infer_full_name_from_part
 from smv.datasetresolver import DataSetResolver
@@ -130,7 +131,7 @@ class TX(object):
         self.repos = [rf.createRepo() for rf in resourceFactories]
         self.stages = stages
         self.resolver = DataSetResolver(self.repos[0])
-        self.log = _jvm.org.apache.log4j.LogManager.getLogger("smv")
+        self.log = smv.logger
 
     def load(self, urns):
         fqns = [u[4:] for u in urns]

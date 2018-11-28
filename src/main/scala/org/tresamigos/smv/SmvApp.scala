@@ -14,8 +14,6 @@
 
 package org.tresamigos.smv
 
-
-import org.apache.log4j.LogManager
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.SparkContext
 
@@ -25,8 +23,6 @@ import org.apache.spark.SparkContext
  * launched using the SmvApp object (defined below)
  */
 class SmvApp(_spark: SparkSession) {
-  val log         = LogManager.getLogger("smv")
-
   val sparkSession = _spark 
 
   val sc         = sparkSession.sparkContext

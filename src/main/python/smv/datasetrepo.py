@@ -16,6 +16,7 @@ import pkgutil
 import sys
 import traceback
 
+import smv
 from smv.error import SmvRuntimeError
 from smv.utils import smv_copy_array, lazy_property
 
@@ -136,7 +137,7 @@ class DataSetRepo(object):
             # introspection. Best action to take in this situation is probably
             # to simply suppress the error.
             def onerror(name):
-                self.smvApp.log.error("Skipping due to error during walk_packages: " + name)
+                smv.logger.error("Skipping due to error during walk_packages: " + name)
             
             return pkgutil.walk_packages(
                 path=search_path,
@@ -161,14 +162,14 @@ class DataSetRepo(object):
         # iterate over the attributes of the module, looking for SmvGenericModules
         for obj_name in dir(pymod):
             obj = getattr(pymod, obj_name)
-            self.smvApp.log.debug("Inspecting {} ({})".format(obj_name, type(obj)))
+            smv.logger.debug("Inspecting {} ({})".format(obj_name, type(obj)))
 
             # skip non-class objects
             if not inspect.isclass(obj):
                 continue
 
             if not is_matching(obj):
-                self.smvApp.log.debug("Ignoring {} because it is not a match.".format(obj_name))
+                smv.logger.debug("Ignoring {} because it is not a match.".format(obj_name))
                 continue
 
             obj_fqn = obj.__module__ + "." + obj.__name__
@@ -179,7 +180,7 @@ class DataSetRepo(object):
             obj_declared_in_pymod = obj_fqn.startswith(pymod_name)
 
             if not obj_declared_in_pymod:
-                self.smvApp.log.debug("Ignoring {} because it was not "
+                smv.logger.debug("Ignoring {} because it was not "
                                         "declared in {}. (Note: it may "
                                         "be collected from another module)"
                                         .format(obj_name, pymod_name))
@@ -192,12 +193,12 @@ class DataSetRepo(object):
                 # abc labels methods as abstract via the attribute __isabstractmethod__
                 is_abstract_method = lambda attr: getattr(attr, "__isabstractmethod__", False)
                 abstract_methods = [name for name, _ in inspect.getmembers(obj, is_abstract_method)]
-                self.smvApp.log.debug("Ignoring {} because it is abstract ({} undefined)"
+                smv.logger.debug("Ignoring {} because it is abstract ({} undefined)"
                                         .format(obj_name, ", ".join(abstract_methods)))
 
                 continue
 
-            self.smvApp.log.debug("Collecting " + obj_name)
+            smv.logger.debug("Collecting " + obj_name)
             matching_classes.append(obj)
 
         return matching_classes
@@ -219,13 +220,13 @@ class DataSetRepo(object):
 
         urns = []
 
-        self.smvApp.log.debug("Searching for SmvGenericModules in stage " + stageName)
-        self.smvApp.log.debug("sys.path=" + repr(sys.path))
+        smv.logger.debug("Searching for SmvGenericModules in stage " + stageName)
+        smv.logger.debug("sys.path=" + repr(sys.path))
 
         for pymod_name, pymod in self.all_project_pymodules.items():
             # The additional "." is necessary to prevent false positive, e.g. stage_2.M1 matches stage
             if pymod_name.startswith(stageName + "."):
-                self.smvApp.log.debug("Searching for SmvGenericModules in " + repr(pymod))
+                smv.logger.debug("Searching for SmvGenericModules in " + repr(pymod))
 
                 gen_modules = self._matchingClassesInPyModule(pymod, is_generic_module)
                 urns.extend([obj.urn() for obj in gen_modules])

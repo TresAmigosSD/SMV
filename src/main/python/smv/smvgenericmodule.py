@@ -17,6 +17,7 @@ import binascii
 import json
 from datetime import datetime
 
+import smv
 from smv.utils import lazy_property, is_string, smvhash
 from smv.error import SmvRuntimeError, SmvMetadataValidationError
 from smv.modulesvisitor import ModulesVisitor
@@ -306,7 +307,7 @@ class SmvGenericModule(ABC):
                     {self.versioned_fqn:res}
                 )
         else:
-            self.smvApp.log.debug("{} had a cache in SmvApp.data_cache".format(self.fqn()))
+            smv.logger.debug("{} had a cache in SmvApp.data_cache".format(self.fqn()))
             res = self.smvApp.data_cache.get(self.versioned_fqn)
             self.data = res
         urn2df.update({self.urn(): res})
@@ -315,7 +316,7 @@ class SmvGenericModule(ABC):
     def computeData(self, urn2df, run_set, collector, is_quick_run):
         """When DF is not in cache, do the real calculation here
         """
-        self.smvApp.log.debug("compute: {}".format(self.urn()))
+        smv.logger.debug("compute: {}".format(self.urn()))
 
         if (self.isEphemeral()):
             raw_df = self.doRun(urn2df)
@@ -345,7 +346,7 @@ class SmvGenericModule(ABC):
                         self.data = _strategy.read()
                         self.run_ancestor_and_me_postAction(run_set, collector)
             else:
-                self.smvApp.log.debug("{} had a persisted file".format(self.fqn()))
+                smv.logger.debug("{} had a persisted file".format(self.fqn()))
                 self.data = _strategy.read()
                 run_set.discard(self)
         return self.data
@@ -424,7 +425,7 @@ class SmvGenericModule(ABC):
         def run_delayed_postAction(mod, state):
             (_run_set, coll) = state
             if (mod in _run_set):
-                self.smvApp.log.debug("Run post_action of {} from {}".format(mod.fqn(), self.fqn()))
+                smv.logger.debug("Run post_action of {} from {}".format(mod.fqn(), self.fqn()))
                 mod.post_action()
                 meta_io_strategy = mod.metaStrategy()
                 if (not_persisted_or_no_edd_when_forced(meta_io_strategy)):
@@ -448,7 +449,7 @@ class SmvGenericModule(ABC):
         self.ancestor_and_me_visitor.dfs_visit(run_delayed_postAction, (run_set, collector))
 
     def _do_action_on_df(self, func, df, desc):
-        log = self.smvApp.log
+        log = smv.logger
         log.info("STARTING {} on {}".format(desc, self.fqn()))
 
         before  = datetime.now()
@@ -468,7 +469,7 @@ class SmvGenericModule(ABC):
         """current module's hash value, depend on code and potentially
             linked data (such as for SmvCsvFile)
         """
-        log = self.smvApp.log
+        log = smv.logger
         _instanceValHash = self.instanceValHash()
         log.debug("{}.instanceValHash = {}".format(self.fqn(), _instanceValHash))
 
@@ -486,7 +487,7 @@ class SmvGenericModule(ABC):
             this calculation could be expensive, so made it a lazy property
         """
         # TODO: implement using visitor too
-        log = self.smvApp.log
+        log = smv.logger
         _dataset_hash = self.dataset_hash()
         log.debug("{}.dataset_hash = {}".format(self.fqn(), _dataset_hash))
 
@@ -565,7 +566,7 @@ class SmvGenericModule(ABC):
                 self.urn() + " defined in shell can't be persisted"
             )
 
-        self.smvApp.log.debug("{} sourceHash: {}".format(self.fqn(), sourceHash))
+        smv.logger.debug("{} sourceHash: {}".format(self.fqn(), sourceHash))
         res += sourceHash
 
         # incorporate source code hash of module's parent classes
@@ -702,13 +703,13 @@ class SmvProcessModule(SmvGenericModule):
         cls = self.__class__
         # incorporate hash of KVs for config keys listed in requiresConfig
         config_hash = self.config_hash()
-        self.smvApp.log.debug("{} config_hash: {}".format(self.fqn(), config_hash))
+        smv.logger.debug("{} config_hash: {}".format(self.fqn(), config_hash))
         res += config_hash
 
         # iterate through libs/modules that this DataSet depends on and use their source towards hash as well
         for lib in self.requiresLib():
             lib_src_hash = _sourceHash(lib)
-            self.smvApp.log.debug("{} sourceHash: {}".format(lib.__name__, lib_src_hash))
+            smv.logger.debug("{} sourceHash: {}".format(lib.__name__, lib_src_hash))
             res += lib_src_hash
 
         # if module has high order historical validation rules, add their hash to sum.
@@ -716,7 +717,7 @@ class SmvProcessModule(SmvGenericModule):
         if hasattr(cls, "_smvHistoricalValidatorsList"):
             keys_hash = [smvhash(v._key()) for v in cls._smvHistoricalValidatorsList]
             historical_keys_hash = sum(keys_hash)
-            self.smvApp.log.debug("{} historical keys hash: {}".format(historical_keys_hash))
+            smv.logger.debug("{} historical keys hash: {}".format(historical_keys_hash))
             res += historical_keys_hash
 
         return res

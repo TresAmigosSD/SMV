@@ -41,8 +41,7 @@ class Myfile(smv.SmvCsvFile):
 
 With above setting, the `SmvCsvFile` will simply persist the validation result and keep moving.
 
-Either terminating the process or not, as long as the log is nontrivial, it will be logged in
-log4j with level "warning".
+Either terminating the process or not, as long as the log is nontrivial, it will be logged with level "warning".
 The result will also by persisted in the `SmvModule` persisted metadata with postfix `.meta`.
 
 Sometimes we need more flexibility on specifying the terminate criteria. For example, I can tolerate
