@@ -13,7 +13,7 @@
 import sys
 
 from test_support.smvbasetest import SmvBaseTest
-from test_support.extrapath import ExtraPath
+from test_support.extrapath import ExtraPath, AppDir
 
 from smv.datasetrepo import DataSetRepo
 
@@ -109,3 +109,13 @@ class DataSetRepoTest(SmvBaseTest):
             mods_in_dir = self.build_new_repo()._dataSetsForStage("stage")
 
         self.assertEqual(mods_in_dir, ["mod:stage.modules.WhateverModule"])
+
+    def test_provider_list(self):
+        """Ensure repo can discover providers"""
+        prov_dir = self.resourceTestDir() + "/provider"
+        with AppDir(self.smvApp, prov_dir):
+            all_providers = self.build_new_repo().all_providers()
+            all_providers_names = sorted([p.__name__ for p in all_providers])
+            # TODO: check against full provider name rather than base class name
+            self.assertEqual(all_providers_names, ['MyBaseProvider', 'MyConcreteProvider', 'SomeProvider'])
+

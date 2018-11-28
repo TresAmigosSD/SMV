@@ -86,6 +86,10 @@ class SmvApp(object):
         cls._instance = app
 
     def __init__(self, arglist, _sparkSession, py_module_hotload=True):
+        self.smvHome = os.environ.get("SMV_HOME")
+        if (self.smvHome is None):
+            raise SmvRuntimeError("SMV_HOME env variable not set!")
+
         self.sparkSession = _sparkSession
 
         if (self.sparkSession is not None):
@@ -143,8 +147,7 @@ class SmvApp(object):
         smv.helpers.init_helpers()
 
     def smvVersion(self): 
-        smvHome = os.environ.get("SMV_HOME")
-        versionFile = smvHome + "/.smv_version"
+        versionFile = self.smvHome + "/.smv_version"
         with open(versionFile, "r") as fp:
             line = fp.readline()
         return line.strip()
@@ -237,12 +240,23 @@ class SmvApp(object):
         """Stages is a function as they can be set dynamically on an SmvApp instance"""
         return self.py_smvconf.stage_names()
 
+    def _libsInDir(self, lib_dir, prefix):
+        """Use introspection to determine list of availabe libs in a given directory."""
+        lib_walker = pkgutil.walk_packages([lib_dir], prefix)
+        lib_names = [name for (_, name, is_pkg) in lib_walker if not is_pkg]
+        return lib_names
+
     def userLibs(self):
         """Use introspection to determine list of availabe user libs."""
         lib_dir = os.path.join(self.appDir(), self.SRC_LIB_PATH)
-        lib_walker = pkgutil.walk_packages([lib_dir])
-        lib_names = [name for (_, name, is_pkg) in lib_walker if not is_pkg]
-        return lib_names
+        return self._libsInDir(lib_dir, "")
+
+    def smvLibs(self):
+        """Use introspection to determine list of availabe smv builtin libs."""
+        # Note: since sys.path has the src/main/python, we need to prefix all discovered
+        # objects by `smv.` so that they are importable.
+        lib_dir = os.path.join(self.smvHome, "src/main/python/smv")
+        return self._libsInDir(lib_dir, "smv.")
 
     def appId(self):
         return self.py_smvconf.app_id()
