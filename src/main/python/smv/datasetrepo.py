@@ -163,6 +163,10 @@ class DataSetRepo(object):
             obj = getattr(pymod, obj_name)
             self.smvApp.log.debug("Inspecting {} ({})".format(obj_name, type(obj)))
 
+            # skip non-class objects
+            if not inspect.isclass(obj):
+                continue
+
             if not is_matching(obj):
                 self.smvApp.log.debug("Ignoring {} because it is not a match.".format(obj_name))
                 continue
