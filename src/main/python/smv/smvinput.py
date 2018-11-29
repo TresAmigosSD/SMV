@@ -30,7 +30,7 @@ from smv.smvmodule import SmvSparkDfModule
 from smv.utils import smvhash
 
 from smv.iomod import SmvHiveInputTable, SmvCsvInputFile
-from smv.conn import SmvHiveConnectionInfo, SmvHdfsConnectionInfo
+from smv.conn import SmvHiveConnectionInfo
 
 if sys.version_info >= (3, 4):
     ABC = abc.ABC
@@ -254,10 +254,7 @@ class SmvCsvFile(SmvCsvInputFile):
         return None
 
     def get_connection(self):
-        return SmvHdfsConnectionInfo(
-            "inputdir",
-            {"smv.conn.inputdir.path": self.smvApp.all_data_dirs().inputDir}
-        )
+        return self.smvApp.input_connection()
 
 
 class SmvSqlCsvFile(SmvCsvFile):

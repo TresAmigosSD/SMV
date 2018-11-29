@@ -18,6 +18,8 @@ import datetime
 
 from smv import SmvApp, SmvHiveTable, SmvCsvFile, dqm
 from smv.smvappinfo import SmvAppInfo
+from smv.conn import SmvHdfsEmptyConn
+from smv.iomod import SmvCsvInputFile
 from test_support.test_runner import SmvTestRunner
 from test_support.testconfig import TestConfig
 
@@ -105,9 +107,16 @@ def openCsv(path, validate=False):
             (DataFrame): The resulting DataFrame
     """
     app = SmvApp.getInstance()
-    class TmpCsv(SmvCsvFile):
-        def fullPath(self):
+    class TmpCsv(SmvCsvInputFile):
+        def connectionName(self):
+            return None
+
+        def get_connection(self):
+            return SmvHdfsEmptyConn
+
+        def fileName(self):
             return path
+
         def failAtParsingError(self):
             return validate
 

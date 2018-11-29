@@ -25,3 +25,9 @@ class SmvHiveConnectionInfo(SmvConnectionInfo):
 class SmvHdfsConnectionInfo(SmvConnectionInfo):
     def attributes(self):
         return ['path']
+
+
+SmvHdfsEmptyConn = SmvHdfsConnectionInfo(
+    "emptydir",
+    {"smv.conn.emptydir.path": ""}
+)
