@@ -29,8 +29,8 @@ from smv.error import SmvRuntimeError
 from smv.smvmodule import SmvSparkDfModule
 from smv.utils import smvhash
 
-from smv.iomod import SmvHiveInputTable
-from smv.conn import SmvHiveConnectionInfo
+from smv.iomod import SmvHiveInputTable, SmvCsvInputFile
+from smv.conn import SmvHiveConnectionInfo, SmvHdfsConnectionInfo
 
 if sys.version_info >= (3, 4):
     ABC = abc.ABC
@@ -225,7 +225,7 @@ class WithParser(SmvInputBase):
         return self.smvSchema().schemaHash()
 
 
-class SmvCsvFile(WithParser, SmvInputFromFile):
+class SmvCsvFile(SmvCsvInputFile):
     """Input from a file in CSV format
         Base class for CSV file input.
         User need to define path method.
@@ -236,22 +236,28 @@ class SmvCsvFile(WithParser, SmvInputFromFile):
         >>>         return "path/relative/to/smvInputDir/file.csv"
     """
 
-    def smvSchema(self):
-        smvSchemaObj = self.smvApp.j_smvPyClient.getSmvSchema()
-        if (self.userSchema() is not None):
-            return smvSchemaObj.fromString(self.userSchema())
-        else:
-            return smvSchemaObj.fromFile(self.smvApp.j_smvApp.sc(), self.fullSchemaPath())
+    @abc.abstractmethod
+    def path(self):
+        """relative path to csv file"""
 
+    def fileName(self):
+        return self.path()
 
-    def readAsDF(self):
-        jdf = self.smvApp.j_smvPyClient.readCsvFromFile(
-            self.fullPath(),
-            self.smvSchema(),
-            self.csvAttr(),
-            self.readerLogger()
+    def run(self, df):
+        return df
+
+    def doRun(self, known):
+        df = super(SmvCsvFile, self).doRun(known)
+        return self.run(df)
+
+    def connectionName(self):
+        return None
+
+    def get_connection(self):
+        return SmvHdfsConnectionInfo(
+            "inputdir",
+            {"smv.conn.inputdir.path": self.smvApp.all_data_dirs().inputDir}
         )
-        return DataFrame(jdf, self.smvApp.sqlContext)
 
 
 class SmvSqlCsvFile(SmvCsvFile):
