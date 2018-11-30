@@ -13,6 +13,8 @@
 
 from smv import *
 from smv.dqm import *
+from smv.iomod import SmvCsvInputFile
+from smv.conn import SmvHdfsEmptyConn
 from pyspark.sql.functions import col, lit
 
 class D1(SmvCsvStringData):
@@ -21,9 +23,12 @@ class D1(SmvCsvStringData):
     def dataStr(self):
         return "a,1;b,2"
 
-class T(SmvCsvFile):
-    @classmethod
-    def fullPath(cls):
+class T(SmvCsvInputFile):
+    def connectionName(self):
+        return None
+    def get_connection(self):
+        return SmvHdfsEmptyConn
+    def fileName(self):
         return "./target/python-test-export-csv.csv"
     def csvAttr(self):
         return self.smvApp.defaultCsvWithHeader()

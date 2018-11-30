@@ -16,7 +16,7 @@ from inspect import formatargspec, getargspec
 import sys
 import datetime
 
-from smv import SmvApp, SmvHiveTable, SmvCsvFile, dqm
+from smv import SmvApp, SmvHiveTable, dqm
 from smv.smvappinfo import SmvAppInfo
 from smv.conn import SmvHdfsEmptyConn
 from smv.iomod import SmvCsvInputFile

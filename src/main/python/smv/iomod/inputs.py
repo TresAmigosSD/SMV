@@ -188,6 +188,15 @@ class WithCsvParser(SmvInput):
             return self.dqmValidator.createParserValidator()
 
 class WithSmvSchema(InputFileWithSchema):
+    def csvAttr(self):
+        """Specifies the csv file format.  Corresponds to the CsvAttributes case class in Scala.
+            Derive from smvSchema if not specified by user.
+
+            Override this method if user want to specify CsvAttributes which is different from
+            the one can be derived from smvSchema
+        """
+        return None
+
     def _smv_schema(self):
         """Return the schema specified by user either through
             userSchema method, or through a schema file. The priority is the following:
@@ -197,13 +206,18 @@ class WithSmvSchema(InputFileWithSchema):
 
         """
         if (self.userSchema() is not None):
-            return self.smvApp.smvSchemaObj.fromString(self.userSchema())
+            schema = self.smvApp.smvSchemaObj.fromString(self.userSchema())
         else:
             schema_file_name = self._get_schema_file_name()
             conn = self._get_schema_connection()
             abs_file_path = os.path.join(conn.path, schema_file_name)
 
-            return SmvSchemaOnHdfsIoStrategy(self.smvApp, abs_file_path).read()
+            schema = SmvSchemaOnHdfsIoStrategy(self.smvApp, abs_file_path).read()
+
+        if (self.csvAttr() is not None):
+            return schema.addCsvAttributes(self.csvAttr())
+        else:
+            return schema
 
 
 class SmvCsvInputFile(WithSmvSchema, WithCsvParser):
@@ -215,6 +229,7 @@ class SmvCsvInputFile(WithSmvSchema, WithCsvParser):
             - schemaConnectionName: optional
             - schemaFileName: optional
             - userSchema: optional
+            - csvAttr: optional
             - failAtParsingError: optional, default True
             - dqm: optional, default SmvDQM()
     """
