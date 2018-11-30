@@ -19,6 +19,7 @@ from pyspark.sql import DataFrame
 from pyspark.sql.types import StructType
 
 from smv.iomod.base import SmvInput, AsTable, AsFile
+from smv.smvmodule import WithSparkDf
 from smv.smviostrategy import SmvJdbcIoStrategy, SmvHiveIoStrategy, \
     SmvSchemaOnHdfsIoStrategy, SmvCsvOnHdfsIoStrategy, SmvTextOnHdfsIoStrategy,\
     SmvXmlOnHdfsIoStrategy
@@ -111,7 +112,7 @@ class InputFileWithSchema(SmvInput, AsFile):
             return self.fileName().rsplit(".", 1)[0] + ".schema"
 
 
-class SmvXmlInputFile(InputFileWithSchema):
+class SmvXmlInputFile(WithSparkDf, InputFileWithSchema):
     """Input from file in XML format
         User need to implement:
 
@@ -220,7 +221,7 @@ class WithSmvSchema(InputFileWithSchema):
             return schema
 
 
-class SmvCsvInputFile(WithSmvSchema, WithCsvParser):
+class SmvCsvInputFile(WithSparkDf, WithSmvSchema, WithCsvParser):
     """Csv file input
         User need to implement:
 
@@ -247,7 +248,7 @@ class SmvCsvInputFile(WithSmvSchema, WithCsvParser):
         ).read()
 
 
-class SmvMultiCsvInputFiles(WithSmvSchema, WithCsvParser):
+class SmvMultiCsvInputFiles(WithSparkDf, WithSmvSchema, WithCsvParser):
     """Multiple Csv files under the same dir input
         User need to implement:
 
