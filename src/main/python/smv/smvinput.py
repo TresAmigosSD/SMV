@@ -29,7 +29,7 @@ from smv.error import SmvRuntimeError
 from smv.smvmodule import SmvSparkDfModule
 from smv.utils import smvhash
 
-from smv.iomod import SmvHiveInputTable, SmvCsvInputFile
+from smv.iomod import SmvHiveInputTable, SmvCsvInputFile, SmvMultiCsvInputFiles
 from smv.conn import SmvHiveConnectionInfo
 
 if sys.version_info >= (3, 4):
@@ -288,38 +288,27 @@ class SmvSqlCsvFile(SmvCsvFile):
         return res
 
 
-class SmvMultiCsvFiles(SmvCsvFile):
+class SmvMultiCsvFiles(SmvMultiCsvInputFiles):
     """Raw input from multiple csv files sharing single schema
 
         Instead of a single input file, specify a data dir with files which share
         the same schema.
     """
-    def path(self):
+    def dirName(self):
         return self.dir()
 
-    def readAsDF(self):
-        flist = self.smvApp._jvm.SmvHDFS.dirList(self.fullPath()).array()
-        # ignore all hidden files in the data dir
-        filesInDir = ["{}/{}".format(self.fullPath(), n) for n in flist if not n.startswith(".")]
+    def run(self, df):
+        return df
 
-        if (not filesInDir):
-            raise SmvRuntimeError("There are no data files in {}".format(self.fullPath()))
+    def doRun(self, known):
+        df = super(SmvMultiCsvFiles, self).doRun(known)
+        return self.run(df)
 
-        combinedJdf = None
-        reader_logger = self.readerLogger()
-        for filePath in filesInDir:
-            jdf = self.smvApp.j_smvPyClient.readCsvFromFile(
-                filePath,
-                self.smvSchema(),
-                self.csvAttr(),
-                reader_logger
-            )
-            combinedJdf = jdf if (combinedJdf is None) else combinedJdf.unionAll(jdf)
+    def connectionName(self):
+        return None
 
-        return DataFrame(combinedJdf, self.smvApp.sqlContext)
-
-    def description(self):
-        return "Input dir: @" + self.dir()
+    def get_connection(self):
+        return self.smvApp.input_connection()
 
     @abc.abstractmethod
     def dir(self):

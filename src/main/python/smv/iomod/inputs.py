@@ -256,6 +256,7 @@ class SmvMultiCsvInputFiles(WithSmvSchema, WithCsvParser):
             - schemaConnectionName: optional
             - schemaFileName: optional
             - userSchema: optional
+            - csvAttr: optional
             - failAtParsingError: optional, default True
             - dqm: optional, default SmvDQM()
     """
