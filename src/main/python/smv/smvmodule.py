@@ -26,7 +26,7 @@ from smv.dqm import SmvDQM
 from smv.error import SmvRuntimeError
 from smv.utils import pickle_lib, lazy_property
 from smv.smviostrategy import SmvCsvPersistenceStrategy, SmvJsonOnHdfsPersistenceStrategy, SmvPicklablePersistenceStrategy, SmvParquetPersistenceStrategy
-from smv.smvgenericmodule import SmvProcessModule
+from smv.smvgenericmodule import SmvProcessModule, SmvGenericModule
 
 class SmvOutput(object):
     """Mixin which marks an SmvModule as one of the output of its stage
@@ -46,7 +46,113 @@ class SmvOutput(object):
         return None
 
 
-class SmvSparkDfModule(SmvProcessModule):
+class WithSparkDf(SmvGenericModule):
+    """Base class for SmvModules create Spark DFs
+    """
+
+    def __init__(self, smvApp):
+        super(WithSparkDf, self).__init__(smvApp)
+        self.dqmTimeElapsed = None
+
+    #########################################################################
+    # User interface methods
+    #
+    # WithSparkDf specific:
+    # - dqm: Optional, default SmvDQM()
+    #########################################################################
+    def dqm(self):
+        """DQM policy
+
+            Override this method to define your own DQM policy (optional).
+            Default is an empty policy.
+
+            Returns:
+                (SmvDQM): a DQM policy
+        """
+        return SmvDQM()
+
+    #########################################################################
+    # Implement of SmvGenericModule abatract methos and other private methods
+    #########################################################################
+    def had_action(self):
+        """Check dqm overall counter to simulate an action check.
+            There is no way for us to tell wether the result df is just
+            empty or there is no action on it. So use this with caution
+        """
+        return self.dqmValidator.totalRecords() > 0
+
+    def calculate_edd(self):
+        """When config smv.forceEdd flag is true, run edd calculation.
+        """
+        def get_edd(df):
+            return self.smvApp._jvm.SmvPythonHelper.getEddJsonArray(df._jdf)
+
+        (edd_json_array, eddTimeElapsed) = self._do_action_on_df(
+            get_edd, self.data, "CALCULATE EDD")
+        self.module_meta.addEddResult(edd_json_array)
+        self.module_meta.addDuration("edd", eddTimeElapsed)
+
+    def force_an_action(self, df):
+        # Since optimization can be done on a DF actions like count, we have to convert DF
+        # to RDD and than apply an action, otherwise fix count will be always zero
+        (n, self.dqmTimeElapsed) = self._do_action_on_df(
+            lambda d: d.rdd.count(), df, "FORCE AN ACTION FOR DQM")
+
+    # Override this method to add the edd calculation if config
+    def _calculate_user_meta(self):
+        super(WithSparkDf, self)._calculate_user_meta()
+        if (self.smvApp.py_smvconf.force_edd()):
+            self.calculate_edd()
+
+    # Override this method to add the dqmTimeElapsed
+    def _finalize_meta(self):
+        super(WithSparkDf, self)._finalize_meta()
+        self.module_meta.addSchemaMetadata(self.data)
+        # Need to add duration at the very end, just before persist
+        self.module_meta.addDuration("dqm", self.dqmTimeElapsed)
+
+    # Override this to add the task to a Spark job group
+    def _do_action_on_df(self, func, df, desc):
+        name = self.fqn()
+        self.smvApp.sc.setJobGroup(groupId=name, description=desc)
+        (res, secondsElapsed) = super(WithSparkDf, self)._do_action_on_df(func, df, desc)
+
+        # Python api does not have clearJobGroup
+        # set groupId and description to None is equivalent
+        self.smvApp.sc.setJobGroup(groupId=None, description=None)
+        return (res, secondsElapsed)
+
+    def persistStrategy(self):
+        _format = self.smvApp.py_smvconf.df_persist_format()
+        if (_format == "smvcsv_on_hdfs"):
+            return SmvCsvPersistenceStrategy(self.smvApp, self.fqn(), self.ver_hex())
+        elif (_format == "parquet_on_hdfs"):
+            return SmvParquetPersistenceStrategy(self.smvApp, self.fqn(), self.ver_hex())
+
+    def metaStrategy(self):
+        return SmvJsonOnHdfsPersistenceStrategy(self.smvApp, self.meta_path())
+
+    @lazy_property
+    def dqmValidator(self):
+        return self.smvApp._jvm.DQMValidator(self.dqm())
+
+    def pre_action(self, df):
+        """DF in and DF out, to perform operations on created from run method"""
+        return DataFrame(self.dqmValidator.attachTasks(df._jdf), df.sql_ctx)
+
+    def post_action(self):
+        """Will run when action happens on a DF, here for DQM validation"""
+        validation_result = self.dqmValidator.validate()
+        if (not validation_result.isEmpty()):
+            msg = json.dumps(
+                json.loads(validation_result.toJSON()),
+                indent=2, separators=(',', ': ')
+            )
+            smv.logger.warn("Nontrivial DQM result:\n{}".format(msg))
+        self.module_meta.addDqmValidationResult(validation_result.toJSON())
+
+
+class SmvSparkDfModule(SmvProcessModule, WithSparkDf):
     """Base class for SmvModules create Spark DFs
     """
 
@@ -54,10 +160,6 @@ class SmvSparkDfModule(SmvProcessModule):
 
     def dsType(self):
         return "Module"
-
-    def __init__(self, smvApp):
-        super(SmvSparkDfModule, self).__init__(smvApp)
-        self.dqmTimeElapsed = None
 
     #########################################################################
     # User interface methods
@@ -74,22 +176,11 @@ class SmvSparkDfModule(SmvProcessModule):
     # - metadataHistorySize: Optional, default 5
     # - version: Optional, default "0" --- Deprecated!
     #
-    # SmvModule specific:
+    # SmvSparkDfModule specific:
     # - dqm: Optional, default SmvDQM()
     # - publishHiveSql: Optional, default None
     # - run: Required
     #########################################################################
-    def dqm(self):
-        """DQM policy
-
-            Override this method to define your own DQM policy (optional).
-            Default is an empty policy.
-
-            Returns:
-                (SmvDQM): a DQM policy
-        """
-        return SmvDQM()
-
 
     def publishHiveSql(self):
         """An optional sql query to run to publish the results of this module when the
@@ -130,85 +221,6 @@ class SmvSparkDfModule(SmvProcessModule):
                 (DataFrame): output of this SmvModule
         """
 
-    #########################################################################
-    # Implement of SmvGenericModule abatract methos and other private methods
-    #########################################################################
-    def had_action(self):
-        """Check dqm overall counter to simulate an action check.
-            There is no way for us to tell wether the result df is just
-            empty or there is no action on it. So use this with caution
-        """
-        return self.dqmValidator.totalRecords() > 0
-
-    def calculate_edd(self):
-        """When config smv.forceEdd flag is true, run edd calculation.
-        """
-        def get_edd(df):
-            return self.smvApp._jvm.SmvPythonHelper.getEddJsonArray(df._jdf)
-
-        (edd_json_array, eddTimeElapsed) = self._do_action_on_df(
-            get_edd, self.data, "CALCULATE EDD")
-        self.module_meta.addEddResult(edd_json_array)
-        self.module_meta.addDuration("edd", eddTimeElapsed)
-
-    def force_an_action(self, df):
-        # Since optimization can be done on a DF actions like count, we have to convert DF
-        # to RDD and than apply an action, otherwise fix count will be always zero
-        (n, self.dqmTimeElapsed) = self._do_action_on_df(
-            lambda d: d.rdd.count(), df, "FORCE AN ACTION FOR DQM")
-
-    # Override this method to add the edd calculation if config
-    def _calculate_user_meta(self):
-        super(SmvSparkDfModule, self)._calculate_user_meta()
-        if (self.smvApp.py_smvconf.force_edd()):
-            self.calculate_edd()
-
-    # Override this method to add the dqmTimeElapsed
-    def _finalize_meta(self):
-        super(SmvSparkDfModule, self)._finalize_meta()
-        self.module_meta.addSchemaMetadata(self.data)
-        # Need to add duration at the very end, just before persist
-        self.module_meta.addDuration("dqm", self.dqmTimeElapsed)
-
-    # Override this to add the task to a Spark job group
-    def _do_action_on_df(self, func, df, desc):
-        name = self.fqn()
-        self.smvApp.sc.setJobGroup(groupId=name, description=desc)
-        (res, secondsElapsed) = super(SmvSparkDfModule, self)._do_action_on_df(func, df, desc)
-
-        # Python api does not have clearJobGroup
-        # set groupId and description to None is equivalent
-        self.smvApp.sc.setJobGroup(groupId=None, description=None)
-        return (res, secondsElapsed)
-
-    def persistStrategy(self):
-        _format = self.smvApp.py_smvconf.df_persist_format()
-        if (_format == "smvcsv_on_hdfs"):
-            return SmvCsvPersistenceStrategy(self.smvApp, self.fqn(), self.ver_hex())
-        elif (_format == "parquet_on_hdfs"):
-            return SmvParquetPersistenceStrategy(self.smvApp, self.fqn(), self.ver_hex())
-
-    def metaStrategy(self):
-        return SmvJsonOnHdfsPersistenceStrategy(self.smvApp, self.meta_path())
-
-    @lazy_property
-    def dqmValidator(self):
-        return self.smvApp._jvm.DQMValidator(self.dqm())
-
-    def pre_action(self, df):
-        """DF in and DF out, to perform operations on created from run method"""
-        return DataFrame(self.dqmValidator.attachTasks(df._jdf), df.sql_ctx)
-
-    def post_action(self):
-        """Will run when action happens on a DF, here for DQM validation"""
-        validation_result = self.dqmValidator.validate()
-        if (not validation_result.isEmpty()):
-            msg = json.dumps(
-                json.loads(validation_result.toJSON()),
-                indent=2, separators=(',', ': ')
-            )
-            smv.logger.warn("Nontrivial DQM result:\n{}".format(msg))
-        self.module_meta.addDqmValidationResult(validation_result.toJSON())
 
     # All publish related methods should be moved to generic output module class
     def exportToHive(self):
