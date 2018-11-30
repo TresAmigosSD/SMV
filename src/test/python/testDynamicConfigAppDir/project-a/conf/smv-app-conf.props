@@ -6,6 +6,3 @@ smv.stages = stage
 
 # static appId for testing
 smv.appId = PROJECT_A
-
-# set maximum retries of Callback Server
-smv.maxCbsPortRetries = 20

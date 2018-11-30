@@ -22,7 +22,7 @@ from smv.error import SmvRuntimeError
 from smv.utils import infer_full_name_from_part
 
 class SmvConfig(object):
-    """Smv configurations 
+    """Smv configurations
         Including:
 
             - command line parsing
@@ -32,7 +32,7 @@ class SmvConfig(object):
     def __init__(self, arglist, _jvm):
         self._jvm = _jvm
         self.cmdline = self._create_cmdline_conf(arglist)
-        
+
         DEFAULT_SMV_HOME_CONF_FILE = os.getenv('HOME', '') + "/.smv/smv-user-conf.props"
 
         self.app_dir = self.cmdline.pop('smvAppDir')
@@ -63,7 +63,7 @@ class SmvConfig(object):
         return res
 
     def spark_sql_props(self):
-        return {k:v 
+        return {k:v
             for k, v in self.merged_props().items()
             if k.startswith("spark.sql")
         }
@@ -118,16 +118,16 @@ class SmvConfig(object):
 
     def app_id(self):
         return self.merged_props().get("smv.appId")
-    
+
     def app_name(self):
         return self.merged_props().get("smv.appName")
-    
+
     def stage_names(self):
         return self._split_prop("smv.stages")
 
     def force_edd(self):
         return self._get_prop_as_bool("smv.forceEdd")
-    
+
     def df_persist_format(self):
         """Spark DF's default persisted format. Available values:
 
@@ -140,7 +140,7 @@ class SmvConfig(object):
         return self._get_prop_as_bool("smv.lock")
 
     def get_run_config(self, key):
-        """Run config will be accessed within client modules. Return 
+        """Run config will be accessed within client modules. Return
             run-config value of the given key.
 
             2 possible sources of run-config:
@@ -178,7 +178,7 @@ class SmvConfig(object):
             return True
         else:
             return False
-    
+
     def _split_prop(self, prop_name):
         """Split multi-value prop to a list
         """
@@ -195,7 +195,7 @@ class SmvConfig(object):
 
         DEFAULT_SMV_APP_CONF_FILE  = "conf/smv-app-conf.props"
         DEFAULT_SMV_USER_CONF_FILE = "conf/smv-user-conf.props"
-    
+
         # TODO: Will remove when no scripts are using this
         parser.add_argument('--cbs-port', dest='cbsPort', type=int, help="python callback server port")
 
@@ -230,7 +230,7 @@ class SmvConfig(object):
 
         def parse_props(prop):
             # str.split([sep[, maxsplit]]): we just need to split the first "="
-            return prop.split("=", 1) 
+            return prop.split("=", 1)
 
         # command line props override
         parser.add_argument('--smv-props', dest="smvProps", nargs='+', type=parse_props, default=[], help="key=value command line props override")
@@ -252,7 +252,7 @@ class SmvConfig(object):
             if os.path.exists(path):
                 with open(path) as fp:
                     return jprops.load_properties(fp)
-            else: 
+            else:
                 return {}
 
         app_conf_props = load(full_app_conf_path)
@@ -264,12 +264,11 @@ class SmvConfig(object):
             "smv.appId"              : str(uuid.uuid4()),
             "smv.stages"             : "",
             "smv.config.keys"        : "",
-            "smv.class_dir"          : "./target/classes",
-            "smv.maxCbsPortRetries"  : "10"
+            "smv.class_dir"          : "./target/classes"
         }
 
         # Priority: Low to High
-        #   - default 
+        #   - default
         #   - conf/smv-app-conf.props
         #   - ${HOME}/.smv/smv-user-conf.props
         #   - conf/smv-user-conf.props
