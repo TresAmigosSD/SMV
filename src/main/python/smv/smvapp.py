@@ -64,6 +64,8 @@ class SmvApp(object):
     SRC_PROJECT_PATH = "src/main/python"
     # default location for py UDL's in smv projects
     SRC_LIB_PATH = "library"
+    # prefix which under SRC_LIB_PATH but should be excluded from userlib
+    SEMI_PRIVATE_LIB_PREFIX = "dsalib"
 
     @classmethod
     def getInstance(cls):
@@ -117,7 +119,7 @@ class SmvApp(object):
 
         self.py_smvconf = SmvConfig(arglist, self._jvm)
 
-        # configure spark sql params 
+        # configure spark sql params
         if (self.sparkSession is not None):
             for k, v in self.py_smvconf.spark_sql_props().items():
                 self.sqlContext.setConf(k, v)
@@ -146,7 +148,7 @@ class SmvApp(object):
         # Initialize DataFrame and Column with helper methods
         smv.helpers.init_helpers()
 
-    def smvVersion(self): 
+    def smvVersion(self):
         versionFile = self.smvHome + "/.smv_version"
         with open(versionFile, "r") as fp:
             line = fp.readline()
@@ -181,7 +183,7 @@ class SmvApp(object):
         self.remove_source(self.SRC_LIB_PATH)
 
     def all_data_dirs(self):
-        """ All the config data dirs as an object. 
+        """ All the config data dirs as an object.
             Could be dynamic, so calculate each time when use
         """
         dds = self.py_smvconf.all_data_dirs()
@@ -201,7 +203,7 @@ class SmvApp(object):
         if (res is None):
             raise SmvRuntimeError("JDBC url not specified in SMV config")
         return res
-  
+
     def jdbcDriver(self):
         res = self.py_smvconf.merged_props().get('smv.jdbc.driver')
         if (res is None):
@@ -232,7 +234,7 @@ class SmvApp(object):
     def getCurrentProperties(self):
         """ Python dict of current megred props
             defaultProps ++ appConfProps ++ homeConfProps ++ usrConfProps ++ cmdLineProps ++ dynamicRunConfig
-            Where right wins out in map merge. 
+            Where right wins out in map merge.
         """
         return self.py_smvconf.merged_props()
 
@@ -249,7 +251,7 @@ class SmvApp(object):
     def userLibs(self):
         """Use introspection to determine list of availabe user libs."""
         lib_dir = os.path.join(self.appDir(), self.SRC_LIB_PATH)
-        return self._libsInDir(lib_dir, "")
+        return [i for i in self._libsInDir(lib_dir, "") if not i.startswith(self.SEMI_PRIVATE_LIB_PREFIX)]
 
     def smvLibs(self):
         """Use introspection to determine list of availabe smv builtin libs."""
@@ -369,15 +371,15 @@ class SmvApp(object):
         return self.runModule(urn, forceRun, quickRun)
 
     def get_need_to_run(self, roots, keep_roots=False):
-        """Given a list of target modules to run, return a list of modules which 
-            will run and be persisted in the order of how they should run. This 
-            is a sub-set of modules_needed_for_run, but only keep the 
+        """Given a list of target modules to run, return a list of modules which
+            will run and be persisted in the order of how they should run. This
+            is a sub-set of modules_needed_for_run, but only keep the
             non-ephemeral and not-persisted-yet modules.
             Please note that some of the roots may not be in this list, to include
             all roots, set `keep_roots` to True
         """
         visitor = ModulesVisitor(roots)
-        return [m for m in visitor.modules_needed_for_run 
+        return [m for m in visitor.modules_needed_for_run
             if ((not m.is_persisted() and not m.isEphemeral())
                 or (keep_roots and m in roots))
         ]
@@ -503,7 +505,7 @@ class SmvApp(object):
             data,
             readerLogger
         ), self.sqlContext)
-    
+
     def createDF(self, schema, data = None):
         readerLogger = self._jvm.SmvPythonHelper.getTerminateParserLogger()
         return self.createDFWithLogger(schema, data, readerLogger)
@@ -559,14 +561,14 @@ class SmvApp(object):
 
     def _purge_current_output_files(self, mods):
         SmvModuleRunner(mods, self).purge_persisted()
-        
+
     def _dry_run(self, mods):
         """Execute as dry-run if the dry-run flag is specified.
             This will show which modules are not yet persisted that need to run, without
             actually running the modules.
         """
 
-        mods_need_to_run = self.get_need_to_run(mods, keep_roots=True) 
+        mods_need_to_run = self.get_need_to_run(mods, keep_roots=True)
 
         print("Dry run - modules not persisted:")
         print("----------------------")
@@ -582,7 +584,7 @@ class SmvApp(object):
             f.write(dot_graph_str)
 
     def _print_dead_modules(self):
-        """Print dead modules: 
+        """Print dead modules:
         Modules which do not contribute to any output modules are considered dead
         """
         SmvAppInfo(self).ls_dead()
@@ -596,7 +598,7 @@ class SmvApp(object):
 
     def _publish_modules(self, mods):
         SmvModuleRunner(mods, self).publish()
-  
+
     def _publish_modules_to_hive(self, mods):
         SmvModuleRunner(mods, self).publish_to_hive()
 
@@ -626,7 +628,7 @@ class SmvApp(object):
         if(self.cmd_line.printDeadModules):
             self._print_dead_modules()
         elif(self.cmd_line.dryRun):
-            self._dry_run(mods) 
+            self._dry_run(mods)
         elif(self.cmd_line.graph):
             self._generate_dot_graph()
         elif(self.cmd_line.publishHive):
