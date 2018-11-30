@@ -48,7 +48,15 @@ class SmvGraphJsonTest(SmvBaseTest):
         res = j_obj['edges'][0]
         exp = ['stage.modules.X', 'stage.modules.Y']
         self.assertEqual(sorted(res), sorted(exp))
-    
+
+    def test_graph_without_state(self):
+        j_str = self.smvApp.get_module_graph_json()
+        j_obj = json.loads(j_str)
+        n_fqns = [n['fqn'] for n in j_obj['nodes']]
+
+        exp = ['stage.modules.X', 'stage.modules.Y']
+        self.assertEqual(sorted(n_fqns), sorted(exp))
+
     def test_module_state(self):
         j_str = self.smvApp.get_module_state_json()
         j_obj = json.loads(j_str)

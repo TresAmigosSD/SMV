@@ -35,7 +35,7 @@ class SmvAppInfo(object):
         for ds in nodes:
             from_ds = ds.resolvedRequiresDS
             edges.extend([(n, ds) for n in from_ds if n in nodes])
-        
+
         return (nodes, edges)
 
     def _common_prefix(self, fqn_list):
@@ -63,7 +63,7 @@ class SmvAppInfo(object):
         else:
             return fqn
 
-    def create_graph_json(self):
+    def create_graph_json(self, withState=True):
         """Create dependency graph Json string
         """
         (nodes, edges) = self._graph()
@@ -76,13 +76,17 @@ class SmvAppInfo(object):
 
         def node_dict(n):
             # TODO: Will remove "needsToRun" from here, when client code changes
-            return {
+            res = {
                 "fqn": n.fqn(),
                 "type": node_type(n),
                 "version": n.version(),
-                "needsToRun": n.needsToRun(),
                 "description": n.description()
             }
+
+            if (withState):
+                res.update({"needsToRun": n.needsToRun()})
+
+            return res
 
         def edge_pair(f, t):
             return [f.fqn(), t.fqn()]
@@ -112,7 +116,7 @@ class SmvAppInfo(object):
             n_in_s = [n for n in nodes if n.fqn().startswith(s + ".")]
             clusters.update({s: n_in_s})
 
-        def _node_str(ds): 
+        def _node_str(ds):
             if (ds.dsType() == "Input"):
                 return '  "{}" [shape=box, color="pink"]'.format(self._base_name(ds))
             else:
@@ -136,7 +140,7 @@ class SmvAppInfo(object):
         ])
 
         all_clusters = "\n".join([
-            _cluster_str(i, s, ns) 
+            _cluster_str(i, s, ns)
             for i, (s, ns) in enumerate(clusters.items())
         ])
 
@@ -195,7 +199,7 @@ class SmvAppInfo(object):
         """For given nodes, list the node names under their stages"""
         if(stage is None):
             return "\n" + "\n".join([
-                "{}:\n".format(s) + self._ls_in_stage(s, nodes, "  ") + "\n" 
+                "{}:\n".format(s) + self._ls_in_stage(s, nodes, "  ") + "\n"
                 for s in self.stages
             ])
         else:

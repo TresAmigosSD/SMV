@@ -293,6 +293,12 @@ class SmvApp(object):
         """
         return SmvAppInfo(self).create_graph_json()
 
+    def get_module_graph_json(self):
+        """Generate a json string representing the dependency graph
+            without the module states
+        """
+        return SmvAppInfo(self).create_graph_json(withState=False)
+
     def get_module_state_json(self):
         """Generate a json string for all modules' needToRun state of the app
         """
