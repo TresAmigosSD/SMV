@@ -196,9 +196,8 @@ class WithSmvSchema(InputFileWithSchema):
                 - schema_file_name under schema_connection
 
         """
-        smvSchemaObj = self.smvApp.j_smvPyClient.getSmvSchema()
         if (self.userSchema() is not None):
-            return smvSchemaObj.fromString(self.userSchema())
+            return self.smvApp.smvSchemaObj.fromString(self.userSchema())
         else:
             schema_file_name = self._get_schema_file_name()
             conn = self._get_schema_connection()

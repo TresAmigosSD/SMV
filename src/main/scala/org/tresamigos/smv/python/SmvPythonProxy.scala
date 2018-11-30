@@ -197,6 +197,8 @@ object SmvPythonHelper {
 
   def getEddJsonArray(df: DataFrame): java.util.List[String] =
     df.edd.summary().toDF.toJSON.collect().toSeq
+
+  def getSmvSchema() = SmvSchema
 }
 
 class SmvGroupedDataAdaptor(grouped: SmvGroupedData) {
@@ -255,8 +257,6 @@ class SmvMultiJoinAdaptor(joiner: SmvMultiJoin) {
  * through the py4j gateway.
  */
 class SmvPyClient(val j_smvApp: SmvApp) {
-  def getSmvSchema() = SmvSchema
-
   def readCsvFromFile(
     fullPath: String,
     schema: SmvSchema,

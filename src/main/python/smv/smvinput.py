@@ -335,8 +335,7 @@ class SmvCsvStringData(WithParser):
     """
 
     def smvSchema(self):
-        smvSchemaObj = self.smvApp.j_smvPyClient.getSmvSchema()
-        return smvSchemaObj.fromString(self.schemaStr())
+        return self.smvApp.smvSchemaObj.fromString(self.schemaStr())
 
     def readAsDF(self):
         return self.smvApp.createDFWithLogger(self.schemaStr(), self.dataStr(), self.readerLogger())

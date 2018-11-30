@@ -118,6 +118,8 @@ class SmvApp(object):
         java_import(self._jvm, "org.tresamigos.smv.SmvHDFS")
         java_import(self._jvm, "org.tresamigos.smv.DfCreator")
 
+        self.smvSchemaObj = self._jvm.SmvPythonHelper.getSmvSchema()
+
         self.py_smvconf = SmvConfig(arglist, self._jvm)
 
         # configure spark sql params

@@ -134,10 +134,9 @@ class SmvCsvPersistenceStrategy(SmvFileOnHdfsPersistenceStrategy):
         # this call creates both .csv and .schema file from the scala side
         record_count = self.smvApp.j_smvPyClient.persistDF(self._file_path, raw_data._jdf)
         smv.logger.info("N: {}".format(record_count))
-    
+
     def _read(self):
-        smvSchemaObj = self.smvApp.j_smvPyClient.getSmvSchema()
-        smv_schema = smvSchemaObj.fromFile(self.smvApp.j_smvApp.sc(), self._schema_path)
+        smv_schema = self.smvApp.smvSchemaObj.fromFile(self.smvApp.j_smvApp.sc(), self._schema_path)
 
         terminateLogger = self.smvApp._jvm.SmvPythonHelper.getTerminateParserLogger()
         handler = self.smvApp.j_smvPyClient.createFileIOHandler(self._file_path)
@@ -351,8 +350,7 @@ class SmvSchemaOnHdfsIoStrategy(SmvIoStrategy):
 
     def read(self):
         schema_file_str = self.smvApp._jvm.SmvHDFS.readFromFile(self._file_path)
-        smvSchemaObj = self.smvApp.j_smvPyClient.getSmvSchema()
-        smv_schema = smvSchemaObj.fromString(";".join(schema_file_str.split("\n")))
+        smv_schema = self.smvApp.smvSchemaObj.fromString(";".join(schema_file_str.split("\n")))
         return smv_schema
 
     def write(self, smvSchema):
