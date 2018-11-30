@@ -196,9 +196,6 @@ class SmvConfig(object):
         DEFAULT_SMV_APP_CONF_FILE  = "conf/smv-app-conf.props"
         DEFAULT_SMV_USER_CONF_FILE = "conf/smv-user-conf.props"
 
-        # TODO: Will remove when no scripts are using this
-        parser.add_argument('--cbs-port', dest='cbsPort', type=int, help="python callback server port")
-
         # Where to find props files
         parser.add_argument('--smv-app-dir', dest='smvAppDir', default=".", help="SMV app directory")
         parser.add_argument('--smv-app-conf', dest='smvAppConfFile', default=DEFAULT_SMV_APP_CONF_FILE, help="app level (static) SMV configuration file path")
