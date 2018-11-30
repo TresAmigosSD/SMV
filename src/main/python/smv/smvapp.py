@@ -195,9 +195,6 @@ class SmvApp(object):
     def appDir(self):
         return self.py_smvconf.app_dir
 
-    def maxCbsPortRetries(self):
-        return self.py_smvconf.merged_props().get('smv.maxCbsPortRetries')
-
     def jdbcUrl(self):
         res = self.py_smvconf.merged_props().get('smv.jdbc.url')
         if (res is None):
