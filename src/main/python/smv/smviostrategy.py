@@ -351,7 +351,7 @@ class SmvSchemaOnHdfsIoStrategy(SmvIoStrategy):
     def read(self):
         # To be backward compatable read using spark sc.textFile
         smv_schema = self.smvApp.smvSchemaObj.fromFile(
-            self.smvApp.sc._jsc.sc(),
+            self.smvApp.j_smvApp.sc(),
             self._file_path
         )
         return smv_schema
