@@ -46,7 +46,7 @@ class DataSetMgr(object):
 
     def load(self, *urns):
         """Load SmvGenericModules for specified URNs
-        
+
         Args:
             *urns (str): list of URNs as strings
 
@@ -116,7 +116,7 @@ class TXContext(object):
 
 
 class TX(object):
-    """Abstraction of the transaction boundary for loading SmvGenericModules. 
+    """Abstraction of the transaction boundary for loading SmvGenericModules.
         A TX object
 
         * will instantiate a set of repos when itself instantiated and will
@@ -140,7 +140,7 @@ class TX(object):
     def inferDS(self, partial_names):
         return self.load(self._inferUrn(partial_names))
 
-    def allDataSets(self): 
+    def allDataSets(self):
         return self.load(self._allUrns())
 
     def allOutputModules(self):
@@ -153,21 +153,21 @@ class TX(object):
         return self.load(self._urnsForStage(stageNames))
 
     def _urnsForStage(self, stageNames):
-        return [u
-            for repo in self.repos 
-            for s in stageNames 
-            for u in repo._dataSetsForStage(s)
+        return ["mod:" + u
+            for repo in self.repos
+            for s in stageNames
+            for u in repo.dataSetsForStage(s)
         ]
 
     def _allUrns(self):
         if (len(self.stages) == 0):
             log.warn("No stage names configured. Unable to discover any modules.")
         return self._urnsForStage(self.stages)
-   
+
     def _inferUrn(self, partial_names):
         def urn_str(pn):
             return infer_full_name_from_part(
-                self._allUrns(), 
+                self._allUrns(),
                 pn
             )
 

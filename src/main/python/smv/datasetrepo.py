@@ -109,14 +109,14 @@ class DataSetRepo(object):
 
             A Python module is discoverable if it is importable and belongs to a stage. We cache this information
             because walk_packages is slow and walking packages repeatedly while loading many datasets explodes
-            the running time of operations like getting the graph of a project. 
+            the running time of operations like getting the graph of a project.
         """
         def packages_in_stage(stage_name):
             stage_pymod = self.load_pymodule(stage_name)
-            
+
             # where to recursively search for pymodules
             search_path = stage_pymod.__path__
-            
+
             # Prefix of all pymodules and packages found in this dir. This is a little strange - suppose we are
             # searching in stage foo.bar which has the following structure:
             # |-foo
@@ -125,9 +125,9 @@ class DataSetRepo(object):
             #     |-baz
             #       |-file.py
             # When walk_packages finds the directory `baz`, it won't know that the package's name is `foo.bar.baz` -
-            # it's not aware that bar is contained within another package. Unless we provide a prefix, it will think 
-            # that `foo.bar.baz's` name is just `baz`.  This sort of makes sense, because if you added foo/bar to the 
-            # path then you could `import baz`. However, walk_packages will actually fail because it cannot 
+            # it's not aware that bar is contained within another package. Unless we provide a prefix, it will think
+            # that `foo.bar.baz's` name is just `baz`.  This sort of makes sense, because if you added foo/bar to the
+            # path then you could `import baz`. However, walk_packages will actually fail because it cannot
             # `import baz`, which it needs to do in order to get package details that inform the recursive search.
             # If there are no packages (only pymodules) in foo/bar, then `walk_packages` will succeed, but the output
             # names will be wrong (e.g. `buzz` instead of `foo.bar.buzz`).
@@ -138,7 +138,7 @@ class DataSetRepo(object):
             # to simply suppress the error.
             def onerror(name):
                 smv.logger.error("Skipping due to error during walk_packages: " + name)
-            
+
             return pkgutil.walk_packages(
                 path=search_path,
                 prefix=stage_name + '.',
@@ -203,7 +203,7 @@ class DataSetRepo(object):
 
         return matching_classes
 
-    def _dataSetsForStage(self, stageName):
+    def dataSetsForStage(self, stageName):
         def is_generic_module(klass):
             # We try to access the IsSmvDataSet attribute of the object.
             # if it does not exist, we will catch the the AttributeError
@@ -218,7 +218,7 @@ class DataSetRepo(object):
                 klass_is_smv_dataset = False
             return klass_is_smv_dataset
 
-        urns = []
+        fqns = []
 
         smv.logger.debug("Searching for SmvGenericModules in stage " + stageName)
         smv.logger.debug("sys.path=" + repr(sys.path))
@@ -229,13 +229,9 @@ class DataSetRepo(object):
                 smv.logger.debug("Searching for SmvGenericModules in " + repr(pymod))
 
                 gen_modules = self._matchingClassesInPyModule(pymod, is_generic_module)
-                urns.extend([obj.urn() for obj in gen_modules])
+                fqns.extend([obj.fqn() for obj in gen_modules])
 
-        return urns
-
-    def dataSetsForStage(self, stageName):
-        urns = self._dataSetsForStage(stageName)
-        return smv_copy_array(self.smvApp.sc, *urns)
+        return fqns
 
     def all_providers(self):
         def is_provider(klass):
