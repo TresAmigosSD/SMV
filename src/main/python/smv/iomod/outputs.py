@@ -19,7 +19,7 @@ from smv.smviostrategy import SmvCsvOnHdfsIoStrategy, SmvJdbcIoStrategy, SmvHive
 from smv.csv_attributes import CsvAttributes
 from smv.utils import scala_seq_to_list
 
-class SparkDfGenModWriter(object):
+class WithSparkDfWriter(object):
     """Mixin for output modules using spark df writer"""
     def writeMode(self):
         """
@@ -34,7 +34,7 @@ class SparkDfGenModWriter(object):
         return "errorifexists"
 
 
-class SmvJdbcOutputTable(SmvSparkDfOutput, SparkDfGenModWriter, AsTable):
+class SmvJdbcOutputTable(SmvSparkDfOutput, WithSparkDfWriter, AsTable):
     """
         User need to implement
 
@@ -56,7 +56,7 @@ class SmvJdbcOutputTable(SmvSparkDfOutput, SparkDfGenModWriter, AsTable):
         return data
 
 
-class SmvHiveOutputTable(SmvSparkDfOutput, SparkDfGenModWriter, AsTable):
+class SmvHiveOutputTable(SmvSparkDfOutput, WithSparkDfWriter, AsTable):
     """
         User need to implement
 
