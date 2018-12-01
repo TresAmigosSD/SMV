@@ -708,10 +708,13 @@ class SmvProcessModule(SmvGenericModule):
 
         # iterate through libs/modules that this DataSet depends on and use their source towards hash as well
         for lib in self.requiresLib():
-            # It is possible that inspect.getsource raises IOError: source code not available for c-lib, e.g. time
+            # It is possible that inspect.getsource raises
+            # (Python 2) "IOError: source code not available"
+            # (Python 3) "TypeError"
+            # for c-lib, e.g. time
             try:
                 lib_src_hash = _sourceHash(lib)
-            except IOError:
+            except (IOError, TypeError) as e:
                 lib_src_hash = 0
 
             smv.logger.debug("{} sourceHash: {}".format(lib.__name__, lib_src_hash))
