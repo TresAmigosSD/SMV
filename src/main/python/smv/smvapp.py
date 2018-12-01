@@ -303,7 +303,8 @@ class SmvApp(object):
 
     def load_single_ds(self, urn):
         """Return j_ds from urn"""
-        return self.dsm.load(urn)[0]
+        fqn = urn[4:]
+        return self.dsm.load(fqn)[0]
 
     def _to_single_run_res(self, res):
         """run and quick_run of SmvModuleRunner, returns (list(DF), SmvRunInfoCollector)
@@ -332,7 +333,8 @@ class SmvApp(object):
             - SmvRunInfoCollector contains additional information
               about the run, such as validation results.
         """
-        ds = self.dsm.load(urn)[0]
+        fqn = urn[4:]
+        ds = self.dsm.load(fqn)[0]
 
         if (quickRun):
             return self._to_single_run_res(SmvModuleRunner([ds], self).quick_run(forceRun))
@@ -341,8 +343,7 @@ class SmvApp(object):
 
     @exception_handling
     def quickRunModule(self, fqn):
-        urn = "mod:" + fqn
-        ds = self.dsm.load(urn)[0]
+        ds = self.dsm.load(fqn)[0]
         return SmvModuleRunner([ds], self).quick_run()[0]
 
     @exception_handling
@@ -405,7 +406,8 @@ class SmvApp(object):
             SmvRunInfoCollector
 
         """
-        ds = self.dsm.load(urn)[0]
+        fqn = urn[4:]
+        ds = self.dsm.load(fqn)[0]
         return SmvModuleRunner([ds], self).get_runinfo()
 
     def getRunInfoByPartialName(self, name):

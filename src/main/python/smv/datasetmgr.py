@@ -44,7 +44,7 @@ class DataSetMgr(object):
         return TXContext(self._jvm, self.dsRepoFactories, self.stages())
 
 
-    def load(self, *urns):
+    def load(self, *fqns):
         """Load SmvGenericModules for specified URNs
 
         Args:
@@ -53,7 +53,6 @@ class DataSetMgr(object):
         Returns:
             list(SmvGenericModules): list of Scala SmvGenericModules (j_ds)
         """
-        fqns = [u[4:] for u in urns]
         with self.tx() as tx:
             return tx.load(fqns)
 
