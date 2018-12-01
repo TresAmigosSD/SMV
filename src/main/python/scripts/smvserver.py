@@ -59,7 +59,7 @@ def runModule(fqn, run_config=None):
 
 def getMetadataHistoryJson(fqn):
     '''returns metadata history given a fqn'''
-    return SmvApp.getInstance().getMetadataHistoryJson("mod:{}".format(fqn))
+    return SmvApp.getInstance().getMetadataHistoryJson(fqn)
 
 # Wrapper so that other python scripts can import and then call
 # smvserver.Main()

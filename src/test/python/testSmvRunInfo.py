@@ -19,9 +19,7 @@ from test_support.smvbasetest import SmvBaseTest
 
 class SmvRunInfoTest(SmvBaseTest):
     R4Fqn = 'stage1.modules.R4'
-    R4Urn = 'mod:stage1.modules.R4'
     R5Fqn = 'stage2.modules.R5'
-    R5Urn = 'mod:stage2.modules.R5'
 
     @classmethod
     def smvAppInitArgs(cls):
@@ -44,7 +42,7 @@ class SmvRunInfoTest(SmvBaseTest):
         assert len(coll.fqns()) == 0
 
     def test_get_run_info_is_empty_if_no_module_is_run(self):
-        coll = self.smvApp.getRunInfo(self.R4Urn)
+        coll = self.smvApp.getRunInfo(self.R4Fqn)
         assert len(coll.fqns()) > 0  # still collected the dependencies
 
         for fqn in coll.fqns():
@@ -66,4 +64,4 @@ class SmvRunInfoTest(SmvBaseTest):
     def test_get_run_info_of_module_with_link_dependency(self):
         self.smvApp.runModule(self.R5Fqn, forceRun=True)
         # This will fail if there is a problem due to link dependency
-        info = self.smvApp.getRunInfo(self.R5Urn)
+        info = self.smvApp.getRunInfo(self.R5Fqn)

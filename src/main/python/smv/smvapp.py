@@ -301,9 +301,8 @@ class SmvApp(object):
         df, collector = self.runModule(fqn, forceRun)
         return df
 
-    def load_single_ds(self, urn):
-        """Return j_ds from urn"""
-        fqn = urn[4:]
+    def load_single_ds(self, fqn):
+        """Return ds from fqn"""
         return self.dsm.load(fqn)[0]
 
     def _to_single_run_res(self, res):
@@ -317,7 +316,7 @@ class SmvApp(object):
         """Runs SmvModule by its Fully Qualified Name(fqn)
 
         Args:
-            urn (str): The URN of a module
+            fqn (str): The FQN of a module
             forceRun (bool): True if the module should be forced to run even if it has persisted output. False otherwise.
             quickRun (bool): skip computing dqm+metadata and persisting csv
 
@@ -382,7 +381,7 @@ class SmvApp(object):
                 or (keep_roots and m in roots))
         ]
 
-    def getRunInfo(self, urn):
+    def getRunInfo(self, fqn):
         """Returns the run information of a module and all its dependencies
         from the last run.
 
@@ -397,7 +396,7 @@ class SmvApp(object):
         all latest run information about all dependent modules.
 
         Args:
-            urn (str): urn of target module
+            fqn (str): fqn of target module
             runConfig (dict): runConfig to apply when collecting info. If module
                               was run with a config, the same config needs to be
                               specified here to retrieve the info.
@@ -406,7 +405,6 @@ class SmvApp(object):
             SmvRunInfoCollector
 
         """
-        fqn = urn[4:]
         ds = self.dsm.load(fqn)[0]
         return SmvModuleRunner([ds], self).get_runinfo()
 
@@ -431,24 +429,26 @@ class SmvApp(object):
             SmvRunInfoCollector
         """
         urn = self.dsm.inferUrn(name)
-        return self.getRunInfo(urn)
+        fqn = urn[4:]
+        return self.getRunInfo(fqn)
 
     @exception_handling
     def publishModuleToHiveByName(self, name):
         """Publish an SmvModule to Hive by its name (can be partial FQN)
         """
         urn = self.dsm.inferUrn(name)
-        ds = self.load_single_ds(urn)
+        fqn = urn[4:]
+        ds = self.load_single_ds(fqn)
         return SmvModuleRunner([ds], self).publish_to_hive()
 
-    def getMetadataJson(self, urn):
-        """Returns the metadata for a given urn"""
-        ds = self.load_single_ds(urn)
+    def getMetadataJson(self, fqn):
+        """Returns the metadata for a given fqn"""
+        ds = self.load_single_ds(fqn)
         return ds.get_metadata().toJson()
 
-    def getMetadataHistoryJson(self, urn):
-        """Returns the metadata history for a given urn"""
-        ds = self.load_single_ds(urn)
+    def getMetadataHistoryJson(self, fqn):
+        """Returns the metadata history for a given fqn"""
+        ds = self.load_single_ds(fqn)
         return self._read_meta_hist(ds).toJson()
 
     def getDsHash(self, name):
