@@ -72,7 +72,7 @@ class DataSetMgr(object):
         """Return FQN string from partial name
         """
         with self.tx() as tx:
-            return tx._inferFqn(partial_name)
+            return tx._inferFqn([partial_name])[0]
 
     def register(self, repo_factory):
         """Register python repo factory
