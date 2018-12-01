@@ -363,8 +363,7 @@ class SmvApp(object):
             - SmvRunInfoCollector contains additional information
               about the run, such as validation results.
         """
-        urn = self.dsm.inferUrn(name)
-        fqn = urn[4:]
+        fqn = self.dsm.inferFqn(name)
         return self.runModule(fqn, forceRun, quickRun)
 
     def get_need_to_run(self, roots, keep_roots=False):
@@ -428,16 +427,14 @@ class SmvApp(object):
         Returns:
             SmvRunInfoCollector
         """
-        urn = self.dsm.inferUrn(name)
-        fqn = urn[4:]
+        fqn = self.dsm.inferFqn(name)
         return self.getRunInfo(fqn)
 
     @exception_handling
     def publishModuleToHiveByName(self, name):
         """Publish an SmvModule to Hive by its name (can be partial FQN)
         """
-        urn = self.dsm.inferUrn(name)
-        fqn = urn[4:]
+        fqn = self.dsm.inferFqn(name)
         ds = self.load_single_ds(fqn)
         return SmvModuleRunner([ds], self).publish_to_hive()
 

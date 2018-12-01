@@ -68,10 +68,11 @@ class DataSetMgr(object):
         with self.tx() as tx:
             return tx.inferDS(partial_names)
 
-    def inferUrn(self, partial_name):
-        """Return URN string from partial name
+    def inferFqn(self, partial_name):
+        """Return FQN string from partial name
         """
-        return self.inferDS(partial_name)[0].urn()
+        with self.tx() as tx:
+            return tx._inferFqn(partial_name)
 
     def register(self, repo_factory):
         """Register python repo factory
