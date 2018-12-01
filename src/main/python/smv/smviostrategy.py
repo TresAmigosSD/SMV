@@ -349,8 +349,11 @@ class SmvSchemaOnHdfsIoStrategy(SmvIoStrategy):
         self._file_path = path
 
     def read(self):
-        schema_file_str = self.smvApp._jvm.SmvHDFS.readFromFile(self._file_path)
-        smv_schema = self.smvApp.smvSchemaObj.fromString(";".join(schema_file_str.split("\n")))
+        # To be backward compatable read using spark sc.textFile
+        smv_schema = self.smvApp.smvSchemaObj.fromFile(
+            self.smvApp.sc._jsc.sc(),
+            self._file_path
+        )
         return smv_schema
 
     def write(self, smvSchema):
