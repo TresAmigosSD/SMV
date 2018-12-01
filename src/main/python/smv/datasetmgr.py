@@ -45,10 +45,10 @@ class DataSetMgr(object):
 
 
     def load(self, *fqns):
-        """Load SmvGenericModules for specified URNs
+        """Load SmvGenericModules for specified FQNs
 
         Args:
-            *urns (str): list of URNs as strings
+            *fqns (str): list of FQNs as strings
 
         Returns:
             list(SmvGenericModules): list of Scala SmvGenericModules (j_ds)

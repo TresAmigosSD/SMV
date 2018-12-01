@@ -76,10 +76,6 @@ class SmvGenericModule(ABC):
         """
         return cls.__module__ + "." + cls.__name__
 
-    @classmethod
-    def urn(cls):
-        return "mod:" + cls.fqn()
-
     #########################################################################
     # User interface methods
     #
@@ -285,13 +281,13 @@ class SmvGenericModule(ABC):
     def get_data(self, fqn2df, run_set, collector, forceRun, is_quick_run):
         """create or get data from smvApp level cache
             Args:
-                urn2df({str:DataFrame}) already run modules current module may depends
+                fqn2df({str:DataFrame}) already run modules current module may depends
                 run_set(set(SmvGenericModule)) modules yet to run post_action
                 collector(SmvRunInfoCollector) collect runinfo of current run
                 forceRun(bool) ignore DF cache in smvApp
                 is_quick_run(bool) skip meta, dqm, persist, but use persisted as possible
 
-            urn2df will be appended, and run_set will shrink
+            fqn2df will be appended, and run_set will shrink
         """
         if (forceRun or (self.versioned_fqn not in self.smvApp.data_cache)):
             res = self.computeData(fqn2df, run_set, collector, is_quick_run)

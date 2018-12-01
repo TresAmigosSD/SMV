@@ -251,6 +251,3 @@ class DataSetRepo(object):
             prov_list.extend(providers)
 
         return prov_list
-
-    def notFound(self, modUrn, msg):
-        raise ValueError("dataset [{0}] is not found in {1}: {2}".format(modUrn, self.__class__.__name__, msg))

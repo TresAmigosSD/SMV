@@ -22,14 +22,14 @@ class RunModuleWithDynamicConfigAppDirTest(SmvBaseTest):
 
     # project A stuff
     projADir = 'project-a/'
-    modUrn = 'stage.modules.A'
+    modFqn = 'stage.modules.A'
     modName = 'modules.A'
 
     # project B stuff
     projBDir = 'project-b/'
-    diffStageUrn = 'notstage.notmodules.NotModuleA'
+    diffStageFqn = 'notstage.notmodules.NotModuleA'
     # same stage/name as project_a modA
-    sameStageUrn = 'stage.modules.A'
+    sameStageFqn = 'stage.modules.A'
 
     def setUp(self):
         # assemble proj abs paths
@@ -57,13 +57,13 @@ class RunModuleWithDynamicConfigAppDirTest(SmvBaseTest):
     def test_mods_available_to_run(self):
         """ verify setting dir makes a module discoverable that wasn't """
         # make sure running the module without setting the app dir fails and raises
-        self.assertRaises(Exception, lambda: self.df(self.modUrn))
+        self.assertRaises(Exception, lambda: self.df(self.modFqn))
 
         # set the app dir
         self.smvApp.setAppDir(self.proj_a_path)
 
         # Now try to run the module. This time we expect success
-        A = self.df(self.modUrn)
+        A = self.df(self.modFqn)
         expected = self.createDF('column:String', 'A')
 
         self.should_be_same(expected, A)
@@ -88,7 +88,7 @@ class RunModuleWithDynamicConfigAppDirTest(SmvBaseTest):
         self.smvApp.setAppDir(self.proj_a_path)
 
         # we can run a module from A, output is expected
-        A = self.df(self.modUrn)
+        A = self.df(self.modFqn)
         expected = self.createDF('column:String', 'A')
 
         self.should_be_same(expected, A)
@@ -98,13 +98,13 @@ class RunModuleWithDynamicConfigAppDirTest(SmvBaseTest):
 
         # run a module with the same name and stage but different output to ensure
         # that we really made the change
-        similar_to_a = self.df(self.sameStageUrn)
+        similar_to_a = self.df(self.sameStageFqn)
         expected_diff_result = self.createDF('column:String', "I am Not Project A's Module A")
 
         self.should_be_same(similar_to_a, expected_diff_result)
 
         # run a module with a different stage name
-        different_stage_result = self.df(self.diffStageUrn)
+        different_stage_result = self.df(self.diffStageFqn)
         expected_diff_stage_result = self.createDF('column:String', "Also Not Module A")
 
         self.should_be_same(different_stage_result, expected_diff_stage_result)
