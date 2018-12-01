@@ -43,7 +43,7 @@ class DataSetResolver:
         """
         res = []
         for fqn in fqns:
-            # Caller need to check whether the urn is in a stage of the SmvConfig stages
+            # Caller need to check whether the fqn is in a stage of the SmvConfig stages
             if (fqn in self.fqn2res):
                 ds = self.fqn2res.get(fqn)
             else:
@@ -71,4 +71,3 @@ class DataSetResolver:
                 self.resolveStack.pop()
                 return resolvedDs
 
-    

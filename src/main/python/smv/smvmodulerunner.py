@@ -36,7 +36,7 @@ class SmvModuleRunner(object):
         # See docs/dev/SmvGenericModule/SmvModuleRunner.md for details
         mods_to_run_post_action = set(self.visitor.modules_needed_for_run)
 
-        # a map from urn to already run DF, since the `run` interface of
+        # a map from fqn to already run DF, since the `run` interface of
         # SmvModule takes a map of class => df, the map here have to be
         # keyed by class method instead of `versioned_fqn`, which is only
         # in the resolved instance
@@ -120,8 +120,8 @@ class SmvModuleRunner(object):
         # run module and create df. when persisting, post_action
         # will run on current module and all upstream modules
         def runner(m, state):
-            (urn2df, run_set, collector) = state
-            m.get_data(urn2df, run_set, collector, forceRun, is_quick_run)
+            (fqn2df, run_set, collector) = state
+            m.get_data(fqn2df, run_set, collector, forceRun, is_quick_run)
         self.visitor.dfs_visit(runner, (known, need_post, collector), need_to_run_only=True)
 
     def _force_post(self, need_post, collector):

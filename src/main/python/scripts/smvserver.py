@@ -32,7 +32,6 @@ def getStagesInApp():
 
 def getStageFromFqn(fqn):
     '''returns the stage given a a dataset's fqn'''
-    # constructing urn for dataset
     try:
         stage = SmvApp.getInstance().getStageFromModuleFqn(fqn).encode("utf-8")
     except:
