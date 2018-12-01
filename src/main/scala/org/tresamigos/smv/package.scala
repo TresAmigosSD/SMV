@@ -44,9 +44,6 @@ import org.apache.spark.annotation.DeveloperApi
  * @groupname other All others
  */
 package object smv {
-  val ModDsPrefix  = "mod:"
-  val LinkDsPrefix = "link:"
-
   /** implicitly convert `Column` to `ColumnHelper` */
   implicit def makeColHelper(col: Column) = new ColumnHelper(col)
 

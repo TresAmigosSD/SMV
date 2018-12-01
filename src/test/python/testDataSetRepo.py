@@ -52,7 +52,7 @@ class DataSetRepoTest(SmvBaseTest):
         with ExtraPath(self.before_dir()):
             modules = self.build_new_repo().dataSetsForStage("stage")
 
-        self.assertNotIn("mod:stage.abcmod.ABCMod", modules, "mod:stage.abcmod.ABCMod is in " + str(modules) )
+        self.assertNotIn("stage.abcmod.ABCMod", modules, "stage.abcmod.ABCMod is in " + str(modules) )
 
     def test_repo_compiles_module_only_once(self):
         """DataSetRepo should not recompile module twice in a transaction
