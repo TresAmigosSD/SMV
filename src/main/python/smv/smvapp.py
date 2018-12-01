@@ -298,7 +298,8 @@ class SmvApp(object):
     def getModuleResult(self, urn, forceRun=False):
         """Run module and get its result, which may not be a DataFrame
         """
-        df, collector = self.runModule(urn, forceRun)
+        fqn = urn[4:]
+        df, collector = self.runModule(fqn, forceRun)
         return df
 
     def load_single_ds(self, urn):
@@ -313,7 +314,7 @@ class SmvApp(object):
         return (dfs[0], coll)
 
     @exception_handling
-    def runModule(self, urn, forceRun=False, quickRun=False):
+    def runModule(self, fqn, forceRun=False, quickRun=False):
         """Runs SmvModule by its Fully Qualified Name(fqn)
 
         Args:
@@ -323,9 +324,9 @@ class SmvApp(object):
 
         Example:
             To get just the dataframe of the module:
-                dataframe = smvApp.runModule('mod:package.module.SmvModuleClass')[0]
+                dataframe = smvApp.runModule('package.module.SmvModuleClass')[0]
             To get both the dataframe and the run info collector:
-                dataframe, collector = smvApp.runModule('mod:package.module.SmvModuleClass')
+                dataframe, collector = smvApp.runModule('package.module.SmvModuleClass')
 
         Returns:
             (DataFrame, SmvRunInfoCollector) tuple
@@ -333,7 +334,6 @@ class SmvApp(object):
             - SmvRunInfoCollector contains additional information
               about the run, such as validation results.
         """
-        fqn = urn[4:]
         ds = self.dsm.load(fqn)[0]
 
         if (quickRun):
@@ -366,7 +366,8 @@ class SmvApp(object):
               about the run, such as validation results.
         """
         urn = self.dsm.inferUrn(name)
-        return self.runModule(urn, forceRun, quickRun)
+        fqn = urn[4:]
+        return self.runModule(fqn, forceRun, quickRun)
 
     def get_need_to_run(self, roots, keep_roots=False):
         """Given a list of target modules to run, return a list of modules which

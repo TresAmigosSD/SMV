@@ -18,7 +18,9 @@ from test_support.smvbasetest import SmvBaseTest
 
 
 class SmvRunInfoTest(SmvBaseTest):
+    R4Fqn = 'stage1.modules.R4'
     R4Urn = 'mod:stage1.modules.R4'
+    R5Fqn = 'stage2.modules.R5'
     R5Urn = 'mod:stage2.modules.R5'
 
     @classmethod
@@ -32,13 +34,13 @@ class SmvRunInfoTest(SmvBaseTest):
 
     def test_run_info_is_empty_if_no_module_is_run(self):
         # the first time modules are run, information is collected
-        res, coll = self.smvApp.runModule(self.R4Urn, forceRun=True)
+        res, coll = self.smvApp.runModule(self.R4Fqn, forceRun=True)
         assert len(coll.fqns()) > 0
 
         # if we run again the collector should be empty because all
         # module results have been persisted so there would be no run
         # info collected
-        res, coll = self.smvApp.runModule(self.R4Urn, forceRun=False)
+        res, coll = self.smvApp.runModule(self.R4Fqn, forceRun=False)
         assert len(coll.fqns()) == 0
 
     def test_get_run_info_is_empty_if_no_module_is_run(self):
@@ -51,8 +53,8 @@ class SmvRunInfoTest(SmvBaseTest):
             assert len(coll.metadata(fqn)['_fqn']) > 0  # still collect basic meta
 
     def test_get_run_info_should_return_info_from_last_run(self):
-        self.smvApp.runModule(self.R4Urn, forceRun=True)
-        self.smvApp.runModule(self.R4Urn, forceRun=False)
+        self.smvApp.runModule(self.R4Fqn, forceRun=True)
+        self.smvApp.runModule(self.R4Fqn, forceRun=False)
         coll = self.smvApp.getRunInfoByPartialName('R4')
         for fqn in coll.fqns():
             if 'R2' not in fqn:  # R2 module does not have validation
@@ -62,6 +64,6 @@ class SmvRunInfoTest(SmvBaseTest):
     # Target a bug that caused an error when getting run info for a module
     # that depends on a link
     def test_get_run_info_of_module_with_link_dependency(self):
-        self.smvApp.runModule(self.R5Urn, forceRun=True)
+        self.smvApp.runModule(self.R5Fqn, forceRun=True)
         # This will fail if there is a problem due to link dependency
         info = self.smvApp.getRunInfo(self.R5Urn)

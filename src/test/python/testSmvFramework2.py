@@ -42,7 +42,7 @@ class SmvFrameworkTest2(SmvBaseTest):
     def test_visit_queue(self):
         fqns = ["stage.modules.M3", "stage.modules.M2"]
         ds = self.load(*fqns)
-        
+
         queue =  ModulesVisitor(ds).queue
 
         names = [m.fqn()[14:] for m in queue]
@@ -83,7 +83,7 @@ class SmvFrameworkTest2(SmvBaseTest):
         r1 = self.df("stage.modules.M2")
         self.smvApp.data_cache = {}
         r2 = self.df("stage.modules.M3")
-        
+
         # counter is in M2 (non-ephemeral)
         self.assertEqual(persist_run_counter, 1)
 
@@ -131,7 +131,7 @@ class SmvFrameworkTest2(SmvBaseTest):
         # Should be removed
         SmvModuleRunner([m2], self.smvApp).purge_persisted()
         self.assertFalse(os.path.exists(m1.persistStrategy()._file_path))
-        
+
 
     def test_publish(self):
         fqn = "stage.modules.M3"
@@ -201,7 +201,7 @@ class SmvForceEddTest(SmvBaseTest):
 
     def test_no_force_create_edd(self):
         fqn = "stage.modules.M2"
-        (df, info) = self.smvApp.runModule("mod:" + fqn)
+        (df, info) = self.smvApp.runModule(fqn)
         meta = info.metadata(fqn)
         edd = meta.get('_edd')
         self.assertEqual(len(edd), 0)
@@ -209,7 +209,7 @@ class SmvForceEddTest(SmvBaseTest):
     def test_force_create_edd(self):
         fqn = "stage.modules.M2"
         self.smvApp.setDynamicRunConfig({'smv.forceEdd': 'True'})
-        (df, info) = self.smvApp.runModule("mod:" + fqn)
+        (df, info) = self.smvApp.runModule(fqn)
         meta = info.metadata(fqn)
         edd = meta.get('_edd')
         for r in edd:
