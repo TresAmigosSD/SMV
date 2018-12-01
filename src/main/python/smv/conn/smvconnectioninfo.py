@@ -51,8 +51,8 @@ class SmvConnectionInfo(object):
     def conn_hash(self):
         res = 0
         for a in self.attributes():
-            if (a is not None):
-                res += smvhash(getattr(self, a))
+            attr = getattr(self, a)
+            if (attr is not None):
+                res += smvhash(attr)
 
-        smv.logger.debug("{} conn_hash: {}".format(self.name, res))
         return res

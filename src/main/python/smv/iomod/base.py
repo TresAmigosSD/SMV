@@ -17,6 +17,7 @@ import importlib
 from pyspark.sql import DataFrame
 
 from smv.error import SmvRuntimeError
+from smv.utils import smvhash
 from smv.smvgenericmodule import SmvGenericModule
 from smv.smviostrategy import SmvNonOpPersistenceStrategy, SmvJsonOnHdfsPersistenceStrategy
 
@@ -69,6 +70,10 @@ class SmvIoModule(SmvGenericModule):
         """
         name = self.connectionName()
         return self._get_connection_by_name(name)
+
+    def connectionHash(self):
+        conn_hash = self.get_connection().conn_hash()
+        return conn_hash
 
 
 class SmvInput(SmvIoModule):
@@ -133,6 +138,9 @@ class AsTable(object):
                 (string)
         """
 
+    def tableNameHash(self):
+        res = smvhash(self.tableName())
+        return res
 
 class AsFile(object):
     """Mixin to assure a fileName method"""
@@ -143,6 +151,10 @@ class AsFile(object):
             Returns:
                 (string)
         """
+
+    def fileNameHash(self):
+        res = smvhash(self.fileName())
+        return res
 
     def _assert_file_postfix(self, postfix):
         """Make sure that file name provided has the desired postfix"""
