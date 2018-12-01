@@ -295,10 +295,9 @@ class SmvApp(object):
         """
         return SmvAppInfo(self).create_module_state_json()
 
-    def getModuleResult(self, urn, forceRun=False):
+    def getModuleResult(self, fqn, forceRun=False):
         """Run module and get its result, which may not be a DataFrame
         """
-        fqn = urn[4:]
         df, collector = self.runModule(fqn, forceRun)
         return df
 

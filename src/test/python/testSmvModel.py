@@ -21,7 +21,7 @@ class SmvModelTest(SmvBaseTest):
 
     def test_SmvModelExec(self):
         with ExtraPath("src/test/python/smv_model"):
-            model = self.smvApp.getModuleResult("mod:stage1.modules.Model")
+            model = self.smvApp.getModuleResult("stage1.modules.Model")
             execDf = self.df("stage1.modules.ModelExec")
 
         self.assertEqual(str(model), execDf.collect()[0][0])
@@ -30,8 +30,8 @@ class SmvModelTest(SmvBaseTest):
         """Test that result of link to SmvModel is same as SmvModel's result
         """
         with ExtraPath("src/test/python/smv_model"):
-            ModelRes = self.smvApp.getModuleResult("mod:stage1.modules.Model")
-            ModelExecDf = self.smvApp.getModuleResult("mod:stage2.modules.ModelExecWithLink")
+            ModelRes = self.smvApp.getModuleResult("stage1.modules.Model")
+            ModelExecDf = self.smvApp.getModuleResult("stage2.modules.ModelExecWithLink")
         self.assertEqual(str(ModelRes), ModelExecDf.collect()[0][0])
 
     def test_module_depends_on_model(self):

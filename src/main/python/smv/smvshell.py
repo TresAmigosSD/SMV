@@ -76,7 +76,8 @@ def getModel(name, forceRun = False):
     """
     app = SmvApp.getInstance()
     urn = app.inferUrn(name)
-    return app.getModuleResult(urn, forceRun)
+    fqn = urn[4:]
+    return app.getModuleResult(fqn, forceRun)
 
 def openHive(tableName):
     """Read in a Hive table as a DataFrame
