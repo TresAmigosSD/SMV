@@ -48,9 +48,9 @@ class SmvGraphJsonTest(SmvBaseTest):
         res = j_obj['edges'][0]
         exp = ['stage.modules.X', 'stage.modules.Y']
         self.assertEqual(sorted(res), sorted(exp))
-    
+
     def test_module_state(self):
-        j_str = self.smvApp.get_module_state_json()
+        j_str = self.smvApp.get_module_state_json(['stage.modules.X', 'stage.modules.Y'])
         j_obj = json.loads(j_str)
 
         res = j_obj['stage.modules.Y']['needsToRun']
