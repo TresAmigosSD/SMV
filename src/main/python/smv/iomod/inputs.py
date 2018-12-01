@@ -311,10 +311,44 @@ class SmvMultiCsvInputFiles(SparkDfGenMod, WithSmvSchema, WithCsvParser):
         return combinedDf
 
 
+class SmvCsvStringInputData(SparkDfGenMod, WithCsvParser):
+    """Input data defined by a schema string and data string
+    """
+
+    def smvSchema(self):
+        return self.smvApp.smvSchemaObj.fromString(self.schemaStr())
+
+    def doRun(self, known):
+        return self.smvApp.createDFWithLogger(self.schemaStr(), self.dataStr(), self.readerLogger())
+
+    @abc.abstractmethod
+    def schemaStr(self):
+        """Smv Schema string.
+
+            E.g. "id:String; dt:Timestamp"
+
+            Returns:
+                (str): schema
+        """
+
+    @abc.abstractmethod
+    def dataStr(self):
+        """Smv data string.
+
+            E.g. "212,2016-10-03;119,2015-01-07"
+
+            Returns:
+                (str): data
+        """
+
+    def connectionName(self):
+        return None
+
 __all__ = [
     'SmvJdbcInputTable',
     'SmvHiveInputTable',
     'SmvXmlInputFile',
     'SmvCsvInputFile',
     'SmvMultiCsvInputFiles',
+    'SmvCsvStringInputData',
 ]

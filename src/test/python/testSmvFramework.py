@@ -107,7 +107,7 @@ class SmvRunConfigTest(SmvBaseTest):
         return ['--smv-props', 'smv.config.s=s2', 'smv.config.i=2', 'smv.config.b=false', 'smv.config.c=c',
                 'smv.config.one=1', 'smv.config.bool=True', 'smv.stages=stage', '-m', "None"]
 
-    def test_SmvCsvStringData_with_SmvRunConfig(self):
+    def test_SmvModule_with_SmvRunConfig(self):
         fqn = "stage.modules.D4"
         df = self.df(fqn)
         expect = self.createDF("a:String;b:Integer",

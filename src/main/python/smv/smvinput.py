@@ -28,9 +28,8 @@ from smv.dqm import FailParserCountPolicy
 from smv.error import SmvRuntimeError
 from smv.smvmodule import SmvSparkDfModule
 from smv.utils import smvhash
-
-from smv.iomod import SmvHiveInputTable, SmvCsvInputFile, SmvMultiCsvInputFiles
-from smv.conn import SmvHiveConnectionInfo
+from smv.iomod import SmvCsvInputFile, SmvMultiCsvInputFiles, SmvHiveInputTable, SmvCsvStringInputData
+from smv.conn import SmvHdfsConnectionInfo, SmvHiveConnectionInfo
 
 if sys.version_info >= (3, 4):
     ABC = abc.ABC
@@ -319,40 +318,6 @@ class SmvMultiCsvFiles(SmvMultiCsvInputFiles):
         """
 
 
-class SmvCsvStringData(WithParser):
-    """Input data defined by a schema string and data string
-    """
-
-    def smvSchema(self):
-        return self.smvApp.smvSchemaObj.fromString(self.schemaStr())
-
-    def readAsDF(self):
-        return self.smvApp.createDFWithLogger(self.schemaStr(), self.dataStr(), self.readerLogger())
-
-    def dataSrcHash(self):
-        return smvhash(self.dataStr())
-
-    @abc.abstractmethod
-    def schemaStr(self):
-        """Smv Schema string.
-
-            E.g. "id:String; dt:Timestamp"
-
-            Returns:
-                (str): schema
-        """
-
-    @abc.abstractmethod
-    def dataStr(self):
-        """Smv data string.
-
-            E.g. "212,2016-10-03;119,2015-01-07"
-
-            Returns:
-                (str): data
-        """
-
-
 class SmvHiveTable(SmvHiveInputTable):
     """Input from a Hive table
         This is for backward compatability. Will be deprecated. Please use
@@ -387,6 +352,9 @@ class SmvHiveTable(SmvHiveInputTable):
         # default to refer to the tableName without a schema name
         return SmvHiveConnectionInfo("hiveschema", {})
 
+
+class SmvCsvStringData(SmvCsvStringInputData):
+    pass
 
 __all__ = [
     'SmvInputFromFile',
