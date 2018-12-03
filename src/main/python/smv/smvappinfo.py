@@ -80,7 +80,6 @@ class SmvAppInfo(object):
                 "fqn": n.fqn(),
                 "type": node_type(n),
                 "version": n.version(),
-                "needsToRun": n.needsToRun(),
                 "description": n.description()
             }
 
