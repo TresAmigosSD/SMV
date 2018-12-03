@@ -23,13 +23,13 @@ class SmvResultTest(SmvBaseTest):
         """Test persistence of non-DataFrame results
         """
         with ExtraPath("src/test/python/smv_result"):
-            res = self.smvApp.getModuleResult("mod:stage1.modules.RM")
+            res = self.smvApp.getModuleResult("stage1.modules.RM")
         self.assertEqual(res, [100, "100", 100.0])
 
     def test_link_to_SmvResultModule(self):
         """Test that result of link to module with non-DataFrame result same as module's result
         """
         with ExtraPath("src/test/python/smv_result"):
-            RMres = self.smvApp.getModuleResult("mod:stage2.modules.RM")
-            Mdf = self.smvApp.getModuleResult("mod:stage2.modules.M")
+            RMres = self.smvApp.getModuleResult("stage2.modules.RM")
+            Mdf = self.smvApp.getModuleResult("stage2.modules.M")
         self.assertEqual(str(RMres), Mdf.collect()[0][0])

@@ -44,7 +44,7 @@ class DataSetRepoTest(SmvBaseTest):
         with ExtraPath(self.after_dir()):
             modules = list( self.build_new_repo().dataSetsForStage("stage") )
 
-        self.assertTrue( "mod:stage.modules.NewModule" in modules, "mod:stage.modules.NewModule not in " + str(modules) )
+        self.assertTrue( "stage.modules.NewModule" in modules, "stage.modules.NewModule not in " + str(modules) )
 
     def test_repo_dslist_filter_abc(self):
         """DataSetRepo's dataSetsForStage method should not return ABC Classes
@@ -52,7 +52,7 @@ class DataSetRepoTest(SmvBaseTest):
         with ExtraPath(self.before_dir()):
             modules = self.build_new_repo().dataSetsForStage("stage")
 
-        self.assertNotIn("mod:stage.abcmod.ABCMod", modules, "mod:stage.abcmod.ABCMod is in " + str(modules) )
+        self.assertNotIn("stage.abcmod.ABCMod", modules, "stage.abcmod.ABCMod is in " + str(modules) )
 
     def test_repo_compiles_module_only_once(self):
         """DataSetRepo should not recompile module twice in a transaction
@@ -106,9 +106,9 @@ class DataSetRepoTest(SmvBaseTest):
         # dir containing stage with module containing JavaObject
         java_obj_dir = self.resourceTestDir() + "/java_obj"
         with ExtraPath(java_obj_dir):
-            mods_in_dir = self.build_new_repo()._dataSetsForStage("stage")
+            mods_in_dir = self.build_new_repo().dataSetsForStage("stage")
 
-        self.assertEqual(mods_in_dir, ["mod:stage.modules.WhateverModule"])
+        self.assertEqual(mods_in_dir, ["stage.modules.WhateverModule"])
 
     def test_provider_list(self):
         """Ensure repo can discover providers"""

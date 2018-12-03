@@ -32,7 +32,6 @@ def getStagesInApp():
 
 def getStageFromFqn(fqn):
     '''returns the stage given a a dataset's fqn'''
-    # constructing urn for dataset
     try:
         stage = SmvApp.getInstance().getStageFromModuleFqn(fqn).encode("utf-8")
     except:
@@ -54,12 +53,12 @@ def getDatasetInstance(fqn):
 
 def runModule(fqn, run_config=None):
     '''runs module of given fqn and runtime configuration'''
-    return SmvApp.getInstance().runModule("mod:{}".format(fqn), runConfig=run_config)[0]
+    return SmvApp.getInstance().runModule(fqn, runConfig=run_config)[0]
 
 
 def getMetadataHistoryJson(fqn):
     '''returns metadata history given a fqn'''
-    return SmvApp.getInstance().getMetadataHistoryJson("mod:{}".format(fqn))
+    return SmvApp.getInstance().getMetadataHistoryJson(fqn)
 
 # Wrapper so that other python scripts can import and then call
 # smvserver.Main()
@@ -70,7 +69,7 @@ class Main(object):
         # init Smv context
         sparkSession = SparkSession.builder.\
                 enableHiveSupport().\
-                getOrCreate() 
+                getOrCreate()
 
         smvApp = SmvApp.createInstance([], sparkSession)
 

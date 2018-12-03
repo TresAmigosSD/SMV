@@ -56,7 +56,7 @@ stage2:
   (I) stage2.modules.CsvStr2
   (M) stage2.modules.M2
 """)
-        
+
         self.assertEqual(cmd.ls_ancestors("M2"),
         """
 stage:
@@ -98,13 +98,13 @@ stage2:
     def test_app_getMetadataJson(self):
         fqn = "stage.modules.CsvStr"
         self.df(fqn)
-        meta = json.loads(self.smvApp.getMetadataJson("mod:" + fqn))
+        meta = json.loads(self.smvApp.getMetadataJson(fqn))
         self.assertEqual(meta['_fqn'], fqn)
 
     def test_app_getMetadataHistoryJson(self):
         fqn = "stage.modules.CsvStr"
         self.df(fqn)
-        metahist = json.loads(self.smvApp.getMetadataHistoryJson("mod:" + fqn))
+        metahist = json.loads(self.smvApp.getMetadataHistoryJson(fqn))
         self.assertEqual(metahist['history'][0]['_fqn'], fqn)
 
     def test_app_getDsHash(self):

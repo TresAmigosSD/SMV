@@ -77,8 +77,8 @@ def getModel(name, forceRun = False):
             (object): The result of running the named module
     """
     app = SmvApp.getInstance()
-    urn = app.inferUrn(name)
-    return app.getModuleResult(urn, forceRun)
+    fqn = app.dsm.inferFqn(name)
+    return app.getModuleResult(fqn, forceRun)
 
 def openHive(tableName):
     """Read in a Hive table as a DataFrame

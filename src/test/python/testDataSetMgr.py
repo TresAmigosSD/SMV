@@ -19,18 +19,18 @@ class SmvDataSetMgrTest(SmvBaseTest):
     @classmethod
     def smvAppInitArgs(cls):
         return [
-            '--smv-props', 
+            '--smv-props',
             'smv.stages=stage1:stage2:stage3:stage4'
         ]
 
-    def assertDSListMatch(self, jds_list, urn_list):
+    def assertDSListMatch(self, jds_list, fqn_list):
         # Scaffolding for moving resolver from Scala to Python
         try:
-            jds_urns = [str(x.urn().toString()) for x in jds_list]
+            jds_fqns = [str(x.fqn().toString()) for x in jds_list]
         except:
-            jds_urns = [x.urn() for x in jds_list]
+            jds_fqns = [x.fqn() for x in jds_list]
 
-        self.assertEqual(sorted(jds_urns), sorted(urn_list))
+        self.assertEqual(sorted(jds_fqns), sorted(fqn_list))
 
     def resolvedDS(self, ds):
         # Scaffolding for moving resolver from Scala to Python
@@ -46,8 +46,8 @@ class SmvDataSetMgrTest(SmvBaseTest):
     def test_dsmgr_resolves_dependencies(self):
         fqn = "stage1.modules.A"
         j_m = self.load(fqn)[0]
-        self.assertDSListMatch(self.resolvedDS(j_m), 
-            ['mod:stage1.modules.B', 'mod:stage1.modules.C']
+        self.assertDSListMatch(self.resolvedDS(j_m),
+            ['stage1.modules.B', 'stage1.modules.C']
         )
 
     def test_dsmgr_resolves_to_the_same_j_obj(self):
@@ -59,10 +59,10 @@ class SmvDataSetMgrTest(SmvBaseTest):
     def test_allDataSets(self):
         allDs = self.smvApp.dsm.allDataSets()
         self.assertDSListMatch(allDs, [
-            'mod:stage1.modules.A', 
-            'mod:stage1.modules.B', 
-            'mod:stage1.modules.C',
-            'mod:stage2.modules.X',
-            'mod:stage2.modules.Z',
-            'mod:stage3.modules.Y'
+            'stage1.modules.A',
+            'stage1.modules.B',
+            'stage1.modules.C',
+            'stage2.modules.X',
+            'stage2.modules.Z',
+            'stage3.modules.Y'
         ])

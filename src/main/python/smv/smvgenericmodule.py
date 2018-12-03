@@ -76,10 +76,6 @@ class SmvGenericModule(ABC):
         """
         return cls.__module__ + "." + cls.__name__
 
-    @classmethod
-    def urn(cls):
-        return "mod:" + cls.fqn()
-
     #########################################################################
     # User interface methods
     #
@@ -238,7 +234,7 @@ class SmvGenericModule(ABC):
         """Map from SmvGenericModule to resulting DataFrame
 
             We need to simulate a dict from ds to df where the same object can be
-            keyed by different datasets with the same urn. For example, in the
+            keyed by different datasets with the same fqn. For example, in the
             module
 
             class X(SmvModule):
@@ -249,19 +245,19 @@ class SmvGenericModule(ABC):
             the correct DataFrame.
 
             Args:
-                (dict): a map from urn to DataFrame
+                (dict): a map from fqn to DataFrame
         """
 
-        def __init__(self, urn2df):
-            self.urn2df = urn2df
+        def __init__(self, fqn2df):
+            self.fqn2df = fqn2df
 
         def __getitem__(self, ds):
             """Called by the '[]' operator
             """
-            if not hasattr(ds, 'urn'):
+            if not hasattr(ds, 'fqn'):
                 raise TypeError('Argument to RunParams must be an SmvGenericModule')
             else:
-                return self.urn2df[ds.urn()]
+                return self.fqn2df[ds.fqn()]
 
     ####################################################################################
     # Private methods: not expect to be overrided by sub-classes, but could be
@@ -282,19 +278,19 @@ class SmvGenericModule(ABC):
         return ModulesVisitor([self])
 
 
-    def get_data(self, urn2df, run_set, collector, forceRun, is_quick_run):
+    def get_data(self, fqn2df, run_set, collector, forceRun, is_quick_run):
         """create or get data from smvApp level cache
             Args:
-                urn2df({str:DataFrame}) already run modules current module may depends
+                fqn2df({str:DataFrame}) already run modules current module may depends
                 run_set(set(SmvGenericModule)) modules yet to run post_action
                 collector(SmvRunInfoCollector) collect runinfo of current run
                 forceRun(bool) ignore DF cache in smvApp
                 is_quick_run(bool) skip meta, dqm, persist, but use persisted as possible
 
-            urn2df will be appended, and run_set will shrink
+            fqn2df will be appended, and run_set will shrink
         """
         if (forceRun or (self.versioned_fqn not in self.smvApp.data_cache)):
-            res = self.computeData(urn2df, run_set, collector, is_quick_run)
+            res = self.computeData(fqn2df, run_set, collector, is_quick_run)
             if (self.isEphemeral()):
                 # Only cache ephemeral modules data, since non-ephemeral any how
                 # will be read from persisted result, no need to persist the logic
@@ -310,27 +306,27 @@ class SmvGenericModule(ABC):
             smv.logger.debug("{} had a cache in SmvApp.data_cache".format(self.fqn()))
             res = self.smvApp.data_cache.get(self.versioned_fqn)
             self.data = res
-        urn2df.update({self.urn(): res})
+        fqn2df.update({self.fqn(): res})
         return res
 
-    def computeData(self, urn2df, run_set, collector, is_quick_run):
+    def computeData(self, fqn2df, run_set, collector, is_quick_run):
         """When DF is not in cache, do the real calculation here
         """
-        smv.logger.debug("compute: {}".format(self.urn()))
+        smv.logger.debug("compute: {}".format(self.fqn()))
 
         if (self.isEphemeral()):
-            raw_df = self.doRun(urn2df)
+            raw_df = self.doRun(fqn2df)
             self.data = self.pre_action(raw_df)
         elif(is_quick_run):
             _strategy = self.persistStrategy()
             if (not _strategy.isPersisted()):
-                self.data = self.doRun(urn2df)
+                self.data = self.doRun(fqn2df)
             else:
                 self.data = _strategy.read()
         else:
             _strategy = self.persistStrategy()
             if (not _strategy.isPersisted()):
-                raw_df = self.doRun(urn2df)
+                raw_df = self.doRun(fqn2df)
                 df = self.pre_action(raw_df)
                 # Acquire lock on persist to ensure write is atomic
                 with self._smvLock():
@@ -563,7 +559,7 @@ class SmvGenericModule(ABC):
             message = "{0}({1!r})".format(type(err).__name__, err.args)
             raise Exception(
                 message + "\n" + "SmvGenericModule " +
-                self.urn() + " defined in shell can't be persisted"
+                self.fqn() + " defined in shell can't be persisted"
             )
 
         smv.logger.debug("{} sourceHash: {}".format(self.fqn(), sourceHash))

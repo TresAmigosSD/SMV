@@ -304,15 +304,15 @@ class SmvApp(object):
         """
         return SmvAppInfo(self).create_module_state_json()
 
-    def getModuleResult(self, urn, forceRun=False):
+    def getModuleResult(self, fqn, forceRun=False):
         """Run module and get its result, which may not be a DataFrame
         """
-        df, collector = self.runModule(urn, forceRun)
+        df, collector = self.runModule(fqn, forceRun)
         return df
 
-    def load_single_ds(self, urn):
-        """Return j_ds from urn"""
-        return self.dsm.load(urn)[0]
+    def load_single_ds(self, fqn):
+        """Return ds from fqn"""
+        return self.dsm.load(fqn)[0]
 
     def _to_single_run_res(self, res):
         """run and quick_run of SmvModuleRunner, returns (list(DF), SmvRunInfoCollector)
@@ -321,19 +321,19 @@ class SmvApp(object):
         return (dfs[0], coll)
 
     @exception_handling
-    def runModule(self, urn, forceRun=False, quickRun=False):
+    def runModule(self, fqn, forceRun=False, quickRun=False):
         """Runs SmvModule by its Fully Qualified Name(fqn)
 
         Args:
-            urn (str): The URN of a module
+            fqn (str): The FQN of a module
             forceRun (bool): True if the module should be forced to run even if it has persisted output. False otherwise.
             quickRun (bool): skip computing dqm+metadata and persisting csv
 
         Example:
             To get just the dataframe of the module:
-                dataframe = smvApp.runModule('mod:package.module.SmvModuleClass')[0]
+                dataframe = smvApp.runModule('package.module.SmvModuleClass')[0]
             To get both the dataframe and the run info collector:
-                dataframe, collector = smvApp.runModule('mod:package.module.SmvModuleClass')
+                dataframe, collector = smvApp.runModule('package.module.SmvModuleClass')
 
         Returns:
             (DataFrame, SmvRunInfoCollector) tuple
@@ -341,7 +341,7 @@ class SmvApp(object):
             - SmvRunInfoCollector contains additional information
               about the run, such as validation results.
         """
-        ds = self.dsm.load(urn)[0]
+        ds = self.dsm.load(fqn)[0]
 
         if (quickRun):
             return self._to_single_run_res(SmvModuleRunner([ds], self).quick_run(forceRun))
@@ -350,8 +350,7 @@ class SmvApp(object):
 
     @exception_handling
     def quickRunModule(self, fqn):
-        urn = "mod:" + fqn
-        ds = self.dsm.load(urn)[0]
+        ds = self.dsm.load(fqn)[0]
         return SmvModuleRunner([ds], self).quick_run()[0]
 
     @exception_handling
@@ -373,8 +372,8 @@ class SmvApp(object):
             - SmvRunInfoCollector contains additional information
               about the run, such as validation results.
         """
-        urn = self.dsm.inferUrn(name)
-        return self.runModule(urn, forceRun, quickRun)
+        fqn = self.dsm.inferFqn(name)
+        return self.runModule(fqn, forceRun, quickRun)
 
     def get_need_to_run(self, roots, keep_roots=False):
         """Given a list of target modules to run, return a list of modules which
@@ -390,7 +389,7 @@ class SmvApp(object):
                 or (keep_roots and m in roots))
         ]
 
-    def getRunInfo(self, urn):
+    def getRunInfo(self, fqn):
         """Returns the run information of a module and all its dependencies
         from the last run.
 
@@ -405,7 +404,7 @@ class SmvApp(object):
         all latest run information about all dependent modules.
 
         Args:
-            urn (str): urn of target module
+            fqn (str): fqn of target module
             runConfig (dict): runConfig to apply when collecting info. If module
                               was run with a config, the same config needs to be
                               specified here to retrieve the info.
@@ -414,7 +413,7 @@ class SmvApp(object):
             SmvRunInfoCollector
 
         """
-        ds = self.dsm.load(urn)[0]
+        ds = self.dsm.load(fqn)[0]
         return SmvModuleRunner([ds], self).get_runinfo()
 
     def getRunInfoByPartialName(self, name):
@@ -437,25 +436,25 @@ class SmvApp(object):
         Returns:
             SmvRunInfoCollector
         """
-        urn = self.dsm.inferUrn(name)
-        return self.getRunInfo(urn)
+        fqn = self.dsm.inferFqn(name)
+        return self.getRunInfo(fqn)
 
     @exception_handling
     def publishModuleToHiveByName(self, name):
         """Publish an SmvModule to Hive by its name (can be partial FQN)
         """
-        urn = self.dsm.inferUrn(name)
-        ds = self.load_single_ds(urn)
+        fqn = self.dsm.inferFqn(name)
+        ds = self.load_single_ds(fqn)
         return SmvModuleRunner([ds], self).publish_to_hive()
 
-    def getMetadataJson(self, urn):
-        """Returns the metadata for a given urn"""
-        ds = self.load_single_ds(urn)
+    def getMetadataJson(self, fqn):
+        """Returns the metadata for a given fqn"""
+        ds = self.load_single_ds(fqn)
         return ds.get_metadata().toJson()
 
-    def getMetadataHistoryJson(self, urn):
-        """Returns the metadata history for a given urn"""
-        ds = self.load_single_ds(urn)
+    def getMetadataHistoryJson(self, fqn):
+        """Returns the metadata history for a given fqn"""
+        ds = self.load_single_ds(fqn)
         return self._read_meta_hist(ds).toJson()
 
     def getDsHash(self, name):

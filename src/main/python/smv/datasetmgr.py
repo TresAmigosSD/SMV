@@ -44,17 +44,17 @@ class DataSetMgr(object):
         return TXContext(self._jvm, self.dsRepoFactories, self.stages())
 
 
-    def load(self, *urns):
-        """Load SmvGenericModules for specified URNs
-        
+    def load(self, *fqns):
+        """Load SmvGenericModules for specified FQNs
+
         Args:
-            *urns (str): list of URNs as strings
+            *fqns (str): list of FQNs as strings
 
         Returns:
             list(SmvGenericModules): list of Scala SmvGenericModules (j_ds)
         """
         with self.tx() as tx:
-            return tx.load(urns)
+            return tx.load(fqns)
 
     def inferDS(self, *partial_names):
         """Return DSs from a list of partial names
@@ -68,10 +68,11 @@ class DataSetMgr(object):
         with self.tx() as tx:
             return tx.inferDS(partial_names)
 
-    def inferUrn(self, partial_name):
-        """Return URN string from partial name
+    def inferFqn(self, partial_name):
+        """Return FQN string from partial name
         """
-        return self.inferDS(partial_name)[0].urn()
+        with self.tx() as tx:
+            return tx._inferFqn([partial_name])[0]
 
     def register(self, repo_factory):
         """Register python repo factory
@@ -116,7 +117,7 @@ class TXContext(object):
 
 
 class TX(object):
-    """Abstraction of the transaction boundary for loading SmvGenericModules. 
+    """Abstraction of the transaction boundary for loading SmvGenericModules.
         A TX object
 
         * will instantiate a set of repos when itself instantiated and will
@@ -133,15 +134,14 @@ class TX(object):
         self.resolver = DataSetResolver(self.repos[0])
         self.log = smv.logger
 
-    def load(self, urns):
-        fqns = [u[4:] for u in urns]
+    def load(self, fqns):
         return self.resolver.loadDataSet(fqns)
 
     def inferDS(self, partial_names):
-        return self.load(self._inferUrn(partial_names))
+        return self.load(self._inferFqn(partial_names))
 
-    def allDataSets(self): 
-        return self.load(self._allUrns())
+    def allDataSets(self):
+        return self.load(self._allFqns())
 
     def allOutputModules(self):
         return self._filterOutput(self.allDataSets())
@@ -150,28 +150,28 @@ class TX(object):
         return self._filterOutput(self._dsForStage(stageNames))
 
     def _dsForStage(self, stageNames):
-        return self.load(self._urnsForStage(stageNames))
+        return self.load(self._fqnsForStage(stageNames))
 
-    def _urnsForStage(self, stageNames):
+    def _fqnsForStage(self, stageNames):
         return [u
-            for repo in self.repos 
-            for s in stageNames 
-            for u in repo._dataSetsForStage(s)
+            for repo in self.repos
+            for s in stageNames
+            for u in repo.dataSetsForStage(s)
         ]
 
-    def _allUrns(self):
+    def _allFqns(self):
         if (len(self.stages) == 0):
             log.warn("No stage names configured. Unable to discover any modules.")
-        return self._urnsForStage(self.stages)
-   
-    def _inferUrn(self, partial_names):
-        def urn_str(pn):
+        return self._fqnsForStage(self.stages)
+
+    def _inferFqn(self, partial_names):
+        def fqn_str(pn):
             return infer_full_name_from_part(
-                self._allUrns(), 
+                self._allFqns(),
                 pn
             )
 
-        return [urn_str(pn) for pn in partial_names]
+        return [fqn_str(pn) for pn in partial_names]
 
     def _filterOutput(self, dss):
         return [ds for ds in dss if ds.isSmvOutput()]
