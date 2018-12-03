@@ -267,7 +267,7 @@ class WithSmvSchema(InputFileWithSchema):
         """
         return None
 
-    def _smv_schema(self):
+    def smvSchema(self):
         """Return the schema specified by user either through
             userSchema method, or through a schema file. The priority is the following:
 
@@ -312,7 +312,7 @@ class SmvCsvInputFile(SparkDfGenMod, WithSmvSchema, WithCsvParser):
         return SmvCsvOnHdfsIoStrategy(
             self.smvApp,
             file_path,
-            self._smv_schema(),
+            self.smvSchema(),
             self.readerLogger()
         ).read()
 
@@ -357,7 +357,7 @@ class SmvMultiCsvInputFiles(SparkDfGenMod, WithSmvSchema, WithCsvParser):
 
     def doRun(self, known):
         dir_path = os.path.join(self.get_connection().path, self.dirName())
-        smv_schema = self._smv_schema()
+        smv_schema = self.smvSchema()
 
         flist = self.smvApp._jvm.SmvHDFS.dirList(dir_path).array()
         # ignore all hidden files in the data dir
