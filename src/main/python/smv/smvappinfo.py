@@ -65,6 +65,7 @@ class SmvAppInfo(object):
 
     def create_graph_json(self):
         """Create dependency graph Json string
+            Dependency graph does not have modules' state info
         """
         (nodes, edges) = self._graph()
         def node_type(n):
@@ -75,7 +76,6 @@ class SmvAppInfo(object):
                 return t[:1].lower() + t[1:]
 
         def node_dict(n):
-            # TODO: Will remove "needsToRun" from here, when client code changes
             return {
                 "fqn": n.fqn(),
                 "type": node_type(n),
