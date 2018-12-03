@@ -95,8 +95,7 @@ class SmvAppInfo(object):
     def create_module_state_json(self, fqns):
         """Create all modules needToRun state Json string
         """
-        urns = ["mod:" + fqn for fqn in fqns]
-        nodes = self.dsm.load(*urns)
+        nodes = self.dsm.load(*fqns)
         res = {}
         for m in nodes:
             res.update({m.fqn(): {'needsToRun': m.needsToRun()}})
