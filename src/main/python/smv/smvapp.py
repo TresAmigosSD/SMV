@@ -299,10 +299,16 @@ class SmvApp(object):
         """
         return SmvAppInfo(self).create_graph_json()
 
-    def get_module_state_json(self):
-        """Generate a json string for all modules' needToRun state of the app
+    def get_module_state_json(self, fqns):
+        """Generate a json string for modules' needToRun state of the app
+
+            Args:
+                fqns (list(string)): module fqn list to get state for
+
+            Return:
+                (string): json string. E.g. {"stage.mymod": {"needsToRun" : True}}
         """
-        return SmvAppInfo(self).create_module_state_json()
+        return SmvAppInfo(self).create_module_state_json(fqns)
 
     def getModuleResult(self, fqn, forceRun=False):
         """Run module and get its result, which may not be a DataFrame

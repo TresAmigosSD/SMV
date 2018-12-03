@@ -35,7 +35,7 @@ class SmvAppInfo(object):
         for ds in nodes:
             from_ds = ds.resolvedRequiresDS
             edges.extend([(n, ds) for n in from_ds if n in nodes])
-        
+
         return (nodes, edges)
 
     def _common_prefix(self, fqn_list):
@@ -92,10 +92,10 @@ class SmvAppInfo(object):
             "edges": [edge_pair(p[0], p[1]) for p in edges]
         })
 
-    def create_module_state_json(self):
+    def create_module_state_json(self, fqns):
         """Create all modules needToRun state Json string
         """
-        nodes = self.dsm.allDataSets()
+        nodes = self.dsm.load(*fqns)
         res = {}
         for m in nodes:
             res.update({m.fqn(): {'needsToRun': m.needsToRun()}})
@@ -112,7 +112,7 @@ class SmvAppInfo(object):
             n_in_s = [n for n in nodes if n.fqn().startswith(s + ".")]
             clusters.update({s: n_in_s})
 
-        def _node_str(ds): 
+        def _node_str(ds):
             if (ds.dsType() == "Input"):
                 return '  "{}" [shape=box, color="pink"]'.format(self._base_name(ds))
             else:
@@ -136,7 +136,7 @@ class SmvAppInfo(object):
         ])
 
         all_clusters = "\n".join([
-            _cluster_str(i, s, ns) 
+            _cluster_str(i, s, ns)
             for i, (s, ns) in enumerate(clusters.items())
         ])
 
@@ -195,7 +195,7 @@ class SmvAppInfo(object):
         """For given nodes, list the node names under their stages"""
         if(stage is None):
             return "\n" + "\n".join([
-                "{}:\n".format(s) + self._ls_in_stage(s, nodes, "  ") + "\n" 
+                "{}:\n".format(s) + self._ls_in_stage(s, nodes, "  ") + "\n"
                 for s in self.stages
             ])
         else:
