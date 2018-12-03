@@ -17,6 +17,8 @@ from pyspark.sql.functions import col, lit
 
 import testSmvFramework2
 
+import time
+
 class I1(SmvModule):
     def requiresDS(self):
         return []
@@ -61,5 +63,14 @@ class M3(SmvModule):
 class M5(SmvModule):
     def requiresDS(self):
         return [M2]
+    def run(self, i):
+        return i[M2]
+
+
+class WithLib(SmvModule):
+    def requiresDS(self):
+        return [M2]
+    def requiresLib(self):
+        return [time]
     def run(self, i):
         return i[M2]

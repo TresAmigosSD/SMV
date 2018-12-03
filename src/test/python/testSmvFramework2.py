@@ -42,7 +42,7 @@ class SmvFrameworkTest2(SmvBaseTest):
     def test_visit_queue(self):
         fqns = ["stage.modules.M3", "stage.modules.M2"]
         ds = self.load(*fqns)
-        
+
         queue =  ModulesVisitor(ds).queue
 
         names = [m.fqn()[14:] for m in queue]
@@ -83,7 +83,7 @@ class SmvFrameworkTest2(SmvBaseTest):
         r1 = self.df("stage.modules.M2")
         self.smvApp.data_cache = {}
         r2 = self.df("stage.modules.M3")
-        
+
         # counter is in M2 (non-ephemeral)
         self.assertEqual(persist_run_counter, 1)
 
@@ -131,7 +131,7 @@ class SmvFrameworkTest2(SmvBaseTest):
         # Should be removed
         SmvModuleRunner([m2], self.smvApp).purge_persisted()
         self.assertFalse(os.path.exists(m1.persistStrategy()._file_path))
-        
+
 
     def test_publish(self):
         fqn = "stage.modules.M3"
@@ -186,6 +186,9 @@ class SmvFrameworkTest2(SmvBaseTest):
         ms = self.load("stage.modules.M5")
         names = [m.fqn()[14:] for m in self.smvApp.get_need_to_run(ms)]
         self.assertEqual(names, ['M2', 'M5'])
+
+    def test_lib_with_clib(self):
+        self.df("stage.modules.WithLib")
 
 class SmvForceEddTest(SmvBaseTest):
     @classmethod
