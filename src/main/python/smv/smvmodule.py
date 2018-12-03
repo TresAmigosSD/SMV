@@ -26,7 +26,7 @@ from smv.dqm import SmvDQM
 from smv.error import SmvRuntimeError
 from smv.utils import pickle_lib, lazy_property
 from smv.smviostrategy import SmvCsvPersistenceStrategy, SmvJsonOnHdfsPersistenceStrategy, SmvPicklablePersistenceStrategy, SmvParquetPersistenceStrategy
-from smv.smvgenericmodule import SmvProcessModule
+from smv.smvgenericmodule import SmvProcessModule, SmvGenericModule
 
 class SmvOutput(object):
     """Mixin which marks an SmvModule as one of the output of its stage
@@ -46,38 +46,19 @@ class SmvOutput(object):
         return None
 
 
-class SmvSparkDfModule(SmvProcessModule):
+class SparkDfGenMod(SmvGenericModule):
     """Base class for SmvModules create Spark DFs
     """
 
-    IsSmvModule = True
-
-    def dsType(self):
-        return "Module"
-
     def __init__(self, smvApp):
-        super(SmvSparkDfModule, self).__init__(smvApp)
+        super(SparkDfGenMod, self).__init__(smvApp)
         self.dqmTimeElapsed = None
 
     #########################################################################
     # User interface methods
     #
-    # Inherited from SmvGenericModule:
-    #
-    # - isEphemeral: Optional, default False
-    # - description: Optional, default class docstr
-    # - requiresDS: Required
-    # - requiresConfig: Optional, default []
-    # - requiresLib: Optional, default []
-    # - metadata: Optional, default {}
-    # - validateMetadata: Optional, default None
-    # - metadataHistorySize: Optional, default 5
-    # - version: Optional, default "0" --- Deprecated!
-    #
-    # SmvModule specific:
+    # SparkDfGenMod specific:
     # - dqm: Optional, default SmvDQM()
-    # - publishHiveSql: Optional, default None
-    # - run: Required
     #########################################################################
     def dqm(self):
         """DQM policy
@@ -89,46 +70,6 @@ class SmvSparkDfModule(SmvProcessModule):
                 (SmvDQM): a DQM policy
         """
         return SmvDQM()
-
-
-    def publishHiveSql(self):
-        """An optional sql query to run to publish the results of this module when the
-           --publish-hive command line is used.  The DataFrame result of running this
-           module will be available to the query as the "dftable" table.
-
-            Example:
-                >>> return "insert overwrite table mytable select * from dftable"
-
-            Note:
-                If this method is not specified, the default is to just create the
-                table specified by tableName() with the results of the module.
-
-           Returns:
-               (string): the query to run.
-        """
-        return None
-
-
-    @abc.abstractmethod
-    def run(self, i):
-        """User-specified definition of the operations of this SmvModule
-
-            Override this method to define the output of this module, given a map
-            'i' from input SmvGenericModule to resulting DataFrame. 'i' will have a
-            mapping for each SmvGenericModule listed in requiresDS. E.g.
-
-            def requiresDS(self):
-                return [MyDependency]
-
-            def run(self, i):
-                return i[MyDependency].select("importantColumn")
-
-            Args:
-                (RunParams): mapping from input SmvGenericModule to DataFrame
-
-            Returns:
-                (DataFrame): output of this SmvModule
-        """
 
     #########################################################################
     # Implement of SmvGenericModule abatract methos and other private methods
@@ -159,13 +100,13 @@ class SmvSparkDfModule(SmvProcessModule):
 
     # Override this method to add the edd calculation if config
     def _calculate_user_meta(self):
-        super(SmvSparkDfModule, self)._calculate_user_meta()
+        super(SparkDfGenMod, self)._calculate_user_meta()
         if (self.smvApp.py_smvconf.force_edd()):
             self.calculate_edd()
 
     # Override this method to add the dqmTimeElapsed
     def _finalize_meta(self):
-        super(SmvSparkDfModule, self)._finalize_meta()
+        super(SparkDfGenMod, self)._finalize_meta()
         self.module_meta.addSchemaMetadata(self.data)
         # Need to add duration at the very end, just before persist
         self.module_meta.addDuration("dqm", self.dqmTimeElapsed)
@@ -174,7 +115,7 @@ class SmvSparkDfModule(SmvProcessModule):
     def _do_action_on_df(self, func, df, desc):
         name = self.fqn()
         self.smvApp.sc.setJobGroup(groupId=name, description=desc)
-        (res, secondsElapsed) = super(SmvSparkDfModule, self)._do_action_on_df(func, df, desc)
+        (res, secondsElapsed) = super(SparkDfGenMod, self)._do_action_on_df(func, df, desc)
 
         # Python api does not have clearJobGroup
         # set groupId and description to None is equivalent
@@ -209,6 +150,56 @@ class SmvSparkDfModule(SmvProcessModule):
             )
             smv.logger.warn("Nontrivial DQM result:\n{}".format(msg))
         self.module_meta.addDqmValidationResult(validation_result.toJSON())
+
+
+class SmvSparkDfModule(SmvProcessModule, SparkDfGenMod):
+    """Base class for SmvModules create Spark DFs
+    """
+
+    IsSmvModule = True
+
+    def dsType(self):
+        return "Module"
+
+    #########################################################################
+    # User interface methods
+    #
+    # Inherited from SmvGenericModule:
+    #
+    # - isEphemeral: Optional, default False
+    # - description: Optional, default class docstr
+    # - requiresDS: Required
+    # - requiresConfig: Optional, default []
+    # - requiresLib: Optional, default []
+    # - metadata: Optional, default {}
+    # - validateMetadata: Optional, default None
+    # - metadataHistorySize: Optional, default 5
+    # - version: Optional, default "0" --- Deprecated!
+    #
+    # SmvSparkDfModule specific:
+    # - dqm: Optional, default SmvDQM()
+    # - publishHiveSql: Optional, default None
+    # - run: Required
+    #########################################################################
+
+    def publishHiveSql(self):
+        """An optional sql query to run to publish the results of this module when the
+           --publish-hive command line is used.  The DataFrame result of running this
+           module will be available to the query as the "dftable" table.
+
+            Example:
+                >>> return "insert overwrite table mytable select * from dftable"
+
+            Note:
+                If this method is not specified, the default is to just create the
+                table specified by tableName() with the results of the module.
+
+           Returns:
+               (string): the query to run.
+        """
+        return None
+
+
 
     # All publish related methods should be moved to generic output module class
     def exportToHive(self):

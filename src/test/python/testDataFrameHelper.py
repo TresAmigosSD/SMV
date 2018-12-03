@@ -15,7 +15,7 @@ import unittest
 import os
 
 from test_support.smvbasetest import SmvBaseTest
-from smv import SmvApp, SmvCsvFile
+from smv import SmvApp
 
 from smv.helpers import DataFrameHelper as dfhelper
 
@@ -116,7 +116,7 @@ class DfHelperTest(SmvBaseTest):
 
     def test_smvDupeCheck(self):
         df = self.createDF(
-            "a:String;b:String;c:Integer", 
+            "a:String;b:String;c:Integer",
             """a,b,1;
             a,b,2;
             a,c,3"""
@@ -131,7 +131,7 @@ class DfHelperTest(SmvBaseTest):
 
     def test_smvDupeCheck_with_Null(self):
         df = self.createDF(
-            "a:String;b:String;c:Integer", 
+            "a:String;b:String;c:Integer",
             """a,,1;
             a,,2;
             a,c,3"""
@@ -319,7 +319,7 @@ class DfHelperTest(SmvBaseTest):
         res = df.smvUnpivot("X", "Y")
         expect = self.createDF("id:String; Z:String; column:String; value:String",
             """1,C,X,A;
-            1,C,Y,B;	
+            1,C,Y,B;
             2,F,X,D;
             2,F,Y,E""")
         self.should_be_same(expect, res)

@@ -18,6 +18,7 @@ from test_support.smvbasetest import SmvBaseTest
 from smv import *
 from smv.datasetrepo import DataSetRepo
 from smv.error import SmvDqmValidationError
+from smv.conn import SmvHdfsConnectionInfo
 
 class SmvInputTest(SmvBaseTest):
     @classmethod
@@ -294,3 +295,9 @@ id:integer"""
         res = self.df("stage.modules.NewMultiCsvFiles1")
         exp = self.createDF("col1:String", "a;b")
         self.should_be_same(res, exp)
+
+    def test_conn_hash(self):
+        conn1 = SmvHdfsConnectionInfo("testconn", {'smv.conn.testconn.path': '/dummy1'})
+        conn2 = SmvHdfsConnectionInfo("testconn2", {'smv.conn.testconn2.path': '/dummy2'})
+
+        self.assertNotEqual(conn1.conn_hash(), conn2.conn_hash())

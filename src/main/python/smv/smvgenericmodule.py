@@ -604,6 +604,7 @@ class SmvProcessModule(SmvGenericModule):
 
     #########################################################################
     # User interface methods
+    # - run: Required
     # - requiresConfig: Optional, default []
     # - requiresLib: Optional, default []
     #########################################################################
@@ -640,6 +641,27 @@ class SmvProcessModule(SmvGenericModule):
                 (list(module)): a list of library dependencies
         """
         return []
+
+    @abc.abstractmethod
+    def run(self, i):
+        """User-specified definition of the operations of this SmvModule
+
+            Override this method to define the output of this module, given a map
+            'i' from input SmvGenericModule to resulting DataFrame. 'i' will have a
+            mapping for each SmvGenericModule listed in requiresDS. E.g.
+
+            def requiresDS(self):
+                return [MyDependency]
+
+            def run(self, i):
+                return i[MyDependency].select("importantColumn")
+
+            Args:
+                (RunParams): mapping from input SmvGenericModule to DataFrame
+
+            Returns:
+                (DataFrame): output of this SmvModule
+        """
 
 
     ####################################################################################

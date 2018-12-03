@@ -27,7 +27,7 @@ class D3(SmvCsvStringData):
             FailTotalRuleCountPolicy(2)).add(
             FailTotalFixCountPolicy(1))
 
-class D4(SmvCsvStringData, SmvRunConfig):
+class D4(SmvModule, SmvRunConfig):
     def schemaStr(self):
         return "a:String;b:Integer"
     def dataStr(self):
@@ -65,6 +65,11 @@ class D4(SmvCsvStringData, SmvRunConfig):
 
         return ";".join(testVals)
 
+    def requiresDS(self):
+        return []
+    def run(self, i):
+        return self.smvApp.createDF(self.schemaStr(), self.dataStr())
+
 class CsvFile(SmvCsvFile, SmvOutput):
     def path(self):
         return "test3.csv"
@@ -81,7 +86,7 @@ class CsvStrWithNullData(SmvCsvStringData):
 
     def run(self, df):
         return df.withColumn("b", lit(""))
-    
+
 class ModWithBadName(SmvModule):
     def requiresDS(self):
         return [ModWhoseNameDoesntExist]
@@ -92,21 +97,21 @@ class ModWithBadName(SmvModule):
 class NeedRunM1(SmvModule):
     def requiresDS(self):
         return []
-    
+
     def run(self, i):
         return self.smvApp.createDF("ida: Integer; a: String", "1,def;2,ghi")
 
 class NeedRunM2(SmvModule):
     def requiresDS(self):
         return [NeedRunM1]
-    
+
     def run(self, i):
         return i[NeedRunM1]
 
 class NeedRunM3(SmvModule):
     def requiresDS(self):
         return [NeedRunM1]
-    
+
     def isEphemeral(self):
         return True
 

@@ -89,8 +89,7 @@ class SmvCsvOutputFile(SmvSparkDfOutput, AsFile):
         file_path = os.path.join(self.get_connection().path, self.fileName())
         schema_path = re.sub("\.csv$", ".schema", file_path)
 
-        smvSchemaObj = self.smvApp.j_smvPyClient.getSmvSchema()
-        schema = smvSchemaObj.fromDataFrame(data._jdf, "_SmvStrNull_", self.smvApp.scalaOption(CsvAttributes()))
+        schema = self.smvApp.smvSchemaObj.fromDataFrame(data._jdf, "_SmvStrNull_", self.smvApp.scalaOption(CsvAttributes()))
 
         SmvCsvOnHdfsIoStrategy(self.smvApp, file_path, schema, None).write(data)
         SmvSchemaOnHdfsIoStrategy(self.smvApp, schema_path).write(schema)

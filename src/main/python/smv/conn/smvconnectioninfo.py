@@ -13,11 +13,13 @@
 
 import abc
 
+import smv
+from smv.utils import smvhash
 
 class SmvConnectionInfo(object):
     """Base class for all IO connection info
 
-        A connection is defined by a group of attributes, and those attributes 
+        A connection is defined by a group of attributes, and those attributes
         are provided from smv props. For example:
 
             - smv.conn.myjdbc.class = smv.conn.SmvJdbcConnectionInfo
@@ -45,3 +47,12 @@ class SmvConnectionInfo(object):
         for a in self.attributes():
             prop_key = prop_prefix + a
             setattr(self, a, props.get(prop_key, None))
+
+    def conn_hash(self):
+        res = 0
+        for a in self.attributes():
+            attr = getattr(self, a)
+            if (attr is not None):
+                res += smvhash(attr)
+
+        return res

@@ -39,6 +39,7 @@ from smv.modulesvisitor import ModulesVisitor
 from smv.smvmodulerunner import SmvModuleRunner
 from smv.smvconfig import SmvConfig
 from smv.smviostrategy import SmvJsonOnHdfsPersistenceStrategy
+from smv.conn import SmvHdfsConnectionInfo
 from smv.smvmetadata import SmvMetaHistory
 from smv.smvhdfs import SmvHDFS
 from py4j.protocol import Py4JJavaError
@@ -116,6 +117,8 @@ class SmvApp(object):
         java_import(self._jvm, "org.tresamigos.smv.python.SmvPythonHelper")
         java_import(self._jvm, "org.tresamigos.smv.SmvHDFS")
         java_import(self._jvm, "org.tresamigos.smv.DfCreator")
+
+        self.smvSchemaObj = self._jvm.SmvPythonHelper.getSmvSchema()
 
         self.py_smvconf = SmvConfig(arglist, self._jvm)
 
@@ -278,6 +281,12 @@ class SmvApp(object):
 
     def inputDir(self):
         return self.all_data_dirs().inputDir
+
+    def input_connection(self):
+        return SmvHdfsConnectionInfo(
+            "inputdir",
+            {"smv.conn.inputdir.path": self.inputDir()}
+        )
 
     def getFileNamesByType(self, ftype):
         """Return a list of file names which has the postfix ftype

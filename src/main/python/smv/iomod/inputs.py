@@ -17,17 +17,20 @@ import json
 
 from pyspark.sql import DataFrame
 from pyspark.sql.types import StructType
+from py4j.protocol import Py4JJavaError
 
+import smv
 from smv.iomod.base import SmvInput, AsTable, AsFile
+from smv.smvmodule import SparkDfGenMod
 from smv.smviostrategy import SmvJdbcIoStrategy, SmvHiveIoStrategy, \
     SmvSchemaOnHdfsIoStrategy, SmvCsvOnHdfsIoStrategy, SmvTextOnHdfsIoStrategy,\
     SmvXmlOnHdfsIoStrategy
 from smv.dqm import SmvDQM
-from smv.utils import lazy_property
+from smv.utils import lazy_property, smvhash
 from smv.error import SmvRuntimeError
 
 
-class SmvJdbcInputTable(SmvInput, AsTable):
+class SmvJdbcInputTable(SparkDfGenMod, SmvInput, AsTable):
     """
         User need to implement
 
@@ -35,12 +38,25 @@ class SmvJdbcInputTable(SmvInput, AsTable):
             - tableName
     """
 
+    def instanceValHash(self):
+        """Jdbc input hash depends on connection and table name
+        """
+
+        _conn_hash = self.connectionHash()
+        smv.logger.debug("{} connectionHash: {}".format(self.fqn(), _conn_hash))
+
+        _table_hash = self.tableNameHash()
+        smv.logger.debug("{} tableNameHash: {}".format(self.fqn(), _table_hash))
+
+        res = _conn_hash + _table_hash
+        return res
+
     def doRun(self, known):
         conn = self.get_connection()
         return SmvJdbcIoStrategy(self.smvApp, conn, self.tableName()).read()
 
 
-class SmvHiveInputTable(SmvInput, AsTable):
+class SmvHiveInputTable(SparkDfGenMod, SmvInput, AsTable):
     """
         User need to implement:
 
@@ -51,6 +67,20 @@ class SmvHiveInputTable(SmvInput, AsTable):
     def doRun(self, known):
         conn = self.get_connection()
         return SmvHiveIoStrategy(self.smvApp, conn, self.tableName()).read()
+
+    def instanceValHash(self):
+        """Hive input hash depends on connection and table name
+        """
+
+        _conn_hash = self.connectionHash()
+        smv.logger.debug("{} connectionHash: {}".format(self.fqn(), _conn_hash))
+
+        _table_hash = self.tableNameHash()
+        smv.logger.debug("{} tableNameHash: {}".format(self.fqn(), _table_hash))
+
+        res = _conn_hash + _table_hash
+        return res
+
 
 
 class InputFileWithSchema(SmvInput, AsFile):
@@ -110,8 +140,48 @@ class InputFileWithSchema(SmvInput, AsFile):
         else:
             return self.fileName().rsplit(".", 1)[0] + ".schema"
 
+    def _full_path(self):
+        return os.path.join(self.get_connection().path, self.fileName())
 
-class SmvXmlInputFile(InputFileWithSchema):
+    def _full_schema_path(self):
+        return os.path.join(self._get_schema_connection().path,
+            self._get_schema_file_name())
+
+    def _file_hash(self, path, msg):
+        _file_path_hash = smvhash(path)
+        smv.logger.debug("{} {} file path hash: {}".format(self.fqn(), msg, _file_path_hash))
+
+        # It is possible that the file doesn't exist
+        try:
+            _m_time = self.smvApp._jvm.SmvHDFS.modificationTime(path)
+        except Py4JJavaError:
+            _m_time = 0
+
+        smv.logger.debug("{} {} file mtime: {}".format(self.fqn(), msg, _m_time))
+
+        res = _file_path_hash + _m_time
+        return res
+
+    def instanceValHash(self):
+        """Hash of file with schema include data file hash (path and mtime),
+            and schema hash (userSchema or schema file)
+        """
+
+        _data_file_hash = self._file_hash(self._full_path(), "data")
+        smv.logger.debug("{} data file hash: {}".format(self.fqn(), _data_file_hash))
+
+        if (self.userSchema() is not None):
+            _schema_hash = smvhash(self.userSchema())
+        else:
+            _schema_hash = self._file_hash(self._full_schema_path(), "schema")
+        smv.logger.debug("{} schema hash: {}".format(self.fqn(), _schema_hash))
+
+        res = _data_file_hash + _schema_hash
+        return res
+
+
+
+class SmvXmlInputFile(SparkDfGenMod, InputFileWithSchema):
     """Input from file in XML format
         User need to implement:
 
@@ -188,6 +258,15 @@ class WithCsvParser(SmvInput):
             return self.dqmValidator.createParserValidator()
 
 class WithSmvSchema(InputFileWithSchema):
+    def csvAttr(self):
+        """Specifies the csv file format.  Corresponds to the CsvAttributes case class in Scala.
+            Derive from smvSchema if not specified by user.
+
+            Override this method if user want to specify CsvAttributes which is different from
+            the one can be derived from smvSchema
+        """
+        return None
+
     def _smv_schema(self):
         """Return the schema specified by user either through
             userSchema method, or through a schema file. The priority is the following:
@@ -196,18 +275,22 @@ class WithSmvSchema(InputFileWithSchema):
                 - schema_file_name under schema_connection
 
         """
-        smvSchemaObj = self.smvApp.j_smvPyClient.getSmvSchema()
         if (self.userSchema() is not None):
-            return smvSchemaObj.fromString(self.userSchema())
+            schema = self.smvApp.smvSchemaObj.fromString(self.userSchema())
         else:
             schema_file_name = self._get_schema_file_name()
             conn = self._get_schema_connection()
             abs_file_path = os.path.join(conn.path, schema_file_name)
 
-            return SmvSchemaOnHdfsIoStrategy(self.smvApp, abs_file_path).read()
+            schema = SmvSchemaOnHdfsIoStrategy(self.smvApp, abs_file_path).read()
+
+        if (self.csvAttr() is not None):
+            return schema.addCsvAttributes(self.csvAttr())
+        else:
+            return schema
 
 
-class SmvCsvInputFile(WithSmvSchema, WithCsvParser):
+class SmvCsvInputFile(SparkDfGenMod, WithSmvSchema, WithCsvParser):
     """Csv file input
         User need to implement:
 
@@ -216,6 +299,7 @@ class SmvCsvInputFile(WithSmvSchema, WithCsvParser):
             - schemaConnectionName: optional
             - schemaFileName: optional
             - userSchema: optional
+            - csvAttr: optional
             - failAtParsingError: optional, default True
             - dqm: optional, default SmvDQM()
     """
@@ -233,7 +317,7 @@ class SmvCsvInputFile(WithSmvSchema, WithCsvParser):
         ).read()
 
 
-class SmvMultiCsvInputFiles(WithSmvSchema, WithCsvParser):
+class SmvMultiCsvInputFiles(SparkDfGenMod, WithSmvSchema, WithCsvParser):
     """Multiple Csv files under the same dir input
         User need to implement:
 
@@ -242,6 +326,7 @@ class SmvMultiCsvInputFiles(WithSmvSchema, WithCsvParser):
             - schemaConnectionName: optional
             - schemaFileName: optional
             - userSchema: optional
+            - csvAttr: optional
             - failAtParsingError: optional, default True
             - dqm: optional, default SmvDQM()
     """
@@ -268,7 +353,7 @@ class SmvMultiCsvInputFiles(WithSmvSchema, WithCsvParser):
             return self.dirName() + ".schema"
 
     def fileName(self):
-        return None
+        return self.dirName()
 
     def doRun(self, known):
         dir_path = os.path.join(self.get_connection().path, self.dirName())
@@ -295,10 +380,44 @@ class SmvMultiCsvInputFiles(WithSmvSchema, WithCsvParser):
         return combinedDf
 
 
+class SmvCsvStringInputData(SparkDfGenMod, WithCsvParser):
+    """Input data defined by a schema string and data string
+    """
+
+    def smvSchema(self):
+        return self.smvApp.smvSchemaObj.fromString(self.schemaStr())
+
+    def doRun(self, known):
+        return self.smvApp.createDFWithLogger(self.schemaStr(), self.dataStr(), self.readerLogger())
+
+    @abc.abstractmethod
+    def schemaStr(self):
+        """Smv Schema string.
+
+            E.g. "id:String; dt:Timestamp"
+
+            Returns:
+                (str): schema
+        """
+
+    @abc.abstractmethod
+    def dataStr(self):
+        """Smv data string.
+
+            E.g. "212,2016-10-03;119,2015-01-07"
+
+            Returns:
+                (str): data
+        """
+
+    def connectionName(self):
+        return None
+
 __all__ = [
     'SmvJdbcInputTable',
     'SmvHiveInputTable',
     'SmvXmlInputFile',
     'SmvCsvInputFile',
     'SmvMultiCsvInputFiles',
+    'SmvCsvStringInputData',
 ]
