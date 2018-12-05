@@ -12,6 +12,7 @@
 # limitations under the License.
 import sys
 
+from smv.error import SmvRuntimeError
 from test_support.smvbasetest import SmvBaseTest
 from test_support.extrapath import ExtraPath, AppDir
 
@@ -110,12 +111,32 @@ class DataSetRepoTest(SmvBaseTest):
 
         self.assertEqual(mods_in_dir, ["stage.modules.WhateverModule"])
 
-    def test_provider_list(self):
+    def test_all_provider_list(self):
         """Ensure repo can discover providers"""
         prov_dir = self.resourceTestDir() + "/provider"
         with AppDir(self.smvApp, prov_dir):
-            all_providers = self.build_new_repo().all_providers()
-            all_providers_names = sorted([p.__name__ for p in all_providers])
-            # TODO: check against full provider name rather than base class name
+            all_providers = self.build_new_repo()._all_providers()
+
+            # verify provider class names
+            all_providers_names = sorted([p.__name__ for p in all_providers.values()])
             self.assertEqual(all_providers_names, ['MyBaseProvider', 'MyConcreteProvider', 'SomeProvider'])
 
+            # verify provider type fqns
+            all_providers_fqns = sorted(all_providers.keys())
+            self.assertEqual(all_providers_fqns, ['aaa', 'aaa.bbb', 'some'])
+
+    def test_provider_list_by_prefix(self):
+        """Ensure repo can discover providers by prefix"""
+        prov_dir = self.resourceTestDir() + "/provider"
+        with AppDir(self.smvApp, prov_dir):
+            providers = self.build_new_repo().get_providers_by_prefix("aaa")
+            providers_fqns = sorted([p.provider_type_fqn() for p in providers])
+            self.assertEqual(providers_fqns, ['aaa', 'aaa.bbb'])
+
+    def test_duplicate_providers(self):
+        """Ensure repo can detect duplicate providers with same provider type fqn"""
+        # the bad_provider dir has multiple providers with fqn "aaa.bbb"
+        prov_dir = self.resourceTestDir() + "/bad_provider"
+        with AppDir(self.smvApp, prov_dir):
+            with self.assertRaisesRegexp(SmvRuntimeError, "multiple providers with same fqn: aaa.bbb"):
+                self.build_new_repo()._all_providers()
