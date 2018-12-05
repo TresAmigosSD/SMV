@@ -256,7 +256,7 @@ class DataSetRepo(object):
             providers = self._matchingClassesInPyModule(prov_lib, is_provider)
             for p in providers:
                 p_fqn = p.provider_type_fqn()
-                if prov_dict.has_key(p_fqn):
+                if p_fqn in prov_dict:
                     raise SmvRuntimeError("multiple providers with same fqn: " + p_fqn)
                 prov_dict[p_fqn] = p
 
