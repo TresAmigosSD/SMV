@@ -29,3 +29,22 @@ class SmvProvider(object):
     @staticmethod
     def provider_type(): return ""
 
+    @classmethod
+    def provider_type_fqn(cls):
+        """create a hierarchichal provider type fqn for a given provider class based on the 
+           provider class hierarchy.
+
+           Example (assume `provider_type()` for class X is X):
+             class A(SmvProvider)
+             class B(A)
+             class C(B)
+           In the above example, C's provider type is just `C` but C's provider_type_fqn is "A.B.C" 
+        """
+        # TODO: handle case where we have multiple inheretence with diamond
+        # (IS_PROVIDER would be true for non-provider in the hierarchy in above case)
+        fqn_parts = [c.provider_type() for c in cls.__mro__ if hasattr(c, "IS_PROVIDER")]
+
+        # actual fqn is in reverse of mro traversal and we can ignore "" type at base provider
+        fqn_parts.reverse()
+        fqn_parts = [f for f in fqn_parts if f != ""]
+        return ".".join(fqn_parts)

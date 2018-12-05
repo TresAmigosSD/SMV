@@ -233,8 +233,14 @@ class DataSetRepo(object):
 
         return fqns
 
-    def all_providers(self):
+    def _all_providers(self):
+        """scans user libraries and smv libraries for "provider" classes.
+            Returns list of discovered provider classes
+        """
         def is_provider(klass):
+            """A class is a provider if it has `IS_PROVIDER` and is not the base `SmvProvider`
+               which returns empty string for provider type.
+            """
             try:
                 klass_is_provider = (klass.IS_PROVIDER is True) and (klass.provider_type())
             except AttributeError:
@@ -243,11 +249,23 @@ class DataSetRepo(object):
 
         # providers can be in user libs dir or builtin smv
         prov_libs_names = self.smvApp.userLibs() + self.smvApp.smvLibs()
-        prov_list = []
+        prov_dict = {}
 
         for prov_lib_name in prov_libs_names:
             prov_lib = self.load_pymodule(prov_lib_name)
             providers = self._matchingClassesInPyModule(prov_lib, is_provider)
-            prov_list.extend(providers)
+            for p in providers:
+                p_fqn = p.provider_type_fqn()
+                if p_fqn in prov_dict:
+                    raise SmvRuntimeError("multiple providers with same fqn: " + p_fqn)
+                prov_dict[p_fqn] = p
 
-        return prov_list
+        return prov_dict
+
+    def get_providers_by_prefix(self, fqn_prefix):
+        """Discover all providers in user lib and smv lib that have an provider type fqn
+           starting with the given prefix.
+           Users should use this method instead of using `_all_providers()` directly.
+        """
+        providers = self._all_providers()
+        return [p for (fqn, p) in providers.items() if fqn.startswith(fqn_prefix)]
