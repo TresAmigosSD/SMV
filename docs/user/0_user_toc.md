@@ -7,6 +7,7 @@
 #### Smv Framework
   * [SMV Introduction](smv_intro.md)
   * [SMV Input (Files/Tables)](smv_input.md)
+  * [SMV Schema](smv_schema.md)
   * [SMV Modules](smv_module.md)
   * [SMV Stages](smv_stages.md)
   * [Modeling with Smv](smv_model.md)
