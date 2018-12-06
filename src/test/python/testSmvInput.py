@@ -27,7 +27,7 @@ class SmvInputTest(SmvBaseTest):
         return [
             '--smv-props',
             'smv.stages=stage',
-            'smv.conn.my_xml.class=smv.conn.SmvHdfsConnectionInfo',
+            'smv.conn.my_xml.type=hdfs',
             'smv.conn.my_xml.path=' + xml_path,
         ]
 
@@ -240,9 +240,9 @@ class SmvNewInputTest(SmvBaseTest):
         return [
             '--smv-props',
             'smv.stages=stage',
-            'smv.conn.my_hdfs.class=smv.conn.SmvHdfsConnectionInfo',
+            'smv.conn.my_hdfs.type=hdfs',
             'smv.conn.my_hdfs.path=' + data_path,
-            'smv.conn.my_hdfs_2.class=smv.conn.SmvHdfsConnectionInfo',
+            'smv.conn.my_hdfs_2.type=hdfs',
             'smv.conn.my_hdfs_2.path=' + data_path + "/conn2",
         ]
 

@@ -14,15 +14,27 @@
 from smv.conn.smvconnectioninfo import SmvConnectionInfo
 
 class SmvJdbcConnectionInfo(SmvConnectionInfo):
+    @staticmethod
+    def provider_type():
+        return "jdbc"
+
     def attributes(self):
         return ["url", "driver", "user", "password"]
 
 
 class SmvHiveConnectionInfo(SmvConnectionInfo):
+    @staticmethod
+    def provider_type():
+        return "hive"
+
     def attributes(self):
         return ['schema']
 
 class SmvHdfsConnectionInfo(SmvConnectionInfo):
+    @staticmethod
+    def provider_type():
+        return "hdfs"
+
     def attributes(self):
         return ['path']
 

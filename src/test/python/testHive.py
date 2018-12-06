@@ -96,7 +96,7 @@ class NewHiveTableTest(HiveTest):
     def smvAppInitArgs(cls):
         return super(NewHiveTableTest, cls).smvAppInitArgs()\
             + [
-                'smv.conn.my_hive.class=smv.conn.SmvHiveConnectionInfo',
+                'smv.conn.my_hive.type=hive',
                 '--publish-hive',
                 '-m',
                 "stage.modules.M"
