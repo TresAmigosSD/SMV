@@ -453,7 +453,7 @@ class SmvGenericModule(ABC):
         _instanceValHash = self.instanceValHash()
         log.debug("{}.instanceValHash = {}".format(self.fqn(), _instanceValHash))
 
-        _sourceCodeHash = self.sourceCodeHash()
+        _sourceCodeHash = self._sourceCodeHash()
         log.debug("{}.sourceCodeHash = ${}".format(self.fqn(), _sourceCodeHash))
 
         res = _instanceValHash + _sourceCodeHash
@@ -528,7 +528,7 @@ class SmvGenericModule(ABC):
         except:
             return False
 
-    def sourceCodeHash(self):
+    def _sourceCodeHash(self):
         """Hash computed based on the source code of the dataset's class
         """
         res = 0
@@ -555,7 +555,7 @@ class SmvGenericModule(ABC):
                 # TODO: it probably shouldn't matter if the upstream class is an SmvGenericModule - it could be a mixin
                 # whose behavior matters but which doesn't inherit from SmvGenericModule
                 if m.IsSmvDataSet and m != cls and not m.fqn().startswith("smv."):
-                    res += m(self.smvApp).sourceCodeHash()
+                    res += m(self.smvApp)._sourceCodeHash()
             except:
                 pass
 
@@ -695,12 +695,12 @@ class SmvProcessModule(SmvGenericModule):
         kv_str = repr(sorted_kvs)
         return smvhash(kv_str)
 
-    def sourceCodeHash(self):
+    def _sourceCodeHash(self):
         """Hash computed based on the source code of and config, lib usage
             Adding config and lib to base class's soruce code hash
         """
 
-        res = super(SmvProcessModule, self).sourceCodeHash()
+        res = super(SmvProcessModule, self)._sourceCodeHash()
 
         cls = self.__class__
         # incorporate hash of KVs for config keys listed in requiresConfig
