@@ -258,7 +258,7 @@ class SmvGenericModule(ABC):
         return self
 
     @lazy_property
-    def ancestor_and_me_visitor(self):
+    def _ancestor_and_me_visitor(self):
         return ModulesVisitor([self])
 
 
@@ -426,7 +426,7 @@ class SmvGenericModule(ABC):
                     self.module_meta = SmvMetaData().fromJson(meta_json)
                 _run_set.discard(mod)
 
-        self.ancestor_and_me_visitor.dfs_visit(run_delayed_postAction, (run_set, collector))
+        self._ancestor_and_me_visitor.dfs_visit(run_delayed_postAction, (run_set, collector))
 
     def _do_action_on_df(self, func, df, desc):
         log = smv.logger
