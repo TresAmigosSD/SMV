@@ -681,7 +681,7 @@ class SmvProcessModule(SmvGenericModule):
     # Private methods: not expect to be overrided by sub-classes, but could be
     ####################################################################################
 
-    def config_hash(self):
+    def _config_hash(self):
         """Integer value representing the SMV config's contribution to the dataset hash
 
             Only the keys declared in requiresConfig will be considered.
@@ -704,7 +704,7 @@ class SmvProcessModule(SmvGenericModule):
 
         cls = self.__class__
         # incorporate hash of KVs for config keys listed in requiresConfig
-        config_hash = self.config_hash()
+        config_hash = self._config_hash()
         smv.logger.debug("{} config_hash: {}".format(self.fqn(), config_hash))
         res += config_hash
 
