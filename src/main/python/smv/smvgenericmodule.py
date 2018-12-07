@@ -167,7 +167,7 @@ class SmvGenericModule(ABC):
     # - _dependencies: Optional, default self.requiresDS()
     # - _pre_action: Optional, default pass through the input data
     # - _post_action: Optional, default pass
-    # - force_an_action: Optional, default pass
+    # - _force_an_action: Optional, default pass
     # - calculate_edd: Optional, default pass
     # - instanceValHash: Optional, default 0
     # - doRun: Required
@@ -199,7 +199,7 @@ class SmvGenericModule(ABC):
             which need to be done after an action on lazy-eval data"""
         pass
 
-    def force_an_action(self, df):
+    def _force_an_action(self, df):
         """For Spark DF and other data with lazy-eval, may need to force an action to
             trigger the post_action calculation. For general data without lazy-eval, do nothing
         """
@@ -391,7 +391,7 @@ class SmvGenericModule(ABC):
 
     def force_post_action(self, run_set, collector):
         if (self in run_set):
-            self.force_an_action(self.data)
+            self._force_an_action(self.data)
             self.run_ancestor_and_me_postAction(run_set, collector)
 
     def run_ancestor_and_me_postAction(self, run_set, collector):

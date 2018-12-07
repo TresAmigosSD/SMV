@@ -85,7 +85,7 @@ class SparkDfGenMod(SmvGenericModule):
         self.module_meta.addEddResult(edd_json_array)
         self.module_meta.addDuration("edd", eddTimeElapsed)
 
-    def force_an_action(self, df):
+    def _force_an_action(self, df):
         # Since optimization can be done on a DF actions like count, we have to convert DF
         # to RDD and than apply an action, otherwise fix count will be always zero
         (n, self.dqmTimeElapsed) = self._do_action_on_df(
