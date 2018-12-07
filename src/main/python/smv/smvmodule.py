@@ -74,7 +74,7 @@ class SparkDfGenMod(SmvGenericModule):
     #########################################################################
     # Implement of SmvGenericModule abatract methos and other private methods
     #########################################################################
-    def calculate_edd(self):
+    def _calculate_edd(self):
         """When config smv.forceEdd flag is true, run edd calculation.
         """
         def get_edd(df):
@@ -95,7 +95,7 @@ class SparkDfGenMod(SmvGenericModule):
     def _calculate_user_meta(self):
         super(SparkDfGenMod, self)._calculate_user_meta()
         if (self.smvApp.py_smvconf.force_edd()):
-            self.calculate_edd()
+            self._calculate_edd()
 
     # Override this method to add the dqmTimeElapsed
     def _finalize_meta(self):
