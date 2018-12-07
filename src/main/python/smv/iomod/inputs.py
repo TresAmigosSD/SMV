@@ -248,14 +248,14 @@ class WithCsvParser(SmvInput):
         return SmvDQM()
 
     @lazy_property
-    def dqmValidator(self):
+    def _dqmValidator(self):
         return self.smvApp._jvm.DQMValidator(self.dqm())
 
     def readerLogger(self):
         if (self.failAtParsingError()):
             return self.smvApp._jvm.SmvPythonHelper.getTerminateParserLogger()
         else:
-            return self.dqmValidator.createParserValidator()
+            return self._dqmValidator.createParserValidator()
 
 class WithSmvSchema(InputFileWithSchema):
     def csvAttr(self):

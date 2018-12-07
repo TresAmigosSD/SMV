@@ -126,16 +126,16 @@ class SparkDfGenMod(SmvGenericModule):
         return SmvJsonOnHdfsPersistenceStrategy(self.smvApp, self._meta_path())
 
     @lazy_property
-    def dqmValidator(self):
+    def _dqmValidator(self):
         return self.smvApp._jvm.DQMValidator(self.dqm())
 
     def _pre_action(self, df):
         """DF in and DF out, to perform operations on created from run method"""
-        return DataFrame(self.dqmValidator.attachTasks(df._jdf), df.sql_ctx)
+        return DataFrame(self._dqmValidator.attachTasks(df._jdf), df.sql_ctx)
 
     def _post_action(self):
         """Will run when action happens on a DF, here for DQM validation"""
-        validation_result = self.dqmValidator.validate()
+        validation_result = self._dqmValidator.validate()
         if (not validation_result.isEmpty()):
             msg = json.dumps(
                 json.loads(validation_result.toJSON()),
