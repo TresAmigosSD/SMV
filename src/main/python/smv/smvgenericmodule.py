@@ -477,7 +477,7 @@ class SmvGenericModule(ABC):
         log.debug("{}.hash_of_hash = {}".format(self.fqn(), res))
         return res
 
-    def ver_hex(self):
+    def _ver_hex(self):
         return "{0:08x}".format(self._hash_of_hash)
 
     @lazy_property
@@ -485,7 +485,7 @@ class SmvGenericModule(ABC):
         """module fqn with the hash of hash. It is the signature of a specific
             version of the module
         """
-        return "{}_{}".format(self.fqn(), self.ver_hex())
+        return "{}_{}".format(self.fqn(), self._ver_hex())
 
     def _meta_path(self):
         return "{}/{}.meta".format(

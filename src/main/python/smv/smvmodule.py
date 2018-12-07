@@ -118,9 +118,9 @@ class SparkDfGenMod(SmvGenericModule):
     def persistStrategy(self):
         _format = self.smvApp.py_smvconf.df_persist_format()
         if (_format == "smvcsv_on_hdfs"):
-            return SmvCsvPersistenceStrategy(self.smvApp, self.fqn(), self.ver_hex())
+            return SmvCsvPersistenceStrategy(self.smvApp, self.fqn(), self._ver_hex())
         elif (_format == "parquet_on_hdfs"):
-            return SmvParquetPersistenceStrategy(self.smvApp, self.fqn(), self.ver_hex())
+            return SmvParquetPersistenceStrategy(self.smvApp, self.fqn(), self._ver_hex())
 
     def metaStrategy(self):
         return SmvJsonOnHdfsPersistenceStrategy(self.smvApp, self._meta_path())
@@ -281,7 +281,7 @@ class SmvModel(SmvProcessModule):
         return "Model"
 
     def persistStrategy(self):
-        return SmvPicklablePersistenceStrategy(self.smvApp, self.fqn(), self.ver_hex())
+        return SmvPicklablePersistenceStrategy(self.smvApp, self.fqn(), self._ver_hex())
 
     def metaStrategy(self):
         return SmvJsonOnHdfsPersistenceStrategy(self.smvApp, self._meta_path())

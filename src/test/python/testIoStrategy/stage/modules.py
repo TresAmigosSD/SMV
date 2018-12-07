@@ -21,7 +21,7 @@ class M1(SmvModule):
         return self.smvApp.createDF("k:String;v:Integer", "a,1;b,2")
 
     def persistStrategy(self):
-        return SmvParquetPersistenceStrategy(self.smvApp, self.fqn(), self.ver_hex())
+        return SmvParquetPersistenceStrategy(self.smvApp, self.fqn(), self._ver_hex())
 
 class M2(SmvModule):
     def requiresDS(self):

@@ -496,7 +496,7 @@ class SmvApp(object):
             Returns:
                 (str): The hashOfHash of the named module
         """
-        return self.dsm.inferDS(name)[0].ver_hex()
+        return self.dsm.inferDS(name)[0]._ver_hex()
 
     def copyToHdfs(self, fileobj, destination):
         """Copies the content of a file object to an HDFS location.

@@ -70,7 +70,7 @@ class SmvMetaData(object):
 
     def addSystemMeta(self, mod):
         self.addFQN(mod.fqn())
-        self.addVerHex(mod.ver_hex())
+        self.addVerHex(mod._ver_hex())
         self.addTimestamp(mod.timestamp)
         self.addApplicationContext(mod.smvApp)
         self.addDependencyMetadata(mod.resolvedRequiresDS)
