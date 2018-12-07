@@ -324,7 +324,7 @@ class SmvGenericModule(ABC):
                             _strategy.write, df, "RUN & PERSIST OUTPUT")
                         # Need to populate self.data, since postAction need it
                         self.data = _strategy.read()
-                        self.run_ancestor_and_me_postAction(run_set, collector)
+                        self._run_ancestor_and_me_postAction(run_set, collector)
             else:
                 smv.logger.debug("{} had a persisted file".format(self.fqn()))
                 self.data = _strategy.read()
@@ -385,9 +385,9 @@ class SmvGenericModule(ABC):
     def _force_post_action(self, run_set, collector):
         if (self in run_set):
             self._force_an_action(self.data)
-            self.run_ancestor_and_me_postAction(run_set, collector)
+            self._run_ancestor_and_me_postAction(run_set, collector)
 
-    def run_ancestor_and_me_postAction(self, run_set, collector):
+    def _run_ancestor_and_me_postAction(self, run_set, collector):
         """When action happens on current module, run the the delayed
             post action of the ancestor ephemeral modules
         """
@@ -414,7 +414,7 @@ class SmvGenericModule(ABC):
                         raise SmvRuntimeError("Module {}'s data is None, can't run postAction".format(mod.fqn()))
                     # Since the ancestor list will be visited as depth-first, although
                     # user_meta may trigger actions, the upper stream modules' post action
-                    # are already run. No need to call run_ancestor_and_me_postAction
+                    # are already run. No need to call _run_ancestor_and_me_postAction
                     # in the calculate_user_meta() any more
                     mod._calculate_user_meta()
                     mod._finalize_meta()
