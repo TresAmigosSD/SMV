@@ -248,7 +248,7 @@ class SmvGenericModule(ABC):
     ####################################################################################
 
     # Set when resolving
-    def setTimestamp(self, dt):
+    def _setTimestamp(self, dt):
         self.timestamp = dt
 
     # Called by resolver, recursively resolve all dependencies. Use self.dependencies
