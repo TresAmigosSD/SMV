@@ -370,7 +370,7 @@ class SmvGenericModule(ABC):
         io_strategy = self.smvApp._hist_io_strategy(self)
         io_strategy.write(hist.toJson())
 
-    def get_metadata(self):
+    def _get_metadata(self):
         """Return the best meta without run. If persisted, use it, otherwise
             add info up to resolved DS"""
         io_strategy = self.metaStrategy()

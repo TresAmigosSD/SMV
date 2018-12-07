@@ -65,7 +65,7 @@ class SmvModuleRunner(object):
         collector = SmvRunInfoCollector()
         def add_to_coll(m, _collector):
             hist = self.smvApp._read_meta_hist(m)
-            _collector.add_runinfo(m.fqn(), m.get_metadata(), hist)
+            _collector.add_runinfo(m.fqn(), m._get_metadata(), hist)
         self.visitor.dfs_visit(add_to_coll, collector, need_to_run_only=True)
         return collector
 

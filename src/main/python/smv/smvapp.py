@@ -477,7 +477,7 @@ class SmvApp(object):
     def getMetadataJson(self, fqn):
         """Returns the metadata for a given fqn"""
         ds = self.load_single_ds(fqn)
-        return ds.get_metadata().toJson()
+        return ds._get_metadata().toJson()
 
     def getMetadataHistoryJson(self, fqn):
         """Returns the metadata history for a given fqn"""
