@@ -299,7 +299,7 @@ class SmvModelExec(SmvModule):
     def dsType(self):
         return "ModelExec"
 
-    def dependencies(self):
+    def _dependencies(self):
         model_mod = self.requiresModel()
         if not self._targetIsSmvModel(model_mod):
             raise SmvRuntimeError("requiresModel method must return an SmvModel or a link to one")

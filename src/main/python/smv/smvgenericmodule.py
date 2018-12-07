@@ -164,7 +164,7 @@ class SmvGenericModule(ABC):
     # - dsType: Required
     # - persistStrategy: Required
     # - metaStrategy: Required
-    # - dependencies: Optional, default self.requiresDS()
+    # - _dependencies: Optional, default self.requiresDS()
     # - had_action: Optional, default True
     # - pre_action: Optional, default pass through the input data
     # - post_action: Optional, default pass
@@ -186,7 +186,7 @@ class SmvGenericModule(ABC):
         """Return an SmvIoStrategy for metadata persisting"""
 
 
-    def dependencies(self):
+    def _dependencies(self):
         """Can be overridden when a module has dependency other than requiresDS
         """
         return self.requiresDS()
@@ -270,7 +270,7 @@ class SmvGenericModule(ABC):
     # Called by resolver, recursively resolve all dependencies. Use self.dependencies
     # instead of requiresDS to make sure model dependency also included
     def resolve(self, resolver):
-        self.resolvedRequiresDS = resolver.loadDataSet([ds.fqn() for ds in self.dependencies()])
+        self.resolvedRequiresDS = resolver.loadDataSet([ds.fqn() for ds in self._dependencies()])
         return self
 
     @lazy_property
