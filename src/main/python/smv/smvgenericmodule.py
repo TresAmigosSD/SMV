@@ -165,7 +165,7 @@ class SmvGenericModule(ABC):
     # - persistStrategy: Required
     # - metaStrategy: Required
     # - _dependencies: Optional, default self.requiresDS()
-    # - pre_action: Optional, default pass through the input data
+    # - _pre_action: Optional, default pass through the input data
     # - post_action: Optional, default pass
     # - force_an_action: Optional, default pass
     # - calculate_edd: Optional, default pass
@@ -190,7 +190,7 @@ class SmvGenericModule(ABC):
         """
         return self.requiresDS()
 
-    def pre_action(self, df):
+    def _pre_action(self, df):
         """DF in and DF out, to perform operations on created from run method"""
         return df
 
@@ -307,7 +307,7 @@ class SmvGenericModule(ABC):
 
         if (self.isEphemeral()):
             raw_df = self.doRun(fqn2df)
-            self.data = self.pre_action(raw_df)
+            self.data = self._pre_action(raw_df)
         elif(is_quick_run):
             _strategy = self.persistStrategy()
             if (not _strategy.isPersisted()):
@@ -318,7 +318,7 @@ class SmvGenericModule(ABC):
             _strategy = self.persistStrategy()
             if (not _strategy.isPersisted()):
                 raw_df = self.doRun(fqn2df)
-                df = self.pre_action(raw_df)
+                df = self._pre_action(raw_df)
                 # Acquire lock on persist to ensure write is atomic
                 with self._smvLock():
                     if (_strategy.isPersisted()):

@@ -129,7 +129,7 @@ class SparkDfGenMod(SmvGenericModule):
     def dqmValidator(self):
         return self.smvApp._jvm.DQMValidator(self.dqm())
 
-    def pre_action(self, df):
+    def _pre_action(self, df):
         """DF in and DF out, to perform operations on created from run method"""
         return DataFrame(self.dqmValidator.attachTasks(df._jdf), df.sql_ctx)
 
