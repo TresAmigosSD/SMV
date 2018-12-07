@@ -30,7 +30,7 @@ class SmvMetaData(object):
             '_userMetadata': {},
             '_edd': []
         }
-    
+
     def addFQN(self, fqn):
         self._metadata.update({'_fqn': fqn})
 
@@ -47,7 +47,7 @@ class SmvMetaData(object):
             self._metadata.update({'_columns': columns})
 
     def addDependencyMetadata(self, deps):
-        paths = [m.meta_path() for m in deps]
+        paths = [m._meta_path() for m in deps]
         self._metadata.update({'_inputs': paths})
 
     def addDuration(self, name, duration):
@@ -99,7 +99,7 @@ class SmvMetaData(object):
 
     def __repr__(self):
         # So that you can print(metadata)
-        return json.dumps(self._metadata, 
+        return json.dumps(self._metadata,
             sort_keys=True, indent=2, separators=(',', ': '))
 
 
@@ -121,5 +121,5 @@ class SmvMetaHistory(object):
 
     def __repr__(self):
         # So that you can print(metadata)
-        return json.dumps(self._hist_list, 
+        return json.dumps(self._hist_list,
             sort_keys=True, indent=2, separators=(',', ': '))

@@ -462,7 +462,7 @@ class SmvGenericModule(ABC):
         return res & 0x7fffffff
 
     @lazy_property
-    def hash_of_hash(self):
+    def _hash_of_hash(self):
         """hash depends on current module's _dataset_hash, and all ancestors.
             this calculation could be expensive, so made it a lazy property
         """
@@ -473,12 +473,12 @@ class SmvGenericModule(ABC):
 
         res = _dataset_hash
         for m in self.resolvedRequiresDS:
-            res += m.hash_of_hash
+            res += m._hash_of_hash
         log.debug("{}.hash_of_hash = {}".format(self.fqn(), res))
         return res
 
     def ver_hex(self):
-        return "{0:08x}".format(self.hash_of_hash)
+        return "{0:08x}".format(self._hash_of_hash)
 
     @lazy_property
     def versioned_fqn(self):
@@ -487,7 +487,7 @@ class SmvGenericModule(ABC):
         """
         return "{}_{}".format(self.fqn(), self.ver_hex())
 
-    def meta_path(self):
+    def _meta_path(self):
         return "{}/{}.meta".format(
             self.smvApp.all_data_dirs().outputDir,
             self.versioned_fqn)

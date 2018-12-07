@@ -41,7 +41,7 @@ class SmvIoModule(SmvGenericModule):
 
     def metaStrategy(self):
         """Still persist meta for input/output modules"""
-        return SmvJsonOnHdfsPersistenceStrategy(self.smvApp, self.meta_path())
+        return SmvJsonOnHdfsPersistenceStrategy(self.smvApp, self._meta_path())
 
     @abc.abstractmethod
     def connectionName(self):

@@ -102,7 +102,7 @@ class SmvFrameworkTest2(SmvBaseTest):
     def test_metadata_persist(self):
         fqn = "stage.modules.M1"
         m = self.load(fqn)[0]
-        meta_path = m.meta_path()
+        meta_path = m._meta_path()
 
         self.df(fqn)
 
