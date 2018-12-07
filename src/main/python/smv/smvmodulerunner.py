@@ -133,7 +133,7 @@ class SmvModuleRunner(object):
             ))
             def force_run(mod, state):
                 (run_set, coll) = state
-                mod.force_post_action(run_set, coll)
+                mod._force_post_action(run_set, coll)
             # Note: we used bfs_visit here run downstream first
             # In case of A<-B<-C all need to run, this way will only
             # need to force action on C, and A and B's post action can

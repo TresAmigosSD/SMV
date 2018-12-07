@@ -382,7 +382,7 @@ class SmvGenericModule(ABC):
             meta_json = io_strategy.read()
             return SmvMetaData().fromJson(meta_json)
 
-    def force_post_action(self, run_set, collector):
+    def _force_post_action(self, run_set, collector):
         if (self in run_set):
             self._force_an_action(self.data)
             self.run_ancestor_and_me_postAction(run_set, collector)
