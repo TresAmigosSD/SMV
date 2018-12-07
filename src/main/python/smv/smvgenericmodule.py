@@ -273,7 +273,7 @@ class SmvGenericModule(ABC):
 
             fqn2df will be appended, and run_set will shrink
         """
-        if (forceRun or (self.versioned_fqn not in self.smvApp.data_cache)):
+        if (forceRun or (self._versioned_fqn not in self.smvApp.data_cache)):
             res = self._computeData(fqn2df, run_set, collector, is_quick_run)
             if (self.isEphemeral()):
                 # Only cache ephemeral modules data, since non-ephemeral any how
@@ -284,11 +284,11 @@ class SmvGenericModule(ABC):
                 # cached DF will still try to read from those deleted files and
                 # cause error.
                 self.smvApp.data_cache.update(
-                    {self.versioned_fqn:res}
+                    {self._versioned_fqn:res}
                 )
         else:
             smv.logger.debug("{} had a cache in SmvApp.data_cache".format(self.fqn()))
-            res = self.smvApp.data_cache.get(self.versioned_fqn)
+            res = self.smvApp.data_cache.get(self._versioned_fqn)
             self.data = res
         fqn2df.update({self.fqn(): res})
         return res
@@ -481,7 +481,7 @@ class SmvGenericModule(ABC):
         return "{0:08x}".format(self._hash_of_hash)
 
     @lazy_property
-    def versioned_fqn(self):
+    def _versioned_fqn(self):
         """module fqn with the hash of hash. It is the signature of a specific
             version of the module
         """
@@ -490,12 +490,12 @@ class SmvGenericModule(ABC):
     def _meta_path(self):
         return "{}/{}.meta".format(
             self.smvApp.all_data_dirs().outputDir,
-            self.versioned_fqn)
+            self._versioned_fqn)
 
     def _lock_path(self):
         return "{}/{}.lock".format(
             self.smvApp.all_data_dirs().lockDir,
-            self.versioned_fqn)
+            self._versioned_fqn)
 
     def _smvLock(self):
         if (self.smvApp.py_smvconf.use_lock()):
