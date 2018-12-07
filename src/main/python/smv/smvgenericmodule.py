@@ -445,7 +445,7 @@ class SmvGenericModule(ABC):
 
         return (res, secondsElapsed)
 
-    def dataset_hash(self):
+    def _dataset_hash(self):
         """current module's hash value, depend on code and potentially
             linked data (such as for SmvCsvFile)
         """
@@ -463,12 +463,12 @@ class SmvGenericModule(ABC):
 
     @lazy_property
     def hash_of_hash(self):
-        """hash depends on current module's dataset_hash, and all ancestors.
+        """hash depends on current module's _dataset_hash, and all ancestors.
             this calculation could be expensive, so made it a lazy property
         """
         # TODO: implement using visitor too
         log = smv.logger
-        _dataset_hash = self.dataset_hash()
+        _dataset_hash = self._dataset_hash()
         log.debug("{}.dataset_hash = {}".format(self.fqn(), _dataset_hash))
 
         res = _dataset_hash
