@@ -135,7 +135,8 @@ class DataSetRepoTest(SmvBaseTest):
         """Ensure repo can discover providers by prefix"""
         prov_dir = self.resourceTestDir() + "/provider"
         with AppDir(self.smvApp, prov_dir):
-            providers = self.build_new_repo().get_providers_by_prefix("aaa")
+            self.smvApp.refresh_provider_cache()
+            providers = self.smvApp.get_providers_by_prefix("aaa")
             providers_fqns = sorted([p.provider_type_fqn() for p in providers])
             self.assertEqual(providers_fqns, ['aaa', 'aaa.bbb'])
 
