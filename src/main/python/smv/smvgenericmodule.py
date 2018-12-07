@@ -166,7 +166,7 @@ class SmvGenericModule(ABC):
     # - metaStrategy: Required
     # - _dependencies: Optional, default self.requiresDS()
     # - _pre_action: Optional, default pass through the input data
-    # - post_action: Optional, default pass
+    # - _post_action: Optional, default pass
     # - force_an_action: Optional, default pass
     # - calculate_edd: Optional, default pass
     # - instanceValHash: Optional, default 0
@@ -194,7 +194,7 @@ class SmvGenericModule(ABC):
         """DF in and DF out, to perform operations on created from run method"""
         return df
 
-    def post_action(self):
+    def _post_action(self):
         """Will run when action happens on a DF, here for DQM validation and others
             which need to be done after an action on lazy-eval data"""
         pass
@@ -413,7 +413,7 @@ class SmvGenericModule(ABC):
             (_run_set, coll) = state
             if (mod in _run_set):
                 smv.logger.debug("Run post_action of {} from {}".format(mod.fqn(), self.fqn()))
-                mod.post_action()
+                mod._post_action()
                 meta_io_strategy = mod.metaStrategy()
                 if (not_persisted_or_no_edd_when_forced(meta_io_strategy)):
                     # data cache should be populated by this step

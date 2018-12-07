@@ -35,8 +35,8 @@ class M1(SmvModule):
     def run(self, i):
         testSmvFramework2.cross_run_counter += 1
         return i[I1]
-    def post_action(self):
-        super(M1, self).post_action()
+    def _post_action(self):
+        super(M1, self)._post_action()
         testSmvFramework2.m1_post_counter += 1
 
 class M2(SmvModule):

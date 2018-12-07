@@ -133,7 +133,7 @@ class SparkDfGenMod(SmvGenericModule):
         """DF in and DF out, to perform operations on created from run method"""
         return DataFrame(self.dqmValidator.attachTasks(df._jdf), df.sql_ctx)
 
-    def post_action(self):
+    def _post_action(self):
         """Will run when action happens on a DF, here for DQM validation"""
         validation_result = self.dqmValidator.validate()
         if (not validation_result.isEmpty()):
