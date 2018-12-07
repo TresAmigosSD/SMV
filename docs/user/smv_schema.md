@@ -18,7 +18,6 @@ income: Decimal[10];
 ```
 
 ## CSV attributes
-The CSV attribute 
 The schema file can specify the CSV attributes (delimiter, quote char, and header).  All three attributes are optional and will default to (',', '"', true) respectively.
 <table>
 <tr>
