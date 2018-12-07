@@ -412,7 +412,7 @@ class SmvApp(object):
         """
         visitor = ModulesVisitor(roots)
         return [m for m in visitor.modules_needed_for_run
-            if ((not m.is_persisted() and not m.isEphemeral())
+            if ((not m._is_persisted() and not m.isEphemeral())
                 or (keep_roots and m in roots))
         ]
 

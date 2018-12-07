@@ -503,7 +503,7 @@ class SmvGenericModule(ABC):
         else:
             return NonOpLock()
 
-    def is_persisted(self):
+    def _is_persisted(self):
         """Is current module persisted or not. Can't be lazy, since the persisted
             file could be removed from OS
         """
