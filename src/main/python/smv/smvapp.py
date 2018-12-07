@@ -30,7 +30,7 @@ from pyspark.sql import SparkSession, DataFrame
 
 from smv.datasetmgr import DataSetMgr
 from smv.smvappinfo import SmvAppInfo
-from smv.datasetrepo import DataSetRepoFactory
+from smv.datasetrepo import DataSetRepoFactory, DataSetRepo
 from smv.utils import smv_copy_array, check_socket, scala_seq_to_list
 from smv.error import SmvRuntimeError, SmvDqmValidationError
 import smv.helpers
@@ -148,6 +148,10 @@ class SmvApp(object):
         self.repoFactory = DataSetRepoFactory(self)
         self.dsm.register(self.repoFactory)
 
+        # provider cache, keyed by providers' fqn
+        self.provider_cache = {}
+        self.refresh_provider_cache()
+
         # Initialize DataFrame and Column with helper methods
         smv.helpers.init_helpers()
 
@@ -259,6 +263,23 @@ class SmvApp(object):
         # objects by `smv.` so that they are importable.
         lib_dir = os.path.join(self.smvHome, "src/main/python/smv")
         return self._libsInDir(lib_dir, "smv.")
+
+    def refresh_provider_cache(self):
+        """Re-discover providers and set provider_cache"""
+        self.provider_cache = DataSetRepo(self)._all_providers()
+
+    def get_providers_by_prefix(self, fqn_prefix):
+        """Discover all providers in user lib and smv lib that have an provider type fqn
+           starting with the given prefix.
+        """
+        providers = self.provider_cache
+        return [p for (fqn, p) in providers.items() if fqn.startswith(fqn_prefix)]
+
+    def get_provider_by_name(self, fqn):
+        """Return provider class from provider name fqn
+        """
+        providers = self.provider_cache
+        return providers.get(fqn)
 
     def appId(self):
         return self.py_smvconf.app_id()

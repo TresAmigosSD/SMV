@@ -21,7 +21,7 @@ from smv.utils import smvhash
 from smv.datasetrepo import DataSetRepo
 from smv.smvgenericmodule import SmvGenericModule
 from smv.smviostrategy import SmvNonOpPersistenceStrategy, SmvJsonOnHdfsPersistenceStrategy
-
+from smv.conn import SmvJdbcConnectionInfo
 
 class SmvIoModule(SmvGenericModule):
     """Base class for input and output modules
@@ -56,12 +56,8 @@ class SmvIoModule(SmvGenericModule):
         if (type_name in props):
             con_type = props.get(type_name)
             provider_fqn = "conn.{}".format(con_type)
-            ds_repo = DataSetRepo(self.smvApp)
-            # Load the class from its FQN
-            ConnClass = ds_repo.get_providers_by_prefix(provider_fqn)[0]
-            res = ConnClass(name, props)
-            print("----------", res)
-            return res
+            ConnClass = self.smvApp.get_provider_by_name(provider_fqn)
+            return ConnClass(name, props)
         else:
             raise SmvRuntimeError("Connection name {} is not configured with a type".format(name))
 
