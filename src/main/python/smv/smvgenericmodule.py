@@ -222,6 +222,9 @@ class SmvGenericModule(ABC):
 
     def instanceValHash(self):
         """Hash computed based on instance values of the dataset, such as the timestamp of an input file
+
+            Returns:
+                (int)
         """
         return 0
 
