@@ -85,7 +85,7 @@ class SmvModuleRunner(object):
             publish_meta_path = publish_base_path + ".meta"
             publish_hist_path = publish_base_path + ".hist"
 
-            SmvCsvPersistenceStrategy(m.smvApp, m.fqn(), None, publish_csv_path).write(m.data)
+            SmvCsvPersistenceStrategy(m.smvApp, m.fqn(), publish_csv_path).write(m.data)
             SmvJsonOnHdfsPersistenceStrategy(m.smvApp, publish_meta_path).write(m.module_meta.toJson())
             hist = self.smvApp._read_meta_hist(m)
             SmvJsonOnHdfsPersistenceStrategy(m.smvApp, publish_hist_path).write(hist.toJson())
