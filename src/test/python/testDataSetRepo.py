@@ -119,11 +119,17 @@ class DataSetRepoTest(SmvBaseTest):
 
             # verify provider class names
             all_providers_names = sorted([p.__name__ for p in all_providers.values()])
-            self.assertEqual(all_providers_names, ['MyBaseProvider', 'MyConcreteProvider', 'SomeProvider'])
+            self.assertTrue(
+                set(['MyBaseProvider', 'MyConcreteProvider', 'SomeProvider'])
+                < set(all_providers_names)
+            )
 
             # verify provider type fqns
             all_providers_fqns = sorted(all_providers.keys())
-            self.assertEqual(all_providers_fqns, ['aaa', 'aaa.bbb', 'some'])
+            self.assertTrue(
+                set(['aaa', 'aaa.bbb', 'some'])
+                < set(all_providers_fqns)
+            )
 
     def test_provider_list_by_prefix(self):
         """Ensure repo can discover providers by prefix"""
