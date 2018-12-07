@@ -48,13 +48,13 @@ class ModulesVisitor(object):
 
         while(not _working_queue.empty()):
             mod = _working_queue.get()
-            if(not un_persisted_only or not mod.is_persisted()):
+            if(not un_persisted_only or not mod._is_persisted()):
                 for m in mod.resolvedRequiresDS:
-                    # regardless whether seen before, add to queue, so not drop 
+                    # regardless whether seen before, add to queue, so not drop
                     # any dependency which may change the ordering of the result
                     _working_queue.put(m)
 
-                    # if in the result list already, remove the old, add the new, 
+                    # if in the result list already, remove the old, add the new,
                     # to make sure leafs always later
                     if (m in _sorted):
                         _sorted.pop(m)
@@ -85,7 +85,7 @@ class ModulesVisitor(object):
             l = self.queue
         for m in l:
             action(m, state)
-    
+
     def bfs_visit(self, action, state, need_to_run_only=False):
         """Breadth first visit"""
         if (need_to_run_only):

@@ -74,14 +74,7 @@ class SparkDfGenMod(SmvGenericModule):
     #########################################################################
     # Implement of SmvGenericModule abatract methos and other private methods
     #########################################################################
-    def had_action(self):
-        """Check dqm overall counter to simulate an action check.
-            There is no way for us to tell wether the result df is just
-            empty or there is no action on it. So use this with caution
-        """
-        return self.dqmValidator.totalRecords() > 0
-
-    def calculate_edd(self):
+    def _calculate_edd(self):
         """When config smv.forceEdd flag is true, run edd calculation.
         """
         def get_edd(df):
@@ -92,7 +85,7 @@ class SparkDfGenMod(SmvGenericModule):
         self.module_meta.addEddResult(edd_json_array)
         self.module_meta.addDuration("edd", eddTimeElapsed)
 
-    def force_an_action(self, df):
+    def _force_an_action(self, df):
         # Since optimization can be done on a DF actions like count, we have to convert DF
         # to RDD and than apply an action, otherwise fix count will be always zero
         (n, self.dqmTimeElapsed) = self._do_action_on_df(
@@ -102,7 +95,7 @@ class SparkDfGenMod(SmvGenericModule):
     def _calculate_user_meta(self):
         super(SparkDfGenMod, self)._calculate_user_meta()
         if (self.smvApp.py_smvconf.force_edd()):
-            self.calculate_edd()
+            self._calculate_edd()
 
     # Override this method to add the dqmTimeElapsed
     def _finalize_meta(self):
@@ -125,24 +118,24 @@ class SparkDfGenMod(SmvGenericModule):
     def persistStrategy(self):
         _format = self.smvApp.py_smvconf.df_persist_format()
         if (_format == "smvcsv_on_hdfs"):
-            return SmvCsvPersistenceStrategy(self.smvApp, self.fqn(), self.ver_hex())
+            return SmvCsvPersistenceStrategy(self.smvApp, self._versioned_fqn)
         elif (_format == "parquet_on_hdfs"):
-            return SmvParquetPersistenceStrategy(self.smvApp, self.fqn(), self.ver_hex())
+            return SmvParquetPersistenceStrategy(self.smvApp, self._versioned_fqn)
 
     def metaStrategy(self):
-        return SmvJsonOnHdfsPersistenceStrategy(self.smvApp, self.meta_path())
+        return SmvJsonOnHdfsPersistenceStrategy(self.smvApp, self._meta_path())
 
     @lazy_property
-    def dqmValidator(self):
+    def _dqmValidator(self):
         return self.smvApp._jvm.DQMValidator(self.dqm())
 
-    def pre_action(self, df):
+    def _pre_action(self, df):
         """DF in and DF out, to perform operations on created from run method"""
-        return DataFrame(self.dqmValidator.attachTasks(df._jdf), df.sql_ctx)
+        return DataFrame(self._dqmValidator.attachTasks(df._jdf), df.sql_ctx)
 
-    def post_action(self):
+    def _post_action(self):
         """Will run when action happens on a DF, here for DQM validation"""
-        validation_result = self.dqmValidator.validate()
+        validation_result = self._dqmValidator.validate()
         if (not validation_result.isEmpty()):
             msg = json.dumps(
                 json.loads(validation_result.toJSON()),
@@ -288,10 +281,10 @@ class SmvModel(SmvProcessModule):
         return "Model"
 
     def persistStrategy(self):
-        return SmvPicklablePersistenceStrategy(self.smvApp, self.fqn(), self.ver_hex())
+        return SmvPicklablePersistenceStrategy(self.smvApp, self._versioned_fqn)
 
     def metaStrategy(self):
-        return SmvJsonOnHdfsPersistenceStrategy(self.smvApp, self.meta_path())
+        return SmvJsonOnHdfsPersistenceStrategy(self.smvApp, self._meta_path())
 
 class SmvModelExec(SmvModule):
     """SmvModule that runs a model produced by an SmvModel
@@ -299,7 +292,7 @@ class SmvModelExec(SmvModule):
     def dsType(self):
         return "ModelExec"
 
-    def dependencies(self):
+    def _dependencies(self):
         model_mod = self.requiresModel()
         if not self._targetIsSmvModel(model_mod):
             raise SmvRuntimeError("requiresModel method must return an SmvModel or a link to one")

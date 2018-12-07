@@ -21,7 +21,6 @@ from smv.utils import smvhash
 from smv.datasetrepo import DataSetRepo
 from smv.smvgenericmodule import SmvGenericModule
 from smv.smviostrategy import SmvNonOpPersistenceStrategy, SmvJsonOnHdfsPersistenceStrategy
-from smv.conn import SmvJdbcConnectionInfo
 
 class SmvIoModule(SmvGenericModule):
     """Base class for input and output modules
@@ -41,7 +40,7 @@ class SmvIoModule(SmvGenericModule):
 
     def metaStrategy(self):
         """Still persist meta for input/output modules"""
-        return SmvJsonOnHdfsPersistenceStrategy(self.smvApp, self.meta_path())
+        return SmvJsonOnHdfsPersistenceStrategy(self.smvApp, self._meta_path())
 
     @abc.abstractmethod
     def connectionName(self):
@@ -93,10 +92,6 @@ class SmvInput(SmvIoModule):
     def dsType(self):
         return "Input"
 
-    def instanceValHash(self):
-        """TODO: need to implement this to depends on connection and
-            also table itself"""
-        return 0
 
 class SmvOutput(SmvIoModule):
     """Base class for all Output modules

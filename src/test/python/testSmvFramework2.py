@@ -61,7 +61,7 @@ class SmvFrameworkTest2(SmvBaseTest):
         fqns = ["stage.modules.M3", "stage.modules.M2"]
         ds = self.load(*fqns)
 
-        self.assertNotEqual(ds[0].versioned_fqn, ds[1].versioned_fqn)
+        self.assertNotEqual(ds[0]._versioned_fqn, ds[1]._versioned_fqn)
 
     def test_cross_tx_df_caching(self):
         """run method of a module should run only once even cross run tx"""
@@ -102,7 +102,7 @@ class SmvFrameworkTest2(SmvBaseTest):
     def test_metadata_persist(self):
         fqn = "stage.modules.M1"
         m = self.load(fqn)[0]
-        meta_path = m.meta_path()
+        meta_path = m._meta_path()
 
         self.df(fqn)
 

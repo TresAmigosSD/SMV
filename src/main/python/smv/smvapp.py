@@ -138,7 +138,7 @@ class SmvApp(object):
         # shortcut is meant for internal use only
         self.dsm = DataSetMgr(self._jvm, self.py_smvconf)
 
-        # computed df cache, keyed by m.versioned_fqn
+        # computed df cache, keyed by m._versioned_fqn
         self.data_cache = {}
 
         # AFTER app is available but BEFORE stages,
@@ -412,7 +412,7 @@ class SmvApp(object):
         """
         visitor = ModulesVisitor(roots)
         return [m for m in visitor.modules_needed_for_run
-            if ((not m.is_persisted() and not m.isEphemeral())
+            if ((not m._is_persisted() and not m.isEphemeral())
                 or (keep_roots and m in roots))
         ]
 
@@ -477,7 +477,7 @@ class SmvApp(object):
     def getMetadataJson(self, fqn):
         """Returns the metadata for a given fqn"""
         ds = self.load_single_ds(fqn)
-        return ds.get_metadata().toJson()
+        return ds._get_metadata().toJson()
 
     def getMetadataHistoryJson(self, fqn):
         """Returns the metadata history for a given fqn"""
@@ -496,7 +496,7 @@ class SmvApp(object):
             Returns:
                 (str): The hashOfHash of the named module
         """
-        return self.dsm.inferDS(name)[0].ver_hex()
+        return self.dsm.inferDS(name)[0]._ver_hex()
 
     def copyToHdfs(self, fileobj, destination):
         """Copies the content of a file object to an HDFS location.

@@ -72,17 +72,15 @@ class SmvFileOnHdfsPersistenceStrategy(SmvPersistenceStrategy):
 
         Args:
             smvApp(SmvApp):
-            fqn(str): data/module's FQN/Name
-            ver_hex(str): data/module's version hex string
+            versioned_fqn(str): data/module's FQN/Name with hash_of_hash
             postfix(str): persisted file's postfix
-            file_path(str): parameters "fqn", "ver_hex" and "postfix" are used to create
+            file_path(str): parameters "versioned_fqn" and "postfix" are used to create
                 a data file path. However if "file_path" is provided, all the other 3
                 parameters are ignored
     """
-    def __init__(self, smvApp, fqn=None, ver_hex=None, postfix=None, file_path=None):
+    def __init__(self, smvApp, versioned_fqn=None, postfix=None, file_path=None):
         self.smvApp = smvApp
         if (file_path is None):
-            versioned_fqn = "{}_{}".format(fqn, ver_hex)
             output_dir = self.smvApp.all_data_dirs().outputDir
             self._file_path = "{}/{}.{}".format(output_dir, versioned_fqn, postfix)
         else:
@@ -116,14 +114,13 @@ class SmvCsvPersistenceStrategy(SmvFileOnHdfsPersistenceStrategy):
 
         Args:
             smvApp(SmvApp):
-            fqn(str): data/module's FQN/Name
-            ver_hex(str): data/module's version hex string
-            file_path(str): parameters "fqn", "ver_hex" are used to create
+            versioned_fqn(str): data/module's FQN/Name with hash_of_hash
+            file_path(str): parameter "versioned_fqn" is used to create
                 a data file path. However if "file_path" is provided, all the other 2
                 parameters are ignored
     """
-    def __init__(self, smvApp, fqn, ver_hex, file_path=None):
-        super(SmvCsvPersistenceStrategy, self).__init__(smvApp, fqn, ver_hex, 'csv', file_path)
+    def __init__(self, smvApp, versioned_fqn, file_path=None):
+        super(SmvCsvPersistenceStrategy, self).__init__(smvApp, versioned_fqn, 'csv', file_path)
 
     @property
     def _schema_path(self):
@@ -156,7 +153,7 @@ class SmvCsvPersistenceStrategy(SmvFileOnHdfsPersistenceStrategy):
 
 class SmvJsonOnHdfsPersistenceStrategy(SmvFileOnHdfsPersistenceStrategy):
     def __init__(self, smvApp, path):
-        super(SmvJsonOnHdfsPersistenceStrategy, self).__init__(smvApp, None, None, None, path)
+        super(SmvJsonOnHdfsPersistenceStrategy, self).__init__(smvApp, None, None, path)
 
     def _read(self):
         return self.smvApp._jvm.SmvHDFS.readFromFile(self._file_path)
@@ -166,8 +163,8 @@ class SmvJsonOnHdfsPersistenceStrategy(SmvFileOnHdfsPersistenceStrategy):
 
 
 class SmvPicklablePersistenceStrategy(SmvFileOnHdfsPersistenceStrategy):
-    def __init__(self, smvApp, fqn, ver_hex, file_path=None):
-        super(SmvPicklablePersistenceStrategy, self).__init__(smvApp, fqn, ver_hex, 'pickle', file_path)
+    def __init__(self, smvApp, versioned_fqn, file_path=None):
+        super(SmvPicklablePersistenceStrategy, self).__init__(smvApp, versioned_fqn, 'pickle', file_path)
 
     def _read(self):
         # reverses result of applying _write. see _write for explanation.
@@ -191,14 +188,13 @@ class SmvParquetPersistenceStrategy(SmvFileOnHdfsPersistenceStrategy):
 
         Args:
             smvApp(SmvApp):
-            fqn(str): data/module's FQN/Name
-            ver_hex(str): data/module's version hex string
-            file_path(str): parameters "fqn", "ver_hex" are used to create
+            versioned_fqn(str): data/module's FQN/Name with hash_of_hash
+            file_path(str): parameter "versioned_fqn" is used to create
                 a data file path. However if "file_path" is provided, all the other 2
                 parameters are ignored
     """
-    def __init__(self, smvApp, fqn, ver_hex, file_path=None):
-        super(SmvParquetPersistenceStrategy, self).__init__(smvApp, fqn, ver_hex, 'parquet', file_path)
+    def __init__(self, smvApp, versioned_fqn, file_path=None):
+        super(SmvParquetPersistenceStrategy, self).__init__(smvApp, versioned_fqn, 'parquet', file_path)
 
     @property
     def _semaphore_path(self):

@@ -164,12 +164,10 @@ class SmvGenericModule(ABC):
     # - dsType: Required
     # - persistStrategy: Required
     # - metaStrategy: Required
-    # - dependencies: Optional, default self.requiresDS()
-    # - had_action: Optional, default True
-    # - pre_action: Optional, default pass through the input data
-    # - post_action: Optional, default pass
-    # - force_an_action: Optional, default pass
-    # - calculate_edd: Optional, default pass
+    # - _dependencies: Optional, default self.requiresDS()
+    # - _pre_action: Optional, default pass through the input data
+    # - _post_action: Optional, default pass
+    # - _force_an_action: Optional, default pass
     # - instanceValHash: Optional, default 0
     # - doRun: Required
     #########################################################################
@@ -186,37 +184,23 @@ class SmvGenericModule(ABC):
         """Return an SmvIoStrategy for metadata persisting"""
 
 
-    def dependencies(self):
+    def _dependencies(self):
         """Can be overridden when a module has dependency other than requiresDS
         """
         return self.requiresDS()
 
-    def had_action(self):
-        """Check whether there is an action happend on the generated data (DF or real data)
-            For Spark DF and other types of lazy-eval data, this method need to be set through
-            so data specific logic. Return True is the DF is evaled. For data type which does
-            not do lazy eval, is one always return True
-        """
-        return True
-
-    def pre_action(self, df):
+    def _pre_action(self, df):
         """DF in and DF out, to perform operations on created from run method"""
         return df
 
-    def post_action(self):
+    def _post_action(self):
         """Will run when action happens on a DF, here for DQM validation and others
             which need to be done after an action on lazy-eval data"""
         pass
 
-    def force_an_action(self, df):
+    def _force_an_action(self, df):
         """For Spark DF and other data with lazy-eval, may need to force an action to
             trigger the post_action calculation. For general data without lazy-eval, do nothing
-        """
-        pass
-
-    def calculate_edd(self, run_set):
-        """When config smv.forceEdd flag is true, run edd calculation.
-            So far only Spark DF has edd defined
         """
         pass
 
@@ -264,21 +248,21 @@ class SmvGenericModule(ABC):
     ####################################################################################
 
     # Set when resolving
-    def setTimestamp(self, dt):
+    def _setTimestamp(self, dt):
         self.timestamp = dt
 
     # Called by resolver, recursively resolve all dependencies. Use self.dependencies
     # instead of requiresDS to make sure model dependency also included
-    def resolve(self, resolver):
-        self.resolvedRequiresDS = resolver.loadDataSet([ds.fqn() for ds in self.dependencies()])
+    def _resolve(self, resolver):
+        self.resolvedRequiresDS = resolver.loadDataSet([ds.fqn() for ds in self._dependencies()])
         return self
 
     @lazy_property
-    def ancestor_and_me_visitor(self):
+    def _ancestor_and_me_visitor(self):
         return ModulesVisitor([self])
 
 
-    def get_data(self, fqn2df, run_set, collector, forceRun, is_quick_run):
+    def _get_data(self, fqn2df, run_set, collector, forceRun, is_quick_run):
         """create or get data from smvApp level cache
             Args:
                 fqn2df({str:DataFrame}) already run modules current module may depends
@@ -289,8 +273,8 @@ class SmvGenericModule(ABC):
 
             fqn2df will be appended, and run_set will shrink
         """
-        if (forceRun or (self.versioned_fqn not in self.smvApp.data_cache)):
-            res = self.computeData(fqn2df, run_set, collector, is_quick_run)
+        if (forceRun or (self._versioned_fqn not in self.smvApp.data_cache)):
+            res = self._computeData(fqn2df, run_set, collector, is_quick_run)
             if (self.isEphemeral()):
                 # Only cache ephemeral modules data, since non-ephemeral any how
                 # will be read from persisted result, no need to persist the logic
@@ -300,23 +284,23 @@ class SmvGenericModule(ABC):
                 # cached DF will still try to read from those deleted files and
                 # cause error.
                 self.smvApp.data_cache.update(
-                    {self.versioned_fqn:res}
+                    {self._versioned_fqn:res}
                 )
         else:
             smv.logger.debug("{} had a cache in SmvApp.data_cache".format(self.fqn()))
-            res = self.smvApp.data_cache.get(self.versioned_fqn)
+            res = self.smvApp.data_cache.get(self._versioned_fqn)
             self.data = res
         fqn2df.update({self.fqn(): res})
         return res
 
-    def computeData(self, fqn2df, run_set, collector, is_quick_run):
+    def _computeData(self, fqn2df, run_set, collector, is_quick_run):
         """When DF is not in cache, do the real calculation here
         """
         smv.logger.debug("compute: {}".format(self.fqn()))
 
         if (self.isEphemeral()):
             raw_df = self.doRun(fqn2df)
-            self.data = self.pre_action(raw_df)
+            self.data = self._pre_action(raw_df)
         elif(is_quick_run):
             _strategy = self.persistStrategy()
             if (not _strategy.isPersisted()):
@@ -327,7 +311,7 @@ class SmvGenericModule(ABC):
             _strategy = self.persistStrategy()
             if (not _strategy.isPersisted()):
                 raw_df = self.doRun(fqn2df)
-                df = self.pre_action(raw_df)
+                df = self._pre_action(raw_df)
                 # Acquire lock on persist to ensure write is atomic
                 with self._smvLock():
                     if (_strategy.isPersisted()):
@@ -340,7 +324,7 @@ class SmvGenericModule(ABC):
                             _strategy.write, df, "RUN & PERSIST OUTPUT")
                         # Need to populate self.data, since postAction need it
                         self.data = _strategy.read()
-                        self.run_ancestor_and_me_postAction(run_set, collector)
+                        self._run_ancestor_and_me_postAction(run_set, collector)
             else:
                 smv.logger.debug("{} had a persisted file".format(self.fqn()))
                 self.data = _strategy.read()
@@ -386,7 +370,7 @@ class SmvGenericModule(ABC):
         io_strategy = self.smvApp._hist_io_strategy(self)
         io_strategy.write(hist.toJson())
 
-    def get_metadata(self):
+    def _get_metadata(self):
         """Return the best meta without run. If persisted, use it, otherwise
             add info up to resolved DS"""
         io_strategy = self.metaStrategy()
@@ -398,12 +382,12 @@ class SmvGenericModule(ABC):
             meta_json = io_strategy.read()
             return SmvMetaData().fromJson(meta_json)
 
-    def force_post_action(self, run_set, collector):
+    def _force_post_action(self, run_set, collector):
         if (self in run_set):
-            self.force_an_action(self.data)
-            self.run_ancestor_and_me_postAction(run_set, collector)
+            self._force_an_action(self.data)
+            self._run_ancestor_and_me_postAction(run_set, collector)
 
-    def run_ancestor_and_me_postAction(self, run_set, collector):
+    def _run_ancestor_and_me_postAction(self, run_set, collector):
         """When action happens on current module, run the the delayed
             post action of the ancestor ephemeral modules
         """
@@ -422,7 +406,7 @@ class SmvGenericModule(ABC):
             (_run_set, coll) = state
             if (mod in _run_set):
                 smv.logger.debug("Run post_action of {} from {}".format(mod.fqn(), self.fqn()))
-                mod.post_action()
+                mod._post_action()
                 meta_io_strategy = mod.metaStrategy()
                 if (not_persisted_or_no_edd_when_forced(meta_io_strategy)):
                     # data cache should be populated by this step
@@ -430,7 +414,7 @@ class SmvGenericModule(ABC):
                         raise SmvRuntimeError("Module {}'s data is None, can't run postAction".format(mod.fqn()))
                     # Since the ancestor list will be visited as depth-first, although
                     # user_meta may trigger actions, the upper stream modules' post action
-                    # are already run. No need to call run_ancestor_and_me_postAction
+                    # are already run. No need to call _run_ancestor_and_me_postAction
                     # in the calculate_user_meta() any more
                     mod._calculate_user_meta()
                     mod._finalize_meta()
@@ -442,7 +426,7 @@ class SmvGenericModule(ABC):
                     self.module_meta = SmvMetaData().fromJson(meta_json)
                 _run_set.discard(mod)
 
-        self.ancestor_and_me_visitor.dfs_visit(run_delayed_postAction, (run_set, collector))
+        self._ancestor_and_me_visitor.dfs_visit(run_delayed_postAction, (run_set, collector))
 
     def _do_action_on_df(self, func, df, desc):
         log = smv.logger
@@ -461,7 +445,7 @@ class SmvGenericModule(ABC):
 
         return (res, secondsElapsed)
 
-    def dataset_hash(self):
+    def _dataset_hash(self):
         """current module's hash value, depend on code and potentially
             linked data (such as for SmvCsvFile)
         """
@@ -469,7 +453,7 @@ class SmvGenericModule(ABC):
         _instanceValHash = self.instanceValHash()
         log.debug("{}.instanceValHash = {}".format(self.fqn(), _instanceValHash))
 
-        _sourceCodeHash = self.sourceCodeHash()
+        _sourceCodeHash = self._sourceCodeHash()
         log.debug("{}.sourceCodeHash = ${}".format(self.fqn(), _sourceCodeHash))
 
         res = _instanceValHash + _sourceCodeHash
@@ -478,40 +462,40 @@ class SmvGenericModule(ABC):
         return res & 0x7fffffff
 
     @lazy_property
-    def hash_of_hash(self):
-        """hash depends on current module's dataset_hash, and all ancestors.
+    def _hash_of_hash(self):
+        """hash depends on current module's _dataset_hash, and all ancestors.
             this calculation could be expensive, so made it a lazy property
         """
         # TODO: implement using visitor too
         log = smv.logger
-        _dataset_hash = self.dataset_hash()
+        _dataset_hash = self._dataset_hash()
         log.debug("{}.dataset_hash = {}".format(self.fqn(), _dataset_hash))
 
         res = _dataset_hash
         for m in self.resolvedRequiresDS:
-            res += m.hash_of_hash
+            res += m._hash_of_hash
         log.debug("{}.hash_of_hash = {}".format(self.fqn(), res))
         return res
 
-    def ver_hex(self):
-        return "{0:08x}".format(self.hash_of_hash)
+    def _ver_hex(self):
+        return "{0:08x}".format(self._hash_of_hash)
 
     @lazy_property
-    def versioned_fqn(self):
+    def _versioned_fqn(self):
         """module fqn with the hash of hash. It is the signature of a specific
             version of the module
         """
-        return "{}_{}".format(self.fqn(), self.ver_hex())
+        return "{}_{}".format(self.fqn(), self._ver_hex())
 
-    def meta_path(self):
+    def _meta_path(self):
         return "{}/{}.meta".format(
             self.smvApp.all_data_dirs().outputDir,
-            self.versioned_fqn)
+            self._versioned_fqn)
 
     def _lock_path(self):
         return "{}/{}.lock".format(
             self.smvApp.all_data_dirs().lockDir,
-            self.versioned_fqn)
+            self._versioned_fqn)
 
     def _smvLock(self):
         if (self.smvApp.py_smvconf.use_lock()):
@@ -519,7 +503,7 @@ class SmvGenericModule(ABC):
         else:
             return NonOpLock()
 
-    def is_persisted(self):
+    def _is_persisted(self):
         """Is current module persisted or not. Can't be lazy, since the persisted
             file could be removed from OS
         """
@@ -544,7 +528,7 @@ class SmvGenericModule(ABC):
         except:
             return False
 
-    def sourceCodeHash(self):
+    def _sourceCodeHash(self):
         """Hash computed based on the source code of the dataset's class
         """
         res = 0
@@ -571,7 +555,7 @@ class SmvGenericModule(ABC):
                 # TODO: it probably shouldn't matter if the upstream class is an SmvGenericModule - it could be a mixin
                 # whose behavior matters but which doesn't inherit from SmvGenericModule
                 if m.IsSmvDataSet and m != cls and not m.fqn().startswith("smv."):
-                    res += m(self.smvApp).sourceCodeHash()
+                    res += m(self.smvApp)._sourceCodeHash()
             except:
                 pass
 
@@ -697,7 +681,7 @@ class SmvProcessModule(SmvGenericModule):
     # Private methods: not expect to be overrided by sub-classes, but could be
     ####################################################################################
 
-    def config_hash(self):
+    def _config_hash(self):
         """Integer value representing the SMV config's contribution to the dataset hash
 
             Only the keys declared in requiresConfig will be considered.
@@ -711,16 +695,16 @@ class SmvProcessModule(SmvGenericModule):
         kv_str = repr(sorted_kvs)
         return smvhash(kv_str)
 
-    def sourceCodeHash(self):
+    def _sourceCodeHash(self):
         """Hash computed based on the source code of and config, lib usage
             Adding config and lib to base class's soruce code hash
         """
 
-        res = super(SmvProcessModule, self).sourceCodeHash()
+        res = super(SmvProcessModule, self)._sourceCodeHash()
 
         cls = self.__class__
         # incorporate hash of KVs for config keys listed in requiresConfig
-        config_hash = self.config_hash()
+        config_hash = self._config_hash()
         smv.logger.debug("{} config_hash: {}".format(self.fqn(), config_hash))
         res += config_hash
 

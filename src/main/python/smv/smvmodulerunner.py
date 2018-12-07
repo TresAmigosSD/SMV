@@ -65,7 +65,7 @@ class SmvModuleRunner(object):
         collector = SmvRunInfoCollector()
         def add_to_coll(m, _collector):
             hist = self.smvApp._read_meta_hist(m)
-            _collector.add_runinfo(m.fqn(), m.get_metadata(), hist)
+            _collector.add_runinfo(m.fqn(), m._get_metadata(), hist)
         self.visitor.dfs_visit(add_to_coll, collector, need_to_run_only=True)
         return collector
 
@@ -85,7 +85,7 @@ class SmvModuleRunner(object):
             publish_meta_path = publish_base_path + ".meta"
             publish_hist_path = publish_base_path + ".hist"
 
-            SmvCsvPersistenceStrategy(m.smvApp, m.fqn(), None, publish_csv_path).write(m.data)
+            SmvCsvPersistenceStrategy(m.smvApp, m.fqn(), publish_csv_path).write(m.data)
             SmvJsonOnHdfsPersistenceStrategy(m.smvApp, publish_meta_path).write(m.module_meta.toJson())
             hist = self.smvApp._read_meta_hist(m)
             SmvJsonOnHdfsPersistenceStrategy(m.smvApp, publish_hist_path).write(hist.toJson())
@@ -107,7 +107,7 @@ class SmvModuleRunner(object):
         self.run()
 
         for m in self.roots:
-            csv_path = "{}/{}".format(local_dir, m.versioned_fqn)
+            csv_path = "{}/{}".format(local_dir, m._versioned_fqn)
             m.data.smvExportCsv(csv_path)
 
     def purge_persisted(self):
@@ -121,7 +121,7 @@ class SmvModuleRunner(object):
         # will run on current module and all upstream modules
         def runner(m, state):
             (fqn2df, run_set, collector) = state
-            m.get_data(fqn2df, run_set, collector, forceRun, is_quick_run)
+            m._get_data(fqn2df, run_set, collector, forceRun, is_quick_run)
         self.visitor.dfs_visit(runner, (known, need_post, collector), need_to_run_only=True)
 
     def _force_post(self, need_post, collector):
@@ -133,7 +133,7 @@ class SmvModuleRunner(object):
             ))
             def force_run(mod, state):
                 (run_set, coll) = state
-                mod.force_post_action(run_set, coll)
+                mod._force_post_action(run_set, coll)
             # Note: we used bfs_visit here run downstream first
             # In case of A<-B<-C all need to run, this way will only
             # need to force action on C, and A and B's post action can

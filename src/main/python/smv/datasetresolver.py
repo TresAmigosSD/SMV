@@ -65,8 +65,8 @@ class DataSetResolver:
                 return self.fqn2res.get(ds.fqn())
             else:
                 self.resolveStack.append(ds.fqn())
-                resolvedDs = ds.resolve(self)
-                resolvedDs.setTimestamp(self.transaction_time)
+                resolvedDs = ds._resolve(self)
+                resolvedDs._setTimestamp(self.transaction_time)
                 self.fqn2res.update({ds.fqn(): resolvedDs})
                 self.resolveStack.pop()
                 return resolvedDs
