@@ -253,7 +253,7 @@ class SmvGenericModule(ABC):
 
     # Called by resolver, recursively resolve all dependencies. Use self.dependencies
     # instead of requiresDS to make sure model dependency also included
-    def resolve(self, resolver):
+    def _resolve(self, resolver):
         self.resolvedRequiresDS = resolver.loadDataSet([ds.fqn() for ds in self._dependencies()])
         return self
 
