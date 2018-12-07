@@ -15,8 +15,9 @@ import abc
 
 import smv
 from smv.utils import smvhash
+from smv.provider import SmvProvider
 
-class SmvConnectionInfo(object):
+class SmvConnectionInfo(SmvProvider):
     """Base class for all IO connection info
 
         A connection is defined by a group of attributes, and those attributes
@@ -29,6 +30,11 @@ class SmvConnectionInfo(object):
             name(str) connection name, in the example is "myjdbc"
             props(dict(str:str)) key-value pairs from smvconf.merged_props()
     """
+
+    @staticmethod
+    def provider_type():
+        return "conn"
+
     @abc.abstractmethod
     def attributes(self):
         """a list of attributes as strings for the concrete connection type"""

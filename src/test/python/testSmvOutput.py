@@ -20,9 +20,9 @@ class SmvOutputTest(SmvBaseTest):
     def smvAppInitArgs(cls):
         data_path = cls.tmpDataDir()
         return [
-            "--smv-props", 
+            "--smv-props",
             "smv.stages=stage",
-            "smv.conn.my_out_conn.class=smv.conn.SmvHdfsConnectionInfo",
+            "smv.conn.my_out_conn.type=hdfs",
             "smv.conn.my_out_conn.path=" + data_path,
         ]
 

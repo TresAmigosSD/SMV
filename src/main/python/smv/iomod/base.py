@@ -18,9 +18,10 @@ from pyspark.sql import DataFrame
 
 from smv.error import SmvRuntimeError
 from smv.utils import smvhash
+from smv.datasetrepo import DataSetRepo
 from smv.smvgenericmodule import SmvGenericModule
 from smv.smviostrategy import SmvNonOpPersistenceStrategy, SmvJsonOnHdfsPersistenceStrategy
-
+from smv.conn import SmvJdbcConnectionInfo
 
 class SmvIoModule(SmvGenericModule):
     """Base class for input and output modules
@@ -50,16 +51,15 @@ class SmvIoModule(SmvGenericModule):
         """Get connection instance from name
         """
         props = self.smvApp.py_smvconf.merged_props()
-        class_key = "smv.conn.{}.class".format(name)
+        type_name = "smv.conn.{}.type".format(name)
 
-        if (class_key in props):
-            con_class = props.get(class_key)
-            # Load the class from its FQN
-            module_name, class_name = con_class.rsplit(".", 1)
-            ConnClass = getattr(importlib.import_module(module_name), class_name)
+        if (type_name in props):
+            con_type = props.get(type_name)
+            provider_fqn = "conn.{}".format(con_type)
+            ConnClass = self.smvApp.get_provider_by_fqn(provider_fqn)
             return ConnClass(name, props)
         else:
-            raise SmvRuntimeError("Connection name {} is not configured with a class".format(name))
+            raise SmvRuntimeError("Connection name {} is not configured with a type".format(name))
 
     def get_connection(self):
         """Get data connection instance from connectionName()

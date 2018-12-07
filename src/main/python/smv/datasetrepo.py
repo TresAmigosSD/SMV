@@ -261,11 +261,3 @@ class DataSetRepo(object):
                 prov_dict[p_fqn] = p
 
         return prov_dict
-
-    def get_providers_by_prefix(self, fqn_prefix):
-        """Discover all providers in user lib and smv lib that have an provider type fqn
-           starting with the given prefix.
-           Users should use this method instead of using `_all_providers()` directly.
-        """
-        providers = self._all_providers()
-        return [p for (fqn, p) in providers.items() if fqn.startswith(fqn_prefix)]
