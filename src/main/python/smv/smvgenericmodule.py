@@ -165,7 +165,6 @@ class SmvGenericModule(ABC):
     # - persistStrategy: Required
     # - metaStrategy: Required
     # - _dependencies: Optional, default self.requiresDS()
-    # - had_action: Optional, default True
     # - pre_action: Optional, default pass through the input data
     # - post_action: Optional, default pass
     # - force_an_action: Optional, default pass
@@ -190,14 +189,6 @@ class SmvGenericModule(ABC):
         """Can be overridden when a module has dependency other than requiresDS
         """
         return self.requiresDS()
-
-    def had_action(self):
-        """Check whether there is an action happend on the generated data (DF or real data)
-            For Spark DF and other types of lazy-eval data, this method need to be set through
-            so data specific logic. Return True is the DF is evaled. For data type which does
-            not do lazy eval, is one always return True
-        """
-        return True
 
     def pre_action(self, df):
         """DF in and DF out, to perform operations on created from run method"""

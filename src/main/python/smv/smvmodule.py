@@ -74,13 +74,6 @@ class SparkDfGenMod(SmvGenericModule):
     #########################################################################
     # Implement of SmvGenericModule abatract methos and other private methods
     #########################################################################
-    def had_action(self):
-        """Check dqm overall counter to simulate an action check.
-            There is no way for us to tell wether the result df is just
-            empty or there is no action on it. So use this with caution
-        """
-        return self.dqmValidator.totalRecords() > 0
-
     def calculate_edd(self):
         """When config smv.forceEdd flag is true, run edd calculation.
         """
