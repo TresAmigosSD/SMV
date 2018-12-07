@@ -262,7 +262,7 @@ class SmvGenericModule(ABC):
         return ModulesVisitor([self])
 
 
-    def get_data(self, fqn2df, run_set, collector, forceRun, is_quick_run):
+    def _get_data(self, fqn2df, run_set, collector, forceRun, is_quick_run):
         """create or get data from smvApp level cache
             Args:
                 fqn2df({str:DataFrame}) already run modules current module may depends
