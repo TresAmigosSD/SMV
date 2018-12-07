@@ -274,7 +274,7 @@ class SmvGenericModule(ABC):
             fqn2df will be appended, and run_set will shrink
         """
         if (forceRun or (self.versioned_fqn not in self.smvApp.data_cache)):
-            res = self.computeData(fqn2df, run_set, collector, is_quick_run)
+            res = self._computeData(fqn2df, run_set, collector, is_quick_run)
             if (self.isEphemeral()):
                 # Only cache ephemeral modules data, since non-ephemeral any how
                 # will be read from persisted result, no need to persist the logic
@@ -293,7 +293,7 @@ class SmvGenericModule(ABC):
         fqn2df.update({self.fqn(): res})
         return res
 
-    def computeData(self, fqn2df, run_set, collector, is_quick_run):
+    def _computeData(self, fqn2df, run_set, collector, is_quick_run):
         """When DF is not in cache, do the real calculation here
         """
         smv.logger.debug("compute: {}".format(self.fqn()))
