@@ -1,5 +1,11 @@
 # SMV Input Handling
 
+This document is for input module classes defined in `smv.iomod`. The input modules 
+directly in `smv` package are deprecated.
+
+SMV input modules are connectors, which read data from some **Connections** and return a single SMV aware data object (currently Spark DF). There are no data manipulation in
+SMV input.
+
 SMV support the following types of inputs:
 
 * `SmvCsvInputFile`: Single Comma Separated Values (CSV) file on HDFS compatible storage
@@ -93,7 +99,7 @@ use comma as the delimiter with header.
 
 Please see the API doc for all the interface methods.
 
-# SmvCsvStringInputData
+## SmvCsvStringInputData
 
 Sometimes people need to create some small data in the code and use as input data. `SmvCsvStringInputData`
 allow using to specify the data schema and content as strings.
@@ -106,11 +112,9 @@ class MyTmpDS(smv.iomod.SmvCsvStringInputData):
         return "aa,1.0,cc;aa2,3.5,CC"
 ```
 
-# Hive Table input
+## Hive Table input
 
 SMV supports reading from tables in Hive meta store (which can be native hive, parquet, impala, etc).
-
-## Reading from Hive Tables
 
 Reading from Hive tables is accomplished by wrapping the Hive table in an `SmvHiveInputTable` object.  The `SmvHiveInputTable` instance can then be used as a required dataset in another dataset downstream.  The use of `SmvHiveInputTable` is similar to current use of `SmvCsvInputFile` and can be considered as just another input file. By default, `SmvHiveInputTable` simply select all the columns from the table (`SELECT * FROM tableName`).
 
@@ -134,7 +138,7 @@ smv.conn.my_hive.schema = mydbschema
 
 For other inputs like `SmvCsvInputFile`, we heuristically detect changes in data by checking things like the timestamp on the file. Unfortunately, we don't have a way to do this with `SmvHiveInputTables`. If the data changes and you want the table and its downstream modules to be run, need to update `instanceValHash` method.
 
-# JDBC Inputs
+## JDBC Inputs
 
 SMV supports reading data over a JDBC connection using `SmvJdbcInputTable`. 
 
