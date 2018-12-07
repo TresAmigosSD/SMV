@@ -275,7 +275,7 @@ class SmvApp(object):
         providers = self.provider_cache
         return [p for (fqn, p) in providers.items() if fqn.startswith(fqn_prefix)]
 
-    def get_provider_by_name(self, fqn):
+    def get_provider_by_fqn(self, fqn):
         """Return provider class from provider name fqn
         """
         providers = self.provider_cache

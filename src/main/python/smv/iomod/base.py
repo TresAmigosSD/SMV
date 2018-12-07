@@ -56,7 +56,7 @@ class SmvIoModule(SmvGenericModule):
         if (type_name in props):
             con_type = props.get(type_name)
             provider_fqn = "conn.{}".format(con_type)
-            ConnClass = self.smvApp.get_provider_by_name(provider_fqn)
+            ConnClass = self.smvApp.get_provider_by_fqn(provider_fqn)
             return ConnClass(name, props)
         else:
             raise SmvRuntimeError("Connection name {} is not configured with a type".format(name))
