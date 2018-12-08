@@ -122,9 +122,6 @@ class SparkDfGenMod(SmvGenericModule):
         elif (_format == "parquet_on_hdfs"):
             return SmvParquetPersistenceStrategy(self.smvApp, self.versioned_fqn)
 
-    def metaStrategy(self):
-        return SmvJsonOnHdfsPersistenceStrategy(self.smvApp, self._meta_path())
-
     @lazy_property
     def _dqmValidator(self):
         return self.smvApp._jvm.DQMValidator(self.dqm())
@@ -283,8 +280,6 @@ class SmvModel(SmvProcessModule):
     def persistStrategy(self):
         return SmvPicklablePersistenceStrategy(self.smvApp, self.versioned_fqn)
 
-    def metaStrategy(self):
-        return SmvJsonOnHdfsPersistenceStrategy(self.smvApp, self._meta_path())
 
 class SmvModelExec(SmvModule):
     """SmvModule that runs a model produced by an SmvModel

@@ -38,10 +38,6 @@ class SmvIoModule(SmvGenericModule):
         """Never persisting input/output modules"""
         return SmvNonOpPersistenceStrategy()
 
-    def metaStrategy(self):
-        """Still persist meta for input/output modules"""
-        return SmvJsonOnHdfsPersistenceStrategy(self.smvApp, self._meta_path())
-
     @abc.abstractmethod
     def connectionName(self):
         """Name of the connection to read/write"""

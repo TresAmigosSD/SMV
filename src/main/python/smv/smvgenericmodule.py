@@ -179,10 +179,9 @@ class SmvGenericModule(ABC):
     def persistStrategy(self):
         """Return an SmvIoStrategy for data persisting"""
 
-    @abc.abstractmethod
     def metaStrategy(self):
         """Return an SmvIoStrategy for metadata persisting"""
-
+        return SmvJsonOnHdfsPersistenceStrategy(self.smvApp, self._meta_path())
 
     def _dependencies(self):
         """Can be overridden when a module has dependency other than requiresDS
