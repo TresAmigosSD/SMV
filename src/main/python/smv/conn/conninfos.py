@@ -14,6 +14,15 @@
 from smv.conn.smvconnectioninfo import SmvConnectionInfo
 
 class SmvJdbcConnectionInfo(SmvConnectionInfo):
+    """Connection Info for connection type "jdbc"
+
+        Attributes:
+
+            - url
+            - driver
+            - user
+            - password
+    """
     @staticmethod
     def provider_type():
         return "jdbc"
@@ -23,6 +32,12 @@ class SmvJdbcConnectionInfo(SmvConnectionInfo):
 
 
 class SmvHiveConnectionInfo(SmvConnectionInfo):
+    """Connection Info for connection type "hive"
+
+        Attributes:
+
+            - schema
+    """
     @staticmethod
     def provider_type():
         return "hive"
@@ -31,6 +46,19 @@ class SmvHiveConnectionInfo(SmvConnectionInfo):
         return ['schema']
 
 class SmvHdfsConnectionInfo(SmvConnectionInfo):
+    """Connection Info for connection type "hdfs"
+
+        Attributes:
+
+            - path
+
+        Path attribute takes standard Hadoop HDFS api url. For example
+
+            - file:///tmp/my_data
+            - hdfs:///app/data
+            - /tmp/data
+            - data
+    """
     @staticmethod
     def provider_type():
         return "hdfs"

@@ -382,6 +382,13 @@ class SmvMultiCsvInputFiles(SparkDfGenMod, WithSmvSchema, WithCsvParser):
 
 class SmvCsvStringInputData(SparkDfGenMod, WithCsvParser):
     """Input data defined by a schema string and data string
+
+        User need to implement:
+
+            - schemaStr(): required
+            - dataStr(): required
+            - failAtParsingError(): optional
+            - dqm(): optional
     """
 
     def smvSchema(self):
