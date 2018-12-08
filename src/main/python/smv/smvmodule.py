@@ -25,7 +25,7 @@ import smv
 from smv.dqm import SmvDQM
 from smv.error import SmvRuntimeError
 from smv.utils import pickle_lib, lazy_property
-from smv.smviostrategy import SmvCsvPersistenceStrategy, SmvJsonOnHdfsPersistenceStrategy, SmvPicklablePersistenceStrategy, SmvParquetPersistenceStrategy
+from smv.smviostrategy import SmvCsvPersistenceStrategy, SmvPicklablePersistenceStrategy, SmvParquetPersistenceStrategy
 from smv.smvgenericmodule import SmvProcessModule, SmvGenericModule
 
 class SmvOutput(object):

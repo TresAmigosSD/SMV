@@ -21,6 +21,7 @@ import smv
 from smv.utils import lazy_property, is_string, smvhash
 from smv.error import SmvRuntimeError, SmvMetadataValidationError
 from smv.modulesvisitor import ModulesVisitor
+from smv.smviostrategy import SmvJsonOnHdfsPersistenceStrategy
 from smv.smvmetadata import SmvMetaData
 from smv.smvlock import SmvLock, NonOpLock
 

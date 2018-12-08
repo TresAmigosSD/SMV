@@ -20,7 +20,7 @@ from smv.error import SmvRuntimeError
 from smv.utils import smvhash
 from smv.datasetrepo import DataSetRepo
 from smv.smvgenericmodule import SmvGenericModule
-from smv.smviostrategy import SmvNonOpPersistenceStrategy, SmvJsonOnHdfsPersistenceStrategy
+from smv.smviostrategy import SmvNonOpPersistenceStrategy
 
 class SmvIoModule(SmvGenericModule):
     """Base class for input and output modules
