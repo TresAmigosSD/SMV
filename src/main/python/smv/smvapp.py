@@ -138,7 +138,7 @@ class SmvApp(object):
         # shortcut is meant for internal use only
         self.dsm = DataSetMgr(self._jvm, self.py_smvconf)
 
-        # computed df cache, keyed by m._versioned_fqn
+        # computed df cache, keyed by m.versioned_fqn
         self.data_cache = {}
 
         # AFTER app is available but BEFORE stages,

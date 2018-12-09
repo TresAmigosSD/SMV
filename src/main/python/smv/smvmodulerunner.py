@@ -107,7 +107,7 @@ class SmvModuleRunner(object):
         self.run()
 
         for m in self.roots:
-            csv_path = "{}/{}".format(local_dir, m._versioned_fqn)
+            csv_path = "{}/{}".format(local_dir, m.versioned_fqn)
             m.data.smvExportCsv(csv_path)
 
     def purge_persisted(self):
