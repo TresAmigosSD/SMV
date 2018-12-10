@@ -353,7 +353,7 @@ function publish_to_pypi() {
   echo "Starting to release to PyPi"
   local temp_dir="temp"
 
-  python -m pip install twine wheel && \
+  python -m pip install --user twine wheel && \
   rm -rf "${temp_dir}" && \
   mkdir -p "${temp_dir}" && \
   cd "${temp_dir}" && \
