@@ -20,7 +20,7 @@ from smv.error import SmvRuntimeError
 from smv.utils import smvhash
 from smv.datasetrepo import DataSetRepo
 from smv.smvgenericmodule import SmvGenericModule
-from smv.smviostrategy import SmvNonOpPersistenceStrategy, SmvJsonOnHdfsPersistenceStrategy
+from smv.smviostrategy import SmvNonOpPersistenceStrategy
 
 class SmvIoModule(SmvGenericModule):
     """Base class for input and output modules
@@ -37,10 +37,6 @@ class SmvIoModule(SmvGenericModule):
     def persistStrategy(self):
         """Never persisting input/output modules"""
         return SmvNonOpPersistenceStrategy()
-
-    def metaStrategy(self):
-        """Still persist meta for input/output modules"""
-        return SmvJsonOnHdfsPersistenceStrategy(self.smvApp, self._meta_path())
 
     @abc.abstractmethod
     def connectionName(self):

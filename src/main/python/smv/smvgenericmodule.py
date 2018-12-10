@@ -21,6 +21,7 @@ import smv
 from smv.utils import lazy_property, is_string, smvhash
 from smv.error import SmvRuntimeError, SmvMetadataValidationError
 from smv.modulesvisitor import ModulesVisitor
+from smv.smviostrategy import SmvJsonOnHdfsPersistenceStrategy
 from smv.smvmetadata import SmvMetaData
 from smv.smvlock import SmvLock, NonOpLock
 
@@ -179,10 +180,9 @@ class SmvGenericModule(ABC):
     def persistStrategy(self):
         """Return an SmvIoStrategy for data persisting"""
 
-    @abc.abstractmethod
     def metaStrategy(self):
         """Return an SmvIoStrategy for metadata persisting"""
-
+        return SmvJsonOnHdfsPersistenceStrategy(self.smvApp, self._meta_path())
 
     def _dependencies(self):
         """Can be overridden when a module has dependency other than requiresDS

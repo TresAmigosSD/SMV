@@ -25,7 +25,7 @@ import smv
 from smv.dqm import SmvDQM
 from smv.error import SmvRuntimeError
 from smv.utils import pickle_lib, lazy_property
-from smv.smviostrategy import SmvCsvPersistenceStrategy, SmvJsonOnHdfsPersistenceStrategy, SmvPicklablePersistenceStrategy, SmvParquetPersistenceStrategy
+from smv.smviostrategy import SmvCsvPersistenceStrategy, SmvPicklablePersistenceStrategy, SmvParquetPersistenceStrategy
 from smv.smvgenericmodule import SmvProcessModule, SmvGenericModule
 
 class SmvOutput(object):
@@ -121,9 +121,6 @@ class SparkDfGenMod(SmvGenericModule):
             return SmvCsvPersistenceStrategy(self.smvApp, self.versioned_fqn)
         elif (_format == "parquet_on_hdfs"):
             return SmvParquetPersistenceStrategy(self.smvApp, self.versioned_fqn)
-
-    def metaStrategy(self):
-        return SmvJsonOnHdfsPersistenceStrategy(self.smvApp, self._meta_path())
 
     @lazy_property
     def _dqmValidator(self):
@@ -283,8 +280,6 @@ class SmvModel(SmvProcessModule):
     def persistStrategy(self):
         return SmvPicklablePersistenceStrategy(self.smvApp, self.versioned_fqn)
 
-    def metaStrategy(self):
-        return SmvJsonOnHdfsPersistenceStrategy(self.smvApp, self._meta_path())
 
 class SmvModelExec(SmvModule):
     """SmvModule that runs a model produced by an SmvModel
