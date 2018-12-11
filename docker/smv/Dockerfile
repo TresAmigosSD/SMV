@@ -55,21 +55,13 @@ RUN ${PYENV_ROOT}/versions/${PYTHON_VERSION}/bin/pip install -r ${SMV_HOME}/dock
 FROM openjdk:8-jdk as smv
 
 ENV TEMPLATE_DIR=/home/template
-
-# TODO: does the docker image really need git or r-base any more?
-RUN echo "deb http://cran.rstudio.com/bin/linux/debian lenny-cran/" >> /etc/apt/source.list &&\
-    apt-key adv --keyserver hkp://pgp.mit.edu --recv-key 381BA480 &&\
-    apt-get update &&\
-    apt-get install -y r-base &&\ 
-    apt-get install -y sudo &&\
-    apt-get install -y vim &&\
-    apt-get install -y git &&\
-    apt-get install -y graphviz
-
 ENV PYENV_ROOT=/.pyenv
 ENV SMV_HOME=/usr/lib/SMV
 ENV SPARK_HOME=/usr/lib/spark
 ENV PATH=${SPARK_HOME}/bin:${SMV_HOME}/tools:${PYENV_ROOT}/bin/:${PATH}
+
+RUN apt-get -y update &&\
+    apt-get -y install sudo git vim graphviz
 
 # create the projects directory and create a flag (.docker) to indicate project is inside docker image.
 RUN mkdir /projects &&\
@@ -79,6 +71,7 @@ RUN mkdir /projects &&\
 # Copy the pyenv installation from the first stage. This is an optimization so we don't install Python twice.
 # we can get away with this because we don't currently differentiate between dev and prod requirements.
 COPY --from=smv-build ${PYENV_ROOT} ${PYENV_ROOT}
+
 # Copy the SMV release artifact from the first stage and unpack it. Since the same artifact is also copied
 # out and published as the official release, we are guaranteed that the published image matches the published
 # This works around the chicken/egg issues encountered with the old approach of downloading a version of 
