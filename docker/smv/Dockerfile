@@ -31,7 +31,7 @@ RUN tar -xzvf sbt-$SBT_VERSION.tgz
 RUN mv sbt /usr/lib/sbt
 RUN rm sbt-$SBT_VERSION.tgz
 
-RUN apt-get -y install make gcc libssl-dev zlib1g-dev sudo git vim graphviz
+RUN apt-get -y install make gcc libssl-dev zlib1g-dev
 
 COPY . ${SMV_HOME}
 WORKDIR ${SMV_HOME}
@@ -55,11 +55,13 @@ RUN ${PYENV_ROOT}/versions/${PYTHON_VERSION}/bin/pip install -r ${SMV_HOME}/dock
 FROM openjdk:8-jdk as smv
 
 ENV TEMPLATE_DIR=/home/template
-
 ENV PYENV_ROOT=/.pyenv
 ENV SMV_HOME=/usr/lib/SMV
 ENV SPARK_HOME=/usr/lib/spark
 ENV PATH=${SPARK_HOME}/bin:${SMV_HOME}/tools:${PYENV_ROOT}/bin/:${PATH}
+
+RUN apt-get -y update &&\
+    apt-get -y install sudo git vim graphviz
 
 # create the projects directory and create a flag (.docker) to indicate project is inside docker image.
 RUN mkdir /projects &&\
