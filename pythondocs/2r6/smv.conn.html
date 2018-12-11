@@ -1,0 +1,246 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>smv.conn package &#8212; Spark Modularized View v2r6 documentation</title>
+    <link rel="stylesheet" href="_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Spark Modularized View v2r6 documentation</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="smv-conn-package">
+<h1>smv.conn package<a class="headerlink" href="#smv-conn-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-smv.conn.conninfos">
+<span id="smv-conn-conninfos-module"></span><h2>smv.conn.conninfos module<a class="headerlink" href="#module-smv.conn.conninfos" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="smv.conn.conninfos.SmvHdfsConnectionInfo">
+<em class="property">class </em><code class="descclassname">smv.conn.conninfos.</code><code class="descname">SmvHdfsConnectionInfo</code><span class="sig-paren">(</span><em>name</em>, <em>props</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/smv/conn/conninfos.html#SmvHdfsConnectionInfo"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smv.conn.conninfos.SmvHdfsConnectionInfo" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#smv.conn.smvconnectioninfo.SmvConnectionInfo" title="smv.conn.smvconnectioninfo.SmvConnectionInfo"><code class="xref py py-class docutils literal notranslate"><span class="pre">smv.conn.smvconnectioninfo.SmvConnectionInfo</span></code></a></p>
+<p>Connection Info for connection type “hdfs”</p>
+<dl class="attribute">
+<dt>
+<code class="descname">- path</code></dt>
+<dd></dd></dl>
+
+<p>Path attribute takes standard Hadoop HDFS api url. For example</p>
+<blockquote>
+<div><ul class="simple">
+<li><a class="reference external" href="file:///tmp/my_data">file:///tmp/my_data</a></li>
+<li>hdfs:///app/data</li>
+<li>/tmp/data</li>
+<li>data</li>
+</ul>
+</div></blockquote>
+<dl class="method">
+<dt id="smv.conn.conninfos.SmvHdfsConnectionInfo.attributes">
+<code class="descname">attributes</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/smv/conn/conninfos.html#SmvHdfsConnectionInfo.attributes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smv.conn.conninfos.SmvHdfsConnectionInfo.attributes" title="Permalink to this definition">¶</a></dt>
+<dd><p>a list of attributes as strings for the concrete connection type</p>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="smv.conn.conninfos.SmvHdfsConnectionInfo.provider_type">
+<em class="property">static </em><code class="descname">provider_type</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/smv/conn/conninfos.html#SmvHdfsConnectionInfo.provider_type"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smv.conn.conninfos.SmvHdfsConnectionInfo.provider_type" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="smv.conn.conninfos.SmvHiveConnectionInfo">
+<em class="property">class </em><code class="descclassname">smv.conn.conninfos.</code><code class="descname">SmvHiveConnectionInfo</code><span class="sig-paren">(</span><em>name</em>, <em>props</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/smv/conn/conninfos.html#SmvHiveConnectionInfo"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smv.conn.conninfos.SmvHiveConnectionInfo" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#smv.conn.smvconnectioninfo.SmvConnectionInfo" title="smv.conn.smvconnectioninfo.SmvConnectionInfo"><code class="xref py py-class docutils literal notranslate"><span class="pre">smv.conn.smvconnectioninfo.SmvConnectionInfo</span></code></a></p>
+<p>Connection Info for connection type “hive”</p>
+<dl class="attribute">
+<dt>
+<code class="descname">- schema</code></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="smv.conn.conninfos.SmvHiveConnectionInfo.attributes">
+<code class="descname">attributes</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/smv/conn/conninfos.html#SmvHiveConnectionInfo.attributes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smv.conn.conninfos.SmvHiveConnectionInfo.attributes" title="Permalink to this definition">¶</a></dt>
+<dd><p>a list of attributes as strings for the concrete connection type</p>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="smv.conn.conninfos.SmvHiveConnectionInfo.provider_type">
+<em class="property">static </em><code class="descname">provider_type</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/smv/conn/conninfos.html#SmvHiveConnectionInfo.provider_type"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smv.conn.conninfos.SmvHiveConnectionInfo.provider_type" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="smv.conn.conninfos.SmvJdbcConnectionInfo">
+<em class="property">class </em><code class="descclassname">smv.conn.conninfos.</code><code class="descname">SmvJdbcConnectionInfo</code><span class="sig-paren">(</span><em>name</em>, <em>props</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/smv/conn/conninfos.html#SmvJdbcConnectionInfo"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smv.conn.conninfos.SmvJdbcConnectionInfo" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#smv.conn.smvconnectioninfo.SmvConnectionInfo" title="smv.conn.smvconnectioninfo.SmvConnectionInfo"><code class="xref py py-class docutils literal notranslate"><span class="pre">smv.conn.smvconnectioninfo.SmvConnectionInfo</span></code></a></p>
+<p>Connection Info for connection type “jdbc”</p>
+<dl class="attribute">
+<dt>
+<code class="descname">- url</code></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt>
+<code class="descname">- driver</code></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt>
+<code class="descname">- user</code></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt>
+<code class="descname">- password</code></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="smv.conn.conninfos.SmvJdbcConnectionInfo.attributes">
+<code class="descname">attributes</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/smv/conn/conninfos.html#SmvJdbcConnectionInfo.attributes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smv.conn.conninfos.SmvJdbcConnectionInfo.attributes" title="Permalink to this definition">¶</a></dt>
+<dd><p>a list of attributes as strings for the concrete connection type</p>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="smv.conn.conninfos.SmvJdbcConnectionInfo.provider_type">
+<em class="property">static </em><code class="descname">provider_type</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/smv/conn/conninfos.html#SmvJdbcConnectionInfo.provider_type"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smv.conn.conninfos.SmvJdbcConnectionInfo.provider_type" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-smv.conn.smvconnectioninfo">
+<span id="smv-conn-smvconnectioninfo-module"></span><h2>smv.conn.smvconnectioninfo module<a class="headerlink" href="#module-smv.conn.smvconnectioninfo" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="smv.conn.smvconnectioninfo.SmvConnectionInfo">
+<em class="property">class </em><code class="descclassname">smv.conn.smvconnectioninfo.</code><code class="descname">SmvConnectionInfo</code><span class="sig-paren">(</span><em>name</em>, <em>props</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/smv/conn/smvconnectioninfo.html#SmvConnectionInfo"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smv.conn.smvconnectioninfo.SmvConnectionInfo" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">smv.provider.SmvProvider</span></code></p>
+<p>Base class for all IO connection info</p>
+<p>A connection is defined by a group of attributes, and those attributes
+are provided from smv props. For example:</p>
+<blockquote>
+<div><ul class="simple">
+<li>smv.conn.myjdbc.class = smv.conn.SmvJdbcConnectionInfo</li>
+<li>smv.conn.myjdbc.url = postgress://localhost:1000/…</li>
+</ul>
+</div></blockquote>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>name</strong> (<em>str</em>) – </li>
+<li><strong>props</strong><strong>(</strong><strong>dict</strong><strong>(</strong><strong>str</strong> – str)) key-value pairs from smvconf.merged_props()</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="smv.conn.smvconnectioninfo.SmvConnectionInfo.attributes">
+<code class="descname">attributes</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/smv/conn/smvconnectioninfo.html#SmvConnectionInfo.attributes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smv.conn.smvconnectioninfo.SmvConnectionInfo.attributes" title="Permalink to this definition">¶</a></dt>
+<dd><p>a list of attributes as strings for the concrete connection type</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="smv.conn.smvconnectioninfo.SmvConnectionInfo.conn_hash">
+<code class="descname">conn_hash</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/smv/conn/smvconnectioninfo.html#SmvConnectionInfo.conn_hash"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smv.conn.smvconnectioninfo.SmvConnectionInfo.conn_hash" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="staticmethod">
+<dt id="smv.conn.smvconnectioninfo.SmvConnectionInfo.provider_type">
+<em class="property">static </em><code class="descname">provider_type</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/smv/conn/smvconnectioninfo.html#SmvConnectionInfo.provider_type"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smv.conn.smvconnectioninfo.SmvConnectionInfo.provider_type" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-smv.conn">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-smv.conn" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">smv.conn package</a><ul>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#module-smv.conn.conninfos">smv.conn.conninfos module</a></li>
+<li><a class="reference internal" href="#module-smv.conn.smvconnectioninfo">smv.conn.smvconnectioninfo module</a></li>
+<li><a class="reference internal" href="#module-smv.conn">Module contents</a></li>
+</ul>
+</li>
+</ul>
+
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/smv.conn.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Spark Modularized View v2r6 documentation</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2017, TresAmigosSD.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.2.
+    </div>
+  </body>
+</html>
