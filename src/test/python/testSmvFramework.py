@@ -34,6 +34,13 @@ class SmvFrameworkTest(SmvBaseTest):
         import re
         return re.sub(r"([\[\]\(\)])", r"\\\1", s)
 
+    def test_CsvWithCRLF(self):
+        """test persisting modules with Carriage Return (^M) and/or line feed"""
+        fqn = "stage.modules.DCR2"
+        df = self.df(fqn)
+        expect = self.smvApp.createDF("a: String", "line1\x0acont;aaa\x0dbbb")
+        self.should_be_same(expect, df)
+
     def test_SmvCsvStringData(self):
         fqn = "stage.modules.D1"
         df = self.df(fqn)

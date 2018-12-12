@@ -112,8 +112,20 @@ private[smv] case class ShortTypeFormat(override val format: String = null) exte
 private[smv] case class StringTypeFormat(override val format: String = null,
                                          val nullValue: String = "")
     extends TypeFormat {
-  override def strToVal(s: String): Any = if (s == nullValue) null else s
-  override def valToStr(v: Any): String = if (v == null) nullValue else v.toString
+  val nlMarker = "__%smv_nl%__"
+  val crMarker = "__%smv_cr%__"
+  override def strToVal(s: String): Any = {
+    if (s == nullValue)
+      null
+    else
+      s.replaceAll(nlMarker, "\012").replaceAll(crMarker, "\015")
+  }
+  override def valToStr(v: Any): String = {
+    if (v == null)
+      nullValue
+    else
+      v.toString.replaceAll("\015", crMarker).replaceAll("\012", nlMarker)
+  }
   override def toString =
     if (format == null && nullValue == "") typeName
     else if (format == null) s"${typeName}[,${nullValue}]"

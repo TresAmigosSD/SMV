@@ -124,3 +124,20 @@ class ModWithBadName(SmvModule):
 
     def run(self, i):
         return self.smvApp.createDF("b: String", "xxx")
+
+# Two modules below are setup so DCR1 will have a "^M"/"\r" in the output
+# which would throw hadoop input reader off.  Need to do it using a
+# sequence of Modules as the error occurs when reading the persisted data.
+class DCR1(SmvModule):
+    def requiresDS(self):
+        return []
+
+    def run(self, i):
+        return self.smvApp.createDF("a: String", "line1\x0acont;aaa\x0dbbb")
+
+class DCR2(SmvModule):
+    def requiresDS(self):
+        return [DCR1]
+
+    def run(self, i):
+        return i[DCR1]
