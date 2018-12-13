@@ -34,3 +34,17 @@ class SmvOutputTest(SmvBaseTest):
         read_back = openCsv(self.tmpDataDir() + "/csv_out_test.csv")
 
         self.should_be_same(res, read_back)
+
+    def test_csv_out_overwrite_by_default(self):
+        file_base = self.tmpDataDir() + "/csv_out_test"
+
+        # create files if they are not exists
+        if (not os.path.exists(file_base + ".csv")):
+            open(file_base + ".csv", "a").close()
+        if (not os.path.exists(file_base + ".schema")):
+            open(file_base + ".schema", "a").close()
+
+        # run output should overwrite
+        res = self.df("stage.modules.CsvOut")
+        read_back = openCsv(file_base + ".csv")
+        self.should_be_same(res, read_back)
