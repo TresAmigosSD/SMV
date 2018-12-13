@@ -30,10 +30,6 @@ class SmvIoModule(SmvGenericModule):
             - SmvInput: no dependency module, single output data
             - SmvOutput: single dependency module, no output data
     """
-    def isEphemeral(self):
-        """SmvIoModules are always ephemeral"""
-        return True
-
     def persistStrategy(self):
         """Never persisting input/output modules"""
         return SmvNonOpPersistenceStrategy()
@@ -82,6 +78,10 @@ class SmvInput(SmvIoModule):
 
             - connectionName
     """
+    def isEphemeral(self):
+        """SmvInput are always ephemeral"""
+        return True
+
     def requiresDS(self):
         return []
 
@@ -106,6 +106,16 @@ class SmvOutput(SmvIoModule):
 
     def dsType(self):
         return "Output"
+
+    def isEphemeral(self):
+        """SmvOutput are always NON-ephemeral"""
+
+        # By making SmvOutput NON-ephemeral, it will not cached in the app level
+        # so whenever "_get_data" is called, "_computeData" will be called
+        # Also with SmvNonOpPersistenceStrategy, the "doRun" method will always
+        # called when "_computeData" get called
+
+        return False
 
     def assert_single_input(self):
         """Make sure SmvOutput only depends on a single module
