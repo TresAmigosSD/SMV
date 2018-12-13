@@ -54,18 +54,25 @@ class SmvPersistenceStrategy(SmvIoStrategy):
         """Remove persisted file(s)"""
 
 class SmvNonOpPersistenceStrategy(SmvPersistenceStrategy):
-    """Never persist, isPersisted always returns false"""
+    """Keep data as a python object in memory,
+        for SparkDF, it only store the DF plan (not the real data).
+
+        Since no data is persisted, isPersisted method always returns False
+    """
+    data_cache = None
+
     def read(self):
-        pass
+        return self.data_cache
 
     def write(self, raw_data):
-        pass
+        self.data_cache = raw_data
 
     def isPersisted(self):
         return False
 
     def remove(self):
-        pass
+        self.data_cache = None
+
 
 class SmvFileOnHdfsPersistenceStrategy(SmvPersistenceStrategy):
     """Abstract class for persisting data to Hdfs file system
