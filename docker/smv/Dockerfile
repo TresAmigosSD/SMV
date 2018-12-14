@@ -33,7 +33,7 @@ COPY . /projects
 
 # install smv and spark and move them into /usr/lib dir.
 RUN cd /projects &&\
-    wget -qO- https://raw.githubusercontent.com/TresAmigosSD/SMV/v1.6.2.4.p1/tools/smv-install | bash -s -- -spark &&\
+    wget -qO- https://raw.githubusercontent.com/TresAmigosSD/SMV/v1.6.2.4.p2/tools/smv-install | bash -s -- -spark &&\
     mkdir -p /usr/lib &&\
     mv SMV_* /usr/lib/SMV &&\
     mv spark-* /usr/lib/spark
