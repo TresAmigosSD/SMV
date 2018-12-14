@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+
+# Start a SMV runtime server.
+# USAGE: smv-server [-e server_script] smv_app_args -- spark_args
+
+# need to extract the -e option before source _env.sh!
+ENTRY_SCRIPT="${SMV_TOOLS}/../src/main/python/scripts/smvserver.py"
+if [ "$1" = "-e" ]; then
+  ENTRY_SCRIPT="$2"
+  shift; shift
+fi
+
+THIS_FILE_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
+source "${THIS_FILE_DIR}/_env.sh"
+SMV_TOOLS="$(get_smv_tools_dir)"
+
+echo "START SMV SERVER =============================="
+
+run_pyspark_with "${ENTRY_SCRIPT}"

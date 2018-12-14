@@ -1,0 +1,18 @@
+// the format in this file is ugly on purpose to test parser
+// handling of spaces and comments all over the place!.
+id:    String // blah
+  val:double # hash comment
+  val2: timestamp
+  val3: Timestamp[ddMMyyyy] // reverse order format!
+  val4: Long
+# hash comment line!
+   // leave above empty line!
+
+@key1= val1
+val5: integer
+val6: boolean
+val7: float
+val8: Map[String, Integer]
+val9: Array[Integer]
+@ key2 = val2
+@ key2 = val2b // override!

@@ -1,0 +1,45 @@
+@startuml
+
+title Smv Metadata Validator
+
+hide empty methods
+hide empty fields
+hide circle
+
+package Scala {
+  class Scala.SmvDataSet {
+    metadata(df: DataFrame): SmvMetaData
+    metadata(df: DataFrame): String
+    validateMetadata(curMeta: SmvMetaData, oldMeta: Seq[SmvMetaData]): Option[String]
+  }
+
+  class SmvExtModulePython extends Scala.SmvDataSet
+
+  class ISmvModule <<Java interface>> {
+    IPythonResponsePy4J<String> getMetadataJson(DataFrame df)
+    IPythonResponsePy4J<String> getValidateMetadataJson(SmvMetaData current, SmvMetaData[] history)
+  }
+
+  Scala.SmvDataSet *-- SmvDQM
+  ISmvModule *-- SmvExtModulePython
+
+  class SmvMetadataHistory {
+    historyList: Seq[SmvMetadata]
+    fromJson(json: String): SmvMetadataHistory
+    update(newMetadata: SmvMetadata): SmvMetadataHistory
+    saveToFile(sqlContext: SQLContext, path: String)
+  }
+}
+
+package Python {
+  class Python.SmvDataSet {
+    metadataJson(jdf): str
+    metadata(df): dict
+    validateMetadataJson(cur_json, old_json): str
+    validateMetadata(cur_meta, old_meta): str
+    metadataHistSize(): int
+  }
+  Python.SmvDataSet *-- ISmvModule
+}
+
+@enduml

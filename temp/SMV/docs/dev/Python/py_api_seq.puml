@@ -1,0 +1,36 @@
+@startuml
+title simple python module resolution and run
+
+Actor User
+Participant SmvApp as app
+Participant SmvExtModule as extmod
+Participant PythonDataSetRepository as repo
+Participant SmvModule as pymod
+
+User -> app : dsForName(urn)
+activate app
+  app -> app : scalaDsForName(urn)
+  app -> app : if isLink dsForName(urn)
+  app -> app : else findRepoWith(urn)
+	app -> repo : hasDataSet(urn)?
+	activate repo
+	repo -> app : yes
+	deactivate repo
+  app -> extmod : <<create>>
+  app --> User : DataSet :\nSmvExtModule
+deactivate app
+
+User -> extmod : run
+  activate extmod
+  extmod -> repo : getSmvModule(fqn)
+    activate repo
+      repo -> pymod : <<create>>
+      activate pymod
+      repo --> extmod : mod :\nISmvModule
+    deactivate repo
+  deactivate extmod
+  extmod -> pymod : getDataFrame
+  pymod --> extmod : dataframe
+extmod --> User : dataframe
+
+@enduml

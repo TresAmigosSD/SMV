@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+# smv-jupyter [--ip bind_ip] [--port portnumber]
+set -e
+
+THIS_FILE_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
+source "${THIS_FILE_DIR}/_env.sh"
+SMV_TOOLS="$(get_smv_tools_dir)"
+
+export PYSPARK_DRIVER_PYTHON="$(which jupyter)"
+
+if [ -f "${HOME}/.jupyter/jupyter_notebook_config.py" ]; then
+  pyspark_driver_python_opts="notebook"
+else
+  pyspark_driver_python_opts="notebook --FileContentsManager.root_dir=notebooks --NotebookApp.open_browser=False"
+fi
+
+extra_args=''
+
+# extract --ip/--port options (must be in that order) from command line.
+# sets JUPYTER_IP/JUPYTER_PORT which will be read in jupyter_notebook_config.py
+if [ "$1" = "--ip" ]; then
+  jupyter_ip="$2"
+  extra_args+=" --NotebookApp.ip=$jupyter_ip"
+  shift; shift
+fi
+if [ "$1" = "--port" ]; then
+  jupyter_port="$2"
+  # set port retries to 0 so that the process exits with non-zero exit code instead of
+  # default behaviour of retrying random ports if port is occupied
+  extra_args+=" --NotebookApp.port=$jupyter_port --NotebookApp.port_retries=0"
+  shift; shift
+fi
+
+export PYSPARK_DRIVER_PYTHON_OPTS="$pyspark_driver_python_opts $extra_args"
+echo "Exporting $PYSPARK_DRIVER_PYTHON_OPTS"
+
+# Pass through the options from `smv-jupyter` invocation through to `smv-pyshell`
+# This will allow the user to specify pyspark options like:
+# `smv-jupyter -- --master=yarn-client --num-executors=10`
+# `smv-jupyter -- --conf="spark.driver.maxResultSize=0"`
+"${SMV_TOOLS}"/smv-pyshell "${@}"

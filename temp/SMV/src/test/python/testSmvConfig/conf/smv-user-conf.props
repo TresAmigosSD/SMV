@@ -1,0 +1,4 @@
+smv.test1 = in_user_conf
+smv.test2 = in_user_conf
+
+smv.stages = s1,s2,s3

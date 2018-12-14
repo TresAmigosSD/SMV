@@ -1,0 +1,90 @@
+@startuml
+
+hide empty methods
+hide empty fields
+hide circle
+
+class SmvGenericModule
+
+class SmvIoModule extends SmvGenericModule {
+  <<abstract>> connectionName(): String
+}
+
+class SmvInput extends SmvIoModule {
+  requiresDS(): Nil
+}
+
+class SmvOutput extends SmvIoModule {
+  <<abstract>> requiresDS()
+  assert_single_input()
+}
+
+class SmvJdbcInputTable extends SmvInput {
+  <<abstract>> connectionName(): String
+  <<abstract>> tableName(): String
+}
+
+class SmvHiveInputTable extends SmvInput {
+  <<abstract>> connectionName(): String
+  <<abstract>> tableName(): String
+}
+
+class SmvXmlInputFile extends SmvInput {
+  <<abstract>> connectionName(): String
+  <<abstract>> fileName(): String
+  <<abstract>> rowTag(): String
+  schemaConnectionName(): String
+  schemaFileName(): String
+  userSchema(): String
+}
+
+class SmvCsvInputFile extends SmvInput {
+  <<abstract>> connectionName(): String
+  <<abstract>> fileName(): String
+  schemaConnectionName(): String
+  schemaFileName(): String
+  userSchema(): String
+  csvAttr(): CsvAttributes
+  failAtParsingError(): Boolean
+  dqm(): SmvDQM
+}
+
+class SmvMultiCsvInputFiles extends SmvInput {
+  <<abstract>> connectionName(): String
+  <<abstract>> dirName(): String
+  schemaConnectionName(): String
+  schemaFileName(): String
+  userSchema(): String
+  csvAttr(): CsvAttributes
+  failAtParsingError(): Boolean
+  dqm(): SmvDQM
+}
+
+class SmvCsvStringInputData extends SmvInput {
+  <<abstract>> schemaStr(): String
+  <<abstract>> dataStr(): String
+  failAtParsingError(): Boolean
+  dqm(): SmvDQM
+}
+
+class SmvJdbcOutputTable extends SmvOutput {
+  <<abstract>> requiresDS()
+  <<abstract>> connectionName()
+  <<abstract>> tableName()
+  writeMode(): default "errorifexists"
+}
+
+class SmvHiveOutputTable extends SmvOutput {
+  <<abstract>> requiresDS()
+  <<abstract>> connectionName()
+  <<abstract>> tableName()
+  writeMode(): default "errorifexists"
+}
+
+class SmvCsvOutputFile extends SmvOutput {
+  <<abstract>> requiresDS()
+  <<abstract>> connectionName()
+  <<abstract>> fileName()
+}
+
+@enduml

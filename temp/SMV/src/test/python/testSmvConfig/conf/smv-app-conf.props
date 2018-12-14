@@ -1,0 +1,4 @@
+smv.test0 = in_app_conf
+smv.test1 = in_app_conf
+smv.test2 = in_app_conf
+#smv.test1 = in_app_conf_should_not_be

@@ -1,0 +1,52 @@
+@startuml
+title run module with DataSetMgr example: x(scala)->y(py)->z(scala)
+
+Actor User
+Participant SmvApp as app
+Participant DataSetMgr as dsm
+Participant "res:DataSetResolver" as res
+Participant DataSetRepoScala as dsrs
+Participant DataSetRepoPython as dsrp
+Participant "x:SmvModule" as x
+Participant "y1:SmvExtModule" as y1
+Participant "y2:SmvExtModulePython" as y2
+Participant "z:SmvModule" as z
+
+User -> app: smv-run -m x
+app -> dsm: loadDataSetWDep('x')
+dsm -> res: loadDataSet('x')
+res -> dsrs: loadDataSet('x')
+dsrs -->> x: create
+activate x
+dsrs --> res: x
+res -> x: resolve(this)
+x -->> y1: create
+activate y1
+x -> res: resolveDataSet(y1)
+res -> y1: resolve(this)
+y1 -> res: loadDataSet('y')
+res -> dsrs: loadDataSet('y')
+dsrs -> res: Unit
+res -> dsrp: loadDataSet('y')
+dsrp -->> y2: create
+activate y2
+res --> y1: y2
+y1 --> y2: resolve(res)
+y2 -> res: loadDataSet('z')
+res -> dsrs: loadDataSet('z')
+dsrs -->> z: create
+activate z
+dsrs --> res: z
+res -> z: resolve(this)
+z --> res: z
+res --> y2: z
+y2 --> y1: y2
+y1 --> res: y2
+res --> x: y2
+x --> res: x
+res --> dsm: x
+dsm --> app: x
+app --> app: (run x)
+app --> User: (print result)
+
+@enduml

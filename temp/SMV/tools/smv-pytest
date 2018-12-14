@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+#
+# Run SMV unit tests
+# USAGE: smv-pytest [-t test_name] smv_args -- spark_args
+#
+# specifying tests with -t will run just those tests
+#
+# smv_args will be combined with each test's SMV args when the test is run
+#
+# user can specify spark args (such as --master, --class or --jar to override the fat jar selection)
+# the rest of the arguments are the standard SmvApp arguments.
+
+set -e
+
+if [ "$1" = "-h" ]; then
+  echo "USAGE: $0 [-h] [-d test_dir] [-t test_name]"
+  echo "      -d: provids a test dir, default: ./src/test/python"
+  echo "      -t: provids a test name, basically the py file's basename"
+  echo "Multiple -t can be provided"
+
+  exit 0
+fi
+
+THIS_FILE_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
+source "${THIS_FILE_DIR}/_env.sh"
+SMV_TOOLS="$(get_smv_tools_dir)"
+
+# When run test, use local log4j config so that we can turn on DEBUG log level
+LOG_CONF_FILE="${SMV_HOME}/log4j.properties"
+SPARK_ARGS=("${SPARK_ARGS[@]}" "--conf" "spark.driver.extraJavaOptions=-Dlog4j.configuration=file://${LOG_CONF_FILE}")
+
+run_pyspark_with ${SMV_TOOLS}/../src/main/python/scripts/runtests.py

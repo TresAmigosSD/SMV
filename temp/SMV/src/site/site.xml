@@ -1,0 +1,12 @@
+<project xmlns="http://maven.apache.org/DECORATION/1.6.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/DECORATION/1.6.0 http://maven.apache.org/xsd/decoration-1.6.0.xsd">
+<body>
+<menu name="SMV Docs">
+<item name="About" href="index.html"/>
+<item name="Summary" href="project-summary.html"/>
+<item name="API Docs" href="scaladocs/index.html"/>
+<item name="User Guide" href="user/0_user_toc.html"/>
+<item name="License" href="http://www.apache.org/licenses/"/>
+</menu>
+</body>
+</project>
+

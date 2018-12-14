@@ -1,0 +1,35 @@
+
+
+-------
+mgr::load(fqn):
+  resolver = new resolver()
+  resolver.load(fqn)
+
+--------
+resolver:load(fqn) :
+  if (dsmap.had(fqn)) return ds
+  ds = findrepo(fqn).loadDS(fqn, this)
+  return resolve(ds)
+
+resolver:resolve(ds):
+  if (dsmap.has(fqn)) return ds
+  ds2 = ds.resolve(this)
+  dsmap.append(ds2.fqn() -> ds2)
+  return ds2
+
+----------
+
+SmvExtModule::resolve(resolver):
+  ds2 = resolver.load(fqn)  // ds2 is of type SEMP
+  return ds2.resolve(resolver)
+
+SmvModule"scala"::resolve(resolver):
+  this.resReq = requiresDS.map(resolver.resolve(_))
+  return this
+
+SmvExtModulePython::resolve(resolver):
+  this.resReq = reqDSFQN.map(resolver.load(_))
+  return this
+
+SmvExtModulePython::requiresDS() : throw exception
+SmvExtModule::requiresDS() : throw exception

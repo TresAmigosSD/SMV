@@ -1,0 +1,174 @@
+@startuml
+hide empty methods
+hide empty fields
+hide circle
+
+namespace smv {
+  class SmvDataSet <<Abstract>> {
+    isEphemeral: Boolean
+    dqm(): SmvDQM
+    dataValidationSet(): ValidationSet
+    doRun(): DataFrame
+    computeDataFrame(): DataFrame
+  }
+
+  class ValidationSet {
+    -tasks: Seq[ValidationTask]
+    -path: String
+    cnstr(path: String, tasks: Seq[ValidationTask]): ValidationSet
+    add(newTask: ValidationTask): ValidationSet
+    -persistResult(chechResult: CheckResult): Unit
+    -readPersistedResult(): CheckResult
+    -terminateAtError(checkResult: CheckResult): Unit
+    validate(df: DataFrame, hasActionYet: Boolean): Unit
+  }
+
+  class ValidationTask <<Abstract>> {
+    needAction(): Boolean
+    validate(df: DataFrame): CheckResult
+  }
+
+  class ParserValidation extends ValidationTask {
+    -parserLogger: RejectLogger
+    -failAtError: Boolean
+    cnstr(failAtError)
+  }
+
+  class ValidationResult {
+    passed: Boolean
+    errorMessages: Seq[String, String]
+    checkLog: Seq[String]
+    \++(that: ValidationResult): ValidationResult
+  }
+
+  class SmvFile <<Abstract>> extends SmvDataSet {
+    failAtParsingError: Boolean
+    -parserValidator: ParserValidation
+  }
+
+  class RejectLogger {
+    -counter: Accumulator[Long]
+    -logger: Accumulator[MutableList[String]]
+
+    add(message: String)
+    getCount()
+    getReport()
+  }
+
+  SmvDataSet *-- "1" ValidationSet
+  SmvDataSet *-- "1" smv.dqm.SmvDQM
+  ValidationSet *-- "*" ValidationTask
+  ParserValidation *-- "1" RejectLogger
+  SmvFile *-- "1" ParserValidation
+}
+
+namespace smv.dqm {
+
+  class DQMPolicy <<Abstract>>{
+    name: String
+    policy: (DataFrame, DQMState) => Boolean
+  }
+
+  class ImplementFailCountPolicy <<Private>> extends DQMPolicy {
+    taskName: String
+    threshold: Int
+    ~cnstr(taskName, threshold)
+  }
+
+  class ImplementFailPercentPolicy <<Private>> extends DQMPolicy {
+    taskName: String
+    threshold: Double
+    ~cnstr(taskName, threshold)
+  }
+
+  class FailTotalRuleCountPolicy extends DQMPolicy {
+    threshold: Int
+    cnstr(threshold)
+  }
+
+  class FailTotalRulePercentPolicy extends DQMPolicy {
+    threshold: Double
+    cnstr(threshold)
+  }
+
+  class FailTotalFixCountPolicy extends DQMPolicy {
+    threshold: Int
+    cnstr(threshold)
+  }
+
+  class FailTotalFixPercentPolicy extends DQMPolicy {
+    threshold: Double
+    cnstr(threshold)
+  }
+
+  class DQMTask <<Abstract>> {
+    name: String
+    taskPolicy: DQMTaskPolicy
+  }
+
+  class DQMRule extends DQMTask {
+    rule: Column
+    cnstr(rule, name = null, taskPolicy = FailNone)
+    createCheckCol(dqmState: DQMState): (Column, Column)
+  }
+
+  class DQMFix extends DQMTask {
+    condition: Column
+    fix: Column
+    cnstr(condition, rule, name = null, taskPolicy = FailNone)
+    createFixCol(dqmState: DQMState): Column
+  }
+
+  class DQMTaskPolicy <<Abstract>> {
+    createPolicy(name: String): DQMSimplyPolicy
+  }
+
+  class FailNone extends DQMTaskPolicy
+  class FailAny extends DQMTaskPolicy
+  class FailCount extends DQMTaskPolicy {
+    threshold: Int
+  }
+  class FailPercent extends DQMTaskPolicy {
+    threshold: Double
+  }
+
+  class DQMState <<Serializable>> {
+    -recordCounter: Acumulator[Long]
+    -fixCounters: Map[String, Acumulator[Long]]
+    -ruleLogger: Map[String, RejectLogger]
+    addRec()
+    addFixRec(fixName: String)
+    addRuleRec(ruleName: String, rec: String)
+    snapshot()
+    getRecCount()
+    getFixCount(fixName: String)
+    getRuleCount(ruleName: String)
+    getRuleLog(ruleName: String)
+    getTotalFixCount()
+    getTotalRuleCount()
+  }
+
+  class SmvDQM extends smv.ValidationTask {
+    fixes: Seq[DQMFix]
+    rules: Seq[DQMRule]
+    policies: Seq[DQMPolicy]
+    -dqmState: DQMState
+    -cnstr(fixes, rules, policies)
+    add(fix: DQMFix): SmvDQM
+    add(rule: DQMRule): SmvDQM
+    add(policy: DQMPolicy): SmvDQM
+    -policiesFromTasks(): Seq[DQMPolicy]
+    ~isEmpty(): Boolean
+    ~attachTasks(df: DataFrame): DataFrame
+    ~checkPolicies(df: DataFrame): CheckResult
+    applyOnDF(df: DataFrame): CheckResult
+  }
+
+  SmvDQM *-- "*" DQMTask
+  SmvDQM *-- "*" DQMPolicy
+  SmvDQM *-- "1" DQMState
+  DQMTask *-- "1" DQMTaskPolicy
+}
+
+smv.dqm.DQMState *-- "*" smv.RejectLogger
+@enduml

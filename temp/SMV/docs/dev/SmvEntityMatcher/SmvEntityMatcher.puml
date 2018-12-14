@@ -1,0 +1,81 @@
+@startuml
+hide empty methods
+hide empty fields
+hide circle
+
+package smv.matcher {
+    class StringMetricUDFs <<Object>> {
+        +soundexMatch
+        +levenshtein
+    }
+
+    class SmvEntityMatcher{
+        +SmvEntityMatcher(exactMatchFilter:AbstractExactMatchFilter,
+            commonLevelMatcher:CommonLevelMatcher, levelMatchers:List[LevelMatcher])
+        +doMatch(df1:DataFrame, df2:DataFrame):DataFrame
+    }
+
+    class ExactMatchFilterResult {
+        ~ExactMatchFilterResult(remainingDF1:DataFrame,
+        remainingDF2:DataFrame, extracted:DataFrame)
+    }
+
+    class AbstractExactMatchFilter <<Abstract>> {
+        ~ {abstract} extract(df1:DataFrame, df2:DataFrame):ExactMatchFilterResult
+    }
+
+    class ExactMatchFilter{
+        +ExactMatchFilter(colName: String, expr:Column)
+        ~extract(df1:DataFrame, df2:DataFrame):ExactMatchFilterResult
+    }
+
+    class NoOpExactMatchFilter <<Object>> {
+        ~extract(df1:DataFrame, df2:DataFrame):ExactMatchFilterResult
+    }
+
+    class CommonLevelMatcher <<Abstract>> {
+        ~ {abstract} join((df1:DataFrame, df2:DataFrame):DataFrame
+    }
+
+    class CommonLevelMatcherExpression {
+        +CommonLevelMatcherExpression(expr: Column)
+        ~join((df1:DataFrame, df2:DataFrame):DataFrame
+    }
+
+    class CommonLevelMatcherNone <<Object>> {
+        ~join((df1:DataFrame, df2:DataFrame):DataFrame
+    }
+
+    class LevelMatcher <<Abstract>> {
+        ~getMatchColName():String
+        ~addCols(df:DataFrame):DataFrame
+    }
+
+    class ExactLevelMatcher {
+        +ExactLevelMatcher(colName:String, exactMatchExpression:Column)
+    }
+
+    class FuzzyLevelMatcher {
+        +FuzzyLevelMatcher(colName:String, predicate:Column,
+        valueExpr:Column, threshold:Float)
+    }
+}
+
+AbstractExactMatchFilter "0..1" --* SmvEntityMatcher
+CommonLevelMatcher "0..1" --* SmvEntityMatcher
+LevelMatcher "*" --* SmvEntityMatcher
+
+LevelMatcher <|-- ExactLevelMatcher
+LevelMatcher <|--- FuzzyLevelMatcher
+
+CommonLevelMatcher <|-- CommonLevelMatcherExpression
+CommonLevelMatcher <|-- CommonLevelMatcherNone
+
+NoOpExactMatchFilter --|> AbstractExactMatchFilter
+ExactMatchFilter --|> AbstractExactMatchFilter
+
+ExactMatchFilter o-- ExactMatchFilterResult
+NoOpExactMatchFilter o-- ExactMatchFilterResult
+SmvEntityMatcher --> ExactMatchFilterResult
+
+@enduml

@@ -1,0 +1,62 @@
+@startuml
+
+title SMV Python integration class diagram
+
+hide empty methods
+hide empty fields
+hide circle
+
+package Scala {
+  class SmvApp {
+    dsForName(urn: String) : SmvDataSet
+    register(id: String, repo: SmvDataSetRepository)
+  }
+  class SmvDataSetRepository <<Java>> {
+    hasDataSet(modUrn: String): boolean
+    getSmvModule(modUrn: String): ISmvModule
+    outputModsForStage(stageName: String): String[]
+  }
+  class SmvOutput
+  class SmvDataSet
+  class SmvInputDataSet extends SmvDataSet
+  class Scala.ISmvModule <<Java>> {
+    dependencies()
+    datasetHash()
+    getDataFrame()
+    isEphemeral()
+    dqmWithTypeSpecificPolicy()
+  }
+  class Scala.SmvDataSetRepository {
+    getSmvModule : SmvExtModuleInt
+    hasDataSet
+    ...
+  }
+
+  SmvApp o-- Python.PythonDataSetRepository
+  SmvApp *-- "*" SmvDataSet
+
+  class SmvModuleLink extends SmvModule
+  SmvModuleLink *-- SmvOutput
+
+  class SmvModule extends SmvDataSet
+
+  class SmvExtModule extends SmvModule {
+    ctor(urn: String)
+  }
+  SmvExtModule o-- Scala.ISmvModule
+
+  class SmvExtModuleLink extends SmvModuleLink
+  SmvExtModuleLink *-- SmvExtModule
+}
+
+package Python {
+
+  class PythonDataSetRepository extends Scala.SmvDataSetRepository
+  class SmvDataSet extends Scala.ISmvModule
+
+  class SmvModule extends SmvDataSet
+
+  PythonDataSetRepository *-- "*" SmvDataSet : "cache"
+}
+
+@enduml

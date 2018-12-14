@@ -1,0 +1,25 @@
+@startuml
+title Propagate SyntaxError from Python module back to smv-pyshell
+
+Actor User as user
+Participant "smv-pyshell" as pyshell
+Participant "Python SmvApp" as pyapp
+Participant "Scala SmvApp" as scApp
+Participant DataSetMgr as dsm
+Participant TX as tx
+Participant DataSetResolver as dsr
+Participant DataSetRepoPython as dsrp
+
+user -> pyshell: df("mod.with.bad.syntax")
+pyshell -> pyapp: runModule("mod.with.bad.syntax")
+pyapp -> scApp: runModuleByName("mod.with.bad.syntax")
+scApp -> dsm: inferDS("mod.with.bad.syntax")
+dsm -> tx: inferDS("mod.with.bad.syntax")
+tx -> dsr: loadDataSet("mod.with.bad.syntax")
+dsr -> dsrp: loadDataSet("mod.with.bad.syntax")
+dsrp -> dsr: IPythonReponsePy4J(err: "SyntaxError: blah newline stacktrace")
+dsrp -> dsrp: attempt to import mod.with.bad.syntax
+dsr -> pyshell: raise SmvPythonError(pythonStacktrace)
+pyshell -> user: (error displays with 3 stacks)
+
+@enduml

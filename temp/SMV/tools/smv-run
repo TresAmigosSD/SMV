@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+#
+# Run one or more SMV modules / stages / app.
+# USAGE: smv-run [-h] [--script <script-path>] <smv_app_args> [-- spark_args]
+#
+# user can specify optional spark args (such as --master, --executor-memory, etc)
+
+set -e
+THIS_FILE_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
+source "${THIS_FILE_DIR}/_env.sh"
+SMV_TOOLS="$(get_smv_tools_dir)"
+
+if [ "$1" = "-h" ]; then
+  show_run_usage_message `basename $0`
+  exit 0
+fi
+
+echo "START RUN =============================="
+date
+
+LAUNCH_SCRIPT="${SMV_USER_SCRIPT:-${SMV_TOOLS}/../src/main/python/scripts/runapp.py}"
+
+run_pyspark_with "$LAUNCH_SCRIPT"
+
+date

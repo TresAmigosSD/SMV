@@ -1,0 +1,4 @@
+id: String
+val:double
+val2: Timestamp[ddMMyyyy]
+val3: Timestamp[ddMMyyyy]

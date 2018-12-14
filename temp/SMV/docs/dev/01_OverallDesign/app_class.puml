@@ -1,0 +1,98 @@
+@startuml
+
+hide empty methods
+hide empty fields
+hide circle
+
+package SMV {
+  class SmvDataSet <<Abstract>>{
+    -app: SmvApp
+    +{abstract} requiresDS() : Seq[SmvDataSet]
+    +{abstract} computeDataFrame(): DataFrame
+    +rdd(): SRDD
+    +name: String
+    +version: Int
+    +description: String
+    +classCodeCRC: Int
+    +validations: ValidationSet
+    +hashOfHash: Int
+    +isEphemeral: Boolean
+    +injectApp(app: SmvApp): Unit
+  }
+
+  class SmvFile <<Abstract>> extends SmvDataSet {
+    +basePath : String
+    +failAtParsingError: Boolean
+    +parserValidator: ParserValidation
+    +run(df: DataFrame): DataFrame
+  }
+
+  class SmvCsvFile extends SmvFile {
+    +csvAttributes : CsvAttributes
+    +schemaPath: String
+  }
+
+  class SmvFrlFile extends SmvFile {
+    +schemaPath: String
+  }
+
+  class SmvModule <<Abstract>> extends SmvDataSet {
+    +{abstract} run(in: runParams) : DataFrame
+  }
+
+  class SmvCsvStringData extends SmvModule {
+    +schemaStr: String
+    +data: String
+    +cnstr(schemaStr, data)
+  }
+
+  class SmvModuleLink extends SmvModule
+
+  class SmvOutput extends SmvModule{
+  //trait mixed in with SmvModule
+  }
+
+  class SmvApp {
+    -sc: SparkContext
+    -sqlContext: SQLContext
+    -smvConfig: SmvConfig
+    +resolveRDD(ds: SmvDataSet): DataFrame
+    +createDF(schemaStr:String, data: String): DataFrame
+    +run()
+  }
+
+  SmvApp *-R- "*" SmvDataSet
+
+  SmvApp *-- "1" SmvStages
+  SmvStages *-- "*" SmvStage
+  SmvStage *-- "*" SmvModule
+
+  SmvModuleLink *-- "1" SmvOutput
+}
+
+package ExampleApp {
+  package AppPkg1 {
+      class Module1 extends SmvOutput {
+        +override version()
+        +override requiresDS()
+        +override run(inputs)
+      }
+      class File1 extends SmvCsvFile {
+        +basePath
+        +csvAttributes
+        +override run(df)
+      }
+  }
+  package AppPkg2 {
+      class MLink1 extends SmvModuleLink {
+        smvModule: SmvOutput
+      }
+
+      class Module2 extends SmvModule {
+        +override version()
+        +override requiresDS()
+        +override run(inputs)
+      }
+  }
+}
+@enduml

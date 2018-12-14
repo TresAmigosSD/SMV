@@ -1,0 +1,39 @@
+@startuml
+hide empty methods
+hide empty fields
+hide circle
+
+package SMV {
+  class SmvDataSet {
+  }
+
+  class SmvModule <<Abstract>> extends SmvDataSet {
+  }
+
+  class SmvFile extends SmvDataSet {
+  }
+
+  class SmvApp <<Abstract>> {
+  }
+
+  SmvApp *-L- "*" SmvDataSet
+}
+
+package App {
+  SmvModule <|-- mod3
+  SmvModule <|-- mod2
+  SmvModule <|-- mod1
+  SmvApp <|-- myApp
+}
+
+package Spark {
+  class SqlContext
+  class DataFrame
+
+  DataFrame ..o SmvDataSet
+  SqlContext ..o SmvApp
+
+  SqlContext *-L- "*" DataFrame
+}
+
+@enduml

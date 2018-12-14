@@ -1,0 +1,35 @@
+@startuml
+title Metadata Validation Sequence for an Updated Python Module
+
+Participant "SmvApp" as app
+Participant "SmvExtModulePython" as extmod
+Participant "DQMValidator" as val
+Participant "SmvDQM" as dqm
+Participant "Python SmvModule" as pymod
+
+app --> extmod: rdd()
+extmod -> pymod: getDoRun()
+extmod <- pymod: DataFrame result
+extmod -> val: validate()
+val -> SmvDQM: policies()
+val -> pol: policy
+pol -> extmod: getMetadata()
+extmod -> pymod: metadataJson()
+extmod <- pymod: String
+pol <- extmod: merged SmvMetaData
+pol -> extmod: getHistoricalMetadata()
+extmod -> extmod: read persisted historical metadata
+pol <- extmod: Seq[SmvMetaData]
+pol -> extmod: validateMetadata
+extmod -> pymod: validateMetadata
+extmod <- pymod: String
+pol <- extmod: Option[String]
+val <- pol: Boolean
+extmod <- val:
+extmod -> extmod: persist versioned metadata
+extmod -> extmod: read then delete historical metadata
+extmod -> extmod: update and persist historical metadata
+extmod -> extmod: persist DataFrame
+app <-- extmod: DataFrame
+
+@enduml

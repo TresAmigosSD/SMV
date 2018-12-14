@@ -1,0 +1,8 @@
+# application name
+smv.appName = Example App
+
+# stage definitions
+smv.stages = integration.test.test2, \
+             integration.test.test4, \
+             integration.test.test4_1, \
+             integration.test.hashtest

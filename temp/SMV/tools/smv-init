@@ -1,0 +1,251 @@
+#!/bin/bash
+set -eo pipefail
+
+# https://stackoverflow.com/a/246128
+THIS_FILE_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
+source "${THIS_FILE_DIR}/_env.sh"
+SMV_TOOLS="$(get_smv_tools_dir)"
+
+# Another way to add smv.py is through the --py-files option passed to
+# pyspark, as in `pyspark --py-files $SMV_TOOLS/../python/smv.py`
+# Not sure yet which way is best practice.
+ALL_TEMPLATES_DIR="${SMV_TOOLS}/templates"
+
+# PROJ_TYPE:
+#  - simple (default)
+#  - enterprise
+#  - test
+PROJ_TYPE="simple"
+OVERRIDE=0
+DO_GIT_INIT=0
+
+
+while [[ $# -gt 1 ]]
+do
+FLAG=$1
+
+  case $FLAG in
+    -q)
+        QUITE_MODE=1
+        shift
+        ;;
+    -b|--blank)
+        PROJ_TYPE="blank"
+        shift
+        ;;
+    -s|-simple)
+        PROJ_TYPE="simple"
+        shift
+        ;;
+    -e|-enterprise)
+        PROJ_TYPE="enterprise"
+        shift
+        ;;
+    -t|-test)
+        PROJ_TYPE="test"
+        shift
+        ;;
+    --bc|--bigChain)
+        PROJ_TYPE="bigChain"
+        shift
+        ;;
+    --bt|--bigTree)
+        PROJ_TYPE="bigTree"
+        shift
+        ;;
+    -d|--dataDir)
+        PROJ_DATA_DIR="$2"
+        shift
+        shift
+        ;;
+    -n|--name)
+        PROJ_NAME="$2"
+        shift
+        shift
+        ;;
+    --mn|--moduleNumber)
+        PROJ_SIZE="$2"
+        shift
+        shift
+        ;;
+    -o)
+    OVERRIDE=1
+        shift
+        ;;
+    -g|--git)
+        DO_GIT_INIT=1
+        shift
+        ;;
+    *)
+        ;;
+  esac
+done
+
+TEMPLATE_DIR="$ALL_TEMPLATES_DIR/$PROJ_TYPE"
+TEMPLATE_DATA_DIR="$ALL_TEMPLATES_DIR/data"
+
+if [ $# -ne 1 ]; then
+    echo "ERROR: Invalid number of arguments"
+    echo "USAGE: $0 [-q][-o] [-s|-e|-t|-b|--bc|--bt] [-d] [-n] [--mn] project_path"
+    echo "project types:"
+    echo "  -s: simple (default)"
+    echo "  -e: enterprise"
+    echo "  -t: test (for developers only)"
+    echo "  -b: blank/empty project"
+    echo "  --bc: big chain project"
+    echo "  --bt: big tree project"
+    echo "  -d: data directory"
+    echo "  -n: project name"
+    echo "  --mn: module number"
+    echo "  -g: initializes git repo in project directory"
+    echo
+    echo "example:"
+    echo "    simple:     \$ ./tools/smv-init /project/path"
+    echo "    blank:      \$ ./tools/smv-init -b -n projec_name -dd /data/dir /project/path"
+    echo "    enterprise: \$ ./tools/smv-init -e /project/path"
+    exit 1
+fi
+
+PROJ_DIR="$1"
+PROJ_SRC_DIR="${PROJ_DIR}/src/main/python"
+PROJ_CLASS=""
+PROJ_DATA_DIR=${PROJ_DATA_DIR:="${PROJ_DIR}/data"} # default data dir is /data in project dir
+
+function extract_group_artifact_ids()
+{
+    PROJ_GROUP_ID="${PROJ_CLASS%.*}"
+    PROJ_ARTIFACT_ID="${PROJ_CLASS##*.}"
+
+    if [ "$PROJ_GROUP_ID" == "$PROJ_ARTIFACT_ID" ]; then
+        echo "Invalid project class: $PROJ_CLASS"
+        echo "the class must have at least two levels a.b"
+        exit 1
+    fi
+}
+
+function copy_proj_dir()
+{
+    echo "-- creating project directory"
+
+    if [ -d "$PROJ_DIR" ]; then
+      if [ $OVERRIDE -eq 0 ]; then
+        echo "   $PROJ_DIR already exists, use the -o flag to authorize override."
+        exit 1
+      else
+        echo "   $PROJ_DIR already exists, converting to SMV project..."
+      fi
+
+      # if creating SMV project from existing dir, it must not contain an smv-app-conf.props file
+      if [ -f "$PROJ_DIR/conf/smv-app-conf.props" ]; then
+        echo "   Error: $PROJ_DIR is already an SMV project. Quitting."
+        exit 1
+      fi
+    fi
+
+    mkdir -p "$PROJ_DIR"
+    PROJ_DIR_FULL_PATH=$(cd $PROJ_DIR; /bin/pwd)
+    # copy all contents of template (including hidden files)
+    cp -r "$TEMPLATE_DIR/." "$PROJ_DIR"
+    # .gitignore is named .gitignore.template to prevent influencing git's behavior in SMV repo
+    mv "${PROJ_DIR_FULL_PATH}/.gitignore.template" "${PROJ_DIR_FULL_PATH}/.gitignore"
+}
+
+function create_stage() {
+    # blank project doesn't have stage built in. It is created based on project name.
+    if [ "$PROJ_TYPE" = "blank" ] ; then
+        local stage_name="`echo $PROJ_NAME | tr '[:upper:]' '[:lower:]'`"
+        local stage_dir="$PROJ_SRC_DIR/$stage_name"
+        echo "-- creating stage \"$stage_name\" in $stage_dir"
+        mkdir -p "$stage_dir"
+        local app_conf="$PROJ_DIR/conf/smv-app-conf.props"
+        sed -e "s/_STAGE_NAME_/$stage_name/g" < "$app_conf" > "$app_conf.tmp"
+        mv "$app_conf.tmp" "$app_conf"
+    fi
+}
+
+function substitute_tokens()
+{
+    #  only test proj has artifact id
+    if [ "$PROJ_TYPE" = "test" ] ; then
+        PROJ_CLASS="integration.test"
+        extract_group_artifact_ids
+    fi
+
+    echo "-- substituting tokens with project info"
+    echo "-- project directory is: ${PROJ_DIR}"
+
+    local files="$(cd ${PROJ_DIR}; find . -type f -not -name "*.pyc")"
+    local files_array=( ${files} )
+    local ESCAPED_FULL_PATH=$(echo ${PROJ_DIR_FULL_PATH} | sed -e 's/[\/&]/\\&/g')
+    local ESCAPED_DATA_DIR=$(echo ${PROJ_DATA_DIR} | sed -e 's/[\/&]/\\&/g')
+
+    for f in "${files_array[@]}"; do
+        sed  -e "s/_GROUP_ID_/$PROJ_GROUP_ID/" \
+             -e "s/_ARTIFACT_ID_/$PROJ_ARTIFACT_ID/" \
+             -e "s/_PROJ_DIR_FULL_PATH_/${ESCAPED_FULL_PATH}/g" \
+             -e "s/_PROJ_NAME_/$PROJ_NAME/g" \
+             -e "s/_PROJ_DATA_DIR_/$ESCAPED_DATA_DIR/g" \
+             < "$PROJ_DIR/$f" > "$PROJ_DIR/$f.tmp"
+        mv "$PROJ_DIR/$f.tmp" "$PROJ_DIR/$f"
+    done
+}
+
+function create_python_packages()
+{
+    echo '-- creating python packages'
+    for dir in $(ls -d ${PROJ_DIR_FULL_PATH}/src/main/python/*/); do
+        find ${dir} -type d -print0 | xargs -0 -I\{\} touch \{\}/__init__.py
+    done
+}
+
+function create_library_folder()
+{
+    echo "-- creating library folder"
+
+    cd ${PROJ_DIR_FULL_PATH} && mkdir library
+}
+
+function create_git_structure()
+{
+    if [ "$DO_GIT_INIT" = 1 ]; then
+        echo "-- initializing git repository"
+
+        cd ${PROJ_DIR_FULL_PATH} && git init && git add . && git commit -m "init commit"
+    fi
+}
+
+function copy_data_files() {
+    # integration test project has its own data already in the template
+    # blank project has no data
+    # other projects share the same data, so it is stored outside of the template
+    if [ "$PROJ_TYPE" != "test" ] && [ "$PROJ_TYPE" != "blank" ]; then
+        echo "-- copying template data"
+        cp -r "$TEMPLATE_DATA_DIR" "$PROJ_DIR_FULL_PATH/data"
+    fi
+}
+
+function augment_module_count() {
+    MODULE_NUMBER=10
+    if [ $PROJ_SIZE ]; then
+        MODULE_NUMBER=$PROJ_SIZE
+    fi
+    if [ "$PROJ_TYPE" = "bigChain" ] ; then
+        $TEMPLATE_DIR/dupChainMod.sh $PROJ_DIR/src/main/python/stage1/employment.py $PROJ_DIR/src/main/python/stage1/ $MODULE_NUMBER
+        rm $PROJ_DIR/src/main/python/stage1/employment.py
+    fi
+    if [ "$PROJ_TYPE" = "bigTree" ] ; then
+        $TEMPLATE_DIR/dupTreeMod.sh $PROJ_DIR/src/main/python/stage1/employment.py $PROJ_DIR/src/main/python/stage1/ $MODULE_NUMBER
+        rm $PROJ_DIR/src/main/python/stage1/employment.py
+    fi
+}
+
+# --- MAIN ---
+
+copy_proj_dir
+substitute_tokens
+create_stage
+copy_data_files
+create_python_packages
+augment_module_count
+create_library_folder
+create_git_structure

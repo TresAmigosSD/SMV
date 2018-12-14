@@ -1,0 +1,2 @@
+[MASTER]
+init-hook=sys.path.append('src/main/python')
