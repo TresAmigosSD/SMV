@@ -278,7 +278,7 @@ class SmvGenericModule(ABC):
         """
         if (forceRun or (self.versioned_fqn not in self.smvApp.data_cache)):
             res = self._computeData(fqn2df, run_set, collector, is_quick_run)
-            if (self.isEphemeral() and not self.isSmvOutput()):
+            if (self.isEphemeral()):
                 # Only cache ephemeral modules data, since non-ephemeral any how
                 # will be read from persisted result, no need to persist the logic
                 # of "read from persisted file". Actually caching on non-ephemeral
@@ -286,8 +286,6 @@ class SmvGenericModule(ABC):
                 # possible some persisted files are deleted, it that case, the
                 # cached DF will still try to read from those deleted files and
                 # cause error.
-                # Also will not cache on output modules, since we do want output
-                # to rerun at every time _get_data is called.
                 self.smvApp.data_cache.update(
                     {self.versioned_fqn:res}
                 )
