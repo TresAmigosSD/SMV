@@ -43,7 +43,7 @@ function parse_args()
 # make sure version of the format a.b.c.d where a,b,c,d are all numbers.
 function validate_version()
 {
-  local res=$(echo "$SMV_VERSION" | sed -E -e 's/^([0-9]+\.){3}[0-9]+$//')
+  local res=$(echo "$SMV_VERSION" | sed -E -e 's/^([0-9]+\.){3}[0-9]+(\.p[0-9]+)?$//')
   if [ -n "$res" ]; then
     echo "ERROR: invalid version format"
     usage 1
