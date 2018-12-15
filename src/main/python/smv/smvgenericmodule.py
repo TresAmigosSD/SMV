@@ -264,9 +264,16 @@ class SmvGenericModule(ABC):
     def _ancestor_and_me_visitor(self):
         return ModulesVisitor([self])
 
+    def _do_it(self, fqn2df, run_set, collector, forceRun, is_quick_run):
+        """Entry point for the module runner
+            By default, just need to calculate modout data
+        """
+        self._populate_data(fqn2df, run_set, collector, forceRun, is_quick_run)
+        return None
 
-    def _get_data(self, fqn2df, run_set, collector, forceRun, is_quick_run):
-        """create or get data from smvApp level cache
+    def _populate_data(self, fqn2df, run_set, collector, forceRun, is_quick_run):
+        """create or get data from smvApp level cache and populate module data cache
+
             Args:
                 fqn2df({str:DataFrame}) already run modules current module may depends
                 run_set(set(SmvGenericModule)) modules yet to run post_action
@@ -294,7 +301,7 @@ class SmvGenericModule(ABC):
             res = self.smvApp.data_cache.get(self.versioned_fqn)
             self.data = res
         fqn2df.update({self.fqn(): res})
-        return res
+        return None
 
     def _computeData(self, fqn2df, run_set, collector, is_quick_run):
         """When DF is not in cache, do the real calculation here

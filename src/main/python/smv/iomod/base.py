@@ -107,7 +107,7 @@ class SmvOutput(SmvIoModule):
     def dsType(self):
         return "Output"
 
-    def assert_single_input(self):
+    def _assert_single_input(self):
         """Make sure SmvOutput only depends on a single module
             This method will not be called, when SmvOutput is used for mixin.
             It should be called by the doRun method when SmvOutput is used for
@@ -118,6 +118,13 @@ class SmvOutput(SmvIoModule):
                 .format(", ".join([m.fqn() for m in self.requiresDS()]))
             )
 
+    def _do_it(self, fqn2df, run_set, collector, forceRun, is_quick_run):
+        """Override _do_it, since output doRun just need to run, no other fancy stuff
+        """
+        self._assert_single_input()
+        self.data = self.doRun(fqn2df)
+        # output's doRun guarantees an action
+        self._run_ancestor_and_me_postAction(run_set, collector)
 
 class AsTable(object):
     """Mixin to assure a tableName method"""
@@ -167,7 +174,6 @@ class SmvSparkDfOutput(SmvOutput):
             )
 
     def get_spark_df(self, known):
-        self.assert_single_input()
         i = self.RunParams(known)
 
         data = i[self.requiresDS()[0]]
