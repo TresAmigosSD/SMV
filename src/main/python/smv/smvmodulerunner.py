@@ -121,7 +121,7 @@ class SmvModuleRunner(object):
         # will run on current module and all upstream modules
         def runner(m, state):
             (fqn2df, run_set, collector) = state
-            m._get_data(fqn2df, run_set, collector, forceRun, is_quick_run)
+            m._do_it(fqn2df, run_set, collector, forceRun, is_quick_run)
         self.visitor.dfs_visit(runner, (known, need_post, collector), need_to_run_only=True)
 
     def _force_post(self, need_post, collector):
