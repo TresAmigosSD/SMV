@@ -257,6 +257,11 @@ class SmvApp(object):
         lib_dir = os.path.join(self.appDir(), self.SRC_LIB_PATH)
         return [i for i in self._libsInDir(lib_dir, "") if not i.startswith(self.SEMI_PRIVATE_LIB_PREFIX)]
 
+    def semiLibs(self):
+        """Use introspection to determine list of availabe semiprivate libs."""
+        lib_dir = os.path.join(self.appDir(), self.SRC_LIB_PATH, self.SEMI_PRIVATE_LIB_PREFIX)
+        return self._libsInDir(lib_dir, self.SEMI_PRIVATE_LIB_PREFIX)
+
     def smvLibs(self):
         """Use introspection to determine list of availabe smv builtin libs."""
         # Note: since sys.path has the src/main/python, we need to prefix all discovered
