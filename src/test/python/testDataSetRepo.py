@@ -120,14 +120,14 @@ class DataSetRepoTest(SmvBaseTest):
             # verify provider class names
             all_providers_names = sorted([p.__name__ for p in all_providers.values()])
             self.assertTrue(
-                set(['MyBaseProvider', 'MyConcreteProvider', 'SomeProvider'])
+                set(['MyBaseProvider', 'MyConcreteProvider', 'SomeProvider', 'SomeSemi'])
                 < set(all_providers_names)
             )
 
             # verify provider type fqns
             all_providers_fqns = sorted(all_providers.keys())
             self.assertTrue(
-                set(['aaa', 'aaa.bbb', 'some'])
+                set(['aaa', 'aaa.bbb', 'some', 'somesemi'])
                 < set(all_providers_fqns)
             )
 
