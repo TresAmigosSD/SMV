@@ -1,1 +1,1 @@
-from d import *
+from dsalib.d import *
