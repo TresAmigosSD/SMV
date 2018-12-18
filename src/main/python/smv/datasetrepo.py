@@ -248,7 +248,7 @@ class DataSetRepo(object):
             return klass_is_provider
 
         # providers can be in user libs dir or builtin smv
-        prov_libs_names = self.smvApp.userLibs() + self.smvApp.smvLibs()
+        prov_libs_names = self.smvApp.userLibs() + self.smvApp.semiLibs() + self.smvApp.smvLibs()
         prov_dict = {}
 
         for prov_lib_name in prov_libs_names:
