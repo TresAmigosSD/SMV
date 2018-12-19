@@ -31,7 +31,12 @@ class AppDir(object):
 
     def __enter__(self):
         self.orig_app_path = self.smvApp.appDir()
-        self.smvApp.setAppDir(self.app_path)
+        try:
+            self.smvApp.setAppDir(self.app_path)
+        except Exception as e:
+            self.smvApp.setAppDir(self.orig_app_path)
+            raise e
+
 
     def __exit__(self, type, value, traceback):
         self.smvApp.setAppDir(self.orig_app_path)
