@@ -232,6 +232,9 @@ class SmvApp(object):
         # to change sys.path, allowing py modules, UDL's to be discovered by python
         self.prependDefaultDirs()
 
+        # As switch app dir, need to re-discover providers
+        self.refresh_provider_cache()
+
     def setDynamicRunConfig(self, runConfig):
         self.py_smvconf.set_dynamic_props(runConfig)
 
