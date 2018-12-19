@@ -135,7 +135,6 @@ class DataSetRepoTest(SmvBaseTest):
         """Ensure repo can discover providers by prefix"""
         prov_dir = self.resourceTestDir() + "/provider"
         with AppDir(self.smvApp, prov_dir):
-            self.smvApp.refresh_provider_cache()
             providers = self.smvApp.get_providers_by_prefix("aaa")
             providers_fqns = sorted([p.provider_type_fqn() for p in providers])
             self.assertEqual(providers_fqns, ['aaa', 'aaa.bbb'])
@@ -144,6 +143,6 @@ class DataSetRepoTest(SmvBaseTest):
         """Ensure repo can detect duplicate providers with same provider type fqn"""
         # the bad_provider dir has multiple providers with fqn "aaa.bbb"
         prov_dir = self.resourceTestDir() + "/bad_provider"
-        with AppDir(self.smvApp, prov_dir):
-            with self.assertRaisesRegexp(SmvRuntimeError, "multiple providers with same fqn: aaa.bbb"):
+        with self.assertRaisesRegexp(SmvRuntimeError, "multiple providers with same fqn: aaa.bbb"):
+            with AppDir(self.smvApp, prov_dir):
                 self.build_new_repo()._all_providers()
