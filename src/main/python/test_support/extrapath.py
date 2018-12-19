@@ -31,6 +31,7 @@ class AppDir(object):
 
     def __enter__(self):
         self.orig_app_path = self.smvApp.appDir()
+        # In case setAppDir throws error, reset appdir back to original
         try:
             self.smvApp.setAppDir(self.app_path)
         except Exception as e:
