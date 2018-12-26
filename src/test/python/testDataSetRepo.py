@@ -136,8 +136,10 @@ class DataSetRepoTest(SmvBaseTest):
         prov_dir = self.resourceTestDir() + "/provider"
         with AppDir(self.smvApp, prov_dir):
             providers = self.smvApp.get_providers_by_prefix("aaa")
-            providers_fqns = sorted([p.provider_type_fqn() for p in providers])
+            providers_fqns = sorted([f for f in providers])
+            providers_fqns_from_class = sorted([p.provider_type_fqn() for (fqn, p) in providers.items()])
             self.assertEqual(providers_fqns, ['aaa', 'aaa.bbb'])
+            self.assertEqual(providers_fqns_from_class, ['aaa', 'aaa.bbb'])
 
     def test_duplicate_providers(self):
         """Ensure repo can detect duplicate providers with same provider type fqn"""
