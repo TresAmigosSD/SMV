@@ -7,6 +7,7 @@
 # USER_CMD : name of the script that was launched (caller of this script)
 # SMV_APP_CLASS : user specified --class name to use for spark-submit or SmvApp as default
 # APP_JAR : user specified --jar option or the discovered application fat jar.
+# SMV_USER_SCRIPT : optional user-defined launch script
 #
 
 # This function is used to split the command line arguments into SMV / Spark
@@ -18,6 +19,10 @@ function split_smv_spark_args()
         if [ "$1" == "--" ]; then
             shift
             break
+        fi
+
+        if [ "$1" == "--script" ]; then
+          SMV_USER_SCRIPT="$2"
         fi
 
         if [ "$1" == "--spark-home" ]; then

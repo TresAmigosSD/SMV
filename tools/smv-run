@@ -18,6 +18,8 @@ fi
 echo "START RUN =============================="
 date
 
-run_pyspark_with ${SMV_TOOLS}/../src/main/python/scripts/runapp.py
+LAUNCH_SCRIPT="${SMV_USER_SCRIPT:-${SMV_TOOLS}/../src/main/python/scripts/runapp.py}"
+
+run_pyspark_with "${LAUNCH_SCRIPT}"
 
 date
