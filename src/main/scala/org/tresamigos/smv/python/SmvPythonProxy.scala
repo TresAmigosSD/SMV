@@ -158,6 +158,8 @@ object SmvPythonHelper {
 
   def smvHashKey(prefix: String, cols: Array[Column]): Column =
     smvfuncs.smvHashKey(prefix, cols: _*)
+
+  def getSmvSchema() = SmvSchema
 }
 
 class SmvGroupedDataAdaptor(grouped: SmvGroupedData) {

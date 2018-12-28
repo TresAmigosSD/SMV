@@ -87,6 +87,8 @@ class SmvApp(object):
         java_import(self._jvm, "org.tresamigos.smv.python.SmvPythonHelper")
         java_import(self._jvm, "org.tresamigos.smv.SmvRunInfoCollector")
 
+        self.smvSchemaObj = self._jvm.SmvPythonHelper.getSmvSchema()
+
         self.j_smvPyClient = self.create_smv_pyclient(arglist)
 
         # shortcut is meant for internal use only
