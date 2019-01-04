@@ -301,3 +301,8 @@ id:integer"""
         conn2 = SmvHdfsConnectionInfo("testconn2", {'smv.conn.testconn2.path': '/dummy2'})
 
         self.assertNotEqual(conn1.conn_hash(), conn2.conn_hash())
+
+    def test_get_connections(self):
+        res = self.smvApp.get_connections()
+        self.assertEqual(res.get('my_hdfs').path, self.tmpInputDir())
+        self.assertTrue('my_hdfs_2' in res)

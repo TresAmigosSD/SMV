@@ -18,6 +18,7 @@ It is equivalent to ``SmvApp`` on Scala side
 from datetime import datetime
 import os
 import sys
+import re
 import json
 import pkgutil
 from collections import namedtuple
@@ -302,6 +303,20 @@ class SmvApp(object):
             return ConnClass(name, props)
         else:
             raise SmvRuntimeError("Connection name {} is not configured with a type".format(name))
+
+    def get_connections(self):
+        """Get all connetions defined in the app, keyed by name
+        """
+        props = self.py_smvconf.merged_props()
+        res = {}
+        for k in props:
+            s = re.search('smv\.conn\.(.*)\.type', k)
+            if s:
+                name = s.group(1)  # matched in '(.*)'
+                res.update({
+                    name: self.get_connection_by_name(name)
+                })
+        return res
 
     def appId(self):
         return self.py_smvconf.app_id()
