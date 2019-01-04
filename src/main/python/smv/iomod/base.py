@@ -68,7 +68,15 @@ class SmvIoModule(SmvGenericModule):
             Ex: smv.conn.con_name.class=smv.conn.SmvJdbcConnectionInfo
         """
         name = self.connectionName()
-        return self._get_connection_by_name(name)
+        conn = self._get_connection_by_name(name)
+
+        # check whether the connection provided by name has the type as expected
+        conn_type = conn.provider_type()
+        if (conn_type != self.connectionType()):
+            raise SmvRuntimeError("Connection {} has type {}, while {} need connection type {}".format(
+                name, conn_type, self.__class__.__name__, self.connectionType()
+            ))
+        return conn
 
     def connectionHash(self):
         conn_hash = self.get_connection().conn_hash()
