@@ -154,7 +154,7 @@ class AsTable(object):
         res = smvhash(self.tableName())
         return res
 
-class AsFile(object):
+class AsFile(SmvIoModule):
     """Mixin to assure a fileName method"""
     @abc.abstractmethod
     def fileName(self):

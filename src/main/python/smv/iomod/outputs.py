@@ -70,7 +70,7 @@ class SmvHiveOutputTable(SmvSparkDfOutput, WithSparkDfWriter, AsTable):
     """
 
     def connectionType(self):
-        return 'jdbc'
+        return 'hive'
 
     def doRun(self, known):
         data = self.get_spark_df(known)
