@@ -303,6 +303,6 @@ id:integer"""
         self.assertNotEqual(conn1.conn_hash(), conn2.conn_hash())
 
     def test_get_connections(self):
-        res = self.smvApp.get_connections()
-        self.assertEqual(res.get('my_hdfs').path, self.tmpInputDir())
+        res = self.smvApp.get_all_connection_names()
+        self.assertTrue('my_hdfs' in res)
         self.assertTrue('my_hdfs_2' in res)
