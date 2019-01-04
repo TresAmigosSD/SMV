@@ -38,6 +38,9 @@ class SmvJdbcInputTable(SparkDfGenMod, SmvInput, AsTable):
             - tableName
     """
 
+    def connectionType(self):
+        return 'jdbc'
+
     def instanceValHash(self):
         """Jdbc input hash depends on connection and table name
         """
@@ -63,6 +66,9 @@ class SmvHiveInputTable(SparkDfGenMod, SmvInput, AsTable):
             - connectionName
             - tableName
     """
+
+    def connectionType(self):
+        return 'hive'
 
     def doRun(self, known):
         conn = self.get_connection()
@@ -417,8 +423,12 @@ class SmvCsvStringInputData(SparkDfGenMod, WithCsvParser):
                 (str): data
         """
 
+    def connectionType(self):
+        return None
+
     def connectionName(self):
         return None
+
 
 __all__ = [
     'SmvJdbcInputTable',

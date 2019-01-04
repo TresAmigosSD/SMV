@@ -39,6 +39,10 @@ class SmvIoModule(SmvGenericModule):
         return SmvNonOpPersistenceStrategy()
 
     @abc.abstractmethod
+    def connectionType(self):
+        """Connection type supported by a specific io module"""
+
+    @abc.abstractmethod
     def connectionName(self):
         """Name of the connection to read/write"""
 
@@ -64,7 +68,15 @@ class SmvIoModule(SmvGenericModule):
             Ex: smv.conn.con_name.class=smv.conn.SmvJdbcConnectionInfo
         """
         name = self.connectionName()
-        return self._get_connection_by_name(name)
+        conn = self._get_connection_by_name(name)
+
+        # check whether the connection provided by name has the type as expected
+        conn_type = conn.provider_type()
+        if (conn_type != self.connectionType()):
+            raise SmvRuntimeError("Connection {} has type {}, while {} need connection type {}".format(
+                name, conn_type, self.__class__.__name__, self.connectionType()
+            ))
+        return conn
 
     def connectionHash(self):
         conn_hash = self.get_connection().conn_hash()
@@ -76,6 +88,7 @@ class SmvInput(SmvIoModule):
 
         Sub-class need to implement:
 
+            - connectionType
             - doRun
 
         User need to implement:
@@ -94,6 +107,7 @@ class SmvOutput(SmvIoModule):
 
         Sub-class need to implement:
 
+            - connectionType
             - doRun
 
         Within doRun, assert_single_input should be called.
@@ -140,7 +154,7 @@ class AsTable(object):
         res = smvhash(self.tableName())
         return res
 
-class AsFile(object):
+class AsFile(SmvIoModule):
     """Mixin to assure a fileName method"""
     @abc.abstractmethod
     def fileName(self):
@@ -153,6 +167,10 @@ class AsFile(object):
     def fileNameHash(self):
         res = smvhash(self.fileName())
         return res
+
+    def connectionType(self):
+        # all files should have hdfs as their connection type
+        return 'hdfs'
 
     def _assert_file_postfix(self, postfix):
         """Make sure that file name provided has the desired postfix"""
