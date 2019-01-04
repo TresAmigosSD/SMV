@@ -44,6 +44,9 @@ class SmvJdbcOutputTable(SmvSparkDfOutput, WithSparkDfWriter, AsTable):
             - writeMode: optional, default "errorifexists"
     """
 
+    def connectionType(self):
+        return 'jdbc'
+
     def doRun(self, known):
         data = self.get_spark_df(known)
         conn = self.get_connection()
@@ -65,6 +68,9 @@ class SmvHiveOutputTable(SmvSparkDfOutput, WithSparkDfWriter, AsTable):
             - tableName
             - writeMode: optional, default "errorifexists"
     """
+
+    def connectionType(self):
+        return 'jdbc'
 
     def doRun(self, known):
         data = self.get_spark_df(known)

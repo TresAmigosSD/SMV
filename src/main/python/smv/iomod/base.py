@@ -39,6 +39,10 @@ class SmvIoModule(SmvGenericModule):
         return SmvNonOpPersistenceStrategy()
 
     @abc.abstractmethod
+    def connectionType(self):
+        """Connection type supported by a specific io module"""
+
+    @abc.abstractmethod
     def connectionName(self):
         """Name of the connection to read/write"""
 
@@ -76,6 +80,7 @@ class SmvInput(SmvIoModule):
 
         Sub-class need to implement:
 
+            - connectionType
             - doRun
 
         User need to implement:
@@ -94,6 +99,7 @@ class SmvOutput(SmvIoModule):
 
         Sub-class need to implement:
 
+            - connectionType
             - doRun
 
         Within doRun, assert_single_input should be called.
@@ -153,6 +159,10 @@ class AsFile(object):
     def fileNameHash(self):
         res = smvhash(self.fileName())
         return res
+
+    def connectionType(self):
+        # all files should have hdfs as their connection type
+        return 'hdfs'
 
     def _assert_file_postfix(self, postfix):
         """Make sure that file name provided has the desired postfix"""
