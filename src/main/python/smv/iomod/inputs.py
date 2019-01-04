@@ -129,9 +129,9 @@ class InputFileWithSchema(SmvInput, AsFile):
         props = self.smvApp.py_smvconf.merged_props()
         global_schema_conn = props.get('smv.schemaConn')
         if (name is not None):
-            return self._get_connection_by_name(name)
+            return self.smvApp.get_connection_by_name(name)
         elif (global_schema_conn is not None):
-            return self._get_connection_by_name(global_schema_conn)
+            return self.smvApp.get_connection_by_name(global_schema_conn)
         else:
             return self.get_connection()
 

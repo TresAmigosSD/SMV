@@ -46,20 +46,6 @@ class SmvIoModule(SmvGenericModule):
     def connectionName(self):
         """Name of the connection to read/write"""
 
-    def _get_connection_by_name(self, name):
-        """Get connection instance from name
-        """
-        props = self.smvApp.py_smvconf.merged_props()
-        type_name = "smv.conn.{}.type".format(name)
-
-        if (type_name in props):
-            con_type = props.get(type_name)
-            provider_fqn = "conn.{}".format(con_type)
-            ConnClass = self.smvApp.get_provider_by_fqn(provider_fqn)
-            return ConnClass(name, props)
-        else:
-            raise SmvRuntimeError("Connection name {} is not configured with a type".format(name))
-
     def get_connection(self):
         """Get data connection instance from connectionName()
 
@@ -68,7 +54,7 @@ class SmvIoModule(SmvGenericModule):
             Ex: smv.conn.con_name.class=smv.conn.SmvJdbcConnectionInfo
         """
         name = self.connectionName()
-        conn = self._get_connection_by_name(name)
+        conn = self.smvApp.get_connection_by_name(name)
 
         # check whether the connection provided by name has the type as expected
         conn_type = conn.provider_type()
