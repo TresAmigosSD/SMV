@@ -27,7 +27,8 @@ class SmvJdbcConnectionInfo(SmvConnectionInfo):
     def provider_type():
         return "jdbc"
 
-    def attributes(self):
+    @staticmethod
+    def attributes():
         return ["url", "driver", "user", "password"]
 
 
@@ -42,7 +43,8 @@ class SmvHiveConnectionInfo(SmvConnectionInfo):
     def provider_type():
         return "hive"
 
-    def attributes(self):
+    @staticmethod
+    def attributes():
         return ['schema']
 
 class SmvHdfsConnectionInfo(SmvConnectionInfo):
@@ -63,7 +65,8 @@ class SmvHdfsConnectionInfo(SmvConnectionInfo):
     def provider_type():
         return "hdfs"
 
-    def attributes(self):
+    @staticmethod
+    def attributes():
         return ['path']
 
 
