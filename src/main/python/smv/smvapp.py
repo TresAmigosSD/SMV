@@ -289,6 +289,20 @@ class SmvApp(object):
         providers = self.provider_cache
         return providers.get(fqn)
 
+    def get_connection_by_name(self, name):
+        """Get connection instance from name
+        """
+        props = self.py_smvconf.merged_props()
+        type_name = "smv.conn.{}.type".format(name)
+
+        if (type_name in props):
+            con_type = props.get(type_name)
+            provider_fqn = "conn.{}".format(con_type)
+            ConnClass = self.get_provider_by_fqn(provider_fqn)
+            return ConnClass(name, props)
+        else:
+            raise SmvRuntimeError("Connection name {} is not configured with a type".format(name))
+
     def appId(self):
         return self.py_smvconf.app_id()
 
