@@ -319,6 +319,7 @@ class SmvApp(object):
     def appId(self):
         return self.py_smvconf.app_id()
 
+    # TODO: deprecate method below.  Users should use SmvSchema.discover() instead.
     def discoverSchemaAsSmvSchema(self, path, csvAttributes, n=100000):
         """Discovers the schema of a .csv file and returns a Scala SmvSchema instance
 
@@ -588,7 +589,7 @@ class SmvApp(object):
         return self._mkCsvAttr(delimiter='\t')
 
     def defaultTsvWithHeader(self):
-        return self._mkCsvAttr(delimier='\t', hasHeader=True)
+        return self._mkCsvAttr(delimiter='\t', hasHeader=True)
 
     def abs_path_for_project_path(self, project_path):
         # Load dynamic app dir from scala
