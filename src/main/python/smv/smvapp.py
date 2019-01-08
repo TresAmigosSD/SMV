@@ -142,6 +142,7 @@ class SmvApp(object):
     def appId(self):
         return self.config().appId()
 
+    # TODO: deprecate method below.  Users should use SmvSchema.discover() instead.
     def discoverSchemaAsSmvSchema(self, path, csvAttributes, n=100000):
         """Discovers the schema of a .csv file and returns a Scala SmvSchema instance
 
@@ -298,7 +299,7 @@ class SmvApp(object):
         return self._mkCsvAttr(delimiter='\t')
 
     def defaultTsvWithHeader(self):
-        return self._mkCsvAttr(delimier='\t', hasHeader=True)
+        return self._mkCsvAttr(delimiter='\t', hasHeader=True)
 
     def prepend_source(self,source_dir):
         # Source must be added to front of path to make sure it is found first

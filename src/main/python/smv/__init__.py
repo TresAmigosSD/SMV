@@ -6,6 +6,7 @@ from smv.smvapp import SmvApp
 from smv.runconfig import SmvRunConfig
 from smv.csv_attributes import CsvAttributes
 from smv.helpers import SmvGroupedData
+from smv.smvschema import SmvSchema
 
 from smv.historical_validators import SmvHistoricalValidator, SmvHistoricalValidators
 
