@@ -46,7 +46,7 @@ class SmvSchema(object):
         val = self.j_smv_schema.toValue(i, str_val)
         j_type = self.spark_schema.fields[i].dataType.typeName()
         if j_type == sql_types.DateType.typeName():
-            val = datetime.date(1900 + val.getYear(), val.getMonth(), val.getDate())
+            val = datetime.date(1900 + val.getYear(), val.getMonth()+1, val.getDate())
         return val
 
     def saveToLocalFile(self, schema_file):
