@@ -1,0 +1,1729 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>smv.helpers &#8212; Spark Modularized View 1.6.2.4.p3 documentation</title>
+    <link rel="stylesheet" href="../../_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Spark Modularized View 1.6.2.4.p3 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for smv.helpers</h1><div class="highlight"><pre>
+<span></span><span class="c1">#</span>
+<span class="c1"># This file is licensed under the Apache License, Version 2.0</span>
+<span class="c1"># (the &quot;License&quot;); you may not use this file except in compliance with</span>
+<span class="c1"># the License.  You may obtain a copy of the License at</span>
+<span class="c1">#</span>
+<span class="c1">#    http://www.apache.org/licenses/LICENSE-2.0</span>
+<span class="c1">#</span>
+<span class="c1"># Unless required by applicable law or agreed to in writing, software</span>
+<span class="c1"># distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
+<span class="c1"># See the License for the specific language governing permissions and</span>
+<span class="c1"># limitations under the License.</span>
+<span class="sd">&quot;&quot;&quot;SMV DataFrame Helpers and Column Helpers</span>
+
+<span class="sd">This module provides the helper functions on DataFrame objects and Column objects</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span> <span class="nn">pyspark</span> <span class="k">import</span> <span class="n">SparkContext</span>
+<span class="kn">from</span> <span class="nn">pyspark.sql</span> <span class="k">import</span> <span class="n">DataFrame</span>
+<span class="kn">from</span> <span class="nn">pyspark.sql.column</span> <span class="k">import</span> <span class="n">Column</span>
+<span class="kn">from</span> <span class="nn">pyspark.sql.functions</span> <span class="k">import</span> <span class="n">col</span><span class="p">,</span> <span class="n">lit</span>
+
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">inspect</span>
+
+<span class="kn">from</span> <span class="nn">smv.utils</span> <span class="k">import</span> <span class="n">smv_copy_array</span>
+<span class="kn">from</span> <span class="nn">smv.error</span> <span class="k">import</span> <span class="n">SmvRuntimeError</span>
+<span class="kn">from</span> <span class="nn">smv.utils</span> <span class="k">import</span> <span class="n">is_string</span>
+
+<span class="c1"># common converters to pass to _to_seq and _to_list</span>
+<span class="k">def</span> <span class="nf">_jcol</span><span class="p">(</span><span class="n">c</span><span class="p">):</span> <span class="k">return</span> <span class="n">c</span><span class="o">.</span><span class="n">_jc</span>
+<span class="k">def</span> <span class="nf">_jdf</span><span class="p">(</span><span class="n">df</span><span class="p">):</span> <span class="k">return</span> <span class="n">df</span><span class="o">.</span><span class="n">_jdf</span>
+
+<span class="c1"># Modified from Spark column.py</span>
+<span class="k">def</span> <span class="nf">_to_seq</span><span class="p">(</span><span class="n">cols</span><span class="p">,</span> <span class="n">converter</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Convert a list of Column (or names) into a JVM Seq of Column.</span>
+
+<span class="sd">    An optional `converter` could be used to convert items in `cols`</span>
+<span class="sd">    into JVM Column objects.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">converter</span><span class="p">:</span>
+        <span class="n">cols</span> <span class="o">=</span> <span class="p">[</span><span class="n">converter</span><span class="p">(</span><span class="n">c</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">cols</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">_sparkContext</span><span class="p">()</span><span class="o">.</span><span class="n">_jvm</span><span class="o">.</span><span class="n">PythonUtils</span><span class="o">.</span><span class="n">toSeq</span><span class="p">(</span><span class="n">cols</span><span class="p">)</span>
+
+<span class="c1"># Modified from Spark column.py</span>
+<span class="k">def</span> <span class="nf">_to_list</span><span class="p">(</span><span class="n">cols</span><span class="p">,</span> <span class="n">converter</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Convert a list of Column (or names) into a JVM (Scala) List of Column.</span>
+
+<span class="sd">    An optional `converter` could be used to convert items in `cols`</span>
+<span class="sd">    into JVM Column objects.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">converter</span><span class="p">:</span>
+        <span class="n">cols</span> <span class="o">=</span> <span class="p">[</span><span class="n">converter</span><span class="p">(</span><span class="n">c</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">cols</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">_sparkContext</span><span class="p">()</span><span class="o">.</span><span class="n">_jvm</span><span class="o">.</span><span class="n">PythonUtils</span><span class="o">.</span><span class="n">toList</span><span class="p">(</span><span class="n">cols</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">_sparkContext</span><span class="p">():</span>
+    <span class="k">return</span> <span class="n">SparkContext</span><span class="o">.</span><span class="n">_active_spark_context</span>
+
+<div class="viewcode-block" id="SmvGroupedData"><a class="viewcode-back" href="../../smv.html#smv.helpers.SmvGroupedData">[docs]</a><span class="k">class</span> <span class="nc">SmvGroupedData</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;The result of running `smvGroupBy` on a DataFrame. Implements special SMV aggregations.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">df</span><span class="p">,</span> <span class="n">keys</span><span class="p">,</span> <span class="n">sgd</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">df</span> <span class="o">=</span> <span class="n">df</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">keys</span> <span class="o">=</span> <span class="n">keys</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sgd</span> <span class="o">=</span> <span class="n">sgd</span>
+
+<div class="viewcode-block" id="SmvGroupedData.smvTopNRecs"><a class="viewcode-back" href="../../smv.html#smv.helpers.SmvGroupedData.smvTopNRecs">[docs]</a>    <span class="k">def</span> <span class="nf">smvTopNRecs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">maxElems</span><span class="p">,</span> <span class="o">*</span><span class="n">cols</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;For each group, return the top N records according to a given ordering</span>
+
+<span class="sd">            Example:</span>
+
+<span class="sd">                &gt;&gt;&gt; df.smvGroupBy(&quot;id&quot;).smvTopNRecs(3, col(&quot;amt&quot;).desc())</span>
+
+<span class="sd">                This will keep the 3 largest amt records for each id</span>
+
+<span class="sd">            Args:</span>
+<span class="sd">                maxElems (int): maximum number of records per group</span>
+<span class="sd">                cols (\*str): columns defining the ordering</span>
+
+<span class="sd">            Returns:</span>
+<span class="sd">                (DataFrame): result of taking top records from groups</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">DataFrame</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sgd</span><span class="o">.</span><span class="n">smvTopNRecs</span><span class="p">(</span><span class="n">maxElems</span><span class="p">,</span> <span class="n">smv_copy_array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">df</span><span class="o">.</span><span class="n">_sc</span><span class="p">,</span> <span class="o">*</span><span class="n">cols</span><span class="p">)),</span> <span class="bp">self</span><span class="o">.</span><span class="n">df</span><span class="o">.</span><span class="n">sql_ctx</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SmvGroupedData.smvPivot"><a class="viewcode-back" href="../../smv.html#smv.helpers.SmvGroupedData.smvPivot">[docs]</a>    <span class="k">def</span> <span class="nf">smvPivot</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pivotCols</span><span class="p">,</span> <span class="n">valueCols</span><span class="p">,</span> <span class="n">baseOutput</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;smvPivot adds the pivoted columns without additional aggregation. In other words</span>
+<span class="sd">            N records in, N records out</span>
+
+<span class="sd">            SmvPivot for Pivot Operations:</span>
+
+<span class="sd">            Pivot Operation on DataFrame that transforms multiple rows per key into a columns so</span>
+<span class="sd">            they can be aggregated to a single row for a given key while preserving all the data</span>
+<span class="sd">            variance.</span>
+
+<span class="sd">            Example:</span>
+<span class="sd">                For input data below:</span>
+
+<span class="sd">                +-----+-------+---------+-------+</span>
+<span class="sd">                | id  | month | product | count |</span>
+<span class="sd">                +=====+=======+=========+=======+</span>
+<span class="sd">                | 1   | 5/14  |   A     |   100 |</span>
+<span class="sd">                +-----+-------+---------+-------+</span>
+<span class="sd">                | 1   | 6/14  |   B     |   200 |</span>
+<span class="sd">                +-----+-------+---------+-------+</span>
+<span class="sd">                | 1   | 5/14  |   B     |   300 |</span>
+<span class="sd">                +-----+-------+---------+-------+</span>
+
+<span class="sd">                We would like to generate a data set to be ready for aggregations.</span>
+<span class="sd">                The desired output is:</span>
+
+<span class="sd">                +-----+--------------+--------------+--------------+--------------+</span>
+<span class="sd">                | id  | count_5_14_A | count_5_14_B | count_6_14_A | count_6_14_B |</span>
+<span class="sd">                +=====+==============+==============+==============+==============+</span>
+<span class="sd">                | 1   | 100          | NULL         | NULL         | NULL         |</span>
+<span class="sd">                +-----+--------------+--------------+--------------+--------------+</span>
+<span class="sd">                | 1   | NULL         | NULL         | NULL         | 200          |</span>
+<span class="sd">                +-----+--------------+--------------+--------------+--------------+</span>
+<span class="sd">                | 1   | NULL         | 300          | NULL         | NULL         |</span>
+<span class="sd">                +-----+--------------+--------------+--------------+--------------+</span>
+
+<span class="sd">                The raw input is divided into three parts.</span>
+<span class="sd">                    1. key column: part of the primary key that is preserved in the output.</span>
+<span class="sd">                        That would be the `id` column in the above example.</span>
+<span class="sd">                    2. pivot columns: the columns whose row values will become the new column names.</span>
+<span class="sd">                        The cross product of all unique values for *each* column is used to generate</span>
+<span class="sd">                        the output column names.</span>
+<span class="sd">                    3. value column: the value that will be copied/aggregated to corresponding output</span>
+<span class="sd">                        column. `count` in our example.</span>
+
+<span class="sd">                Example code:</span>
+
+<span class="sd">                &gt;&gt;&gt; df.smvGroupBy(&quot;id&quot;).smvPivot([[&quot;month&quot;, &quot;product&quot;]], [&quot;count&quot;], [&quot;5_14_A&quot;, &quot;5_14_B&quot;, &quot;6_14_A&quot;, &quot;6_14_B&quot;])</span>
+
+<span class="sd">            Args:</span>
+<span class="sd">                pivotCols (list(list(str))): specify the pivot columns, on above example, it is</span>
+<span class="sd">                    [[&#39;month, &#39;product]]. If [[&#39;month&#39;], [&#39;month&#39;, &#39;product&#39;]] is</span>
+<span class="sd">                    used, the output columns will have &quot;count_5_14&quot; and &quot;count_6_14&quot; as</span>
+<span class="sd">                    addition to the example.</span>
+<span class="sd">                valueCols (list(string)): names of value columns which will be prepared for</span>
+<span class="sd">                    aggregation</span>
+<span class="sd">                baseOutput (list(str)): expected names of the pivoted column</span>
+<span class="sd">                    In above example, it is [&quot;5_14_A&quot;, &quot;5_14_B&quot;, &quot;6_14_A&quot;, &quot;6_14_B&quot;].</span>
+<span class="sd">                    The user is required to supply the list of expected pivot column output names to avoid</span>
+<span class="sd">                    and extra action on the input DataFrame just to extract the possible pivot columns.</span>
+<span class="sd">                    If an empty sequence is provided, the base output columns will be extracted from</span>
+<span class="sd">                    values in the pivot columns (will cause an action on the entire DataFrame!)</span>
+
+<span class="sd">            Returns:</span>
+<span class="sd">                (DataFrame): result of pivot operation</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">DataFrame</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sgd</span><span class="o">.</span><span class="n">smvPivot</span><span class="p">(</span><span class="n">smv_copy_array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">df</span><span class="o">.</span><span class="n">_sc</span><span class="p">,</span> <span class="o">*</span><span class="n">pivotCols</span><span class="p">),</span> <span class="n">smv_copy_array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">df</span><span class="o">.</span><span class="n">_sc</span><span class="p">,</span> <span class="o">*</span><span class="n">valueCols</span><span class="p">),</span> <span class="n">smv_copy_array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">df</span><span class="o">.</span><span class="n">_sc</span><span class="p">,</span> <span class="o">*</span><span class="n">baseOutput</span><span class="p">)),</span> <span class="bp">self</span><span class="o">.</span><span class="n">df</span><span class="o">.</span><span class="n">sql_ctx</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SmvGroupedData.smvPivotSum"><a class="viewcode-back" href="../../smv.html#smv.helpers.SmvGroupedData.smvPivotSum">[docs]</a>    <span class="k">def</span> <span class="nf">smvPivotSum</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pivotCols</span><span class="p">,</span> <span class="n">valueCols</span><span class="p">,</span> <span class="n">baseOutput</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Perform SmvPivot, then sum the results.</span>
+<span class="sd">            Please refer smvPivot&#39;s document for context and details of the SmvPivot operation.</span>
+
+<span class="sd">            Args:</span>
+<span class="sd">                pivotCols (list(list(str))): list of lists of column names to pivot</span>
+<span class="sd">                valueCols (list(string)): names of value columns to sum</span>
+<span class="sd">                baseOutput (list(str)): expected names pivoted column</span>
+
+<span class="sd">            Examples:</span>
+<span class="sd">                For example, given a DataFrame df that represents the table</span>
+
+<span class="sd">                +-----+-------+---------+-------+</span>
+<span class="sd">                | id  | month | product | count |</span>
+<span class="sd">                +=====+=======+=========+=======+</span>
+<span class="sd">                | 1   | 5/14  |   A     |   100 |</span>
+<span class="sd">                +-----+-------+---------+-------+</span>
+<span class="sd">                | 1   | 6/14  |   B     |   200 |</span>
+<span class="sd">                +-----+-------+---------+-------+</span>
+<span class="sd">                | 1   | 5/14  |   B     |   300 |</span>
+<span class="sd">                +-----+-------+---------+-------+</span>
+
+<span class="sd">                we can use</span>
+
+<span class="sd">                &gt;&gt;&gt; df.smvGroupBy(&quot;id&quot;).smvPivotSum([[&quot;month&quot;, &quot;product&quot;]], [&quot;count&quot;], [&quot;5_14_A&quot;, &quot;5_14_B&quot;, &quot;6_14_A&quot;, &quot;6_14_B&quot;])</span>
+
+<span class="sd">                to produce the following output</span>
+
+<span class="sd">                +-----+--------------+--------------+--------------+--------------+</span>
+<span class="sd">                | id  | count_5_14_A | count_5_14_B | count_6_14_A | count_6_14_B |</span>
+<span class="sd">                +=====+==============+==============+==============+==============+</span>
+<span class="sd">                | 1   | 100          | 300          | NULL         | 200          |</span>
+<span class="sd">                +-----+--------------+--------------+--------------+--------------+</span>
+
+<span class="sd">            Returns:</span>
+<span class="sd">                (DataFrame): result of pivot sum</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">DataFrame</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sgd</span><span class="o">.</span><span class="n">smvPivotSum</span><span class="p">(</span><span class="n">smv_copy_array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">df</span><span class="o">.</span><span class="n">_sc</span><span class="p">,</span> <span class="o">*</span><span class="n">pivotCols</span><span class="p">),</span> <span class="n">smv_copy_array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">df</span><span class="o">.</span><span class="n">_sc</span><span class="p">,</span> <span class="o">*</span><span class="n">valueCols</span><span class="p">),</span> <span class="n">smv_copy_array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">df</span><span class="o">.</span><span class="n">_sc</span><span class="p">,</span> <span class="o">*</span><span class="n">baseOutput</span><span class="p">)),</span> <span class="bp">self</span><span class="o">.</span><span class="n">df</span><span class="o">.</span><span class="n">sql_ctx</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SmvGroupedData.smvPivotCoalesce"><a class="viewcode-back" href="../../smv.html#smv.helpers.SmvGroupedData.smvPivotCoalesce">[docs]</a>    <span class="k">def</span> <span class="nf">smvPivotCoalesce</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pivotCols</span><span class="p">,</span> <span class="n">valueCols</span><span class="p">,</span> <span class="n">baseOutput</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Perform SmvPivot, then coalesce the output</span>
+<span class="sd">            Please refer smvPivot&#39;s document for context and details of the SmvPivot operation.</span>
+
+<span class="sd">            Args:</span>
+<span class="sd">                pivotCols (list(list(str))): list of lists of column names to pivot</span>
+<span class="sd">                valueCols (list(string)): names of value columns to coalesce</span>
+<span class="sd">                baseOutput (list(str)): expected names pivoted column</span>
+
+<span class="sd">            Examples:</span>
+<span class="sd">                For example, given a DataFrame df that represents the table</span>
+
+<span class="sd">                +---+---+----+</span>
+<span class="sd">                |  k|  p|   v|</span>
+<span class="sd">                +===+===+====+</span>
+<span class="sd">                |  a|  c|   1|</span>
+<span class="sd">                +---+---+----+</span>
+<span class="sd">                |  a|  d|   2|</span>
+<span class="sd">                +---+---+----+</span>
+<span class="sd">                |  a|  e|null|</span>
+<span class="sd">                +---+---+----+</span>
+<span class="sd">                |  a|  f|   5|</span>
+<span class="sd">                +---+---+----+</span>
+
+<span class="sd">                we can use</span>
+
+<span class="sd">                &gt;&gt;&gt; df.smvGroupBy(&quot;k&quot;).smvPivotCoalesce([[&#39;p&#39;]], [&#39;v&#39;], [&#39;c&#39;, &#39;d&#39;, &#39;e&#39;, &#39;f&#39;])</span>
+
+<span class="sd">                to produce the following output</span>
+
+<span class="sd">                +---+---+---+----+---+</span>
+<span class="sd">                |  k|v_c|v_d| v_e|v_f|</span>
+<span class="sd">                +===+===+===+====+===+</span>
+<span class="sd">                |  a|  1|  2|null|  5|</span>
+<span class="sd">                +---+---+---+----+---+</span>
+
+<span class="sd">            Returns:</span>
+<span class="sd">                (Dataframe): result of pivot coalesce</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">DataFrame</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sgd</span><span class="o">.</span><span class="n">smvPivotCoalesce</span><span class="p">(</span><span class="n">smv_copy_array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">df</span><span class="o">.</span><span class="n">_sc</span><span class="p">,</span> <span class="o">*</span><span class="n">pivotCols</span><span class="p">),</span> <span class="n">smv_copy_array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">df</span><span class="o">.</span><span class="n">_sc</span><span class="p">,</span> <span class="o">*</span><span class="n">valueCols</span><span class="p">),</span> <span class="n">smv_copy_array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">df</span><span class="o">.</span><span class="n">_sc</span><span class="p">,</span> <span class="o">*</span><span class="n">baseOutput</span><span class="p">)),</span> <span class="bp">self</span><span class="o">.</span><span class="n">df</span><span class="o">.</span><span class="n">sql_ctx</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SmvGroupedData.smvRePartition"><a class="viewcode-back" href="../../smv.html#smv.helpers.SmvGroupedData.smvRePartition">[docs]</a>    <span class="k">def</span> <span class="nf">smvRePartition</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">numParts</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Repartition SmvGroupedData using specified partitioner on the keys. A</span>
+<span class="sd">            HashPartitioner with the specified number of partitions will be used.</span>
+
+<span class="sd">            This method is used in the cases that the key-space is very large. In the</span>
+<span class="sd">            current Spark DF&#39;s groupBy method, the entire key-space is actually loaded</span>
+<span class="sd">            into executor&#39;s memory, which is very dangerous when the key space is big.</span>
+<span class="sd">            The regular DF&#39;s repartition function doesn&#39;t solve this issue since a random</span>
+<span class="sd">            repartition will not guaranteed to reduce the key-space on each executor.</span>
+<span class="sd">            In that case we need to use this function to linearly reduce the key-space.</span>
+
+<span class="sd">            Example:</span>
+
+<span class="sd">            &gt;&gt;&gt; df.smvGroupBy(&quot;k1&quot;, &quot;k2&quot;).smvRePartition(32).agg(sum(&quot;v&quot;) as &quot;v&quot;)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">jgdadp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sgd</span><span class="o">.</span><span class="n">smvRePartition</span><span class="p">(</span><span class="n">numParts</span><span class="p">)</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">DataFrame</span><span class="p">(</span><span class="n">jgdadp</span><span class="o">.</span><span class="n">toDF</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">df</span><span class="o">.</span><span class="n">sql_ctx</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">SmvGroupedData</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">keys</span><span class="p">,</span> <span class="n">jgdadp</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SmvGroupedData.smvFillNullWithPrevValue"><a class="viewcode-back" href="../../smv.html#smv.helpers.SmvGroupedData.smvFillNullWithPrevValue">[docs]</a>    <span class="k">def</span> <span class="nf">smvFillNullWithPrevValue</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">orderCols</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Fill in Null values with &quot;previous&quot; value according to an ordering</span>
+
+<span class="sd">            Examples:</span>
+<span class="sd">                Given DataFrame df representing the table</span>
+
+<span class="sd">                +---+---+------+</span>
+<span class="sd">                | K | T | V    |</span>
+<span class="sd">                +===+===+======+</span>
+<span class="sd">                | a | 1 | null |</span>
+<span class="sd">                +---+---+------+</span>
+<span class="sd">                | a | 2 | a    |</span>
+<span class="sd">                +---+---+------+</span>
+<span class="sd">                | a | 3 | b    |</span>
+<span class="sd">                +---+---+------+</span>
+<span class="sd">                | a | 4 | null |</span>
+<span class="sd">                +---+---+------+</span>
+
+<span class="sd">                we can use</span>
+
+<span class="sd">                &gt;&gt;&gt; df.smvGroupBy(&quot;K&quot;).smvFillNullWithPrevValue($&quot;T&quot;.asc)(&quot;V&quot;)</span>
+
+<span class="sd">                to produce the result</span>
+
+<span class="sd">                +---+---+------+</span>
+<span class="sd">                | K | T | V    |</span>
+<span class="sd">                +===+===+======+</span>
+<span class="sd">                | a | 1 | null |</span>
+<span class="sd">                +---+---+------+</span>
+<span class="sd">                | a | 2 | a    |</span>
+<span class="sd">                +---+---+------+</span>
+<span class="sd">                | a | 3 | b    |</span>
+<span class="sd">                +---+---+------+</span>
+<span class="sd">                | a | 4 | b    |</span>
+<span class="sd">                +---+---+------+</span>
+
+<span class="sd">            Returns:</span>
+<span class="sd">                (Dataframe): result of fill nulls with previous value</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">def</span> <span class="nf">__doFill</span><span class="p">(</span><span class="o">*</span><span class="n">valueCols</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">DataFrame</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sgd</span><span class="o">.</span><span class="n">smvFillNullWithPrevValue</span><span class="p">(</span><span class="n">smv_copy_array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">df</span><span class="o">.</span><span class="n">_sc</span><span class="p">,</span> <span class="o">*</span><span class="n">orderCols</span><span class="p">),</span> <span class="n">smv_copy_array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">df</span><span class="o">.</span><span class="n">_sc</span><span class="p">,</span> <span class="o">*</span><span class="n">valueCols</span><span class="p">)),</span> <span class="bp">self</span><span class="o">.</span><span class="n">df</span><span class="o">.</span><span class="n">sql_ctx</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">__doFill</span></div>
+
+<div class="viewcode-block" id="SmvGroupedData.smvWithTimePanel"><a class="viewcode-back" href="../../smv.html#smv.helpers.SmvGroupedData.smvWithTimePanel">[docs]</a>    <span class="k">def</span> <span class="nf">smvWithTimePanel</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">time_col</span><span class="p">,</span> <span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Adding a specified time panel period to the DF</span>
+<span class="sd">            Args:</span>
+<span class="sd">                time_col (str): the column name in the data as the event timestamp</span>
+<span class="sd">                start (panel.PartialTime): could be Day, Month, Week, Quarter, refer the panel</span>
+<span class="sd">                    package for details</span>
+<span class="sd">                end (panel.PartialTime): should be the same time type as the &quot;start&quot;</span>
+
+<span class="sd">            Example:</span>
+
+<span class="sd">            &gt;&gt;&gt; df.smvGroupBy(&quot;K&quot;).smvWithTimePanel(&quot;TS&quot;, Week(2012, 1, 1), Week(2012, 12, 31))</span>
+
+<span class="sd">            Returns:</span>
+<span class="sd">                (DataFrame): a result data frame with keys, and a column with name `smvTime`, and</span>
+<span class="sd">                    other input columns. Refer the panel package for the potential forms of</span>
+<span class="sd">                    different PartialTimes. Since `TimePanel` defines a period of time, if for some</span>
+<span class="sd">                    group in the data missing Months (or Quarters), this function will add records</span>
+<span class="sd">                    with non-null keys and `smvTime` columns while all other columns are</span>
+<span class="sd">                    null-valued.</span>
+
+<span class="sd">            Example with on data:</span>
+
+<span class="sd">                Given DataFrame df as</span>
+
+<span class="sd">                +---+------------+------+</span>
+<span class="sd">                | K | TS         | V    |</span>
+<span class="sd">                +===+============+======+</span>
+<span class="sd">                | 1 | 2014-01-01 | 1.2  |</span>
+<span class="sd">                +---+------------+------+</span>
+<span class="sd">                | 1 | 2014-03-01 | 4.5  |</span>
+<span class="sd">                +---+------------+------+</span>
+<span class="sd">                | 1 | 2014-03-25 | 10.3 |</span>
+<span class="sd">                +---+------------+------+</span>
+
+<span class="sd">                after applying</span>
+
+<span class="sd">                &gt;&gt;&gt; import smv.panel as P</span>
+<span class="sd">                &gt;&gt;&gt; df.smvGroupBy(&quot;k&quot;).smvWithTimePanel(&quot;TS&quot;, Month(2014,1), Month(2014, 2))</span>
+
+<span class="sd">                the result is</span>
+
+<span class="sd">                +---+------------+------+---------+</span>
+<span class="sd">                | K | TS         | V    | smvTime |</span>
+<span class="sd">                +===+============+======+=========+</span>
+<span class="sd">                | 1 | 2014-01-01 | 1.2  | M201401 |</span>
+<span class="sd">                +---+------------+------+---------|</span>
+<span class="sd">                | 1 | None       | None | M201402 |</span>
+<span class="sd">                +---+------------+------+---------|</span>
+<span class="sd">                | 1 | 2014-03-01 | 4.5  | M201403 |</span>
+<span class="sd">                +---+------------+------+---------|</span>
+<span class="sd">                | 1 | 2014-03-25 | 10.3 | M201403 |</span>
+<span class="sd">                +---+------------+------+---------|</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">DataFrame</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sgd</span><span class="o">.</span><span class="n">smvWithTimePanel</span><span class="p">(</span><span class="n">time_col</span><span class="p">,</span> <span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">df</span><span class="o">.</span><span class="n">sql_ctx</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="SmvGroupedData.smvTimePanelAgg"><a class="viewcode-back" href="../../smv.html#smv.helpers.SmvGroupedData.smvTimePanelAgg">[docs]</a>    <span class="k">def</span> <span class="nf">smvTimePanelAgg</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">time_col</span><span class="p">,</span> <span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Apply aggregation on given keys and specified time panel period</span>
+
+<span class="sd">            Args:</span>
+<span class="sd">                time_col (str): the column name in the data as the event timestamp</span>
+<span class="sd">                start (panel.PartialTime): could be Day, Month, Week, Quarter, refer the panel</span>
+<span class="sd">                    package for details</span>
+<span class="sd">                end (panel.PartialTime): should be the same time type as the &quot;start&quot;</span>
+
+<span class="sd">            Both `start` and `end` PartialTime are inclusive.</span>
+
+<span class="sd">            Example:</span>
+
+<span class="sd">            &gt;&gt;&gt; df.smvGroupBy(&quot;K&quot;).smvTimePanelAgg(&quot;TS&quot;, Week(2012, 1, 1), Week(2012, 12, 31))(</span>
+<span class="sd">                    sum(&quot;V&quot;).alias(&quot;V&quot;)</span>
+<span class="sd">                )</span>
+
+<span class="sd">            Returns:</span>
+<span class="sd">                (DataFrame): a result data frame with keys, and a column with name `smvTime`, and</span>
+<span class="sd">                    aggregated values. Refer the panel package for the potential forms of different</span>
+<span class="sd">                    PartialTimes</span>
+
+<span class="sd">            Example with on data:</span>
+
+<span class="sd">                Given DataFrame df as</span>
+
+<span class="sd">                +---+------------+------+</span>
+<span class="sd">                | K | TS         | V    |</span>
+<span class="sd">                +===+============+======+</span>
+<span class="sd">                | 1 | 2012-01-01 | 1.5  |</span>
+<span class="sd">                +---+------------+------+</span>
+<span class="sd">                | 1 | 2012-03-01 | 4.5  |</span>
+<span class="sd">                +---+------------+------+</span>
+<span class="sd">                | 1 | 2012-07-01 | 7.5  |</span>
+<span class="sd">                +---+------------+------+</span>
+<span class="sd">                | 1 | 2012-05-01 | 2.45 |</span>
+<span class="sd">                +---+------------+------+</span>
+
+<span class="sd">                after applying</span>
+
+<span class="sd">                &gt;&gt;&gt; import smv.panel as P</span>
+<span class="sd">                &gt;&gt;&gt; df.smvGroupBy(&quot;K&quot;).smvTimePanelAgg(&quot;TS&quot;, P.Quarter(2012, 1), P.Quarter(2012, 2))(</span>
+<span class="sd">                        sum(&quot;V&quot;).alias(&quot;V&quot;)</span>
+<span class="sd">                    )</span>
+
+<span class="sd">                the result is</span>
+
+<span class="sd">                +---+---------+------+</span>
+<span class="sd">                | K | smvTime | V    |</span>
+<span class="sd">                +===+=========+======+</span>
+<span class="sd">                | 1 | Q201201 | 6.0  |</span>
+<span class="sd">                +---+---------+------+</span>
+<span class="sd">                | 1 | Q201202 | 2.45 |</span>
+<span class="sd">                +---+---------+------+</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">def</span> <span class="nf">__doAgg</span><span class="p">(</span><span class="o">*</span><span class="n">aggs</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">DataFrame</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sgd</span><span class="o">.</span><span class="n">smvTimePanelAgg</span><span class="p">(</span><span class="n">time_col</span><span class="p">,</span> <span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="p">,</span> <span class="n">smv_copy_array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">df</span><span class="o">.</span><span class="n">_sc</span><span class="p">,</span> <span class="o">*</span><span class="n">aggs</span><span class="p">)),</span> <span class="bp">self</span><span class="o">.</span><span class="n">df</span><span class="o">.</span><span class="n">sql_ctx</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">__doAgg</span></div>
+
+<div class="viewcode-block" id="SmvGroupedData.smvPercentRank"><a class="viewcode-back" href="../../smv.html#smv.helpers.SmvGroupedData.smvPercentRank">[docs]</a>    <span class="k">def</span> <span class="nf">smvPercentRank</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value_cols</span><span class="p">,</span> <span class="n">ignoreNull</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Compute the percent rank of a sequence of columns within a group in a given DataFrame.</span>
+
+<span class="sd">            Used Spark&#39;s `percentRank` window function. The precent rank is defined as</span>
+<span class="sd">            `R/(N-1)`, where `R` is the base 0 rank, and `N` is the population size. Under</span>
+<span class="sd">            this definition, min value (R=0) has percent rank `0.0`, and max value has percent</span>
+<span class="sd">            rank `1.0`.</span>
+
+<span class="sd">            For each column for which the percent rank is computed (e.g. &quot;v&quot;), an additional column is</span>
+<span class="sd">            added to the output, `v_pctrnk`</span>
+
+<span class="sd">            All other columns in the input are untouched and propagated to the output.</span>
+
+<span class="sd">            Args:</span>
+<span class="sd">                value_cols (list(str)): columns to calculate percentRank on</span>
+<span class="sd">                ignoreNull (boolean): if true, null values&#39;s percent ranks will be nulls, otherwise,</span>
+<span class="sd">                    as Spark sort considers null smaller than any value, nulls percent ranks will be</span>
+<span class="sd">                    zeros. Default true.</span>
+
+<span class="sd">            Example:</span>
+<span class="sd">                &gt;&gt;&gt; df.smvGroupBy(&#39;g, &#39;g2).smvPercentRank([&quot;v1&quot;, &quot;v2&quot;, &quot;v3&quot;])</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">DataFrame</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sgd</span><span class="o">.</span><span class="n">smvPercentRank</span><span class="p">(</span><span class="n">smv_copy_array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">df</span><span class="o">.</span><span class="n">_sc</span><span class="p">,</span> <span class="o">*</span><span class="n">value_cols</span><span class="p">),</span> <span class="n">ignoreNull</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">df</span><span class="o">.</span><span class="n">sql_ctx</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SmvGroupedData.smvQuantile"><a class="viewcode-back" href="../../smv.html#smv.helpers.SmvGroupedData.smvQuantile">[docs]</a>    <span class="k">def</span> <span class="nf">smvQuantile</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value_cols</span><span class="p">,</span> <span class="n">bin_num</span><span class="p">,</span> <span class="n">ignoreNull</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Compute the quantile bin numbers within a group in a given DataFrame.</span>
+
+<span class="sd">            Estimate quantiles and quantile groups given a data with unknown distribution is</span>
+<span class="sd">            quite arbitrary. There are multiple &#39;definitions&#39; used in different softwares. Please refer</span>
+<span class="sd">            https://en.wikipedia.org/wiki/Quantile#Estimating_quantiles_from_a_sample</span>
+<span class="sd">            for details.</span>
+
+<span class="sd">            `smvQuantile` calculated from Spark&#39;s `percentRank`. The algorithm is equavalent to the</span>
+<span class="sd">            one labled as `R-7, Excel, SciPy-(1,1), Maple-6` in above wikipedia page. Please note it</span>
+<span class="sd">            is slight different from SAS&#39;s default algorithm (labled as SAS-5).</span>
+
+<span class="sd">            Returned quantile bin numbers are 1 based. For example when `bin_num=10`, returned values are</span>
+<span class="sd">            integers from 1 to 10, inclusively.</span>
+
+<span class="sd">            For each column for which the quantile is computed (e.g. &quot;v&quot;), an additional column is added to</span>
+<span class="sd">            the output, &quot;v_quantile&quot;.</span>
+
+<span class="sd">            All other columns in the input are untouched and propagated to the output.</span>
+
+<span class="sd">            Args:</span>
+<span class="sd">                value_cols (list(str)): columns to calculate quantiles on</span>
+<span class="sd">                bin_num (int): number of quantiles, e.g. 4 for quartile, 10 for decile</span>
+<span class="sd">                ignoreNull (boolean): if true, null values&#39;s percent ranks will be nulls, otherwise,</span>
+<span class="sd">                    as Spark sort considers null smaller than any value, nulls percent ranks will be</span>
+<span class="sd">                    zeros. Default true.</span>
+
+<span class="sd">            Example:</span>
+<span class="sd">                &gt;&gt;&gt; df.smvGroupBy(&#39;g, &#39;g2).smvQuantile([&quot;v&quot;], 100)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">DataFrame</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sgd</span><span class="o">.</span><span class="n">smvQuantile</span><span class="p">(</span><span class="n">smv_copy_array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">df</span><span class="o">.</span><span class="n">_sc</span><span class="p">,</span> <span class="o">*</span><span class="n">value_cols</span><span class="p">),</span> <span class="n">bin_num</span><span class="p">,</span> <span class="n">ignoreNull</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">df</span><span class="o">.</span><span class="n">sql_ctx</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SmvGroupedData.smvDecile"><a class="viewcode-back" href="../../smv.html#smv.helpers.SmvGroupedData.smvDecile">[docs]</a>    <span class="k">def</span> <span class="nf">smvDecile</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value_cols</span><span class="p">,</span> <span class="n">ignoreNull</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Compute deciles of some columns on a grouped data</span>
+
+<span class="sd">            Simply an alias to `smvQuantile(value_cols, 10, ignoreNull)`</span>
+
+<span class="sd">            Args:</span>
+<span class="sd">                value_cols (list(str)): columns to calculate deciles on</span>
+<span class="sd">                ignoreNull (boolean): if true, null values&#39;s percent ranks will be nulls, otherwise,</span>
+<span class="sd">                    as Spark sort considers null smaller than any value, nulls percent ranks will be</span>
+<span class="sd">                    zeros. Default true.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">smvQuantile</span><span class="p">(</span><span class="n">value_cols</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="n">ignoreNull</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="SmvMultiJoin"><a class="viewcode-back" href="../../smv.html#smv.helpers.SmvMultiJoin">[docs]</a><span class="k">class</span> <span class="nc">SmvMultiJoin</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Wrapper around Scala&#39;s SmvMultiJoin&quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sqlContext</span><span class="p">,</span> <span class="n">mj</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sqlContext</span> <span class="o">=</span> <span class="n">sqlContext</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mj</span> <span class="o">=</span> <span class="n">mj</span>
+
+<div class="viewcode-block" id="SmvMultiJoin.joinWith"><a class="viewcode-back" href="../../smv.html#smv.helpers.SmvMultiJoin.joinWith">[docs]</a>    <span class="k">def</span> <span class="nf">joinWith</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">df</span><span class="p">,</span> <span class="n">postfix</span><span class="p">,</span> <span class="n">jointype</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Append SmvMultiJoin Chain</span>
+
+<span class="sd">            Args:</span>
+<span class="sd">                df (DataFrame): the DataFrame to join with</span>
+<span class="sd">                postfix (string): postfix to use when renaming join columns</span>
+<span class="sd">                jointype (string): optional jointype. if not specified, `conf.defaultJoinType` is used.  choose one of [&#39;inner&#39;, &#39;outer&#39;, &#39;leftouter&#39;, &#39;rightouter&#39;, &#39;leftsemi&#39;]</span>
+
+<span class="sd">            Example:</span>
+<span class="sd">                &gt;&gt;&gt; joindf = df1.smvJoinMultipleByKey([&#39;a&#39;], &#39;inner&#39;).joinWith(df2, &#39;_df2&#39;).joinWith(df3, &#39;_df3&#39;, &#39;outer&#39;)</span>
+
+<span class="sd">            Returns:</span>
+<span class="sd">                (SmvMultiJoin): formula of the join. need to call `doJoin()` on it to execute</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">SmvMultiJoin</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sqlContext</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">mj</span><span class="o">.</span><span class="n">joinWith</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">_jdf</span><span class="p">,</span> <span class="n">postfix</span><span class="p">,</span> <span class="n">jointype</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="SmvMultiJoin.doJoin"><a class="viewcode-back" href="../../smv.html#smv.helpers.SmvMultiJoin.doJoin">[docs]</a>    <span class="k">def</span> <span class="nf">doJoin</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dropextra</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Trigger the join operation</span>
+
+<span class="sd">            Args:</span>
+<span class="sd">                dropExtra (boolean): default false, which will keep all duplicated name columns with the postfix.</span>
+<span class="sd">                                     when true, the duplicated columns will be dropped</span>
+
+<span class="sd">            Example:</span>
+<span class="sd">                &gt;&gt;&gt; joindf.doJoin()</span>
+
+<span class="sd">            Returns:</span>
+<span class="sd">                (DataFrame): result of executing the join operation</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">DataFrame</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mj</span><span class="o">.</span><span class="n">doJoin</span><span class="p">(</span><span class="n">dropextra</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">sqlContext</span><span class="p">)</span></div></div>
+
+<span class="k">def</span> <span class="nf">_getUnboundMethod</span><span class="p">(</span><span class="n">helperCls</span><span class="p">,</span> <span class="n">methodName</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">method</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">helperCls</span><span class="p">(</span><span class="bp">self</span><span class="p">),</span> <span class="n">methodName</span><span class="p">)(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="n">method</span><span class="o">.</span><span class="vm">__name__</span> <span class="o">=</span> <span class="n">methodName</span>
+    <span class="k">return</span> <span class="n">method</span>
+
+<span class="k">def</span> <span class="nf">_helpCls</span><span class="p">(</span><span class="n">receiverCls</span><span class="p">,</span> <span class="n">helperCls</span><span class="p">):</span>
+    <span class="n">iscallable</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">f</span><span class="p">:</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="s2">&quot;__call__&quot;</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">method</span> <span class="ow">in</span> <span class="n">inspect</span><span class="o">.</span><span class="n">getmembers</span><span class="p">(</span><span class="n">helperCls</span><span class="p">,</span> <span class="n">predicate</span><span class="o">=</span><span class="n">iscallable</span><span class="p">):</span>
+        <span class="c1"># ignore special and private methods</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;_&quot;</span><span class="p">):</span>
+            <span class="n">newMethod</span> <span class="o">=</span> <span class="n">_getUnboundMethod</span><span class="p">(</span><span class="n">helperCls</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+            <span class="nb">setattr</span><span class="p">(</span><span class="n">receiverCls</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">newMethod</span><span class="p">)</span>
+
+<div class="viewcode-block" id="DataFrameHelper"><a class="viewcode-back" href="../../smv.html#smv.helpers.DataFrameHelper">[docs]</a><span class="k">class</span> <span class="nc">DataFrameHelper</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">df</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">df</span> <span class="o">=</span> <span class="n">df</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_sc</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">_sc</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_sql_ctx</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">sql_ctx</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_jdf</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">_jdf</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_jPythonHelper</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">_sc</span><span class="o">.</span><span class="n">_jvm</span><span class="o">.</span><span class="n">SmvPythonHelper</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_jDfHelper</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">_sc</span><span class="o">.</span><span class="n">_jvm</span><span class="o">.</span><span class="n">SmvDFHelper</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">_jdf</span><span class="p">)</span>
+
+<div class="viewcode-block" id="DataFrameHelper.smvExpandStruct"><a class="viewcode-back" href="../../smv.html#smv.helpers.DataFrameHelper.smvExpandStruct">[docs]</a>    <span class="k">def</span> <span class="nf">smvExpandStruct</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">cols</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Expand structure type column to a group of columns</span>
+
+<span class="sd">            Args:</span>
+<span class="sd">                cols (\*string): column names to expand</span>
+
+<span class="sd">            Example:</span>
+<span class="sd">                input DF:</span>
+<span class="sd">                    [id: string, address: struct&lt;state:string, zip:string, street:string&gt;]</span>
+
+<span class="sd">                &gt;&gt;&gt; df.smvExpandStruct(&quot;address&quot;)</span>
+
+<span class="sd">                output DF:</span>
+<span class="sd">                    [id: string, state: string, zip: string, street: string]</span>
+
+<span class="sd">            Returns:</span>
+<span class="sd">                (DataFrame): DF with expanded columns</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">jdf</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_jPythonHelper</span><span class="o">.</span><span class="n">smvExpandStruct</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_jdf</span><span class="p">,</span> <span class="n">smv_copy_array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_sc</span><span class="p">,</span> <span class="o">*</span><span class="n">cols</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">DataFrame</span><span class="p">(</span><span class="n">jdf</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sql_ctx</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="DataFrameHelper.smvGroupBy"><a class="viewcode-back" href="../../smv.html#smv.helpers.DataFrameHelper.smvGroupBy">[docs]</a>    <span class="k">def</span> <span class="nf">smvGroupBy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">cols</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Similar to groupBy, instead of creating GroupedData, create an `SmvGroupedData` object.</span>
+
+<span class="sd">            See [[org.tresamigos.smv.SmvGroupedDataFunc]] for list of functions that can be applied to the grouped data.</span>
+
+<span class="sd">            Args:</span>
+<span class="sd">                cols (\*string or \*Column): column names or Column objects to group on</span>
+
+<span class="sd">            Note:</span>
+<span class="sd">                This is going away shortly and user will be able to use standard Spark `groupBy` method directly.</span>
+
+<span class="sd">            Example:</span>
+<span class="sd">                &gt;&gt;&gt; df.smvGroupBy(col(&quot;k&quot;))</span>
+<span class="sd">                &gt;&gt;&gt; df.smvGroupBy(&quot;k&quot;)</span>
+
+<span class="sd">            Returns:</span>
+<span class="sd">                (SmvGroupedData): grouped data object</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">cols</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">Column</span><span class="p">):</span>
+            <span class="n">keys</span> <span class="o">=</span> <span class="p">[</span><span class="n">ColumnHelper</span><span class="p">(</span><span class="n">c</span><span class="p">)</span><span class="o">.</span><span class="n">smvGetColName</span><span class="p">()</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">cols</span><span class="p">]</span>
+        <span class="k">elif</span> <span class="n">is_string</span><span class="p">(</span><span class="n">cols</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+            <span class="n">keys</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">cols</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">SmvRuntimeError</span><span class="p">(</span><span class="s2">&quot;smvGroupBy does not support type: &quot;</span> <span class="o">+</span> <span class="nb">type</span><span class="p">(</span><span class="n">cols</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+
+        <span class="n">jSgd</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_jPythonHelper</span><span class="o">.</span><span class="n">smvGroupBy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_jdf</span><span class="p">,</span> <span class="n">smv_copy_array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_sc</span><span class="p">,</span> <span class="o">*</span><span class="n">cols</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">SmvGroupedData</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">df</span><span class="p">,</span> <span class="n">keys</span><span class="p">,</span> <span class="n">jSgd</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="DataFrameHelper.smvHashSample"><a class="viewcode-back" href="../../smv.html#smv.helpers.DataFrameHelper.smvHashSample">[docs]</a>    <span class="k">def</span> <span class="nf">smvHashSample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">rate</span><span class="o">=</span><span class="mf">0.01</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">23</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Sample the df according to the hash of a column</span>
+
+<span class="sd">            MurmurHash3 algorithm is used for generating the hash</span>
+
+<span class="sd">            Args:</span>
+<span class="sd">                key (string or Column): column name or Column to sample on</span>
+<span class="sd">                rate (double): sample rate in range (0, 1] with a default of 0.01 (1%)</span>
+<span class="sd">                seed (int): random generator integer seed with a default of 23</span>
+
+<span class="sd">            Example:</span>
+<span class="sd">                &gt;&gt;&gt; df.smvHashSample(col(&quot;key&quot;), rate=0.1, seed=123)</span>
+
+<span class="sd">            Returns:</span>
+<span class="sd">                (DataFrame): sampled DF</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">is_string</span><span class="p">(</span><span class="n">key</span><span class="p">):</span>
+            <span class="n">jkey</span> <span class="o">=</span> <span class="n">col</span><span class="p">(</span><span class="n">key</span><span class="p">)</span><span class="o">.</span><span class="n">_jc</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">Column</span><span class="p">):</span>
+            <span class="n">jkey</span> <span class="o">=</span> <span class="n">key</span><span class="o">.</span><span class="n">_jc</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;key parameter must be either a String or a Column&quot;</span><span class="p">)</span>
+
+        <span class="n">jdf</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_jDfHelper</span><span class="o">.</span><span class="n">smvHashSample</span><span class="p">(</span><span class="n">jkey</span><span class="p">,</span> <span class="n">rate</span><span class="p">,</span> <span class="n">seed</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">DataFrame</span><span class="p">(</span><span class="n">jdf</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sql_ctx</span><span class="p">)</span></div>
+
+    <span class="c1"># FIXME py4j method resolution with null argument can fail, so we</span>
+    <span class="c1"># temporarily remove the trailing parameters till we can find a</span>
+    <span class="c1"># workaround</span>
+<div class="viewcode-block" id="DataFrameHelper.smvJoinByKey"><a class="viewcode-back" href="../../smv.html#smv.helpers.DataFrameHelper.smvJoinByKey">[docs]</a>    <span class="k">def</span> <span class="nf">smvJoinByKey</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">,</span> <span class="n">keys</span><span class="p">,</span> <span class="n">joinType</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;joins two DataFrames on a key</span>
+
+<span class="sd">            The Spark `DataFrame` join operation does not handle duplicate key names.</span>
+<span class="sd">            If both left and right side of the join operation contain the same key,</span>
+<span class="sd">            the result `DataFrame` is unusable.</span>
+
+<span class="sd">            The `smvJoinByKey` method will allow the user to join two `DataFrames` using the same join key.</span>
+<span class="sd">            Post join, only the left side keys will remain. In case of outer-join, the</span>
+<span class="sd">            `coalesce(leftkey, rightkey)` will replace the left key to be kept.</span>
+
+<span class="sd">            Args:</span>
+<span class="sd">                other (DataFrame): the DataFrame to join with</span>
+<span class="sd">                keys (list(string)): a list of column names on which to apply the join</span>
+<span class="sd">                joinType (string): choose one of [&#39;inner&#39;, &#39;outer&#39;, &#39;leftouter&#39;, &#39;rightouter&#39;, &#39;leftsemi&#39;]</span>
+
+<span class="sd">            Example:</span>
+<span class="sd">                &gt;&gt;&gt; df1.smvJoinByKey(df2, [&quot;k&quot;], &quot;inner&quot;)</span>
+
+<span class="sd">            Returns:</span>
+<span class="sd">                (DataFrame): result of the join operation</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">jdf</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_jPythonHelper</span><span class="o">.</span><span class="n">smvJoinByKey</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_jdf</span><span class="p">,</span> <span class="n">other</span><span class="o">.</span><span class="n">_jdf</span><span class="p">,</span> <span class="n">_to_seq</span><span class="p">(</span><span class="n">keys</span><span class="p">),</span> <span class="n">joinType</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">DataFrame</span><span class="p">(</span><span class="n">jdf</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sql_ctx</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="DataFrameHelper.smvJoinMultipleByKey"><a class="viewcode-back" href="../../smv.html#smv.helpers.DataFrameHelper.smvJoinMultipleByKey">[docs]</a>    <span class="k">def</span> <span class="nf">smvJoinMultipleByKey</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">keys</span><span class="p">,</span> <span class="n">joinType</span> <span class="o">=</span> <span class="s1">&#39;inner&#39;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Create multiple DF join builder</span>
+
+<span class="sd">            It is used in conjunction with `joinWith` and `doJoin`</span>
+
+<span class="sd">            Args:</span>
+<span class="sd">                keys (list(string)): a list of column names on which to apply the join</span>
+<span class="sd">                joinType (string): choose one of [&#39;inner&#39;, &#39;outer&#39;, &#39;leftouter&#39;, &#39;rightouter&#39;, &#39;leftsemi&#39;]</span>
+
+<span class="sd">            Example:</span>
+<span class="sd">                &gt;&gt;&gt; df.joinMultipleByKey([&quot;k1&quot;, &quot;k2&quot;], &quot;inner&quot;).joinWith(df2, &quot;_df2&quot;).joinWith(df3, &quot;_df3&quot;, &quot;leftouter&quot;).doJoin()</span>
+
+<span class="sd">            Returns:</span>
+<span class="sd">                (SmvMultiJoin): the builder object for the multi join operation</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">jdf</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_jPythonHelper</span><span class="o">.</span><span class="n">smvJoinMultipleByKey</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_jdf</span><span class="p">,</span> <span class="n">smv_copy_array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_sc</span><span class="p">,</span> <span class="o">*</span><span class="n">keys</span><span class="p">),</span> <span class="n">joinType</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">SmvMultiJoin</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_sql_ctx</span><span class="p">,</span> <span class="n">jdf</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="DataFrameHelper.topNValsByFreq"><a class="viewcode-back" href="../../smv.html#smv.helpers.DataFrameHelper.topNValsByFreq">[docs]</a>    <span class="k">def</span> <span class="nf">topNValsByFreq</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">col</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Get top N most frequent values in Column col</span>
+
+<span class="sd">            Args:</span>
+<span class="sd">                n (int): maximum number of values</span>
+<span class="sd">                col (Column): which column to get values from</span>
+
+<span class="sd">            Example:</span>
+
+<span class="sd">                &gt;&gt;&gt; df.topNValsByFreq(1, col(&quot;cid&quot;))</span>
+
+<span class="sd">                will return the single most frequent value in the cid column</span>
+
+<span class="sd">            Returns:</span>
+<span class="sd">                (list(object)): most frequent values (type depends on schema)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">topNdf</span> <span class="o">=</span> <span class="n">DataFrame</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_jDfHelper</span><span class="o">.</span><span class="n">_topNValsByFreq</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">col</span><span class="o">.</span><span class="n">_jc</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sql_ctx</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">[</span><span class="nb">list</span><span class="p">(</span><span class="n">r</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">topNdf</span><span class="o">.</span><span class="n">collect</span><span class="p">()]</span></div>
+
+<div class="viewcode-block" id="DataFrameHelper.smvSkewJoinByKey"><a class="viewcode-back" href="../../smv.html#smv.helpers.DataFrameHelper.smvSkewJoinByKey">[docs]</a>    <span class="k">def</span> <span class="nf">smvSkewJoinByKey</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">,</span> <span class="n">joinType</span><span class="p">,</span> <span class="n">skewVals</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Join that leverages broadcast (map-side) join of rows with skewed (high-frequency) values</span>
+
+<span class="sd">            Rows keyed by skewed values are joined via broadcast join while remaining</span>
+<span class="sd">            rows are joined without broadcast join. Occurrences of skewVals in df2 should be</span>
+<span class="sd">            infrequent enough that the filtered table is small enough for a broadcast join.</span>
+<span class="sd">            result is the union of the join results.</span>
+
+<span class="sd">            Args:</span>
+<span class="sd">                other (DataFrame): DataFrame to join with</span>
+<span class="sd">                joinType (str): name of type of join (e.g. &quot;inner&quot;)</span>
+<span class="sd">                skewVals (list(object)): list of skewed values</span>
+<span class="sd">                key (str): key on which to join (also the Column with the skewed values)</span>
+
+<span class="sd">            Example:</span>
+
+<span class="sd">                &gt;&gt;&gt; df.smvSkewJoinByKey(df2, &quot;inner&quot;, [4], &quot;cid&quot;)</span>
+
+<span class="sd">                will broadcast join the rows of df1 and df2 where col(&quot;cid&quot;) == &quot;4&quot;</span>
+<span class="sd">                and join the remaining rows of df1 and df2 without broadcast join.</span>
+
+<span class="sd">            Returns:</span>
+<span class="sd">                (DataFrame): the result of the join operation</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">jdf</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_jDfHelper</span><span class="o">.</span><span class="n">smvSkewJoinByKey</span><span class="p">(</span><span class="n">other</span><span class="o">.</span><span class="n">_jdf</span><span class="p">,</span> <span class="n">joinType</span><span class="p">,</span> <span class="n">_to_seq</span><span class="p">(</span><span class="n">skewVals</span><span class="p">),</span> <span class="n">key</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">DataFrame</span><span class="p">(</span><span class="n">jdf</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sql_ctx</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="DataFrameHelper.smvSelectMinus"><a class="viewcode-back" href="../../smv.html#smv.helpers.DataFrameHelper.smvSelectMinus">[docs]</a>    <span class="k">def</span> <span class="nf">smvSelectMinus</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">cols</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Remove one or more columns from current DataFrame</span>
+
+<span class="sd">            Args:</span>
+<span class="sd">                cols (\*string or \*Column): column names or Columns to remove from the DataFrame</span>
+
+<span class="sd">            Example:</span>
+<span class="sd">                &gt;&gt;&gt; df.smvSelectMinus(&quot;col1&quot;, &quot;col2&quot;)</span>
+<span class="sd">                &gt;&gt;&gt; df.smvSelectMinus(col(&quot;col1&quot;), col(&quot;col2&quot;))</span>
+
+<span class="sd">            Returns:</span>
+<span class="sd">                (DataFrame): the resulting DataFrame after removal of columns</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">jdf</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_jPythonHelper</span><span class="o">.</span><span class="n">smvSelectMinus</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_jdf</span><span class="p">,</span> <span class="n">smv_copy_array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_sc</span><span class="p">,</span> <span class="o">*</span><span class="n">cols</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">DataFrame</span><span class="p">(</span><span class="n">jdf</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sql_ctx</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="DataFrameHelper.smvSelectPlus"><a class="viewcode-back" href="../../smv.html#smv.helpers.DataFrameHelper.smvSelectPlus">[docs]</a>    <span class="k">def</span> <span class="nf">smvSelectPlus</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">cols</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Selects all the current columns in current DataFrame plus the supplied expressions</span>
+
+<span class="sd">            The new columns are added to the end of the current column list.</span>
+
+<span class="sd">            Args:</span>
+<span class="sd">                cols (\*Column): expressions to add to the DataFrame</span>
+
+<span class="sd">            Example:</span>
+<span class="sd">                &gt;&gt;&gt; df.smvSelectPlus((col(&quot;price&quot;) * col(&quot;count&quot;)).alias(&quot;amt&quot;))</span>
+
+<span class="sd">            Returns:</span>
+<span class="sd">                (DataFrame): the resulting DataFrame after removal of columns</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">jdf</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_jDfHelper</span><span class="o">.</span><span class="n">smvSelectPlus</span><span class="p">(</span><span class="n">_to_seq</span><span class="p">(</span><span class="n">cols</span><span class="p">,</span> <span class="n">_jcol</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">DataFrame</span><span class="p">(</span><span class="n">jdf</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sql_ctx</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="DataFrameHelper.smvPrefixFieldNames"><a class="viewcode-back" href="../../smv.html#smv.helpers.DataFrameHelper.smvPrefixFieldNames">[docs]</a>    <span class="k">def</span> <span class="nf">smvPrefixFieldNames</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prefix</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Apply a prefix to all column names in the given `DataFrame`.</span>
+
+<span class="sd">            Args:</span>
+<span class="sd">                prefix (string): prefix string to be added to all the column names</span>
+<span class="sd">            Example:</span>
+<span class="sd">                &gt;&gt;&gt; df.smvPrefixFieldNames(&quot;x_&quot;)</span>
+
+<span class="sd">            Above will add `x_` to the beginning of every column name in the `DataFrame`.</span>
+<span class="sd">            Please note that if the renamed column names over lap with existing columns,</span>
+<span class="sd">            the method will error out.</span>
+
+<span class="sd">            Returns:</span>
+<span class="sd">                (DataFrame)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">jdf</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_jDfHelper</span><span class="o">.</span><span class="n">smvPrefixFieldNames</span><span class="p">(</span><span class="n">prefix</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">DataFrame</span><span class="p">(</span><span class="n">jdf</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sql_ctx</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="DataFrameHelper.smvDedupByKey"><a class="viewcode-back" href="../../smv.html#smv.helpers.DataFrameHelper.smvDedupByKey">[docs]</a>    <span class="k">def</span> <span class="nf">smvDedupByKey</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">keys</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Remove duplicate records from the DataFrame by arbitrarily selecting the first record from a set of records with same primary key or key combo.</span>
+
+<span class="sd">            Args:</span>
+<span class="sd">                keys (\*string or \*Column): the column names or Columns on which to apply dedup</span>
+
+<span class="sd">            Example:</span>
+<span class="sd">                input DataFrame:</span>
+
+<span class="sd">                +-----+---------+---------+</span>
+<span class="sd">                | id  | product | Company |</span>
+<span class="sd">                +=====+=========+=========+</span>
+<span class="sd">                | 1   | A       | C1      |</span>
+<span class="sd">                +-----+---------+---------+</span>
+<span class="sd">                | 1   | C       | C2      |</span>
+<span class="sd">                +-----+---------+---------+</span>
+<span class="sd">                | 2   | B       | C3      |</span>
+<span class="sd">                +-----+---------+---------+</span>
+<span class="sd">                | 2   | B       | C4      |</span>
+<span class="sd">                +-----+---------+---------+</span>
+
+<span class="sd">                &gt;&gt;&gt; df.smvDedupByKey(&quot;id&quot;)</span>
+
+<span class="sd">                output DataFrame:</span>
+
+<span class="sd">                +-----+---------+---------+</span>
+<span class="sd">                | id  | product | Company |</span>
+<span class="sd">                +=====+=========+=========+</span>
+<span class="sd">                | 1   | A       | C1      |</span>
+<span class="sd">                +-----+---------+---------+</span>
+<span class="sd">                | 2   | B       | C3      |</span>
+<span class="sd">                +-----+---------+---------+</span>
+
+<span class="sd">                &gt;&gt;&gt; df.smvDedupByKey(&quot;id&quot;, &quot;product&quot;)</span>
+
+<span class="sd">                output DataFrame:</span>
+
+<span class="sd">                +-----+---------+---------+</span>
+<span class="sd">                | id  | product | Company |</span>
+<span class="sd">                +=====+=========+=========+</span>
+<span class="sd">                | 1   | A       | C1      |</span>
+<span class="sd">                +-----+---------+---------+</span>
+<span class="sd">                | 1   | C       | C2      |</span>
+<span class="sd">                +-----+---------+---------+</span>
+<span class="sd">                | 2   | B       | C3      |</span>
+<span class="sd">                +-----+---------+---------+</span>
+
+<span class="sd">            Returns:</span>
+<span class="sd">                (DataFrame): a DataFrame without duplicates for the specified keys</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">jdf</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_jPythonHelper</span><span class="o">.</span><span class="n">smvDedupByKey</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_jdf</span><span class="p">,</span> <span class="n">smv_copy_array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_sc</span><span class="p">,</span> <span class="o">*</span><span class="n">keys</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">DataFrame</span><span class="p">(</span><span class="n">jdf</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sql_ctx</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="DataFrameHelper.smvDedupByKeyWithOrder"><a class="viewcode-back" href="../../smv.html#smv.helpers.DataFrameHelper.smvDedupByKeyWithOrder">[docs]</a>    <span class="k">def</span> <span class="nf">smvDedupByKeyWithOrder</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">keys</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Remove duplicated records by selecting the first record relative to a given ordering</span>
+
+<span class="sd">            The order is specified in another set of parentheses, as follows:</span>
+
+<span class="sd">            &gt;&gt;&gt; def smvDedupByKeyWithOrder(self, *keys)(*orderCols)</span>
+
+<span class="sd">            Note:</span>
+<span class="sd">                Same as the `smvDedupByKey` method, we use RDD groupBy in the implementation of this method to make sure we can handle large key space.</span>
+
+<span class="sd">            Args:</span>
+<span class="sd">                keys (\*string or \*Column): the column names or Columns on which to apply dedup</span>
+
+<span class="sd">            Example:</span>
+<span class="sd">                input DataFrame:</span>
+
+<span class="sd">                +-----+---------+---------+</span>
+<span class="sd">                | id  | product | Company |</span>
+<span class="sd">                +=====+=========+=========+</span>
+<span class="sd">                | 1   | A       | C1      |</span>
+<span class="sd">                +-----+---------+---------+</span>
+<span class="sd">                | 1   | C       | C2      |</span>
+<span class="sd">                +-----+---------+---------+</span>
+<span class="sd">                | 2   | B       | C3      |</span>
+<span class="sd">                +-----+---------+---------+</span>
+<span class="sd">                | 2   | B       | C4      |</span>
+<span class="sd">                +-----+---------+---------+</span>
+
+<span class="sd">                &gt;&gt;&gt; df.smvDedupByKeyWithOrder(col(&quot;id&quot;))(col(&quot;product&quot;).desc())</span>
+
+<span class="sd">                output DataFrame:</span>
+
+<span class="sd">                +-----+---------+---------+</span>
+<span class="sd">                | id  | product | Company |</span>
+<span class="sd">                +=====+=========+=========+</span>
+<span class="sd">                | 1   | C       | C2      |</span>
+<span class="sd">                +-----+---------+---------+</span>
+<span class="sd">                | 2   | B       | C3      |</span>
+<span class="sd">                +-----+---------+---------+</span>
+
+<span class="sd">            Returns:</span>
+<span class="sd">                (DataFrame): a DataFrame without duplicates for the specified keys / order</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">def</span> <span class="nf">_withOrder</span><span class="p">(</span><span class="o">*</span><span class="n">orderCols</span><span class="p">):</span>
+            <span class="n">jdf</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_jPythonHelper</span><span class="o">.</span><span class="n">smvDedupByKeyWithOrder</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_jdf</span><span class="p">,</span> <span class="n">smv_copy_array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_sc</span><span class="p">,</span> <span class="o">*</span><span class="n">keys</span><span class="p">),</span> <span class="n">smv_copy_array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_sc</span><span class="p">,</span> <span class="o">*</span><span class="n">orderCols</span><span class="p">))</span>
+            <span class="k">return</span> <span class="n">DataFrame</span><span class="p">(</span><span class="n">jdf</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sql_ctx</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">_withOrder</span></div>
+
+<div class="viewcode-block" id="DataFrameHelper.smvUnion"><a class="viewcode-back" href="../../smv.html#smv.helpers.DataFrameHelper.smvUnion">[docs]</a>    <span class="k">def</span> <span class="nf">smvUnion</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">dfothers</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Unions DataFrames with different number of columns by column name and schema</span>
+
+<span class="sd">            Spark unionAll ignores column names &amp; schema, and can only be performed on tables with the same number of columns.</span>
+
+<span class="sd">            Args:</span>
+<span class="sd">                dfOthers (\*DataFrame): the dataframes to union with</span>
+
+<span class="sd">            Example:</span>
+<span class="sd">                &gt;&gt;&gt; df.smvUnion(df2, df3)</span>
+
+<span class="sd">            Returns:</span>
+<span class="sd">                (DataFrame): the union of all specified DataFrames</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">jdf</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_jDfHelper</span><span class="o">.</span><span class="n">smvUnion</span><span class="p">(</span><span class="n">_to_seq</span><span class="p">(</span><span class="n">dfothers</span><span class="p">,</span> <span class="n">_jdf</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">DataFrame</span><span class="p">(</span><span class="n">jdf</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sql_ctx</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="DataFrameHelper.smvRenameField"><a class="viewcode-back" href="../../smv.html#smv.helpers.DataFrameHelper.smvRenameField">[docs]</a>    <span class="k">def</span> <span class="nf">smvRenameField</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">namePairs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Rename one or more fields of a `DataFrame`</span>
+
+<span class="sd">            Args:</span>
+<span class="sd">                namePairs (\*tuple): tuples of strings where the first is the source column name, and the second is the target column name</span>
+
+<span class="sd">            Example:</span>
+<span class="sd">                &gt;&gt;&gt; df.smvRenameField((&quot;a&quot;, &quot;aa&quot;), (&quot;c&quot;, &quot;cc&quot;))</span>
+
+<span class="sd">            Returns:</span>
+<span class="sd">                (DataFrame): the DataFrame with renamed fields</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">jdf</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_jPythonHelper</span><span class="o">.</span><span class="n">smvRenameField</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_jdf</span><span class="p">,</span> <span class="n">smv_copy_array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_sc</span><span class="p">,</span> <span class="o">*</span><span class="n">namePairs</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">DataFrame</span><span class="p">(</span><span class="n">jdf</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sql_ctx</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="DataFrameHelper.smvUnpivot"><a class="viewcode-back" href="../../smv.html#smv.helpers.DataFrameHelper.smvUnpivot">[docs]</a>    <span class="k">def</span> <span class="nf">smvUnpivot</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">cols</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Unpivot the selected columns</span>
+
+<span class="sd">            Given a set of records with value columns, turns the value columns into value rows.</span>
+
+<span class="sd">            Args:</span>
+<span class="sd">                cols (\*string): the names of the columns to unpivot</span>
+
+<span class="sd">            Example:</span>
+<span class="sd">                input DF:</span>
+
+<span class="sd">                    +----+---+---+---+</span>
+<span class="sd">                    | id | X | Y | Z |</span>
+<span class="sd">                    +====+===+===+===+</span>
+<span class="sd">                    | 1  | A | B | C |</span>
+<span class="sd">                    +----+---+---+---+</span>
+<span class="sd">                    | 2  | D | E | F |</span>
+<span class="sd">                    +----+---+---+---+</span>
+<span class="sd">                    | 3  | G | H | I |</span>
+<span class="sd">                    +----+---+---+---+</span>
+
+<span class="sd">                &gt;&gt;&gt; df.smvUnpivot(&quot;X&quot;, &quot;Y&quot;, &quot;Z&quot;)</span>
+
+<span class="sd">                output DF:</span>
+
+<span class="sd">                    +----+--------+-------+</span>
+<span class="sd">                    | id | column | value |</span>
+<span class="sd">                    +====+========+=======+</span>
+<span class="sd">                    |  1 |   X    |   A   |</span>
+<span class="sd">                    +----+--------+-------+</span>
+<span class="sd">                    |  1 |   Y    |   B   |</span>
+<span class="sd">                    +----+--------+-------+</span>
+<span class="sd">                    |  1 |   Z    |   C   |</span>
+<span class="sd">                    +----+--------+-------+</span>
+<span class="sd">                    | ...|   ...  |  ...  |</span>
+<span class="sd">                    +----+--------+-------+</span>
+<span class="sd">                    |  3 |   Y    |   H   |</span>
+<span class="sd">                    +----+--------+-------+</span>
+<span class="sd">                    |  3 |   Z    |   I   |</span>
+<span class="sd">                    +----+--------+-------+</span>
+
+<span class="sd">            Returns:</span>
+<span class="sd">                (DataFrame): the unpivoted DataFrame</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">jdf</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_jDfHelper</span><span class="o">.</span><span class="n">smvUnpivot</span><span class="p">(</span><span class="n">_to_seq</span><span class="p">(</span><span class="n">cols</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">DataFrame</span><span class="p">(</span><span class="n">jdf</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sql_ctx</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="DataFrameHelper.smvUnpivotRegex"><a class="viewcode-back" href="../../smv.html#smv.helpers.DataFrameHelper.smvUnpivotRegex">[docs]</a>    <span class="k">def</span> <span class="nf">smvUnpivotRegex</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cols</span><span class="p">,</span> <span class="n">colNameFn</span><span class="p">,</span> <span class="n">indexColName</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Unpivot the selected columns using the specified regex</span>
+
+<span class="sd">            Args:</span>
+<span class="sd">                cols (\*string): the names of the columns to unpivot</span>
+<span class="sd">                colNameFn (string): a regex representing the function to be applied when unpivoting</span>
+<span class="sd">                indexColName (string): the name of the index column to be created</span>
+
+<span class="sd">            Example:</span>
+<span class="sd">                input DF:</span>
+
+<span class="sd">                    +----+-------+-------+-------+-------+</span>
+<span class="sd">                    | id |  A_1  |  A_2  |  B_1  |  B_2  |</span>
+<span class="sd">                    +====+=======+=======+=======+=======+</span>
+<span class="sd">                    | 1  | 1_a_1 | 1_a_2 | 1_b_1 | 1_b_2 |</span>
+<span class="sd">                    +----+-------+-------+-------+-------+</span>
+<span class="sd">                    | 2  | 2_a_1 | 2_a_2 | 2_b_1 | 2_b_2 |</span>
+<span class="sd">                    +----+-------+-------+-------+-------+</span>
+
+<span class="sd">                &gt;&gt;&gt; df.smvUnpivotRegex( [&quot;A_1&quot;, &quot;A_2&quot;, &quot;B_1&quot;, &quot;B_2&quot;], &quot;(.*)_(.*)&quot;, &quot;index&quot; )</span>
+
+<span class="sd">                output DF:</span>
+
+<span class="sd">                    +----+-------+-------+-------+</span>
+<span class="sd">                    | id | index |   A   |   B   |</span>
+<span class="sd">                    +====+=======+=======+=======+</span>
+<span class="sd">                    | 1  |   1   | 1_a_1 | 1_b_1 |</span>
+<span class="sd">                    +----+-------+-------+-------+</span>
+<span class="sd">                    | 1  |   2   | 1_a_2 | 1_b_2 |</span>
+<span class="sd">                    +----+-------+-------+-------+</span>
+<span class="sd">                    | 2  |   1   | 2_a_1 | 2_b_1 |</span>
+<span class="sd">                    +----+-------+-------+-------+</span>
+<span class="sd">                    | 2  |   2   | 2_a_2 | 2_b_2 |</span>
+<span class="sd">                    +----+-------+-------+-------+</span>
+
+<span class="sd">            Returns:</span>
+<span class="sd">                (DataFrame): the unpivoted DataFrame</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">jdf</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_jDfHelper</span><span class="o">.</span><span class="n">smvUnpivotRegex</span><span class="p">(</span><span class="n">_to_seq</span><span class="p">(</span><span class="n">cols</span><span class="p">),</span> <span class="n">colNameFn</span><span class="p">,</span> <span class="n">indexColName</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">DataFrame</span><span class="p">(</span><span class="n">jdf</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sql_ctx</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="DataFrameHelper.smvExportCsv"><a class="viewcode-back" href="../../smv.html#smv.helpers.DataFrameHelper.smvExportCsv">[docs]</a>    <span class="k">def</span> <span class="nf">smvExportCsv</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Export DataFrame to local file system</span>
+
+<span class="sd">            Args:</span>
+<span class="sd">                path (string): relative path to the app running directory on local file system (instead of HDFS)</span>
+<span class="sd">                n (integer): optional. number of records to export. default is all records</span>
+
+<span class="sd">            Note:</span>
+<span class="sd">                Since we have to collect the DF and then call JAVA file operations, the job have to be launched as either local or yar-client mode. Also it is user&#39;s responsibility to make sure that the DF is small enough to fit into local file system.</span>
+
+<span class="sd">            Example:</span>
+<span class="sd">                &gt;&gt;&gt; df.smvExportCsv(&quot;./target/python-test-export-csv.csv&quot;)</span>
+
+<span class="sd">            Returns:</span>
+<span class="sd">                (None)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_jDfHelper</span><span class="o">.</span><span class="n">smvExportCsv</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="DataFrameHelper.smvOverlapCheck"><a class="viewcode-back" href="../../smv.html#smv.helpers.DataFrameHelper.smvOverlapCheck">[docs]</a>    <span class="k">def</span> <span class="nf">smvOverlapCheck</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">keyColName</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;For a set of DFs, which share the same key column, check the overlap across them</span>
+
+<span class="sd">            The other DataFrames are specified in another set of parentheses, as follows:</span>
+
+<span class="sd">            &gt;&gt;&gt; df1.smvOverlapCheck(key)(*df)</span>
+
+<span class="sd">            Args:</span>
+<span class="sd">                keyColName (string): the column name for the key column</span>
+
+<span class="sd">            Examples:</span>
+<span class="sd">                &gt;&gt;&gt; df1.smvOverlapCheck(&quot;key&quot;)(df2, df3, df4)</span>
+
+<span class="sd">                output DF has 2 columns:</span>
+<span class="sd">                  - key</span>
+<span class="sd">                  - flag: a bit-string, e.g. 0110. Each bit represents whether the original DF has this key</span>
+
+<span class="sd">                It can be used with EDD to summarize on the flag:</span>
+
+<span class="sd">                &gt;&gt;&gt; df1.smvOverlapCheck(&quot;key&quot;)(df2, df3).smvHist(&quot;flag&quot;)</span>
+
+<span class="sd">            Returns:</span>
+<span class="sd">                (DataFrame): the DataFrame with the key and flag columns</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">def</span> <span class="nf">_check</span><span class="p">(</span><span class="o">*</span><span class="n">dfothers</span><span class="p">):</span>
+            <span class="n">jdf</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_jPythonHelper</span><span class="o">.</span><span class="n">smvOverlapCheck</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_jdf</span><span class="p">,</span> <span class="n">keyColName</span><span class="p">,</span> <span class="n">smv_copy_array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_sc</span><span class="p">,</span> <span class="o">*</span><span class="n">dfothers</span><span class="p">))</span>
+            <span class="k">return</span> <span class="n">DataFrame</span><span class="p">(</span><span class="n">jdf</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sql_ctx</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">_check</span></div>
+
+<div class="viewcode-block" id="DataFrameHelper.smvDesc"><a class="viewcode-back" href="../../smv.html#smv.helpers.DataFrameHelper.smvDesc">[docs]</a>    <span class="k">def</span> <span class="nf">smvDesc</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">colDescs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Adds column descriptions</span>
+
+<span class="sd">            Args:</span>
+<span class="sd">                colDescs (\*tuple): tuples of strings where the first is the column name, and the second is the description to add</span>
+
+<span class="sd">            Example:</span>
+<span class="sd">                &gt;&gt;&gt; df.smvDesc((&quot;a&quot;, &quot;description of col a&quot;), (&quot;b&quot;, &quot;description of col b&quot;))</span>
+
+<span class="sd">            Returns:</span>
+<span class="sd">                (DataFrame): the DataFrame with column descriptions added</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">jdf</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_jPythonHelper</span><span class="o">.</span><span class="n">smvDesc</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_jdf</span><span class="p">,</span> <span class="n">smv_copy_array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_sc</span><span class="p">,</span> <span class="o">*</span><span class="n">colDescs</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">DataFrame</span><span class="p">(</span><span class="n">jdf</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sql_ctx</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="DataFrameHelper.smvDescFromDF"><a class="viewcode-back" href="../../smv.html#smv.helpers.DataFrameHelper.smvDescFromDF">[docs]</a>    <span class="k">def</span> <span class="nf">smvDescFromDF</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">descDF</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Adds column descriptions</span>
+
+<span class="sd">            Args:</span>
+<span class="sd">                descDF (DataFrame): a companion 2-column desciptionDF that has variable names as column 1 and corresponding variable descriptions as column 2</span>
+
+<span class="sd">            Example:</span>
+<span class="sd">                &gt;&gt;&gt; df.smvDescFromDF(desciptionDF)</span>
+
+<span class="sd">            Returns:</span>
+<span class="sd">                (DataFrame): the DataFrame with column descriptions added</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">desclist</span> <span class="o">=</span> <span class="p">[(</span><span class="nb">str</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="nb">str</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">descDF</span><span class="o">.</span><span class="n">collect</span><span class="p">()]</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">smvDesc</span><span class="p">(</span><span class="o">*</span><span class="n">desclist</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="DataFrameHelper.smvGetDesc"><a class="viewcode-back" href="../../smv.html#smv.helpers.DataFrameHelper.smvGetDesc">[docs]</a>    <span class="k">def</span> <span class="nf">smvGetDesc</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">colName</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns column description(s)</span>
+
+<span class="sd">            Args:</span>
+<span class="sd">                colName (string): optional column name for which to get the description.</span>
+
+<span class="sd">            Example:</span>
+<span class="sd">                &gt;&gt;&gt; df.smvGetDesc(&quot;col_a&quot;)</span>
+<span class="sd">                &gt;&gt;&gt; df.smvGetDesc()</span>
+
+<span class="sd">            Returns:</span>
+<span class="sd">                (string): description string of colName, if specified</span>
+
+<span class="sd">            or:</span>
+
+<span class="sd">            Returns:</span>
+<span class="sd">                (list(tuple)): a list of (colName, description) pairs for all columns</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">colName</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_jDfHelper</span><span class="o">.</span><span class="n">smvGetDesc</span><span class="p">(</span><span class="n">colName</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[(</span><span class="n">c</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_jDfHelper</span><span class="o">.</span><span class="n">smvGetDesc</span><span class="p">(</span><span class="n">c</span><span class="p">))</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="DataFrameHelper.smvRemoveDesc"><a class="viewcode-back" href="../../smv.html#smv.helpers.DataFrameHelper.smvRemoveDesc">[docs]</a>    <span class="k">def</span> <span class="nf">smvRemoveDesc</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">colNames</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Removes description for the given columns from the Dataframe</span>
+
+<span class="sd">            Args:</span>
+<span class="sd">                colNames (\*string): names of columns for which to remove the description</span>
+
+<span class="sd">            Example:</span>
+<span class="sd">                &gt;&gt;&gt; df.smvRemoveDesc(&quot;col_a&quot;, &quot;col_b&quot;)</span>
+
+<span class="sd">            Returns:</span>
+<span class="sd">                (DataFrame): the DataFrame with column descriptions removed</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">jdf</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_jPythonHelper</span><span class="o">.</span><span class="n">smvRemoveDesc</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_jdf</span><span class="p">,</span> <span class="n">smv_copy_array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_sc</span><span class="p">,</span> <span class="o">*</span><span class="n">colNames</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">DataFrame</span><span class="p">(</span><span class="n">jdf</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sql_ctx</span><span class="p">)</span></div>
+
+    <span class="c1">#############################################</span>
+    <span class="c1"># DfHelpers which print to STDOUT</span>
+    <span class="c1"># Scala side which print to STDOUT will not work on Jupyter. Have to pass the string to python side then print to stdout</span>
+    <span class="c1">#############################################</span>
+    <span class="k">def</span> <span class="nf">_println</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">string</span><span class="p">):</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">string</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_printFile</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="n">tgt</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span>
+        <span class="n">tgt</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="nb">str</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">tgt</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_peekStr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pos</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">colRegex</span> <span class="o">=</span> <span class="s2">&quot;.*&quot;</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_jPythonHelper</span><span class="o">.</span><span class="n">peekStr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_jdf</span><span class="p">,</span> <span class="n">pos</span><span class="p">,</span> <span class="n">colRegex</span><span class="p">)</span>
+
+<div class="viewcode-block" id="DataFrameHelper.peek"><a class="viewcode-back" href="../../smv.html#smv.helpers.DataFrameHelper.peek">[docs]</a>    <span class="k">def</span> <span class="nf">peek</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pos</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">colRegex</span> <span class="o">=</span> <span class="s2">&quot;.*&quot;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Display a DataFrame row in transposed view</span>
+
+<span class="sd">            Args:</span>
+<span class="sd">                pos (integer): the n-th row to display, default as 1</span>
+<span class="sd">                colRegex (string): show the columns with name matching the regex, default as &quot;.*&quot;</span>
+
+<span class="sd">            Returns:</span>
+<span class="sd">                (None)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_println</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_peekStr</span><span class="p">(</span><span class="n">pos</span><span class="p">,</span> <span class="n">colRegex</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="DataFrameHelper.peekSave"><a class="viewcode-back" href="../../smv.html#smv.helpers.DataFrameHelper.peekSave">[docs]</a>    <span class="k">def</span> <span class="nf">peekSave</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">pos</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>  <span class="n">colRegex</span> <span class="o">=</span> <span class="s2">&quot;.*&quot;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Write `peek` result to a file</span>
+
+<span class="sd">            Args:</span>
+<span class="sd">                path (string): local file name to Write</span>
+<span class="sd">                pos (integer): the n-th row to display, default as 1</span>
+<span class="sd">                colRegex (string): show the columns with name matching the regex, default as &quot;.*&quot;</span>
+
+<span class="sd">            Returns:</span>
+<span class="sd">                (None)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_printFile</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_peekStr</span><span class="p">(</span><span class="n">pos</span><span class="p">,</span> <span class="n">colRegex</span><span class="p">))</span></div>
+
+    <span class="k">def</span> <span class="nf">_smvEdd</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">cols</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_jDfHelper</span><span class="o">.</span><span class="n">_smvEdd</span><span class="p">(</span><span class="n">_to_seq</span><span class="p">(</span><span class="n">cols</span><span class="p">))</span><span class="o">.</span><span class="n">createReport</span><span class="p">()</span>
+
+<div class="viewcode-block" id="DataFrameHelper.smvEdd"><a class="viewcode-back" href="../../smv.html#smv.helpers.DataFrameHelper.smvEdd">[docs]</a>    <span class="k">def</span> <span class="nf">smvEdd</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">cols</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Display EDD summary</span>
+
+<span class="sd">            Args:</span>
+<span class="sd">                cols (\*string): column names on which to perform EDD summary</span>
+
+<span class="sd">            Example:</span>
+<span class="sd">                &gt;&gt;&gt; df.smvEdd(&quot;a&quot;, &quot;b&quot;)</span>
+
+<span class="sd">            Returns:</span>
+<span class="sd">                (None)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_println</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_smvEdd</span><span class="p">(</span><span class="o">*</span><span class="n">cols</span><span class="p">))</span></div>
+
+    <span class="k">def</span> <span class="nf">_smvHist</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">cols</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_jDfHelper</span><span class="o">.</span><span class="n">_smvHist</span><span class="p">(</span><span class="n">_to_seq</span><span class="p">(</span><span class="n">cols</span><span class="p">))</span><span class="o">.</span><span class="n">createReport</span><span class="p">()</span>
+
+<div class="viewcode-block" id="DataFrameHelper.smvHist"><a class="viewcode-back" href="../../smv.html#smv.helpers.DataFrameHelper.smvHist">[docs]</a>    <span class="k">def</span> <span class="nf">smvHist</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">cols</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Display EDD histogram</span>
+
+<span class="sd">            Each column&#39;s histogram prints separately</span>
+
+<span class="sd">            Args:</span>
+<span class="sd">                cols (\*string): The columns on which to perform EDD histogram</span>
+
+<span class="sd">            Example:</span>
+<span class="sd">                &gt;&gt;&gt; df.smvHist(&quot;a&quot;)</span>
+
+<span class="sd">            Returns:</span>
+<span class="sd">                (None)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_println</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_smvHist</span><span class="p">(</span><span class="o">*</span><span class="n">cols</span><span class="p">))</span></div>
+
+    <span class="k">def</span> <span class="nf">_smvConcatHist</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">cols</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_jPythonHelper</span><span class="o">.</span><span class="n">smvConcatHist</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_jdf</span><span class="p">,</span> <span class="n">smv_copy_array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_sc</span><span class="p">,</span> <span class="o">*</span><span class="n">cols</span><span class="p">))</span><span class="o">.</span><span class="n">createReport</span><span class="p">()</span>
+
+<div class="viewcode-block" id="DataFrameHelper.smvConcatHist"><a class="viewcode-back" href="../../smv.html#smv.helpers.DataFrameHelper.smvConcatHist">[docs]</a>    <span class="k">def</span> <span class="nf">smvConcatHist</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">cols</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Display EDD histogram of a group of columns (joint distribution)</span>
+
+<span class="sd">            Args:</span>
+<span class="sd">                cols (\*string): The columns on which to perform EDD histogram</span>
+
+<span class="sd">            Example:</span>
+<span class="sd">                &gt;&gt;&gt; df.smvConcatHist(&quot;a&quot;, &quot;b&quot;)</span>
+
+<span class="sd">            Returns:</span>
+<span class="sd">                (None)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_println</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_smvConcatHist</span><span class="p">(</span><span class="o">*</span><span class="n">cols</span><span class="p">))</span></div>
+
+    <span class="k">def</span> <span class="nf">_smvFreqHist</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">cols</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_jDfHelper</span><span class="o">.</span><span class="n">_smvFreqHist</span><span class="p">(</span><span class="n">_to_seq</span><span class="p">(</span><span class="n">cols</span><span class="p">))</span><span class="o">.</span><span class="n">createReport</span><span class="p">()</span>
+
+<div class="viewcode-block" id="DataFrameHelper.smvFreqHist"><a class="viewcode-back" href="../../smv.html#smv.helpers.DataFrameHelper.smvFreqHist">[docs]</a>    <span class="k">def</span> <span class="nf">smvFreqHist</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">cols</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Print EDD histogram with frequency sorting</span>
+
+<span class="sd">            Args:</span>
+<span class="sd">                cols (\*string): The columns on which to perform EDD histogram</span>
+
+<span class="sd">            Example:</span>
+<span class="sd">                &gt;&gt;&gt; df.smvFreqHist(&quot;a&quot;)</span>
+
+<span class="sd">            Returns:</span>
+<span class="sd">                (None)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_println</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_smvFreqHist</span><span class="p">(</span><span class="o">*</span><span class="n">cols</span><span class="p">))</span></div>
+
+    <span class="k">def</span> <span class="nf">_smvCountHist</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">keys</span><span class="p">,</span> <span class="n">binSize</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">is_string</span><span class="p">(</span><span class="n">keys</span><span class="p">):</span>
+            <span class="n">res</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_jDfHelper</span><span class="o">.</span><span class="n">_smvCountHist</span><span class="p">(</span><span class="n">_to_seq</span><span class="p">([</span><span class="n">keys</span><span class="p">]),</span> <span class="n">binSize</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">res</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_jDfHelper</span><span class="o">.</span><span class="n">_smvCountHist</span><span class="p">(</span><span class="n">_to_seq</span><span class="p">(</span><span class="n">keys</span><span class="p">),</span> <span class="n">binSize</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">res</span><span class="o">.</span><span class="n">createReport</span><span class="p">()</span>
+
+<div class="viewcode-block" id="DataFrameHelper.smvCountHist"><a class="viewcode-back" href="../../smv.html#smv.helpers.DataFrameHelper.smvCountHist">[docs]</a>    <span class="k">def</span> <span class="nf">smvCountHist</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">keys</span><span class="p">,</span> <span class="n">binSize</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Print the distribution of the value frequency on specific columns</span>
+
+<span class="sd">            Args:</span>
+<span class="sd">                keys (list(string)): the column names on which the EDD histogram is performed</span>
+<span class="sd">                binSize (integer): the bin size for the histogram</span>
+
+<span class="sd">            Example:</span>
+<span class="sd">                &gt;&gt;&gt; df.smvCountHist([&quot;k&quot;], 1)</span>
+
+<span class="sd">            Returns:</span>
+<span class="sd">                (None)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_println</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_smvCountHist</span><span class="p">(</span><span class="n">keys</span><span class="p">,</span> <span class="n">binSize</span><span class="p">))</span></div>
+
+    <span class="k">def</span> <span class="nf">_smvBinHist</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">colWithBin</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">elem</span> <span class="ow">in</span> <span class="n">colWithBin</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="nb">type</span><span class="p">(</span><span class="n">elem</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">tuple</span><span class="p">,</span> <span class="s2">&quot;smvBinHist takes a list of tuple(string, double) as paraeter&quot;</span>
+            <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">elem</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">,</span> <span class="s2">&quot;smvBinHist takes a list of tuple(string, double) as parameter&quot;</span>
+        <span class="n">insureDouble</span> <span class="o">=</span> <span class="nb">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">t</span><span class="p">:</span> <span class="p">(</span><span class="n">t</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">t</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="mf">1.0</span><span class="p">),</span> <span class="n">colWithBin</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_jPythonHelper</span><span class="o">.</span><span class="n">smvBinHist</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_jdf</span><span class="p">,</span> <span class="n">smv_copy_array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_sc</span><span class="p">,</span> <span class="o">*</span><span class="n">insureDouble</span><span class="p">))</span><span class="o">.</span><span class="n">createReport</span><span class="p">()</span>
+
+<div class="viewcode-block" id="DataFrameHelper.smvBinHist"><a class="viewcode-back" href="../../smv.html#smv.helpers.DataFrameHelper.smvBinHist">[docs]</a>    <span class="k">def</span> <span class="nf">smvBinHist</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">colWithBin</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Print distributions on numerical columns with applying the specified bin size</span>
+
+<span class="sd">            Args:</span>
+<span class="sd">                colWithBin (\*tuple): each tuple must be of size 2, where the first element is the column name, and the second is the bin size for that column</span>
+
+<span class="sd">            Example:</span>
+<span class="sd">                &gt;&gt;&gt; df.smvBinHist((&quot;col_a&quot;, 1))</span>
+
+<span class="sd">            Returns:</span>
+<span class="sd">                (None)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_println</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_smvBinHist</span><span class="p">(</span><span class="o">*</span><span class="n">colWithBin</span><span class="p">))</span></div>
+
+    <span class="k">def</span> <span class="nf">_smvEddCompare</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">df2</span><span class="p">,</span> <span class="n">ignoreColName</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_jDfHelper</span><span class="o">.</span><span class="n">_smvEddCompare</span><span class="p">(</span><span class="n">df2</span><span class="o">.</span><span class="n">_jdf</span><span class="p">,</span> <span class="n">ignoreColName</span><span class="p">)</span>
+
+<div class="viewcode-block" id="DataFrameHelper.smvEddCompare"><a class="viewcode-back" href="../../smv.html#smv.helpers.DataFrameHelper.smvEddCompare">[docs]</a>    <span class="k">def</span> <span class="nf">smvEddCompare</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">df2</span><span class="p">,</span> <span class="n">ignoreColName</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Compare 2 DFs by comparing their Edd Summary result</span>
+
+<span class="sd">            The result of the comparison is printed out.</span>
+
+<span class="sd">            Args:</span>
+<span class="sd">                df2 (DataFrame): the DataFrame to compare with</span>
+<span class="sd">                ignoreColName (boolean): specifies whether to ignore column names, default is false</span>
+
+<span class="sd">            Example:</span>
+<span class="sd">                &gt;&gt;&gt; df.smvEddCompare(df2)</span>
+<span class="sd">                &gt;&gt;&gt; df.smvEddCompare(df2, true)</span>
+
+<span class="sd">            Returns:</span>
+<span class="sd">                (None)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_println</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_smvEddCompare</span><span class="p">(</span><span class="n">df2</span><span class="p">,</span> <span class="n">ignoreColName</span><span class="p">))</span></div>
+
+    <span class="k">def</span> <span class="nf">_smvDiscoverPK</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">):</span>
+        <span class="n">pk</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_jPythonHelper</span><span class="o">.</span><span class="n">smvDiscoverPK</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_jdf</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span>
+        <span class="k">return</span> <span class="s2">&quot;[</span><span class="si">{}</span><span class="s2">], </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">pk</span><span class="o">.</span><span class="n">_1</span><span class="p">())),</span> <span class="n">pk</span><span class="o">.</span><span class="n">_2</span><span class="p">())</span>
+
+<div class="viewcode-block" id="DataFrameHelper.smvDiscoverPK"><a class="viewcode-back" href="../../smv.html#smv.helpers.DataFrameHelper.smvDiscoverPK">[docs]</a>    <span class="k">def</span> <span class="nf">smvDiscoverPK</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">10000</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Find a column combination which uniquely identifies a row from the data</span>
+
+<span class="sd">            The resulting output is printed out</span>
+
+<span class="sd">            Note:</span>
+<span class="sd">                The algorithm only looks for a set of keys which uniquely identifies the row. There could be more key combinations which can also be the primary key.</span>
+
+<span class="sd">            Args:</span>
+<span class="sd">                n (integer): number of rows the PK discovery algorithm will run on, defaults to 10000</span>
+
+<span class="sd">            Example:</span>
+<span class="sd">                &gt;&gt;&gt; df.smvDiscoverPK(5000)</span>
+
+<span class="sd">            Returns:</span>
+<span class="sd">                (None)</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_println</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_smvDiscoverPK</span><span class="p">(</span><span class="n">n</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="DataFrameHelper.smvDumpDF"><a class="viewcode-back" href="../../smv.html#smv.helpers.DataFrameHelper.smvDumpDF">[docs]</a>    <span class="k">def</span> <span class="nf">smvDumpDF</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Dump the schema and data of given df to screen for debugging purposes</span>
+
+<span class="sd">            Similar to `show()` method of DF from Spark 1.3, although the format is slightly different.  This function&#39;s format is more convenient for us and hence has remained.</span>
+
+<span class="sd">            Example:</span>
+<span class="sd">                &gt;&gt;&gt; df.smvDumpDF()</span>
+
+<span class="sd">            Returns:</span>
+<span class="sd">                (None)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_println</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_jDfHelper</span><span class="o">.</span><span class="n">_smvDumpDF</span><span class="p">())</span></div></div>
+
+<div class="viewcode-block" id="ColumnHelper"><a class="viewcode-back" href="../../smv.html#smv.helpers.ColumnHelper">[docs]</a><span class="k">class</span> <span class="nc">ColumnHelper</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">col</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">col</span> <span class="o">=</span> <span class="n">col</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_jc</span> <span class="o">=</span> <span class="n">col</span><span class="o">.</span><span class="n">_jc</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_jvm</span> <span class="o">=</span> <span class="n">_sparkContext</span><span class="p">()</span><span class="o">.</span><span class="n">_jvm</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_jPythonHelper</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_jvm</span><span class="o">.</span><span class="n">SmvPythonHelper</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_jColumnHelper</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_jvm</span><span class="o">.</span><span class="n">ColumnHelper</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_jc</span><span class="p">)</span>
+
+<div class="viewcode-block" id="ColumnHelper.smvGetColName"><a class="viewcode-back" href="../../smv.html#smv.helpers.ColumnHelper.smvGetColName">[docs]</a>    <span class="k">def</span> <span class="nf">smvGetColName</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns the name of a Column as a sting</span>
+
+<span class="sd">            Example:</span>
+<span class="sd">            &gt;&gt;&gt; df.a.smvGetColName()</span>
+
+<span class="sd">            Returns:</span>
+<span class="sd">                (str)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_jColumnHelper</span><span class="o">.</span><span class="n">getName</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="ColumnHelper.smvIsAllIn"><a class="viewcode-back" href="../../smv.html#smv.helpers.ColumnHelper.smvIsAllIn">[docs]</a>    <span class="k">def</span> <span class="nf">smvIsAllIn</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">vals</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns true if ALL of the Array columns&#39; elements are in the given parameter sequence</span>
+
+<span class="sd">            Args:</span>
+<span class="sd">                vals (\*any): vals must be of the same type as the Array content</span>
+
+<span class="sd">            Example:</span>
+<span class="sd">                input DF:</span>
+
+<span class="sd">                    +---+---+</span>
+<span class="sd">                    | k | v |</span>
+<span class="sd">                    +===+===+</span>
+<span class="sd">                    | a | b |</span>
+<span class="sd">                    +---+---+</span>
+<span class="sd">                    | c | d |</span>
+<span class="sd">                    +---+---+</span>
+<span class="sd">                    |   |   |</span>
+<span class="sd">                    +---+---+</span>
+
+<span class="sd">                &gt;&gt;&gt; df.select(array(col(&quot;k&quot;), col(&quot;v&quot;)).smvIsAllIn(&quot;a&quot;, &quot;b&quot;, &quot;c&quot;).alias(&quot;isFound&quot;))</span>
+
+<span class="sd">                output DF:</span>
+
+<span class="sd">                    +---------+</span>
+<span class="sd">                    | isFound |</span>
+<span class="sd">                    +=========+</span>
+<span class="sd">                    |  true   |</span>
+<span class="sd">                    +---------+</span>
+<span class="sd">                    |  false  |</span>
+<span class="sd">                    +---------+</span>
+<span class="sd">                    |  false  |</span>
+<span class="sd">                    +---------+</span>
+
+<span class="sd">            Returns:</span>
+<span class="sd">                (Column): BooleanType</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">jc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_jPythonHelper</span><span class="o">.</span><span class="n">smvIsAllIn</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_jc</span><span class="p">,</span> <span class="n">_to_seq</span><span class="p">(</span><span class="n">vals</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">Column</span><span class="p">(</span><span class="n">jc</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="ColumnHelper.smvIsAnyIn"><a class="viewcode-back" href="../../smv.html#smv.helpers.ColumnHelper.smvIsAnyIn">[docs]</a>    <span class="k">def</span> <span class="nf">smvIsAnyIn</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">vals</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns true if ANY one of the Array columns&#39; elements are in the given parameter sequence</span>
+
+<span class="sd">            Args:</span>
+<span class="sd">                vals (\*any): vals must be of the same type as the Array content</span>
+
+<span class="sd">            Example:</span>
+<span class="sd">                input DF:</span>
+
+<span class="sd">                    +---+---+</span>
+<span class="sd">                    | k | v |</span>
+<span class="sd">                    +===+===+</span>
+<span class="sd">                    | a | b |</span>
+<span class="sd">                    +---+---+</span>
+<span class="sd">                    | c | d |</span>
+<span class="sd">                    +---+---+</span>
+<span class="sd">                    |   |   |</span>
+<span class="sd">                    +---+---+</span>
+
+<span class="sd">                &gt;&gt;&gt; df.select(array(col(&quot;k&quot;), col(&quot;v&quot;)).smvIsAnyIn(&quot;a&quot;, &quot;b&quot;, &quot;c&quot;).alias(&quot;isFound&quot;))</span>
+
+<span class="sd">                output DF:</span>
+
+<span class="sd">                    +---------+</span>
+<span class="sd">                    | isFound |</span>
+<span class="sd">                    +=========+</span>
+<span class="sd">                    |  true   |</span>
+<span class="sd">                    +---------+</span>
+<span class="sd">                    |  true   |</span>
+<span class="sd">                    +---------+</span>
+<span class="sd">                    |  false  |</span>
+<span class="sd">                    +---------+</span>
+
+<span class="sd">            Returns:</span>
+<span class="sd">                (Column): BooleanType</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">jc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_jPythonHelper</span><span class="o">.</span><span class="n">smvIsAnyIn</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_jc</span><span class="p">,</span> <span class="n">_to_seq</span><span class="p">(</span><span class="n">vals</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">Column</span><span class="p">(</span><span class="n">jc</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="ColumnHelper.smvMonth"><a class="viewcode-back" href="../../smv.html#smv.helpers.ColumnHelper.smvMonth">[docs]</a>    <span class="k">def</span> <span class="nf">smvMonth</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Extract month component from a timestamp</span>
+
+<span class="sd">            Example:</span>
+<span class="sd">                &gt;&gt;&gt; df.select(col(&quot;dob&quot;).smvMonth())</span>
+
+<span class="sd">            Returns:</span>
+<span class="sd">                (Column): IntegerType. Month component as integer, or null if input column is null</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">jc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_jColumnHelper</span><span class="o">.</span><span class="n">smvMonth</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">Column</span><span class="p">(</span><span class="n">jc</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="ColumnHelper.smvYear"><a class="viewcode-back" href="../../smv.html#smv.helpers.ColumnHelper.smvYear">[docs]</a>    <span class="k">def</span> <span class="nf">smvYear</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Extract year component from a timestamp</span>
+
+<span class="sd">            Example:</span>
+<span class="sd">                &gt;&gt;&gt; df.select(col(&quot;dob&quot;).smvYear())</span>
+
+<span class="sd">            Returns:</span>
+<span class="sd">                (Column): IntegerType. Year component as integer, or null if input column is null</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">jc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_jColumnHelper</span><span class="o">.</span><span class="n">smvYear</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">Column</span><span class="p">(</span><span class="n">jc</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="ColumnHelper.smvQuarter"><a class="viewcode-back" href="../../smv.html#smv.helpers.ColumnHelper.smvQuarter">[docs]</a>    <span class="k">def</span> <span class="nf">smvQuarter</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Extract quarter component from a timestamp</span>
+
+<span class="sd">            Example:</span>
+<span class="sd">                &gt;&gt;&gt; df.select(col(&quot;dob&quot;).smvQuarter())</span>
+
+<span class="sd">            Returns:</span>
+<span class="sd">                (Column): IntegerType. Quarter component as integer (1-based), or null if input column is null</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">jc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_jColumnHelper</span><span class="o">.</span><span class="n">smvQuarter</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">Column</span><span class="p">(</span><span class="n">jc</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="ColumnHelper.smvDayOfMonth"><a class="viewcode-back" href="../../smv.html#smv.helpers.ColumnHelper.smvDayOfMonth">[docs]</a>    <span class="k">def</span> <span class="nf">smvDayOfMonth</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Extract day of month component from a timestamp</span>
+
+<span class="sd">            Example:</span>
+<span class="sd">                &gt;&gt;&gt; df.select(col(&quot;dob&quot;).smvDayOfMonth())</span>
+
+<span class="sd">            Returns:</span>
+<span class="sd">                (Column): IntegerType. Day of month component as integer (range 1-31), or null if input column is null</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">jc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_jColumnHelper</span><span class="o">.</span><span class="n">smvDayOfMonth</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">Column</span><span class="p">(</span><span class="n">jc</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="ColumnHelper.smvDayOfWeek"><a class="viewcode-back" href="../../smv.html#smv.helpers.ColumnHelper.smvDayOfWeek">[docs]</a>    <span class="k">def</span> <span class="nf">smvDayOfWeek</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Extract day of week component from a timestamp</span>
+
+<span class="sd">            Example:</span>
+<span class="sd">                &gt;&gt;&gt; df.select(col(&quot;dob&quot;).smvDayOfWeek())</span>
+
+<span class="sd">            Returns:</span>
+<span class="sd">                (Column): IntegerType. Day of week component as integer (range 1-7, 1 being Monday), or null if input column is null</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">jc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_jColumnHelper</span><span class="o">.</span><span class="n">smvDayOfWeek</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">Column</span><span class="p">(</span><span class="n">jc</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="ColumnHelper.smvHour"><a class="viewcode-back" href="../../smv.html#smv.helpers.ColumnHelper.smvHour">[docs]</a>    <span class="k">def</span> <span class="nf">smvHour</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Extract hour component from a timestamp</span>
+
+<span class="sd">            Example:</span>
+<span class="sd">                &gt;&gt;&gt; df.select(col(&quot;dob&quot;).smvHour())</span>
+
+<span class="sd">            Returns:</span>
+<span class="sd">                (Column): IntegerType. Hour component as integer, or null if input column is null</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">jc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_jColumnHelper</span><span class="o">.</span><span class="n">smvHour</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">Column</span><span class="p">(</span><span class="n">jc</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="ColumnHelper.smvPlusDays"><a class="viewcode-back" href="../../smv.html#smv.helpers.ColumnHelper.smvPlusDays">[docs]</a>    <span class="k">def</span> <span class="nf">smvPlusDays</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">delta</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Add N days to `Timestamp` or `Date` column</span>
+
+<span class="sd">            Args:</span>
+<span class="sd">                delta (int or Column): the number of days to add</span>
+
+<span class="sd">            Example:</span>
+<span class="sd">                &gt;&gt;&gt; df.select(col(&quot;dob&quot;).smvPlusDays(3))</span>
+
+<span class="sd">            Returns:</span>
+<span class="sd">                (Column): TimestampType. The incremented Timestamp, or null if input is null.</span>
+<span class="sd">                    **Note** even if the input is DateType, the output is TimestampType</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">delta</span><span class="p">,</span> <span class="nb">int</span><span class="p">)):</span>
+            <span class="n">jdelta</span> <span class="o">=</span> <span class="n">delta</span>
+        <span class="k">elif</span> <span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">delta</span><span class="p">,</span> <span class="n">Column</span><span class="p">)):</span>
+            <span class="n">jdelta</span> <span class="o">=</span> <span class="n">delta</span><span class="o">.</span><span class="n">_jc</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;delta parameter must be either an int or a Column&quot;</span><span class="p">)</span>
+        <span class="n">jc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_jColumnHelper</span><span class="o">.</span><span class="n">smvPlusDays</span><span class="p">(</span><span class="n">jdelta</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">Column</span><span class="p">(</span><span class="n">jc</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="ColumnHelper.smvPlusWeeks"><a class="viewcode-back" href="../../smv.html#smv.helpers.ColumnHelper.smvPlusWeeks">[docs]</a>    <span class="k">def</span> <span class="nf">smvPlusWeeks</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">delta</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Add N weeks to `Timestamp` or `Date` column</span>
+
+<span class="sd">            Args:</span>
+<span class="sd">                delta (int or Column): the number of weeks to add</span>
+
+<span class="sd">            Example:</span>
+<span class="sd">                &gt;&gt;&gt; df.select(col(&quot;dob&quot;).smvPlusWeeks(3))</span>
+
+<span class="sd">            Returns:</span>
+<span class="sd">                (Column): TimestampType. The incremented Timestamp, or null if input is null.</span>
+<span class="sd">                    **Note** even if the input is DateType, the output is TimestampType</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">delta</span><span class="p">,</span> <span class="nb">int</span><span class="p">)):</span>
+            <span class="n">jdelta</span> <span class="o">=</span> <span class="n">delta</span>
+        <span class="k">elif</span> <span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">delta</span><span class="p">,</span> <span class="n">Column</span><span class="p">)):</span>
+            <span class="n">jdelta</span> <span class="o">=</span> <span class="n">delta</span><span class="o">.</span><span class="n">_jc</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;delta parameter must be either an int or a Column&quot;</span><span class="p">)</span>
+        <span class="n">jc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_jColumnHelper</span><span class="o">.</span><span class="n">smvPlusWeeks</span><span class="p">(</span><span class="n">jdelta</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">Column</span><span class="p">(</span><span class="n">jc</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="ColumnHelper.smvPlusMonths"><a class="viewcode-back" href="../../smv.html#smv.helpers.ColumnHelper.smvPlusMonths">[docs]</a>    <span class="k">def</span> <span class="nf">smvPlusMonths</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">delta</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Add N months to `Timestamp` or `Date` column</span>
+
+<span class="sd">            Args:</span>
+<span class="sd">                delta (int or Column): the number of months to add</span>
+
+<span class="sd">            Note:</span>
+<span class="sd">                The calculation will do its best to only change the month field retaining the same day of month. However, in certain circumstances, it may be necessary to alter smaller fields. For example, 2007-03-31 plus one month cannot result in 2007-04-31, so the day of month is adjusted to 2007-04-30.</span>
+
+<span class="sd">            Example:</span>
+<span class="sd">                &gt;&gt;&gt; df.select(col(&quot;dob&quot;).smvPlusMonths(3))</span>
+
+<span class="sd">            Returns:</span>
+<span class="sd">                (Column): TimestampType. The incremented Timestamp, or null if input is null.</span>
+<span class="sd">                    **Note** even if the input is DateType, the output is TimestampType</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">delta</span><span class="p">,</span> <span class="nb">int</span><span class="p">)):</span>
+            <span class="n">jdelta</span> <span class="o">=</span> <span class="n">delta</span>
+        <span class="k">elif</span> <span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">delta</span><span class="p">,</span> <span class="n">Column</span><span class="p">)):</span>
+            <span class="n">jdelta</span> <span class="o">=</span> <span class="n">delta</span><span class="o">.</span><span class="n">_jc</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;delta parameter must be either an int or a Column&quot;</span><span class="p">)</span>
+        <span class="n">jc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_jColumnHelper</span><span class="o">.</span><span class="n">smvPlusMonths</span><span class="p">(</span><span class="n">jdelta</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">Column</span><span class="p">(</span><span class="n">jc</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="ColumnHelper.smvPlusYears"><a class="viewcode-back" href="../../smv.html#smv.helpers.ColumnHelper.smvPlusYears">[docs]</a>    <span class="k">def</span> <span class="nf">smvPlusYears</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">delta</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Add N years to `Timestamp` or `Date` column</span>
+
+<span class="sd">            Args:</span>
+<span class="sd">                delta (int or Column): the number of years to add</span>
+
+<span class="sd">            Example:</span>
+<span class="sd">                &gt;&gt;&gt; df.select(col(&quot;dob&quot;).smvPlusYears(3))</span>
+
+<span class="sd">            Returns:</span>
+<span class="sd">                (Column): TimestampType. The incremented Timestamp, or null if input is null.</span>
+<span class="sd">                    **Note** even if the input is DateType, the output is TimestampType</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">delta</span><span class="p">,</span> <span class="nb">int</span><span class="p">)):</span>
+            <span class="n">jdelta</span> <span class="o">=</span> <span class="n">delta</span>
+        <span class="k">elif</span> <span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">delta</span><span class="p">,</span> <span class="n">Column</span><span class="p">)):</span>
+            <span class="n">jdelta</span> <span class="o">=</span> <span class="n">delta</span><span class="o">.</span><span class="n">_jc</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;delta parameter must be either an int or a Column&quot;</span><span class="p">)</span>
+        <span class="n">jc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_jColumnHelper</span><span class="o">.</span><span class="n">smvPlusYears</span><span class="p">(</span><span class="n">jdelta</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">Column</span><span class="p">(</span><span class="n">jc</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="ColumnHelper.smvStrToTimestamp"><a class="viewcode-back" href="../../smv.html#smv.helpers.ColumnHelper.smvStrToTimestamp">[docs]</a>    <span class="k">def</span> <span class="nf">smvStrToTimestamp</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fmt</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Build a timestamp from a string</span>
+
+<span class="sd">            Args:</span>
+<span class="sd">                fmt (string): the format is the same as the Java `Date` format</span>
+
+<span class="sd">            Example:</span>
+<span class="sd">                &gt;&gt;&gt; df.select(col(&quot;dob&quot;).smvStrToTimestamp(&quot;yyyy-MM-dd&quot;))</span>
+
+<span class="sd">            Returns:</span>
+<span class="sd">                (Column): TimestampType. The converted Timestamp</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">jc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_jColumnHelper</span><span class="o">.</span><span class="n">smvStrToTimestamp</span><span class="p">(</span><span class="n">fmt</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">Column</span><span class="p">(</span><span class="n">jc</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="ColumnHelper.smvDay70"><a class="viewcode-back" href="../../smv.html#smv.helpers.ColumnHelper.smvDay70">[docs]</a>    <span class="k">def</span> <span class="nf">smvDay70</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Convert a Timestamp to the number of days from 1970-01-01</span>
+
+<span class="sd">            Example:</span>
+<span class="sd">                &gt;&gt;&gt; df.select(col(&quot;dob&quot;).smvDay70())</span>
+
+<span class="sd">            Returns:</span>
+<span class="sd">                (Column): IntegerType. Number of days from 1970-01-01 (start from 0)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">jc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_jColumnHelper</span><span class="o">.</span><span class="n">smvDay70</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">Column</span><span class="p">(</span><span class="n">jc</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="ColumnHelper.smvMonth70"><a class="viewcode-back" href="../../smv.html#smv.helpers.ColumnHelper.smvMonth70">[docs]</a>    <span class="k">def</span> <span class="nf">smvMonth70</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Convert a Timestamp to the number of months from 1970-01-01</span>
+
+<span class="sd">            Example:</span>
+<span class="sd">                &gt;&gt;&gt; df.select(col(&quot;dob&quot;).smvMonth70())</span>
+
+<span class="sd">            Returns:</span>
+<span class="sd">                (Column): IntegerType. Number of months from 1970-01-01 (start from 0)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">jc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_jColumnHelper</span><span class="o">.</span><span class="n">smvMonth70</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">Column</span><span class="p">(</span><span class="n">jc</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="ColumnHelper.smvTimeToType"><a class="viewcode-back" href="../../smv.html#smv.helpers.ColumnHelper.smvTimeToType">[docs]</a>    <span class="k">def</span> <span class="nf">smvTimeToType</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;smvTime helper to convert `smvTime` column to time type string</span>
+
+<span class="sd">            Example `smvTime` values (as String): &quot;Q201301&quot;, &quot;M201512&quot;, &quot;D20141201&quot;</span>
+<span class="sd">            Example output type &quot;quarter&quot;, &quot;month&quot;, &quot;day&quot;</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">jc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_jColumnHelper</span><span class="o">.</span><span class="n">smvTimeToType</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">Column</span><span class="p">(</span><span class="n">jc</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="ColumnHelper.smvTimeToIndex"><a class="viewcode-back" href="../../smv.html#smv.helpers.ColumnHelper.smvTimeToIndex">[docs]</a>    <span class="k">def</span> <span class="nf">smvTimeToIndex</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;smvTime helper to convert `smvTime` column to time index integer</span>
+
+<span class="sd">            Example `smvTime` values (as String): &quot;Q201301&quot;, &quot;M201512&quot;, &quot;D20141201&quot;</span>
+<span class="sd">            Example output 172, 551, 16405 (# of quarters, months, and days from 19700101)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">jc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_jColumnHelper</span><span class="o">.</span><span class="n">smvTimeToIndex</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">Column</span><span class="p">(</span><span class="n">jc</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="ColumnHelper.smvTimeToLabel"><a class="viewcode-back" href="../../smv.html#smv.helpers.ColumnHelper.smvTimeToLabel">[docs]</a>    <span class="k">def</span> <span class="nf">smvTimeToLabel</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;smvTime helper to convert `smvTime` column to human readable form</span>
+
+<span class="sd">             Example `smvTime` values (as String): &quot;Q201301&quot;, &quot;M201512&quot;, &quot;D20141201&quot;</span>
+<span class="sd">             Example output &quot;2013-Q1&quot;, &quot;2015-12&quot;, &quot;2014-12-01&quot;</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">jc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_jColumnHelper</span><span class="o">.</span><span class="n">smvTimeToLabel</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">Column</span><span class="p">(</span><span class="n">jc</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="ColumnHelper.smvTimeToTimestamp"><a class="viewcode-back" href="../../smv.html#smv.helpers.ColumnHelper.smvTimeToTimestamp">[docs]</a>    <span class="k">def</span> <span class="nf">smvTimeToTimestamp</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;smvTime helper to convert `smvTime` column to a timestamp at the beginning of</span>
+<span class="sd">            the given time pireod.</span>
+
+<span class="sd">             Example `smvTime` values (as String): &quot;Q201301&quot;, &quot;M201512&quot;, &quot;D20141201&quot;</span>
+<span class="sd">             Example output &quot;2013-01-01 00:00:00.0&quot;, &quot;2015-12-01 00:00:00.0&quot;, &quot;2014-12-01 00:00:00.0&quot;</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">jc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_jColumnHelper</span><span class="o">.</span><span class="n">smvTimeToTimestamp</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">Column</span><span class="p">(</span><span class="n">jc</span><span class="p">)</span></div></div>
+
+<span class="c1"># Initialize DataFrame and Column with helper methods. Called by SmvApp.</span>
+<div class="viewcode-block" id="init_helpers"><a class="viewcode-back" href="../../smv.html#smv.helpers.init_helpers">[docs]</a><span class="k">def</span> <span class="nf">init_helpers</span><span class="p">():</span>
+    <span class="n">_helpCls</span><span class="p">(</span><span class="n">Column</span><span class="p">,</span> <span class="n">ColumnHelper</span><span class="p">)</span>
+    <span class="n">_helpCls</span><span class="p">(</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">DataFrameHelper</span><span class="p">)</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Spark Modularized View 1.6.2.4.p3 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2017, TresAmigosSD.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.2.
+    </div>
+  </body>
+</html>
