@@ -1,0 +1,637 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>smv.iomod package &#8212; Spark Modularized View v2r7 documentation</title>
+    <link rel="stylesheet" href="_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Spark Modularized View v2r7 documentation</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="smv-iomod-package">
+<h1>smv.iomod package<a class="headerlink" href="#smv-iomod-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-smv.iomod.base">
+<span id="smv-iomod-base-module"></span><h2>smv.iomod.base module<a class="headerlink" href="#module-smv.iomod.base" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="smv.iomod.base.AsFile">
+<em class="property">class </em><code class="descclassname">smv.iomod.base.</code><code class="descname">AsFile</code><span class="sig-paren">(</span><em>smvApp</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/smv/iomod/base.html#AsFile"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smv.iomod.base.AsFile" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#smv.iomod.base.SmvIoModule" title="smv.iomod.base.SmvIoModule"><code class="xref py py-class docutils literal notranslate"><span class="pre">smv.iomod.base.SmvIoModule</span></code></a></p>
+<p>Mixin to assure a fileName method</p>
+<dl class="method">
+<dt id="smv.iomod.base.AsFile.connectionType">
+<code class="descname">connectionType</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/smv/iomod/base.html#AsFile.connectionType"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smv.iomod.base.AsFile.connectionType" title="Permalink to this definition">¶</a></dt>
+<dd><p>Connection type supported by a specific io module</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="smv.iomod.base.AsFile.fileName">
+<code class="descname">fileName</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/smv/iomod/base.html#AsFile.fileName"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smv.iomod.base.AsFile.fileName" title="Permalink to this definition">¶</a></dt>
+<dd><p>User-specified file name relative to the path defined in the connection</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">(string)</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="smv.iomod.base.AsFile.fileNameHash">
+<code class="descname">fileNameHash</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/smv/iomod/base.html#AsFile.fileNameHash"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smv.iomod.base.AsFile.fileNameHash" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="smv.iomod.base.AsTable">
+<em class="property">class </em><code class="descclassname">smv.iomod.base.</code><code class="descname">AsTable</code><a class="reference internal" href="_modules/smv/iomod/base.html#AsTable"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smv.iomod.base.AsTable" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Mixin to assure a tableName method</p>
+<dl class="method">
+<dt id="smv.iomod.base.AsTable.tableName">
+<code class="descname">tableName</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/smv/iomod/base.html#AsTable.tableName"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smv.iomod.base.AsTable.tableName" title="Permalink to this definition">¶</a></dt>
+<dd><p>The user-specified table name to write to</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">(string)</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="smv.iomod.base.AsTable.tableNameHash">
+<code class="descname">tableNameHash</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/smv/iomod/base.html#AsTable.tableNameHash"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smv.iomod.base.AsTable.tableNameHash" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="smv.iomod.base.SmvInput">
+<em class="property">class </em><code class="descclassname">smv.iomod.base.</code><code class="descname">SmvInput</code><span class="sig-paren">(</span><em>smvApp</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/smv/iomod/base.html#SmvInput"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smv.iomod.base.SmvInput" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#smv.iomod.base.SmvIoModule" title="smv.iomod.base.SmvIoModule"><code class="xref py py-class docutils literal notranslate"><span class="pre">smv.iomod.base.SmvIoModule</span></code></a></p>
+<p>Base class for all Input modules</p>
+<p>Sub-class need to implement:</p>
+<blockquote>
+<div><ul class="simple">
+<li>connectionType</li>
+<li>doRun</li>
+</ul>
+</div></blockquote>
+<p>User need to implement:</p>
+<blockquote>
+<div><ul class="simple">
+<li>connectionName</li>
+</ul>
+</div></blockquote>
+<dl class="method">
+<dt id="smv.iomod.base.SmvInput.dsType">
+<code class="descname">dsType</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/smv/iomod/base.html#SmvInput.dsType"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smv.iomod.base.SmvInput.dsType" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return SmvGenericModule’s type</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="smv.iomod.base.SmvInput.requiresDS">
+<code class="descname">requiresDS</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/smv/iomod/base.html#SmvInput.requiresDS"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smv.iomod.base.SmvInput.requiresDS" title="Permalink to this definition">¶</a></dt>
+<dd><p>User-specified list of dependencies</p>
+<p>Override this method to specify the SmvGenericModule needed as inputs.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">a list of dependencies</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">(list(SmvGenericModule))</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="smv.iomod.base.SmvIoModule">
+<em class="property">class </em><code class="descclassname">smv.iomod.base.</code><code class="descname">SmvIoModule</code><span class="sig-paren">(</span><em>smvApp</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/smv/iomod/base.html#SmvIoModule"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smv.iomod.base.SmvIoModule" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">smv.smvgenericmodule.SmvGenericModule</span></code></p>
+<p>Base class for input and output modules</p>
+<p>Has two sub-classes:</p>
+<blockquote>
+<div><ul class="simple">
+<li>SmvInput: no dependency module, single output data</li>
+<li>SmvOutput: single dependency module, no output data</li>
+</ul>
+</div></blockquote>
+<dl class="method">
+<dt id="smv.iomod.base.SmvIoModule.connectionHash">
+<code class="descname">connectionHash</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/smv/iomod/base.html#SmvIoModule.connectionHash"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smv.iomod.base.SmvIoModule.connectionHash" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="smv.iomod.base.SmvIoModule.connectionName">
+<code class="descname">connectionName</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/smv/iomod/base.html#SmvIoModule.connectionName"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smv.iomod.base.SmvIoModule.connectionName" title="Permalink to this definition">¶</a></dt>
+<dd><p>Name of the connection to read/write</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="smv.iomod.base.SmvIoModule.connectionType">
+<code class="descname">connectionType</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/smv/iomod/base.html#SmvIoModule.connectionType"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smv.iomod.base.SmvIoModule.connectionType" title="Permalink to this definition">¶</a></dt>
+<dd><p>Connection type supported by a specific io module</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="smv.iomod.base.SmvIoModule.get_connection">
+<code class="descname">get_connection</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/smv/iomod/base.html#SmvIoModule.get_connection"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smv.iomod.base.SmvIoModule.get_connection" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get data connection instance from connectionName()</p>
+<p>Connetion should be configured in conf file with at least a class FQN</p>
+<p>Ex: smv.conn.con_name.class=smv.conn.SmvJdbcConnectionInfo</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="smv.iomod.base.SmvIoModule.isEphemeral">
+<code class="descname">isEphemeral</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/smv/iomod/base.html#SmvIoModule.isEphemeral"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smv.iomod.base.SmvIoModule.isEphemeral" title="Permalink to this definition">¶</a></dt>
+<dd><p>SmvIoModules are always ephemeral</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="smv.iomod.base.SmvIoModule.persistStrategy">
+<code class="descname">persistStrategy</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/smv/iomod/base.html#SmvIoModule.persistStrategy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smv.iomod.base.SmvIoModule.persistStrategy" title="Permalink to this definition">¶</a></dt>
+<dd><p>Never persisting input/output modules</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="smv.iomod.base.SmvOutput">
+<em class="property">class </em><code class="descclassname">smv.iomod.base.</code><code class="descname">SmvOutput</code><span class="sig-paren">(</span><em>smvApp</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/smv/iomod/base.html#SmvOutput"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smv.iomod.base.SmvOutput" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#smv.iomod.base.SmvIoModule" title="smv.iomod.base.SmvIoModule"><code class="xref py py-class docutils literal notranslate"><span class="pre">smv.iomod.base.SmvIoModule</span></code></a></p>
+<p>Base class for all Output modules</p>
+<p>Sub-class need to implement:</p>
+<blockquote>
+<div><ul class="simple">
+<li>connectionType</li>
+<li>doRun</li>
+</ul>
+</div></blockquote>
+<p>Within doRun, assert_single_input should be called.</p>
+<p>User need to implement:</p>
+<blockquote>
+<div><ul class="simple">
+<li>connectionName</li>
+</ul>
+</div></blockquote>
+<dl class="attribute">
+<dt id="smv.iomod.base.SmvOutput.IsSmvOutput">
+<code class="descname">IsSmvOutput</code><em class="property"> = True</em><a class="headerlink" href="#smv.iomod.base.SmvOutput.IsSmvOutput" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="smv.iomod.base.SmvOutput.dsType">
+<code class="descname">dsType</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/smv/iomod/base.html#SmvOutput.dsType"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smv.iomod.base.SmvOutput.dsType" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return SmvGenericModule’s type</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="smv.iomod.base.SmvSparkDfOutput">
+<em class="property">class </em><code class="descclassname">smv.iomod.base.</code><code class="descname">SmvSparkDfOutput</code><span class="sig-paren">(</span><em>smvApp</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/smv/iomod/base.html#SmvSparkDfOutput"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smv.iomod.base.SmvSparkDfOutput" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#smv.iomod.base.SmvOutput" title="smv.iomod.base.SmvOutput"><code class="xref py py-class docutils literal notranslate"><span class="pre">smv.iomod.base.SmvOutput</span></code></a></p>
+<p>SmvOutput which write out Spark DF</p>
+<dl class="method">
+<dt id="smv.iomod.base.SmvSparkDfOutput.get_spark_df">
+<code class="descname">get_spark_df</code><span class="sig-paren">(</span><em>known</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/smv/iomod/base.html#SmvSparkDfOutput.get_spark_df"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smv.iomod.base.SmvSparkDfOutput.get_spark_df" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-smv.iomod.inputs">
+<span id="smv-iomod-inputs-module"></span><h2>smv.iomod.inputs module<a class="headerlink" href="#module-smv.iomod.inputs" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="smv.iomod.inputs.SmvJdbcInputTable">
+<em class="property">class </em><code class="descclassname">smv.iomod.inputs.</code><code class="descname">SmvJdbcInputTable</code><span class="sig-paren">(</span><em>smvApp</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/smv/iomod/inputs.html#SmvJdbcInputTable"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smv.iomod.inputs.SmvJdbcInputTable" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">smv.smvmodule.SparkDfGenMod</span></code>, <a class="reference internal" href="#smv.iomod.base.SmvInput" title="smv.iomod.base.SmvInput"><code class="xref py py-class docutils literal notranslate"><span class="pre">smv.iomod.base.SmvInput</span></code></a>, <a class="reference internal" href="#smv.iomod.base.AsTable" title="smv.iomod.base.AsTable"><code class="xref py py-class docutils literal notranslate"><span class="pre">smv.iomod.base.AsTable</span></code></a></p>
+<p>User need to implement</p>
+<blockquote>
+<div><ul class="simple">
+<li>connectionName</li>
+<li>tableName</li>
+</ul>
+</div></blockquote>
+<dl class="method">
+<dt id="smv.iomod.inputs.SmvJdbcInputTable.connectionType">
+<code class="descname">connectionType</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/smv/iomod/inputs.html#SmvJdbcInputTable.connectionType"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smv.iomod.inputs.SmvJdbcInputTable.connectionType" title="Permalink to this definition">¶</a></dt>
+<dd><p>Connection type supported by a specific io module</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="smv.iomod.inputs.SmvJdbcInputTable.doRun">
+<code class="descname">doRun</code><span class="sig-paren">(</span><em>known</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/smv/iomod/inputs.html#SmvJdbcInputTable.doRun"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smv.iomod.inputs.SmvJdbcInputTable.doRun" title="Permalink to this definition">¶</a></dt>
+<dd><p>Do the real data calculation or the task of this module</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="smv.iomod.inputs.SmvJdbcInputTable.instanceValHash">
+<code class="descname">instanceValHash</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/smv/iomod/inputs.html#SmvJdbcInputTable.instanceValHash"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smv.iomod.inputs.SmvJdbcInputTable.instanceValHash" title="Permalink to this definition">¶</a></dt>
+<dd><p>Jdbc input hash depends on connection and table name</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="smv.iomod.inputs.SmvHiveInputTable">
+<em class="property">class </em><code class="descclassname">smv.iomod.inputs.</code><code class="descname">SmvHiveInputTable</code><span class="sig-paren">(</span><em>smvApp</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/smv/iomod/inputs.html#SmvHiveInputTable"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smv.iomod.inputs.SmvHiveInputTable" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">smv.smvmodule.SparkDfGenMod</span></code>, <a class="reference internal" href="#smv.iomod.base.SmvInput" title="smv.iomod.base.SmvInput"><code class="xref py py-class docutils literal notranslate"><span class="pre">smv.iomod.base.SmvInput</span></code></a>, <a class="reference internal" href="#smv.iomod.base.AsTable" title="smv.iomod.base.AsTable"><code class="xref py py-class docutils literal notranslate"><span class="pre">smv.iomod.base.AsTable</span></code></a></p>
+<p>User need to implement:</p>
+<blockquote>
+<div><ul class="simple">
+<li>connectionName</li>
+<li>tableName</li>
+</ul>
+</div></blockquote>
+<dl class="method">
+<dt id="smv.iomod.inputs.SmvHiveInputTable.connectionType">
+<code class="descname">connectionType</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/smv/iomod/inputs.html#SmvHiveInputTable.connectionType"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smv.iomod.inputs.SmvHiveInputTable.connectionType" title="Permalink to this definition">¶</a></dt>
+<dd><p>Connection type supported by a specific io module</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="smv.iomod.inputs.SmvHiveInputTable.doRun">
+<code class="descname">doRun</code><span class="sig-paren">(</span><em>known</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/smv/iomod/inputs.html#SmvHiveInputTable.doRun"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smv.iomod.inputs.SmvHiveInputTable.doRun" title="Permalink to this definition">¶</a></dt>
+<dd><p>Do the real data calculation or the task of this module</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="smv.iomod.inputs.SmvHiveInputTable.instanceValHash">
+<code class="descname">instanceValHash</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/smv/iomod/inputs.html#SmvHiveInputTable.instanceValHash"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smv.iomod.inputs.SmvHiveInputTable.instanceValHash" title="Permalink to this definition">¶</a></dt>
+<dd><p>Hive input hash depends on connection and table name</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="smv.iomod.inputs.SmvXmlInputFile">
+<em class="property">class </em><code class="descclassname">smv.iomod.inputs.</code><code class="descname">SmvXmlInputFile</code><span class="sig-paren">(</span><em>smvApp</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/smv/iomod/inputs.html#SmvXmlInputFile"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smv.iomod.inputs.SmvXmlInputFile" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">smv.smvmodule.SparkDfGenMod</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">smv.iomod.inputs.InputFileWithSchema</span></code></p>
+<p>Input from file in XML format
+User need to implement:</p>
+<blockquote>
+<div><ul class="simple">
+<li>rowTag: required</li>
+<li>connectionName: required</li>
+<li>fileName: required</li>
+<li>schemaConnectionName: optional</li>
+<li>schemaFileName: optional</li>
+<li>userSchema: optional</li>
+</ul>
+</div></blockquote>
+<dl class="method">
+<dt id="smv.iomod.inputs.SmvXmlInputFile.doRun">
+<code class="descname">doRun</code><span class="sig-paren">(</span><em>known</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/smv/iomod/inputs.html#SmvXmlInputFile.doRun"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smv.iomod.inputs.SmvXmlInputFile.doRun" title="Permalink to this definition">¶</a></dt>
+<dd><p>readin xml data</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="smv.iomod.inputs.SmvXmlInputFile.rowTag">
+<code class="descname">rowTag</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/smv/iomod/inputs.html#SmvXmlInputFile.rowTag"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smv.iomod.inputs.SmvXmlInputFile.rowTag" title="Permalink to this definition">¶</a></dt>
+<dd><p>XML tag for identifying a record (row)</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="smv.iomod.inputs.SmvCsvInputFile">
+<em class="property">class </em><code class="descclassname">smv.iomod.inputs.</code><code class="descname">SmvCsvInputFile</code><span class="sig-paren">(</span><em>smvApp</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/smv/iomod/inputs.html#SmvCsvInputFile"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smv.iomod.inputs.SmvCsvInputFile" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">smv.smvmodule.SparkDfGenMod</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">smv.iomod.inputs.WithSmvSchema</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">smv.iomod.inputs.WithCsvParser</span></code></p>
+<p>Csv file input
+User need to implement:</p>
+<blockquote>
+<div><ul class="simple">
+<li>connectionName: required</li>
+<li>fileName: required</li>
+<li>schemaConnectionName: optional</li>
+<li>schemaFileName: optional</li>
+<li>userSchema: optional</li>
+<li>csvAttr: optional</li>
+<li>failAtParsingError: optional, default True</li>
+<li>dqm: optional, default SmvDQM()</li>
+</ul>
+</div></blockquote>
+<dl class="method">
+<dt id="smv.iomod.inputs.SmvCsvInputFile.doRun">
+<code class="descname">doRun</code><span class="sig-paren">(</span><em>known</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/smv/iomod/inputs.html#SmvCsvInputFile.doRun"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smv.iomod.inputs.SmvCsvInputFile.doRun" title="Permalink to this definition">¶</a></dt>
+<dd><p>Do the real data calculation or the task of this module</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="smv.iomod.inputs.SmvMultiCsvInputFiles">
+<em class="property">class </em><code class="descclassname">smv.iomod.inputs.</code><code class="descname">SmvMultiCsvInputFiles</code><span class="sig-paren">(</span><em>smvApp</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/smv/iomod/inputs.html#SmvMultiCsvInputFiles"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smv.iomod.inputs.SmvMultiCsvInputFiles" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">smv.smvmodule.SparkDfGenMod</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">smv.iomod.inputs.WithSmvSchema</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">smv.iomod.inputs.WithCsvParser</span></code></p>
+<p>Multiple Csv files under the same dir input
+User need to implement:</p>
+<blockquote>
+<div><ul class="simple">
+<li>connectionName: required</li>
+<li>dirName: required</li>
+<li>schemaConnectionName: optional</li>
+<li>schemaFileName: optional</li>
+<li>userSchema: optional</li>
+<li>csvAttr: optional</li>
+<li>failAtParsingError: optional, default True</li>
+<li>dqm: optional, default SmvDQM()</li>
+</ul>
+</div></blockquote>
+<dl class="method">
+<dt id="smv.iomod.inputs.SmvMultiCsvInputFiles.dirName">
+<code class="descname">dirName</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/smv/iomod/inputs.html#SmvMultiCsvInputFiles.dirName"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smv.iomod.inputs.SmvMultiCsvInputFiles.dirName" title="Permalink to this definition">¶</a></dt>
+<dd><p>Path to the directory containing the csv files
+relative to the path defined in the connection</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">(str)</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="smv.iomod.inputs.SmvMultiCsvInputFiles.doRun">
+<code class="descname">doRun</code><span class="sig-paren">(</span><em>known</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/smv/iomod/inputs.html#SmvMultiCsvInputFiles.doRun"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smv.iomod.inputs.SmvMultiCsvInputFiles.doRun" title="Permalink to this definition">¶</a></dt>
+<dd><p>Do the real data calculation or the task of this module</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="smv.iomod.inputs.SmvMultiCsvInputFiles.fileName">
+<code class="descname">fileName</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/smv/iomod/inputs.html#SmvMultiCsvInputFiles.fileName"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smv.iomod.inputs.SmvMultiCsvInputFiles.fileName" title="Permalink to this definition">¶</a></dt>
+<dd><p>User-specified file name relative to the path defined in the connection</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">(string)</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="smv.iomod.inputs.SmvCsvStringInputData">
+<em class="property">class </em><code class="descclassname">smv.iomod.inputs.</code><code class="descname">SmvCsvStringInputData</code><span class="sig-paren">(</span><em>smvApp</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/smv/iomod/inputs.html#SmvCsvStringInputData"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smv.iomod.inputs.SmvCsvStringInputData" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">smv.smvmodule.SparkDfGenMod</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">smv.iomod.inputs.WithCsvParser</span></code></p>
+<p>Input data defined by a schema string and data string</p>
+<p>User need to implement:</p>
+<blockquote>
+<div><ul class="simple">
+<li>schemaStr(): required</li>
+<li>dataStr(): required</li>
+<li>failAtParsingError(): optional</li>
+<li>dqm(): optional</li>
+</ul>
+</div></blockquote>
+<dl class="method">
+<dt id="smv.iomod.inputs.SmvCsvStringInputData.connectionName">
+<code class="descname">connectionName</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/smv/iomod/inputs.html#SmvCsvStringInputData.connectionName"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smv.iomod.inputs.SmvCsvStringInputData.connectionName" title="Permalink to this definition">¶</a></dt>
+<dd><p>Name of the connection to read/write</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="smv.iomod.inputs.SmvCsvStringInputData.connectionType">
+<code class="descname">connectionType</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/smv/iomod/inputs.html#SmvCsvStringInputData.connectionType"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smv.iomod.inputs.SmvCsvStringInputData.connectionType" title="Permalink to this definition">¶</a></dt>
+<dd><p>Connection type supported by a specific io module</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="smv.iomod.inputs.SmvCsvStringInputData.dataStr">
+<code class="descname">dataStr</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/smv/iomod/inputs.html#SmvCsvStringInputData.dataStr"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smv.iomod.inputs.SmvCsvStringInputData.dataStr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Smv data string.</p>
+<p>E.g. “212,2016-10-03;119,2015-01-07”</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">data</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">(str)</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="smv.iomod.inputs.SmvCsvStringInputData.doRun">
+<code class="descname">doRun</code><span class="sig-paren">(</span><em>known</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/smv/iomod/inputs.html#SmvCsvStringInputData.doRun"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smv.iomod.inputs.SmvCsvStringInputData.doRun" title="Permalink to this definition">¶</a></dt>
+<dd><p>Do the real data calculation or the task of this module</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="smv.iomod.inputs.SmvCsvStringInputData.schemaStr">
+<code class="descname">schemaStr</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/smv/iomod/inputs.html#SmvCsvStringInputData.schemaStr"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smv.iomod.inputs.SmvCsvStringInputData.schemaStr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Smv Schema string.</p>
+<p>E.g. “id:String; dt:Timestamp”</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">schema</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">(str)</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="smv.iomod.inputs.SmvCsvStringInputData.smvSchema">
+<code class="descname">smvSchema</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/smv/iomod/inputs.html#SmvCsvStringInputData.smvSchema"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smv.iomod.inputs.SmvCsvStringInputData.smvSchema" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-smv.iomod.outputs">
+<span id="smv-iomod-outputs-module"></span><h2>smv.iomod.outputs module<a class="headerlink" href="#module-smv.iomod.outputs" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="smv.iomod.outputs.SmvJdbcOutputTable">
+<em class="property">class </em><code class="descclassname">smv.iomod.outputs.</code><code class="descname">SmvJdbcOutputTable</code><span class="sig-paren">(</span><em>smvApp</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/smv/iomod/outputs.html#SmvJdbcOutputTable"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smv.iomod.outputs.SmvJdbcOutputTable" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#smv.iomod.base.SmvSparkDfOutput" title="smv.iomod.base.SmvSparkDfOutput"><code class="xref py py-class docutils literal notranslate"><span class="pre">smv.iomod.base.SmvSparkDfOutput</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">smv.iomod.outputs.WithSparkDfWriter</span></code>, <a class="reference internal" href="#smv.iomod.base.AsTable" title="smv.iomod.base.AsTable"><code class="xref py py-class docutils literal notranslate"><span class="pre">smv.iomod.base.AsTable</span></code></a></p>
+<p>User need to implement</p>
+<blockquote>
+<div><ul class="simple">
+<li>requiresDS</li>
+<li>connectionName</li>
+<li>tableName</li>
+<li>writeMode: optional, default “errorifexists”</li>
+</ul>
+</div></blockquote>
+<dl class="method">
+<dt id="smv.iomod.outputs.SmvJdbcOutputTable.connectionType">
+<code class="descname">connectionType</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/smv/iomod/outputs.html#SmvJdbcOutputTable.connectionType"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smv.iomod.outputs.SmvJdbcOutputTable.connectionType" title="Permalink to this definition">¶</a></dt>
+<dd><p>Connection type supported by a specific io module</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="smv.iomod.outputs.SmvJdbcOutputTable.doRun">
+<code class="descname">doRun</code><span class="sig-paren">(</span><em>known</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/smv/iomod/outputs.html#SmvJdbcOutputTable.doRun"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smv.iomod.outputs.SmvJdbcOutputTable.doRun" title="Permalink to this definition">¶</a></dt>
+<dd><p>Do the real data calculation or the task of this module</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="smv.iomod.outputs.SmvHiveOutputTable">
+<em class="property">class </em><code class="descclassname">smv.iomod.outputs.</code><code class="descname">SmvHiveOutputTable</code><span class="sig-paren">(</span><em>smvApp</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/smv/iomod/outputs.html#SmvHiveOutputTable"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smv.iomod.outputs.SmvHiveOutputTable" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#smv.iomod.base.SmvSparkDfOutput" title="smv.iomod.base.SmvSparkDfOutput"><code class="xref py py-class docutils literal notranslate"><span class="pre">smv.iomod.base.SmvSparkDfOutput</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">smv.iomod.outputs.WithSparkDfWriter</span></code>, <a class="reference internal" href="#smv.iomod.base.AsTable" title="smv.iomod.base.AsTable"><code class="xref py py-class docutils literal notranslate"><span class="pre">smv.iomod.base.AsTable</span></code></a></p>
+<p>User need to implement</p>
+<blockquote>
+<div><ul class="simple">
+<li>requiresDS</li>
+<li>connectionName</li>
+<li>tableName</li>
+<li>writeMode: optional, default “errorifexists”</li>
+</ul>
+</div></blockquote>
+<dl class="method">
+<dt id="smv.iomod.outputs.SmvHiveOutputTable.connectionType">
+<code class="descname">connectionType</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/smv/iomod/outputs.html#SmvHiveOutputTable.connectionType"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smv.iomod.outputs.SmvHiveOutputTable.connectionType" title="Permalink to this definition">¶</a></dt>
+<dd><p>Connection type supported by a specific io module</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="smv.iomod.outputs.SmvHiveOutputTable.doRun">
+<code class="descname">doRun</code><span class="sig-paren">(</span><em>known</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/smv/iomod/outputs.html#SmvHiveOutputTable.doRun"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smv.iomod.outputs.SmvHiveOutputTable.doRun" title="Permalink to this definition">¶</a></dt>
+<dd><p>Do the real data calculation or the task of this module</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="smv.iomod.outputs.SmvCsvOutputFile">
+<em class="property">class </em><code class="descclassname">smv.iomod.outputs.</code><code class="descname">SmvCsvOutputFile</code><span class="sig-paren">(</span><em>smvApp</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/smv/iomod/outputs.html#SmvCsvOutputFile"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smv.iomod.outputs.SmvCsvOutputFile" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#smv.iomod.base.SmvSparkDfOutput" title="smv.iomod.base.SmvSparkDfOutput"><code class="xref py py-class docutils literal notranslate"><span class="pre">smv.iomod.base.SmvSparkDfOutput</span></code></a>, <a class="reference internal" href="#smv.iomod.base.AsFile" title="smv.iomod.base.AsFile"><code class="xref py py-class docutils literal notranslate"><span class="pre">smv.iomod.base.AsFile</span></code></a></p>
+<p>User need to implement</p>
+<blockquote>
+<div><ul class="simple">
+<li>requiresDS</li>
+<li>connectionName</li>
+<li>fileName</li>
+</ul>
+</div></blockquote>
+<dl class="method">
+<dt id="smv.iomod.outputs.SmvCsvOutputFile.doRun">
+<code class="descname">doRun</code><span class="sig-paren">(</span><em>known</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/smv/iomod/outputs.html#SmvCsvOutputFile.doRun"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smv.iomod.outputs.SmvCsvOutputFile.doRun" title="Permalink to this definition">¶</a></dt>
+<dd><p>Do the real data calculation or the task of this module</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="smv.iomod.outputs.SmvCsvOutputFile.writeMode">
+<code class="descname">writeMode</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/smv/iomod/outputs.html#SmvCsvOutputFile.writeMode"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#smv.iomod.outputs.SmvCsvOutputFile.writeMode" title="Permalink to this definition">¶</a></dt>
+<dd><p>Default write mode is overwrite, and currently only support overwrite</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-smv.iomod">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-smv.iomod" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">smv.iomod package</a><ul>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#module-smv.iomod.base">smv.iomod.base module</a></li>
+<li><a class="reference internal" href="#module-smv.iomod.inputs">smv.iomod.inputs module</a></li>
+<li><a class="reference internal" href="#module-smv.iomod.outputs">smv.iomod.outputs module</a></li>
+<li><a class="reference internal" href="#module-smv.iomod">Module contents</a></li>
+</ul>
+</li>
+</ul>
+
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/smv.iomod.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Spark Modularized View v2r7 documentation</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2017, TresAmigosSD.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.3.
+    </div>
+  </body>
+</html>

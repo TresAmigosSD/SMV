@@ -1,0 +1,30 @@
+smv.conn package
+================
+
+Submodules
+----------
+
+smv.conn.conninfos module
+-------------------------
+
+.. automodule:: smv.conn.conninfos
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+smv.conn.smvconnectioninfo module
+---------------------------------
+
+.. automodule:: smv.conn.smvconnectioninfo
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
+Module contents
+---------------
+
+.. automodule:: smv.conn
+    :members:
+    :undoc-members:
+    :show-inheritance:
