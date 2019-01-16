@@ -92,7 +92,7 @@ install_app() {
 
 # Download the latest SMV binary release from github
 download_smv() {
-  install_app "https://github.com/TresAmigosSD/SMV/releases/download/v${SMV_VERSION}/smv_${SMV_VERSION}.tgz"
+  install_app "https://github.com/TresAmigosSD/SMV/releases/download/v${SMV_VERSION}/smv_v${SMV_VERSION}.tgz"
 }
 
 # Download prebuilt spark version with hive support.
