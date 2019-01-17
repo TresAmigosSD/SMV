@@ -16,5 +16,5 @@ blocks:
         commands:
           - checkout
           - ls -1
-          - sbt clean
+          - sbt build
 
