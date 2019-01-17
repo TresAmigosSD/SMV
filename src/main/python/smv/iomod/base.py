@@ -75,7 +75,7 @@ class SmvInput(SmvIoModule):
         Sub-class need to implement:
 
             - connectionType
-            - doRun
+            - _get_input_data
 
         User need to implement:
 
@@ -86,6 +86,15 @@ class SmvInput(SmvIoModule):
 
     def dsType(self):
         return "Input"
+
+    @abc.abstractmethod
+    def _get_input_data(self):
+        """Read in input to the desired typed data(frame)"""
+
+    def doRun(self, know):
+        res = self._get_input_data()
+        self._assure_output_type(res)
+        return res
 
 
 class SmvOutput(SmvIoModule):

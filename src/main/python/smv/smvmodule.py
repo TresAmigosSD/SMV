@@ -141,6 +141,11 @@ class SparkDfGenMod(SmvGenericModule):
             smv.logger.warn("Nontrivial DQM result:\n{}".format(msg))
         self.module_meta.addDqmValidationResult(validation_result.toJSON())
 
+    def _assure_output_type(self, run_output):
+        if (not isinstance(run_output, DataFrame)):
+            raise SmvRuntimeError(
+                'The output data from this module should be a Spark DataFrame, but {} is given.'.format(type(run_output))
+            )
 
 class SmvSparkDfModule(SmvProcessModule, SparkDfGenMod):
     """Base class for SmvModules create Spark DFs

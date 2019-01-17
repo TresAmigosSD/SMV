@@ -171,6 +171,7 @@ class SmvGenericModule(ABC):
     # - _force_an_action: Optional, default pass
     # - instanceValHash: Optional, default 0
     # - doRun: Required
+    # - _assure_output_type: Optional
     #########################################################################
     @abc.abstractmethod
     def dsType(self):
@@ -211,6 +212,12 @@ class SmvGenericModule(ABC):
                 (int)
         """
         return 0
+
+    def _assure_output_type(self, data):
+        """Check whether the output of run method is expected by the concrete module
+            Raise an exception if check failed
+        """
+        pass
 
     @abc.abstractmethod
     def doRun(self, known):
@@ -685,7 +692,9 @@ class SmvProcessModule(SmvGenericModule):
     def doRun(self, known):
         """Compute this dataset, and return the dataframe"""
         i = self.RunParams(known)
-        return self.run(i)
+        res = self.run(i)
+        self._assure_output_type(res)
+        return res
 
     ####################################################################################
     # Private methods: not expect to be overrided by sub-classes, but could be
