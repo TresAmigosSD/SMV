@@ -74,3 +74,9 @@ class WithLib(SmvModule):
         return [time]
     def run(self, i):
         return i[M2]
+
+class WrongType(SmvModule):
+    def requiresDS(self):
+        return [M2]
+    def run(self, i):
+        return i[M2].toPandas()
