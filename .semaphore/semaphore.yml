@@ -1,0 +1,20 @@
+version: v1.0
+name: SMV Build pipeline
+agent:
+  machine:
+    type: e1-standard-2
+    os_image: ubuntu1804
+
+blocks:
+  - name: "Build"
+    task:
+      env_vars:
+        - name: APP_ENV
+          value: prod
+      jobs:
+      - name: SBT Build
+        commands:
+          - checkout
+          - ls -1
+          - sbt clean
+
