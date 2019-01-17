@@ -151,6 +151,12 @@ class SmvSparkDfModule(SmvProcessModule, SparkDfGenMod):
     def dsType(self):
         return "Module"
 
+    def _assure_output_type(self, run_output):
+        if (not isinstance(run_output, DataFrame)):
+            raise SmvRuntimeError(
+                'The run method output should be a Spark DataFrame, but {} is given.'.format(type(run_output))
+            )
+
     #########################################################################
     # User interface methods
     #
