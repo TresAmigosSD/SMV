@@ -15,6 +15,7 @@ blocks:
       - name: SBT Build
         commands:
           - checkout
-          - ls -1
-          - sbt assembly
-
+          - cache restore sparks
+          - make install
+          - cache store sparks ./.sparks
+          - make test
