@@ -11,11 +11,16 @@ blocks:
       env_vars:
         - name: APP_ENV
           value: prod
+      prologue:
+        commands:
+          - sudo pip install tox
       jobs:
       - name: SBT Build
         commands:
           - checkout
           - cache restore sparks
+          - (cd ~; cache restore ivy)
           - make install
-          - cache store sparks ./.sparks
           - make test
+          - cache store sparks ./.sparks
+          - (cd ~; cache store ivy .ivy2)
