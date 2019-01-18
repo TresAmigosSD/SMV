@@ -16,8 +16,6 @@ blocks:
       jobs:
       - name: SBT Build
         commands:
-          - echo SEMAPHORE_GIT_BRANCH = $SEMAPHORE_GIT_BRANCH
-          - echo ROBOT_CREDS = $ROBOT_CREDS
           - checkout
           - cache restore sparks
           - (cd ~; cache restore ivy)
