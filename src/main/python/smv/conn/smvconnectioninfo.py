@@ -40,7 +40,7 @@ class SmvConnectionInfo(SmvProvider):
         """a list of attributes as strings for the concrete connection type"""
         # Need to be @staticmethod when define in concrete class
 
-    def get_content_list(self, smvApp, pattern=None, ignore_case=True):
+    def get_contents(self, smvApp, pattern=None, ignore_case=True):
         """Return a list of file/table names which match the pattern
         """
         return []
