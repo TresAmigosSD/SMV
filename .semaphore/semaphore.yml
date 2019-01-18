@@ -22,5 +22,7 @@ blocks:
           - (cd ~; cache restore ivy)
           - make install
           - make test
+          - make local_bundle
+          - ls -l
           - cache store sparks ./.sparks
           - (cd ~; cache store ivy .ivy2)

@@ -116,7 +116,7 @@ install-spark-all: $(INSTALL_SPARK_RULES)
 test: test-quick
 
 # Run all the basic tests tests with the default Python and Spark
-test-quick: test-scala test-python test-integration test-ingration-pip
+test-quick: test-scala test-python test-integration
 
 test-scala:
 	sbt test
