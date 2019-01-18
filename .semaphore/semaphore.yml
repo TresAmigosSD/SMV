@@ -8,15 +8,17 @@ agent:
 blocks:
   - name: "Build"
     task:
-      env_vars:
-        - name: APP_ENV
-          value: prod
+      secrets:
+        - name: github-robot
       prologue:
         commands:
           - sudo pip install tox
       jobs:
       - name: SBT Build
         commands:
+          - echo SEMAPHORE_GIT_BRANCH = $SEMAPHORE_GIT_BRANCH
+          - echo ROBOT_CREDS = $ROBOT_CREDS
+          - [ "$SEMAPHORE_GIT_BRANCH" = "master" ] && echo on master
           - checkout
           - cache restore sparks
           - (cd ~; cache restore ivy)
