@@ -1,0 +1,63 @@
+#!/bin/bash
+#
+# script to upload/download latest SMV release bundle created by CI
+#
+# USAGE:
+#   ci-latest-mgr -upload GIT_USER_CREDS
+# OR
+#   ci-latest-mgr -download
+#
+# The commands above always assume the file is called "latest.tgz" to keep things simple.
+# Note: this script should really only be used by CI and not by users directly.
+
+CI_RELEASE_URL="https://api.github.com/repos/tresamigossd/SMV/releases/15020709"
+CI_ASSET_UPLOAD_URL="https://uploads.github.com/repos/TresAmigosSD/SMV/releases/15020709/assets"
+
+CI_TGZ_URL="https://github.com/TresAmigosSD/SMV/releases/download/ci/latest.tgz"
+
+function cur_asset_url()
+{
+    curl -s -u "${GITHUB_AUTH}" -X GET "${CI_RELEASE_URL}/assets" |
+        grep '"url"' | grep "SMV/releases/assets" |
+        sed -e 's/.*\(https:.*\)\".*/\1/'
+}
+
+function upload()
+{
+    if [ $# -ne 2 ]; then
+        echo ERROR: github creds to upload a file
+        exit 1
+    fi
+    GITHUB_AUTH="$2"
+
+    # delete current asset if any
+    local url=`cur_asset_url`
+    echo "current asset url : $url"
+    if [ -n "$url" ]; then
+        echo "Deleting current asset"
+        curl -s -u "${GITHUB_AUTH}" -X DELETE "${url}"
+    fi
+
+    # upload the file (always called "latest.tgz" in the release to make life easy)
+    echo "Uploading file"
+    curl -s -u "${GITHUB_AUTH}" -H "Content-Type: application/gzip" -X POST \
+        --data-binary "@latest.tgz" "${CI_ASSET_UPLOAD_URL}?name=latest.tgz"
+
+    exit 0
+}
+
+function download()
+{
+    echo "Download latest CI bundle"
+    curl -s -L -o latest.tgz "${CI_TGZ_URL}"
+
+    exit 0
+}
+
+# ---- MAIN ----
+
+[ "$1" = "-upload" ] && upload "$@"
+[ "$1" = "-download" ] && download "$@"
+
+echo "Invalid option"
+exit 1
