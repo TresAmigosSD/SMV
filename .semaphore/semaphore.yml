@@ -18,7 +18,6 @@ blocks:
         commands:
           - echo SEMAPHORE_GIT_BRANCH = $SEMAPHORE_GIT_BRANCH
           - echo ROBOT_CREDS = $ROBOT_CREDS
-          - [ "$SEMAPHORE_GIT_BRANCH" = "master" ] && echo on master
           - checkout
           - cache restore sparks
           - (cd ~; cache restore ivy)
