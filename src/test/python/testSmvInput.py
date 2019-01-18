@@ -306,3 +306,10 @@ id:integer"""
         res = self.smvApp.get_all_connection_names()
         self.assertTrue('my_hdfs' in res)
         self.assertTrue('my_hdfs_2' in res)
+
+    def test_get_content_list(self):
+        self.createTempInputFile("f1.csv", "col1\na\n")
+        self.createTempInputFile("f1.schema", "a:String")
+        conn = self.smvApp.get_connection_by_name('my_hdfs')
+        res = conn.get_content_list(self.smvApp, '.*\.csv')
+        self.assertEqual(res, ['f1.csv'])

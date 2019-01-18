@@ -12,6 +12,7 @@
 # limitations under the License.
 
 from smv.conn.smvconnectioninfo import SmvConnectionInfo
+import re
 
 class SmvJdbcConnectionInfo(SmvConnectionInfo):
     """Connection Info for connection type "jdbc"
@@ -69,6 +70,18 @@ class SmvHdfsConnectionInfo(SmvConnectionInfo):
     def attributes():
         return ['path']
 
+    def get_content_list(self, smvApp, pattern=None, ignore_case=True):
+        """Return a list of file/table names which match the pattern
+        """
+        all_files = [str(f) for f in smvApp._jvm.SmvPythonHelper.getDirList(self.path)]
+        if (pattern is None):
+            return all_files
+        else:
+            if (ignore_case):
+                to_match = re.compile(pattern, re.IGNORECASE)
+            else:
+                to_match = re.compile(pattern)
+            return [str(f) for f in all_files if to_match.match(f)]
 
 SmvHdfsEmptyConn = SmvHdfsConnectionInfo(
     "emptydir",
