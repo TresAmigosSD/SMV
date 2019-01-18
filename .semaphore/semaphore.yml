@@ -23,6 +23,5 @@ blocks:
           - make test
           - make local_bundle
           - make ci-upload-bundle
-          - ls -l
           - cache store sparks ./.sparks
           - (cd ~; cache store ivy .ivy2)
