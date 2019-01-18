@@ -57,7 +57,7 @@ local_bundle:
 #   SEMAPHORE_GIT_BRANCH : branch that semaphore is currently building (set by semaphore automatically)
 ci-upload-bundle:
 	@(\
-		if [ "${SEMAPHORE_GIT_BRANCH}" = "i1578_build_ci" ]; then \
+		if [ "${SEMAPHORE_GIT_BRANCH}" = "master" ]; then \
 			ln -s smv_v*.tgz latest.tgz; \
 			./admin/ci-latest-mgr -upload "${ROBOT_CREDS}"; \
 		fi; \
