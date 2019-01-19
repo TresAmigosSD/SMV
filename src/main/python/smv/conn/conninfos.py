@@ -48,6 +48,17 @@ class SmvHiveConnectionInfo(SmvConnectionInfo):
     def attributes():
         return ['schema']
 
+    def get_contents(self, smvApp):
+        """Return a list of file/table names which match the pattern
+        """
+        if (self.schema is None):
+            query = 'show tables'
+        else:
+            query = 'show tables from {}'.format(self.schema)
+        tables_df = smvApp.sqlContext.sql(query)
+        tablenames = [str(f.tableName) for f in tables_df.collect()]
+        return tablenames
+
 class SmvHdfsConnectionInfo(SmvConnectionInfo):
     """Connection Info for connection type "hdfs"
 
