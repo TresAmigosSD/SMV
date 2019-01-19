@@ -47,7 +47,7 @@ class SmvJdbcConnectionInfo(SmvConnectionInfo):
         return builder
 
     def get_contents(self, smvApp):
-        """Return a list of file/table names which match the pattern
+        """Return a list of table names
         """
         tables_df = self._connect_for_read(smvApp)\
             .option("dbtable", "(SELECT TABLENAME FROM SYS.SYSTABLES WHERE TABLETYPE='T') foo")\
@@ -72,7 +72,7 @@ class SmvHiveConnectionInfo(SmvConnectionInfo):
         return ['schema']
 
     def get_contents(self, smvApp):
-        """Return a list of file/table names which match the pattern
+        """Return a list of table names
         """
         if (self.schema is None):
             query = 'show tables'
@@ -105,7 +105,7 @@ class SmvHdfsConnectionInfo(SmvConnectionInfo):
         return ['path']
 
     def get_contents(self, smvApp):
-        """Return a list of file/table names which match the pattern
+        """Return a list of file/dir names
         """
         # TODO: should be recursive and return the tree
         return [str(f) for f in smvApp._jvm.SmvPythonHelper.getDirList(self.path)]
