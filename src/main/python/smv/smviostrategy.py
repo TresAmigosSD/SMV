@@ -233,16 +233,7 @@ class SmvJdbcIoStrategy(SmvIoStrategy):
 
     def read(self):
         conn = self.conn
-        builder = self.smvApp.sqlContext.read\
-            .format('jdbc')\
-            .option('url', conn.url)
-
-        if (conn.driver is not None):
-            builder = builder.option('driver', conn.driver)
-        if (conn.user is not None):
-            builder = builder.option('user', conn.user)
-        if (conn.password is not None):
-            builder = builder.option('password', conn.password)
+        builder = conn._connect_for_read(self.smvApp)
 
         return builder\
             .option('dbtable', self.table)\

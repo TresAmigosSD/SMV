@@ -55,3 +55,8 @@ class NewJdbcTest(SmvBaseTest):
             .option("dbtable", "MyJdbcTable")\
             .load()
         self.should_be_same(res, df)
+
+    def test_conn_contents(self):
+        conn = self.smvApp.get_connection_by_name('myjdbc_conn')
+        res = [f.lower() for f in conn.get_contents(self.smvApp)]
+        self.assertTrue('MyJdbcTable'.lower() in res)

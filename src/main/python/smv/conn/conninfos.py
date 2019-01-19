@@ -33,6 +33,30 @@ class SmvJdbcConnectionInfo(SmvConnectionInfo):
         return ["url", "driver", "user", "password"]
 
 
+    def _connect_for_read(self, smvApp):
+        builder = smvApp.sqlContext.read\
+            .format('jdbc')\
+            .option('url', self.url)
+
+        if (self.driver is not None):
+            builder = builder.option('driver', self.driver)
+        if (self.user is not None):
+            builder = builder.option('user', self.user)
+        if (self.password is not None):
+            builder = builder.option('password', self.password)
+
+        return builder
+
+    def get_contents(self, smvApp):
+        """Return a list of file/table names which match the pattern
+        """
+        tables_df = self._connect_for_read(smvApp)\
+            .option("dbtable", "(SELECT TABLENAME FROM SYS.SYSTABLES WHERE TABLETYPE='T') foo")\
+            .load()
+
+        tablenames = [str(f[0]) for f in tables_df.select('tableName').collect()]
+        return tablenames
+
 class SmvHiveConnectionInfo(SmvConnectionInfo):
     """Connection Info for connection type "hive"
 
@@ -56,7 +80,7 @@ class SmvHiveConnectionInfo(SmvConnectionInfo):
         else:
             query = 'show tables from {}'.format(self.schema)
         tables_df = smvApp.sqlContext.sql(query)
-        tablenames = [str(f.tableName) for f in tables_df.collect()]
+        tablenames = [str(f[0]) for f in tables_df.select('tableName').collect()]
         return tablenames
 
 class SmvHdfsConnectionInfo(SmvConnectionInfo):
