@@ -112,6 +112,11 @@ class NewHiveTableTest(HiveTest):
         exp = self.smvApp.sqlContext.sql("select * from M")
         self.should_be_same(res, exp)
 
+    def test_get_conn_contents(self):
+        conn = self.smvApp.get_connection_by_name('my_hive')
+        tablenames = conn.get_contents(self.smvApp)
+        self.assertTrue('m' in tablenames)
+
     def test_new_hive_output(self):
         res = self.df("stage.modules.NewHiveOutput")
         readBack = self.smvApp.sqlContext.sql("select * from WriteOutM")
