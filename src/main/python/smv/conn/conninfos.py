@@ -12,7 +12,6 @@
 # limitations under the License.
 
 from smv.conn.smvconnectioninfo import SmvConnectionInfo
-import re
 
 class SmvJdbcConnectionInfo(SmvConnectionInfo):
     """Connection Info for connection type "jdbc"
