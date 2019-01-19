@@ -36,7 +36,7 @@ publish-scala: assemble-fat-jar
 
 BUNDLE_NAME = smv_$(SMV_VERSION).tgz
 BUNDLE_PATH = docker/smv/$(BUNDLE_NAME)
-BUNDLE_EXCLUDE = venv metastore_db .tox .ivy2 $(SPARKS_DIR) .git admin $(BUNDLE_NAME)
+BUNDLE_EXCLUDE = venv metastore_db .tox .ivy2 $(SPARKS_DIR) .git admin $(BUNDLE_NAME) .sparks
 
 local_bundle:
 	# cleanup some unneeded binary files.
