@@ -36,7 +36,7 @@ publish-scala: assemble-fat-jar
 
 BUNDLE_NAME = smv_$(SMV_VERSION).tgz
 BUNDLE_PATH = docker/smv/$(BUNDLE_NAME)
-BUNDLE_EXCLUDE = venv metastore_db .tox .ivy2 $(SPARKS_DIR) .git admin $(BUNDLE_NAME)
+BUNDLE_EXCLUDE = venv metastore_db .tox .ivy2 $(SPARKS_DIR) .git admin $(BUNDLE_NAME) .sparks
 
 local_bundle:
 	# cleanup some unneeded binary files.
@@ -51,6 +51,17 @@ local_bundle:
 	tar zcvf $(SMV_ROOT)/../$(BUNDLE_NAME) -C $(SMV_ROOT)/.. $(addprefix --exclude=, $(BUNDLE_EXCLUDE)) $(shell basename $(SMV_ROOT))
 	mv $(SMV_ROOT)/../$(BUNDLE_NAME) $(SMV_ROOT)/$(BUNDLE_NAME)
 
+# This will upload the bundle as "latest.tgz" to the CI release if we built on master.
+# Required env:
+#   ROBOT_CREDS : must be set to the D2D robot credentials
+#   SEMAPHORE_GIT_BRANCH : branch that semaphore is currently building (set by semaphore automatically)
+ci-upload-bundle:
+	@(\
+		if [ "${SEMAPHORE_GIT_BRANCH}" = "master" ]; then \
+			ln -s smv_v*.tgz latest.tgz; \
+			./admin/ci-latest-mgr -upload "${ROBOT_CREDS}"; \
+		fi; \
+	)
 
 DOCKER_BASE_NAME = local-smv-base-$(SMV_VERSION)
 DOCKER_SMV_NAME = local-smv-$(SMV_VERSION)
@@ -116,7 +127,7 @@ install-spark-all: $(INSTALL_SPARK_RULES)
 test: test-quick
 
 # Run all the basic tests tests with the default Python and Spark
-test-quick: test-scala test-python test-integration test-ingration-pip
+test-quick: test-scala test-python test-integration
 
 test-scala:
 	sbt test
