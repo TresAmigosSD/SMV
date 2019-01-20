@@ -33,16 +33,20 @@ class SmvConfig(object):
         self._jvm = _jvm
         self.cmdline = self._create_cmdline_conf(arglist)
 
+        DEFAULT_SMV_APP_CONF_FILE  = "conf/smv-app-conf.props"
+        DEFAULT_SMV_CONN_CONF_FILE  = "conf/connections.props"
+        DEFAULT_SMV_USER_CONF_FILE = "conf/smv-user-conf.props"
         DEFAULT_SMV_HOME_CONF_FILE = os.getenv('HOME', '') + "/.smv/smv-user-conf.props"
 
         self.app_dir = self.cmdline.pop('smvAppDir')
         self.static_props = {}
         self.dynamic_props = {}
 
-        self.app_conf_path = self.cmdline.pop('smvAppConfFile')
-        self.conn_conf_path = self.cmdline.pop('smvConnConfFile')
+        self.app_conf_path = DEFAULT_SMV_APP_CONF_FILE
+        self.conn_conf_path = DEFAULT_SMV_CONN_CONF_FILE
+        self.user_conf_path = DEFAULT_SMV_USER_CONF_FILE
         self.home_conf_path = DEFAULT_SMV_HOME_CONF_FILE
-        self.user_conf_path = self.cmdline.pop('smvUserConfFile')
+
         self.cmdline_props = dict(self.cmdline.pop('smvProps'))
 
         self.read_props_from_app_dir(self.app_dir)
@@ -194,15 +198,9 @@ class SmvConfig(object):
             description="For additional usage information, please refer to the user guide and API docs at: \nhttp://tresamigossd.github.io/SMV"
         )
 
-        DEFAULT_SMV_APP_CONF_FILE  = "conf/smv-app-conf.props"
-        DEFAULT_SMV_CONN_CONF_FILE  = "conf/connections.props"
-        DEFAULT_SMV_USER_CONF_FILE = "conf/smv-user-conf.props"
 
         # Where to find props files
         parser.add_argument('--smv-app-dir', dest='smvAppDir', default=".", help="SMV app directory")
-        parser.add_argument('--smv-app-conf', dest='smvAppConfFile', default=DEFAULT_SMV_APP_CONF_FILE, help="app level SMV configuration file path")
-        parser.add_argument('--smv-conn-conf', dest='smvConnConfFile', default=DEFAULT_SMV_CONN_CONF_FILE, help="app level SMV connection configuration file path")
-        parser.add_argument('--smv-user-conf', dest='smvUserConfFile', default=DEFAULT_SMV_USER_CONF_FILE, help="user level SMV configuration file path")
 
         # Where to find/store data
         parser.add_argument('--data-dir', dest='dataDir', help="specify the top level data directory")
