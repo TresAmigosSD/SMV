@@ -33,15 +33,20 @@ class SmvConfig(object):
         self._jvm = _jvm
         self.cmdline = self._create_cmdline_conf(arglist)
 
+        DEFAULT_SMV_APP_CONF_FILE  = "conf/smv-app-conf.props"
+        DEFAULT_SMV_CONN_CONF_FILE  = "conf/connections.props"
+        DEFAULT_SMV_USER_CONF_FILE = "conf/smv-user-conf.props"
         DEFAULT_SMV_HOME_CONF_FILE = os.getenv('HOME', '') + "/.smv/smv-user-conf.props"
 
         self.app_dir = self.cmdline.pop('smvAppDir')
         self.static_props = {}
         self.dynamic_props = {}
 
-        self.app_conf_path = self.cmdline.pop('smvAppConfFile')
+        self.app_conf_path = DEFAULT_SMV_APP_CONF_FILE
+        self.conn_conf_path = DEFAULT_SMV_CONN_CONF_FILE
+        self.user_conf_path = DEFAULT_SMV_USER_CONF_FILE
         self.home_conf_path = DEFAULT_SMV_HOME_CONF_FILE
-        self.user_conf_path = self.cmdline.pop('smvUserConfFile')
+
         self.cmdline_props = dict(self.cmdline.pop('smvProps'))
 
         self.read_props_from_app_dir(self.app_dir)
@@ -193,13 +198,9 @@ class SmvConfig(object):
             description="For additional usage information, please refer to the user guide and API docs at: \nhttp://tresamigossd.github.io/SMV"
         )
 
-        DEFAULT_SMV_APP_CONF_FILE  = "conf/smv-app-conf.props"
-        DEFAULT_SMV_USER_CONF_FILE = "conf/smv-user-conf.props"
 
         # Where to find props files
         parser.add_argument('--smv-app-dir', dest='smvAppDir', default=".", help="SMV app directory")
-        parser.add_argument('--smv-app-conf', dest='smvAppConfFile', default=DEFAULT_SMV_APP_CONF_FILE, help="app level (static) SMV configuration file path")
-        parser.add_argument('--smv-user-conf', dest='smvUserConfFile', default=DEFAULT_SMV_USER_CONF_FILE, help="user level (dynamic) SMV configuration file path")
 
         # Where to find/store data
         parser.add_argument('--data-dir', dest='dataDir', help="specify the top level data directory")
@@ -243,6 +244,7 @@ class SmvConfig(object):
         # ("/a/b", "c/d") -> "/a/b/c/d"
         # ("/a/b", "/c/d") -> "/c/d"
         full_app_conf_path = os.path.join(self.app_dir, self.app_conf_path)
+        full_conn_conf_path = os.path.join(self.app_dir, self.conn_conf_path)
         full_user_conf_path = os.path.join(self.app_dir, self.user_conf_path)
 
         def load(path):
@@ -253,6 +255,7 @@ class SmvConfig(object):
                 return {}
 
         app_conf_props = load(full_app_conf_path)
+        conn_conf_props = load(full_conn_conf_path)
         home_conf_props = load(self.home_conf_path)
         user_conf_props = load(full_user_conf_path)
 
@@ -267,12 +270,14 @@ class SmvConfig(object):
         # Priority: Low to High
         #   - default
         #   - conf/smv-app-conf.props
+        #   - conf/connections.props
         #   - ${HOME}/.smv/smv-user-conf.props
         #   - conf/smv-user-conf.props
         #   - command-line
         res = {}
         res.update(default_props)
         res.update(app_conf_props)
+        res.update(conn_conf_props)
         res.update(home_conf_props)
         res.update(user_conf_props)
         res.update(self.cmdline_props)
