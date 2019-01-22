@@ -49,12 +49,8 @@ class SmvJdbcConnectionInfo(SmvConnectionInfo):
     def get_contents(self, smvApp):
         """Return a list of table names
         """
-        tables_df = self._connect_for_read(smvApp)\
-            .option("dbtable", "(SELECT TABLENAME FROM SYS.SYSTABLES WHERE TABLETYPE='T') foo")\
-            .load()
-
-        tablenames = [str(f[0]) for f in tables_df.select('tableName').collect()]
-        return tablenames
+        # TODO: implement for specific DB
+        return []
 
 class SmvHiveConnectionInfo(SmvConnectionInfo):
     """Connection Info for connection type "hive"
