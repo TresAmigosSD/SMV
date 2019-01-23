@@ -37,6 +37,12 @@ class SmvSchema(object):
         j_smv_schema = smvApp.smvSchemaObj.fromFile(smvApp.j_smvApp.sc(), schema_file)
         return SmvSchema(j_smv_schema)
 
+    @staticmethod
+    def fromString(schema_str):
+        smvApp = SmvApp.getInstance()
+        j_smv_schema = smvApp.smvSchemaObj.fromString(schema_str)
+        return SmvSchema(j_smv_schema)
+
     def toValue(self, i, str_val):
         """convert the string value to native value based on type defined in schema.
 
@@ -46,7 +52,7 @@ class SmvSchema(object):
         val = self.j_smv_schema.toValue(i, str_val)
         j_type = self.spark_schema.fields[i].dataType.typeName()
         if j_type == sql_types.DateType.typeName():
-            val = datetime.date(1900 + val.getYear(), val.getMonth(), val.getDate())
+            val = datetime.date(1900 + val.getYear(), val.getMonth()+1, val.getDate())
         return val
 
     def saveToLocalFile(self, schema_file):
