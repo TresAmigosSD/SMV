@@ -361,7 +361,7 @@ function publish_to_pypi() {
   tar -xzf "${TGZ_IMAGE}" && \
   cd SMV && \
   python setup.py sdist bdist_wheel && \
-  twine upload --username "${PYPI_USERNAME}" --password "${PYPI_PASSWORD}" dist/* && \
+  python -m twine upload --username "${PYPI_USERNAME}" --password "${PYPI_PASSWORD}" dist/* && \
   echo "Finished upload to PyPi"
 }
 
