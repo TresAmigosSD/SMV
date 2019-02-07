@@ -285,9 +285,14 @@ class SmvHiveIoStrategy(SmvIoStrategy):
         return self.smvApp.sqlContext.sql(query)
 
     def write(self, raw_data):
-        raw_data.write\
-            .mode(self.write_mode)\
-            .saveAsTable(self._table_with_schema())
+        # TODO: write_mode == 'Ignore'
+        raw_data.createOrReplaceTempView("dftable")
+        if (self.write_mode == 'overwrite' or self.write_mode == 'errorifexists'):
+            if (self.write_mode == 'overwrite'):
+                self.smvApp.sqlContext.sql("drop table if exists {}".format(self.table))
+            self.smvApp.sqlContext.sql("create table {} as select * from dftable".format(self.table))
+        elif (self.write_mode == 'append'):
+            self.smvApp.sqlContext.sql("insert into table {} select * from dftable".format(self.table))
 
     # TODO: we should allow persisting intermidiate results in Hive also
     # For that case, however need to specify a convention to store semaphore
