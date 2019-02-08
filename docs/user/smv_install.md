@@ -49,13 +49,13 @@ This will automatically add the SMV CLI scripts to the PATH inside of your Pytho
 ## Install SMV using curl
 
 ```bash
-$ curl https://raw.githubusercontent.com/TresAmigosSD/SMV/v2r7/tools/smv-install | bash -s -- -spark
+$ curl https://raw.githubusercontent.com/TresAmigosSD/SMV/v2r9/tools/smv-install | bash -s -- -spark
 ```
 
 ## Install SMV using wget
 
 ```bash
-$ wget -qO- https://raw.githubusercontent.com/TresAmigosSD/SMV/v2r7/tools/smv-install | bash -s -- -w -spark
+$ wget -qO- https://raw.githubusercontent.com/TresAmigosSD/SMV/v2r9/tools/smv-install | bash -s -- -w -spark
 ```
 
 If curl/wget method doesn't work, we can use "sbt assembly" to build SMV by ourselves.
