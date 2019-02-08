@@ -1,0 +1,38 @@
+smv.iomod package
+=================
+
+Submodules
+----------
+
+smv.iomod.base module
+---------------------
+
+.. automodule:: smv.iomod.base
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+smv.iomod.inputs module
+-----------------------
+
+.. automodule:: smv.iomod.inputs
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+smv.iomod.outputs module
+------------------------
+
+.. automodule:: smv.iomod.outputs
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
+Module contents
+---------------
+
+.. automodule:: smv.iomod
+    :members:
+    :undoc-members:
+    :show-inheritance:

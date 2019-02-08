@@ -39,22 +39,12 @@ class SmvIoModule(SmvGenericModule):
         return SmvNonOpPersistenceStrategy()
 
     @abc.abstractmethod
+    def connectionType(self):
+        """Connection type supported by a specific io module"""
+
+    @abc.abstractmethod
     def connectionName(self):
         """Name of the connection to read/write"""
-
-    def _get_connection_by_name(self, name):
-        """Get connection instance from name
-        """
-        props = self.smvApp.py_smvconf.merged_props()
-        type_name = "smv.conn.{}.type".format(name)
-
-        if (type_name in props):
-            con_type = props.get(type_name)
-            provider_fqn = "conn.{}".format(con_type)
-            ConnClass = self.smvApp.get_provider_by_fqn(provider_fqn)
-            return ConnClass(name, props)
-        else:
-            raise SmvRuntimeError("Connection name {} is not configured with a type".format(name))
 
     def get_connection(self):
         """Get data connection instance from connectionName()
@@ -64,7 +54,15 @@ class SmvIoModule(SmvGenericModule):
             Ex: smv.conn.con_name.class=smv.conn.SmvJdbcConnectionInfo
         """
         name = self.connectionName()
-        return self._get_connection_by_name(name)
+        conn = self.smvApp.get_connection_by_name(name)
+
+        # check whether the connection provided by name has the type as expected
+        conn_type = conn.provider_type()
+        if (conn_type != self.connectionType()):
+            raise SmvRuntimeError("Connection {} has type {}, while {} need connection type {}".format(
+                name, conn_type, self.__class__.__name__, self.connectionType()
+            ))
+        return conn
 
     def connectionHash(self):
         conn_hash = self.get_connection().conn_hash()
@@ -76,7 +74,8 @@ class SmvInput(SmvIoModule):
 
         Sub-class need to implement:
 
-            - doRun
+            - connectionType
+            - _get_input_data
 
         User need to implement:
 
@@ -88,12 +87,22 @@ class SmvInput(SmvIoModule):
     def dsType(self):
         return "Input"
 
+    @abc.abstractmethod
+    def _get_input_data(self):
+        """Read in input to the desired typed data(frame)"""
+
+    def doRun(self, know):
+        res = self._get_input_data()
+        self._assure_output_type(res)
+        return res
+
 
 class SmvOutput(SmvIoModule):
     """Base class for all Output modules
 
         Sub-class need to implement:
 
+            - connectionType
             - doRun
 
         Within doRun, assert_single_input should be called.
@@ -107,7 +116,7 @@ class SmvOutput(SmvIoModule):
     def dsType(self):
         return "Output"
 
-    def assert_single_input(self):
+    def _assert_single_input(self):
         """Make sure SmvOutput only depends on a single module
             This method will not be called, when SmvOutput is used for mixin.
             It should be called by the doRun method when SmvOutput is used for
@@ -118,6 +127,13 @@ class SmvOutput(SmvIoModule):
                 .format(", ".join([m.fqn() for m in self.requiresDS()]))
             )
 
+    def _do_it(self, fqn2df, run_set, collector, forceRun, is_quick_run):
+        """Override _do_it, since output doRun just need to run, no other fancy stuff
+        """
+        self._assert_single_input()
+        self.data = self.doRun(fqn2df)
+        # output's doRun guarantees an action
+        self._run_ancestor_and_me_postAction(run_set, collector)
 
 class AsTable(object):
     """Mixin to assure a tableName method"""
@@ -133,7 +149,7 @@ class AsTable(object):
         res = smvhash(self.tableName())
         return res
 
-class AsFile(object):
+class AsFile(SmvIoModule):
     """Mixin to assure a fileName method"""
     @abc.abstractmethod
     def fileName(self):
@@ -146,6 +162,10 @@ class AsFile(object):
     def fileNameHash(self):
         res = smvhash(self.fileName())
         return res
+
+    def connectionType(self):
+        # all files should have hdfs as their connection type
+        return 'hdfs'
 
     def _assert_file_postfix(self, postfix):
         """Make sure that file name provided has the desired postfix"""
@@ -167,7 +187,6 @@ class SmvSparkDfOutput(SmvOutput):
             )
 
     def get_spark_df(self, known):
-        self.assert_single_input()
         i = self.RunParams(known)
 
         data = i[self.requiresDS()[0]]

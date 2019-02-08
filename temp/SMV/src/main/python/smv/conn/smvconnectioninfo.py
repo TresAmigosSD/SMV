@@ -36,8 +36,14 @@ class SmvConnectionInfo(SmvProvider):
         return "conn"
 
     @abc.abstractmethod
-    def attributes(self):
+    def attributes():
         """a list of attributes as strings for the concrete connection type"""
+        # Need to be @staticmethod when define in concrete class
+
+    def get_contents(self, smvApp):
+        """Return a list of file/table names
+        """
+        return []
 
     def __init__(self, name, props):
         self.name = name

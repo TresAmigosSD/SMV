@@ -1,0 +1,27 @@
+version: v1.0
+name: SMV Build pipeline
+agent:
+  machine:
+    type: e1-standard-2
+    os_image: ubuntu1804
+
+blocks:
+  - name: "Build"
+    task:
+      secrets:
+        - name: github-robot
+      prologue:
+        commands:
+          - sudo pip install tox
+      jobs:
+      - name: SBT Build
+        commands:
+          - checkout
+          - cache restore sparks
+          - (cd ~; cache restore ivy)
+          - make install
+          - make test
+          - make local_bundle
+          - make ci-upload-bundle
+          - cache store sparks ./.sparks
+          - (cd ~; cache store ivy .ivy2)

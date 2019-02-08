@@ -171,6 +171,7 @@ class SmvGenericModule(ABC):
     # - _force_an_action: Optional, default pass
     # - instanceValHash: Optional, default 0
     # - doRun: Required
+    # - _assure_output_type: Optional
     #########################################################################
     @abc.abstractmethod
     def dsType(self):
@@ -211,6 +212,12 @@ class SmvGenericModule(ABC):
                 (int)
         """
         return 0
+
+    def _assure_output_type(self, data):
+        """Check whether the output of run method is expected by the concrete module
+            Raise an exception if check failed
+        """
+        pass
 
     @abc.abstractmethod
     def doRun(self, known):
@@ -264,9 +271,16 @@ class SmvGenericModule(ABC):
     def _ancestor_and_me_visitor(self):
         return ModulesVisitor([self])
 
+    def _do_it(self, fqn2df, run_set, collector, forceRun, is_quick_run):
+        """Entry point for the module runner
+            By default, just need to calculate modout data
+        """
+        self._populate_data(fqn2df, run_set, collector, forceRun, is_quick_run)
+        return None
 
-    def _get_data(self, fqn2df, run_set, collector, forceRun, is_quick_run):
-        """create or get data from smvApp level cache
+    def _populate_data(self, fqn2df, run_set, collector, forceRun, is_quick_run):
+        """create or get data from smvApp level cache and populate module data cache
+
             Args:
                 fqn2df({str:DataFrame}) already run modules current module may depends
                 run_set(set(SmvGenericModule)) modules yet to run post_action
@@ -294,7 +308,7 @@ class SmvGenericModule(ABC):
             res = self.smvApp.data_cache.get(self.versioned_fqn)
             self.data = res
         fqn2df.update({self.fqn(): res})
-        return res
+        return None
 
     def _computeData(self, fqn2df, run_set, collector, is_quick_run):
         """When DF is not in cache, do the real calculation here
@@ -678,7 +692,9 @@ class SmvProcessModule(SmvGenericModule):
     def doRun(self, known):
         """Compute this dataset, and return the dataframe"""
         i = self.RunParams(known)
-        return self.run(i)
+        res = self.run(i)
+        self._assure_output_type(res)
+        return res
 
     ####################################################################################
     # Private methods: not expect to be overrided by sub-classes, but could be

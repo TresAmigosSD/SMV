@@ -190,6 +190,10 @@ class SmvFrameworkTest2(SmvBaseTest):
     def test_lib_with_clib(self):
         self.df("stage.modules.WithLib")
 
+    def test_error_on_wrong_type(self):
+        with self.assertRaisesRegexp(SmvRuntimeError, "should be a Spark DataFrame"):
+            self.df("stage.modules.WrongType")
+
 class SmvForceEddTest(SmvBaseTest):
     @classmethod
     def smvAppInitArgs(cls):

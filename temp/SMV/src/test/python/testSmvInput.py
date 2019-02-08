@@ -301,3 +301,15 @@ id:integer"""
         conn2 = SmvHdfsConnectionInfo("testconn2", {'smv.conn.testconn2.path': '/dummy2'})
 
         self.assertNotEqual(conn1.conn_hash(), conn2.conn_hash())
+
+    def test_get_connections(self):
+        res = self.smvApp.get_all_connection_names()
+        self.assertTrue('my_hdfs' in res)
+        self.assertTrue('my_hdfs_2' in res)
+
+    def test_get_contents(self):
+        self.createTempInputFile("f1.csv", "col1\na\n")
+        self.createTempInputFile("f1.schema", "a:String")
+        conn = self.smvApp.get_connection_by_name('my_hdfs')
+        res = conn.get_contents(self.smvApp)
+        self.assertTrue('f1.csv' in res)

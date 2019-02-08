@@ -44,6 +44,9 @@ class SmvJdbcOutputTable(SmvSparkDfOutput, WithSparkDfWriter, AsTable):
             - writeMode: optional, default "errorifexists"
     """
 
+    def connectionType(self):
+        return 'jdbc'
+
     def doRun(self, known):
         data = self.get_spark_df(known)
         conn = self.get_connection()
@@ -66,6 +69,9 @@ class SmvHiveOutputTable(SmvSparkDfOutput, WithSparkDfWriter, AsTable):
             - writeMode: optional, default "errorifexists"
     """
 
+    def connectionType(self):
+        return 'hive'
+
     def doRun(self, known):
         data = self.get_spark_df(known)
         conn = self.get_connection()
@@ -84,6 +90,11 @@ class SmvCsvOutputFile(SmvSparkDfOutput, AsFile):
             - connectionName
             - fileName
     """
+    def writeMode(self):
+        """Default write mode is overwrite, and currently only support overwrite
+        """
+        return "overwrite"
+
     def doRun(self, known):
         data = self.get_spark_df(known)
         file_path = os.path.join(self.get_connection().path, self.fileName())
@@ -91,8 +102,8 @@ class SmvCsvOutputFile(SmvSparkDfOutput, AsFile):
 
         schema = self.smvApp.smvSchemaObj.fromDataFrame(data._jdf, "_SmvStrNull_", self.smvApp.scalaOption(CsvAttributes()))
 
-        SmvCsvOnHdfsIoStrategy(self.smvApp, file_path, schema, None).write(data)
-        SmvSchemaOnHdfsIoStrategy(self.smvApp, schema_path).write(schema)
+        SmvCsvOnHdfsIoStrategy(self.smvApp, file_path, schema, None, self.writeMode()).write(data)
+        SmvSchemaOnHdfsIoStrategy(self.smvApp, schema_path, self.writeMode()).write(schema)
         return data
 
 __all__ = [

@@ -1,0 +1,154 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>smv.datasetresolver &#8212; Spark Modularized View v2r9 documentation</title>
+    <link rel="stylesheet" href="../../_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Spark Modularized View v2r9 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for smv.datasetresolver</h1><div class="highlight"><pre>
+<span></span><span class="c1">#</span>
+<span class="c1"># This file is licensed under the Apache License, Version 2.0</span>
+<span class="c1"># (the &quot;License&quot;); you may not use this file except in compliance with</span>
+<span class="c1"># the License.  You may obtain a copy of the License at</span>
+<span class="c1">#</span>
+<span class="c1">#    http://www.apache.org/licenses/LICENSE-2.0</span>
+<span class="c1">#</span>
+<span class="c1"># Unless required by applicable law or agreed to in writing, software</span>
+<span class="c1"># distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
+<span class="c1"># See the License for the specific language governing permissions and</span>
+<span class="c1"># limitations under the License.</span>
+
+<span class="kn">from</span> <span class="nn">datetime</span> <span class="k">import</span> <span class="n">datetime</span>
+<span class="kn">from</span> <span class="nn">smv.error</span> <span class="k">import</span> <span class="n">SmvRuntimeError</span>
+
+<div class="viewcode-block" id="DataSetResolver"><a class="viewcode-back" href="../../smv.html#smv.datasetresolver.DataSetResolver">[docs]</a><span class="k">class</span> <span class="nc">DataSetResolver</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;DataSetResolver (DSR) is the entrypoint through which the DataSetMgr acquires</span>
+<span class="sd">        SmvGenericModules. A DSR object represent a single transaction. Each DSR creates a</span>
+<span class="sd">        set of DataSetRepos at instantiation. When asked for an SmvGenericModules, DSR queries</span>
+<span class="sd">        the repos for that SmvGenericModule and resolves it. The SmvGenericModule is responsible for</span>
+<span class="sd">        resolving itself, given access to the DSR to load/resolve the SmvGenericModule&#39;s</span>
+<span class="sd">        dependencies. DSR caches the SmvGenericModule it has already resolved to ensure that</span>
+<span class="sd">        any SmvGenericModule is only resolved once.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">repo</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">repo</span> <span class="o">=</span> <span class="n">repo</span>
+
+        <span class="c1"># FQN to resolved SmvGenericModule</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fqn2res</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="c1"># Track which SmvGenericModules is currently being resolved. Used to check for</span>
+        <span class="c1"># dependency cycles. Note: we no longer have to worry about corruption of</span>
+        <span class="c1"># resolve stack because a new stack is created per transaction.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">resolveStack</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="c1">#Timestamp which will be injected into the resolved SmvGenericModules</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">transaction_time</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
+
+<div class="viewcode-block" id="DataSetResolver.loadDataSet"><a class="viewcode-back" href="../../smv.html#smv.datasetresolver.DataSetResolver.loadDataSet">[docs]</a>    <span class="k">def</span> <span class="nf">loadDataSet</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fqns</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Given a list of FQNs, return cached resolved version SmvGenericModules if exists, or</span>
+<span class="sd">            otherwise load unresolved version from source and resolve them.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">fqn</span> <span class="ow">in</span> <span class="n">fqns</span><span class="p">:</span>
+            <span class="c1"># Caller need to check whether the fqn is in a stage of the SmvConfig stages</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">fqn</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">fqn2res</span><span class="p">):</span>
+                <span class="n">ds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fqn2res</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">fqn</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">mod</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">repo</span><span class="o">.</span><span class="n">loadDataSet</span><span class="p">(</span><span class="n">fqn</span><span class="p">)</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">mod</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">):</span>
+                    <span class="k">raise</span> <span class="n">SmvRuntimeError</span><span class="p">(</span><span class="s2">&quot;Module </span><span class="si">{}</span><span class="s2"> does not exist&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">fqn</span><span class="p">))</span>
+                <span class="n">ds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">resolveDataSet</span><span class="p">(</span><span class="n">mod</span><span class="p">)</span>
+            <span class="n">res</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ds</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">res</span></div>
+
+<div class="viewcode-block" id="DataSetResolver.resolveDataSet"><a class="viewcode-back" href="../../smv.html#smv.datasetresolver.DataSetResolver.resolveDataSet">[docs]</a>    <span class="k">def</span> <span class="nf">resolveDataSet</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ds</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return cached resolved version of given SmvGenericModule if it exists, or resolve</span>
+<span class="sd">            it otherwise.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">ds</span><span class="o">.</span><span class="n">fqn</span><span class="p">()</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">resolveStack</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">SmvRuntimeError</span><span class="p">(</span><span class="s2">&quot;Cycle found while resolving </span><span class="si">{}</span><span class="s2">: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">ds</span><span class="o">.</span><span class="n">fqn</span><span class="p">(),</span> <span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">resolveStack</span><span class="p">)))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">ds</span><span class="o">.</span><span class="n">fqn</span><span class="p">()</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">fqn2res</span><span class="p">):</span>
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">fqn2res</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">ds</span><span class="o">.</span><span class="n">fqn</span><span class="p">())</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">resolveStack</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ds</span><span class="o">.</span><span class="n">fqn</span><span class="p">())</span>
+                <span class="n">resolvedDs</span> <span class="o">=</span> <span class="n">ds</span><span class="o">.</span><span class="n">_resolve</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+                <span class="n">resolvedDs</span><span class="o">.</span><span class="n">_setTimestamp</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">transaction_time</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">fqn2res</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="n">ds</span><span class="o">.</span><span class="n">fqn</span><span class="p">():</span> <span class="n">resolvedDs</span><span class="p">})</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">resolveStack</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+                <span class="k">return</span> <span class="n">resolvedDs</span></div></div>
+
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Spark Modularized View v2r9 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2017, TresAmigosSD.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.4.
+    </div>
+  </body>
+</html>

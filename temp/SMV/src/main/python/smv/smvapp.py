@@ -18,6 +18,7 @@ It is equivalent to ``SmvApp`` on Scala side
 from datetime import datetime
 import os
 import sys
+import re
 import json
 import pkgutil
 from collections import namedtuple
@@ -232,6 +233,9 @@ class SmvApp(object):
         # to change sys.path, allowing py modules, UDL's to be discovered by python
         self.prependDefaultDirs()
 
+        # As switch app dir, need to re-discover providers
+        self.refresh_provider_cache()
+
     def setDynamicRunConfig(self, runConfig):
         self.py_smvconf.set_dynamic_props(runConfig)
 
@@ -257,6 +261,11 @@ class SmvApp(object):
         lib_dir = os.path.join(self.appDir(), self.SRC_LIB_PATH)
         return [i for i in self._libsInDir(lib_dir, "") if not i.startswith(self.SEMI_PRIVATE_LIB_PREFIX)]
 
+    def semiLibs(self):
+        """Use introspection to determine list of availabe semiprivate libs."""
+        lib_dir = os.path.join(self.appDir(), self.SRC_LIB_PATH, self.SEMI_PRIVATE_LIB_PREFIX)
+        return self._libsInDir(lib_dir, self.SEMI_PRIVATE_LIB_PREFIX + ".")
+
     def smvLibs(self):
         """Use introspection to determine list of availabe smv builtin libs."""
         # Note: since sys.path has the src/main/python, we need to prefix all discovered
@@ -273,7 +282,7 @@ class SmvApp(object):
            starting with the given prefix.
         """
         providers = self.provider_cache
-        return [p for (fqn, p) in providers.items() if fqn.startswith(fqn_prefix)]
+        return {fqn:p for (fqn, p) in providers.items() if fqn.startswith(fqn_prefix)}
 
     def get_provider_by_fqn(self, fqn):
         """Return provider class from provider name fqn
@@ -281,9 +290,36 @@ class SmvApp(object):
         providers = self.provider_cache
         return providers.get(fqn)
 
+    def get_connection_by_name(self, name):
+        """Get connection instance from name
+        """
+        props = self.py_smvconf.merged_props()
+        type_name = "smv.conn.{}.type".format(name)
+
+        if (type_name in props):
+            con_type = props.get(type_name)
+            provider_fqn = "conn.{}".format(con_type)
+            ConnClass = self.get_provider_by_fqn(provider_fqn)
+            return ConnClass(name, props)
+        else:
+            raise SmvRuntimeError("Connection name {} is not configured with a type".format(name))
+
+    def get_all_connection_names(self):
+        """Get all connetions defined in the app, return a list of names
+        """
+        props = self.py_smvconf.merged_props()
+        res = []
+        for k in props:
+            s = re.search('smv\.conn\.(.*)\.type', k)
+            if s:
+                name = s.group(1)  # matched in '(.*)'
+                res.append(name)
+        return res
+
     def appId(self):
         return self.py_smvconf.app_id()
 
+    # TODO: deprecate method below.  Users should use SmvSchema.discover() instead.
     def discoverSchemaAsSmvSchema(self, path, csvAttributes, n=100000):
         """Discovers the schema of a .csv file and returns a Scala SmvSchema instance
 
@@ -293,11 +329,11 @@ class SmvApp(object):
         """
         return self._jvm.SmvPythonHelper.discoverSchemaAsSmvSchema(path, n, csvAttributes)
 
-    def getSchemaByDataFileAsSmvSchema(self, data_file_name):
+    def getSchemaByDataFileAsSmvSchema(self, data_file_name, path=None):
         """Get the schema of a data file from its path and returns a Scala SmvSchema instance.
            The result will be None if the corresponding schema file does not exist or is invalid.
         """
-        data_file_path = os.path.join(self.inputDir(), data_file_name)
+        data_file_path = os.path.join(self.inputDir() if path == None else path, data_file_name)
         return self.j_smvPyClient.readSchemaFromDataPathAsSmvSchema(data_file_path)
 
     def inputDir(self):
@@ -553,7 +589,7 @@ class SmvApp(object):
         return self._mkCsvAttr(delimiter='\t')
 
     def defaultTsvWithHeader(self):
-        return self._mkCsvAttr(delimier='\t', hasHeader=True)
+        return self._mkCsvAttr(delimiter='\t', hasHeader=True)
 
     def abs_path_for_project_path(self, project_path):
         # Load dynamic app dir from scala

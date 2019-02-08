@@ -38,6 +38,9 @@ class SmvJdbcInputTable(SparkDfGenMod, SmvInput, AsTable):
             - tableName
     """
 
+    def connectionType(self):
+        return 'jdbc'
+
     def instanceValHash(self):
         """Jdbc input hash depends on connection and table name
         """
@@ -51,7 +54,7 @@ class SmvJdbcInputTable(SparkDfGenMod, SmvInput, AsTable):
         res = _conn_hash + _table_hash
         return res
 
-    def doRun(self, known):
+    def _get_input_data(self):
         conn = self.get_connection()
         return SmvJdbcIoStrategy(self.smvApp, conn, self.tableName()).read()
 
@@ -64,7 +67,10 @@ class SmvHiveInputTable(SparkDfGenMod, SmvInput, AsTable):
             - tableName
     """
 
-    def doRun(self, known):
+    def connectionType(self):
+        return 'hive'
+
+    def _get_input_data(self):
         conn = self.get_connection()
         return SmvHiveIoStrategy(self.smvApp, conn, self.tableName()).read()
 
@@ -123,9 +129,9 @@ class InputFileWithSchema(SmvInput, AsFile):
         props = self.smvApp.py_smvconf.merged_props()
         global_schema_conn = props.get('smv.schemaConn')
         if (name is not None):
-            return self._get_connection_by_name(name)
+            return self.smvApp.get_connection_by_name(name)
         elif (global_schema_conn is not None):
-            return self._get_connection_by_name(global_schema_conn)
+            return self.smvApp.get_connection_by_name(global_schema_conn)
         else:
             return self.get_connection()
 
@@ -213,7 +219,7 @@ class SmvXmlInputFile(SparkDfGenMod, InputFileWithSchema):
             except:
                 return None
 
-    def doRun(self, known):
+    def _get_input_data(self):
         """readin xml data"""
         file_path = os.path.join(self.get_connection().path, self.fileName())
         return SmvXmlOnHdfsIoStrategy(
@@ -304,7 +310,7 @@ class SmvCsvInputFile(SparkDfGenMod, WithSmvSchema, WithCsvParser):
             - dqm: optional, default SmvDQM()
     """
 
-    def doRun(self, known):
+    def _get_input_data(self):
         self._assert_file_postfix(".csv")
 
         file_path = os.path.join(self.get_connection().path, self.fileName())
@@ -355,7 +361,7 @@ class SmvMultiCsvInputFiles(SparkDfGenMod, WithSmvSchema, WithCsvParser):
     def fileName(self):
         return self.dirName()
 
-    def doRun(self, known):
+    def _get_input_data(self):
         dir_path = os.path.join(self.get_connection().path, self.dirName())
         smv_schema = self.smvSchema()
 
@@ -394,7 +400,7 @@ class SmvCsvStringInputData(SparkDfGenMod, WithCsvParser):
     def smvSchema(self):
         return self.smvApp.smvSchemaObj.fromString(self.schemaStr())
 
-    def doRun(self, known):
+    def _get_input_data(self):
         return self.smvApp.createDFWithLogger(self.schemaStr(), self.dataStr(), self._readerLogger())
 
     @abc.abstractmethod
@@ -417,8 +423,12 @@ class SmvCsvStringInputData(SparkDfGenMod, WithCsvParser):
                 (str): data
         """
 
+    def connectionType(self):
+        return None
+
     def connectionName(self):
         return None
+
 
 __all__ = [
     'SmvJdbcInputTable',

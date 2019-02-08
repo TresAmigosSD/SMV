@@ -150,7 +150,7 @@ class DataSetRepo(object):
 
         return {pymod.__name__: pymod for pymod in module_iter}
 
-    def _matchingClassesInPyModule(self, pymod, is_matching):
+    def _matchingClassesInPyModule(self, pymod, is_matching, skip_abs=True):
         """Finds all matching classes in a given python module.
 
            `is_matching` is called on each candidate object in the module.  Only non-abstract
@@ -189,7 +189,7 @@ class DataSetRepo(object):
             # Class should not be an ABC
             obj_is_abstract = inspect.isabstract(obj)
 
-            if obj_is_abstract:
+            if skip_abs and obj_is_abstract:
                 # abc labels methods as abstract via the attribute __isabstractmethod__
                 is_abstract_method = lambda attr: getattr(attr, "__isabstractmethod__", False)
                 abstract_methods = [name for name, _ in inspect.getmembers(obj, is_abstract_method)]
@@ -248,12 +248,12 @@ class DataSetRepo(object):
             return klass_is_provider
 
         # providers can be in user libs dir or builtin smv
-        prov_libs_names = self.smvApp.userLibs() + self.smvApp.smvLibs()
+        prov_libs_names = self.smvApp.userLibs() + self.smvApp.semiLibs() + self.smvApp.smvLibs()
         prov_dict = {}
 
         for prov_lib_name in prov_libs_names:
             prov_lib = self.load_pymodule(prov_lib_name)
-            providers = self._matchingClassesInPyModule(prov_lib, is_provider)
+            providers = self._matchingClassesInPyModule(prov_lib, is_provider, skip_abs=False)
             for p in providers:
                 p_fqn = p.provider_type_fqn()
                 if p_fqn in prov_dict:

@@ -14,6 +14,8 @@
 from smv import *
 from smv.iomod import SmvCsvOutputFile
 
+import testSmvOutput
+
 class MyData(SmvModule):
     def requiresDS(self):
         return []
@@ -30,3 +32,19 @@ class CsvOut(SmvCsvOutputFile):
 
     def requiresDS(self):
         return [MyData]
+
+
+class CsvOutRerun(SmvCsvOutputFile):
+    def connectionName(self):
+        return "my_out_conn"
+
+    def fileName(self):
+        return "csv_out_test2.csv"
+
+    def requiresDS(self):
+        return [MyData]
+
+    def doRun(self, known):
+        testSmvOutput.output_run_cnt += 1
+        return super(CsvOutRerun, self).doRun(known)
+

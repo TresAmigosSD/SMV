@@ -6,7 +6,7 @@ USAGE="${PROG_NAME} [--spark-version version] [--target-dir target_dir]"
 
 SMV_HOME="$(cd "`dirname "$0"`/.."; pwd)"
 
-DEFAULT_SPARK_VERSION=2.3.1
+DEFAULT_SPARK_VERSION=2.3.2
 
 function   error() {
   echo "ERROR: ${1}"

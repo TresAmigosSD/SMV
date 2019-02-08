@@ -32,9 +32,9 @@ function parse_args()
   done
 
   # SMV version is updated automatically by smv-release
-  SMV_VERSION="2r6"
+  SMV_VERSION="2r8"
 
-  SMV_DIR="SMV_${SMV_VERSION}"
+  SMV_DIR="SMV"
   SMV_PROFILE_FILENAME="smv-profile.sh"
   SMV_PROFILE="${HOME}/.smv/${SMV_PROFILE_FILENAME}"
 
@@ -92,7 +92,7 @@ install_app() {
 
 # Download the latest SMV binary release from github
 download_smv() {
-  install_app "https://github.com/TresAmigosSD/SMV/releases/download/v${SMV_VERSION}/smv_${SMV_VERSION}.tgz"
+  install_app "https://github.com/TresAmigosSD/SMV/releases/download/v${SMV_VERSION}/smv_v${SMV_VERSION}.tgz"
 }
 
 # Download prebuilt spark version with hive support.

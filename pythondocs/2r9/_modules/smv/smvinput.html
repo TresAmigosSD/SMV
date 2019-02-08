@@ -1,0 +1,243 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>smv.smvinput &#8212; Spark Modularized View v2r9 documentation</title>
+    <link rel="stylesheet" href="../../_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Spark Modularized View v2r9 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for smv.smvinput</h1><div class="highlight"><pre>
+<span></span><span class="c1"># This file is licensed under the Apache License, Version 2.0</span>
+<span class="c1"># (the &quot;License&quot;); you may not use this file except in compliance with</span>
+<span class="c1"># the License.  You may obtain a copy of the License at</span>
+<span class="c1">#</span>
+<span class="c1">#    http://www.apache.org/licenses/LICENSE-2.0</span>
+<span class="c1">#</span>
+<span class="c1"># Unless required by applicable law or agreed to in writing, software</span>
+<span class="c1"># distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
+<span class="c1"># See the License for the specific language governing permissions and</span>
+<span class="c1"># limitations under the License.</span>
+<span class="sd">&quot;&quot;&quot;SMV DataSet Framework&#39;s SmvInputBase interface</span>
+
+<span class="sd">This module defines the abstract classes which formed the SmvGenericModule&#39;s</span>
+<span class="sd">input DS Framework for clients&#39; projects</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">abc</span>
+
+<span class="kn">from</span> <span class="nn">smv.iomod</span> <span class="k">import</span> <span class="n">SmvCsvInputFile</span><span class="p">,</span> <span class="n">SmvMultiCsvInputFiles</span><span class="p">,</span> <span class="n">SmvHiveInputTable</span><span class="p">,</span> <span class="n">SmvCsvStringInputData</span>
+<span class="kn">from</span> <span class="nn">smv.conn</span> <span class="k">import</span> <span class="n">SmvHiveConnectionInfo</span>
+
+
+<div class="viewcode-block" id="SmvCsvFile"><a class="viewcode-back" href="../../smv.html#smv.smvinput.SmvCsvFile">[docs]</a><span class="k">class</span> <span class="nc">SmvCsvFile</span><span class="p">(</span><span class="n">SmvCsvInputFile</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Input from a file in CSV format</span>
+<span class="sd">        Base class for CSV file input.</span>
+<span class="sd">        User need to define path method.</span>
+
+<span class="sd">        Example:</span>
+<span class="sd">        &gt;&gt;&gt; class MyCsvFile(SmvCsvFile):</span>
+<span class="sd">        &gt;&gt;&gt;     def path(self):</span>
+<span class="sd">        &gt;&gt;&gt;         return &quot;path/relative/to/smvInputDir/file.csv&quot;</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="SmvCsvFile.path"><a class="viewcode-back" href="../../smv.html#smv.smvinput.SmvCsvFile.path">[docs]</a>    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">path</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;relative path to csv file&quot;&quot;&quot;</span></div>
+
+<div class="viewcode-block" id="SmvCsvFile.fileName"><a class="viewcode-back" href="../../smv.html#smv.smvinput.SmvCsvFile.fileName">[docs]</a>    <span class="k">def</span> <span class="nf">fileName</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="SmvCsvFile.run"><a class="viewcode-back" href="../../smv.html#smv.smvinput.SmvCsvFile.run">[docs]</a>    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">df</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">df</span></div>
+
+<div class="viewcode-block" id="SmvCsvFile.doRun"><a class="viewcode-back" href="../../smv.html#smv.smvinput.SmvCsvFile.doRun">[docs]</a>    <span class="k">def</span> <span class="nf">doRun</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">known</span><span class="p">):</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="nb">super</span><span class="p">(</span><span class="n">SmvCsvFile</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">doRun</span><span class="p">(</span><span class="n">known</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">df</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SmvCsvFile.connectionName"><a class="viewcode-back" href="../../smv.html#smv.smvinput.SmvCsvFile.connectionName">[docs]</a>    <span class="k">def</span> <span class="nf">connectionName</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">None</span></div>
+
+<div class="viewcode-block" id="SmvCsvFile.get_connection"><a class="viewcode-back" href="../../smv.html#smv.smvinput.SmvCsvFile.get_connection">[docs]</a>    <span class="k">def</span> <span class="nf">get_connection</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">smvApp</span><span class="o">.</span><span class="n">input_connection</span><span class="p">()</span></div></div>
+
+
+<div class="viewcode-block" id="SmvSqlCsvFile"><a class="viewcode-back" href="../../smv.html#smv.smvinput.SmvSqlCsvFile">[docs]</a><span class="k">class</span> <span class="nc">SmvSqlCsvFile</span><span class="p">(</span><span class="n">SmvCsvFile</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Input from a file in CSV format and using a SQL query to access it</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># temporary table name</span>
+    <span class="n">tableName</span> <span class="o">=</span> <span class="s2">&quot;df&quot;</span>
+
+<div class="viewcode-block" id="SmvSqlCsvFile.query"><a class="viewcode-back" href="../../smv.html#smv.smvinput.SmvSqlCsvFile.query">[docs]</a>    <span class="k">def</span> <span class="nf">query</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Query used to extract data from the table which reads the CSV file</span>
+
+<span class="sd">            Override this to specify your own query (optional). Default is</span>
+<span class="sd">            equivalent to &#39;select * from &#39; + tableName.</span>
+
+<span class="sd">            Returns:</span>
+<span class="sd">                (str): query</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="s2">&quot;select * from &quot;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">tableName</span></div>
+
+<div class="viewcode-block" id="SmvSqlCsvFile.run"><a class="viewcode-back" href="../../smv.html#smv.smvinput.SmvSqlCsvFile.run">[docs]</a>    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">df</span><span class="p">):</span>
+        <span class="c1"># temporarily register DataFrame of input CSV file as a table</span>
+        <span class="n">df</span><span class="o">.</span><span class="n">registerTempTable</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tableName</span><span class="p">)</span>
+
+        <span class="c1"># execute the table query</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">smvApp</span><span class="o">.</span><span class="n">sqlContext</span><span class="o">.</span><span class="n">sql</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">query</span><span class="p">())</span>
+
+        <span class="c1"># drop the temporary table</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">smvApp</span><span class="o">.</span><span class="n">sqlContext</span><span class="o">.</span><span class="n">sql</span><span class="p">(</span><span class="s2">&quot;drop table &quot;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">tableName</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">res</span></div></div>
+
+
+<div class="viewcode-block" id="SmvMultiCsvFiles"><a class="viewcode-back" href="../../smv.html#smv.smvinput.SmvMultiCsvFiles">[docs]</a><span class="k">class</span> <span class="nc">SmvMultiCsvFiles</span><span class="p">(</span><span class="n">SmvMultiCsvInputFiles</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Raw input from multiple csv files sharing single schema</span>
+
+<span class="sd">        Instead of a single input file, specify a data dir with files which share</span>
+<span class="sd">        the same schema.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+<div class="viewcode-block" id="SmvMultiCsvFiles.dirName"><a class="viewcode-back" href="../../smv.html#smv.smvinput.SmvMultiCsvFiles.dirName">[docs]</a>    <span class="k">def</span> <span class="nf">dirName</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">dir</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="SmvMultiCsvFiles.run"><a class="viewcode-back" href="../../smv.html#smv.smvinput.SmvMultiCsvFiles.run">[docs]</a>    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">df</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">df</span></div>
+
+<div class="viewcode-block" id="SmvMultiCsvFiles.doRun"><a class="viewcode-back" href="../../smv.html#smv.smvinput.SmvMultiCsvFiles.doRun">[docs]</a>    <span class="k">def</span> <span class="nf">doRun</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">known</span><span class="p">):</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="nb">super</span><span class="p">(</span><span class="n">SmvMultiCsvFiles</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">doRun</span><span class="p">(</span><span class="n">known</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">df</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SmvMultiCsvFiles.connectionName"><a class="viewcode-back" href="../../smv.html#smv.smvinput.SmvMultiCsvFiles.connectionName">[docs]</a>    <span class="k">def</span> <span class="nf">connectionName</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">None</span></div>
+
+<div class="viewcode-block" id="SmvMultiCsvFiles.get_connection"><a class="viewcode-back" href="../../smv.html#smv.smvinput.SmvMultiCsvFiles.get_connection">[docs]</a>    <span class="k">def</span> <span class="nf">get_connection</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">smvApp</span><span class="o">.</span><span class="n">input_connection</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="SmvMultiCsvFiles.dir"><a class="viewcode-back" href="../../smv.html#smv.smvinput.SmvMultiCsvFiles.dir">[docs]</a>    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">dir</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Path to the directory containing the csv files and their schema</span>
+
+<span class="sd">            Returns:</span>
+<span class="sd">                (str): path</span>
+<span class="sd">        &quot;&quot;&quot;</span></div></div>
+
+
+<div class="viewcode-block" id="SmvHiveTable"><a class="viewcode-back" href="../../smv.html#smv.smvinput.SmvHiveTable">[docs]</a><span class="k">class</span> <span class="nc">SmvHiveTable</span><span class="p">(</span><span class="n">SmvHiveInputTable</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Input from a Hive table</span>
+<span class="sd">        This is for backward compatability. Will be deprecated. Please use</span>
+<span class="sd">        iomod.SmvHiveInputTable instead.</span>
+
+<span class="sd">        User need to implement:</span>
+
+<span class="sd">            - tableName</span>
+
+<span class="sd">        Custom query at reading is no more supported, please use downstream</span>
+<span class="sd">        module to process data</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="SmvHiveTable.tableName"><a class="viewcode-back" href="../../smv.html#smv.smvinput.SmvHiveTable.tableName">[docs]</a>    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">tableName</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;User-specified name Hive hive table to extract input from</span>
+
+<span class="sd">            Override this to specify your own table name.</span>
+
+<span class="sd">            Returns:</span>
+<span class="sd">                (str): table name</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="SmvHiveTable.connectionName"><a class="viewcode-back" href="../../smv.html#smv.smvinput.SmvHiveTable.connectionName">[docs]</a>    <span class="k">def</span> <span class="nf">connectionName</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># Since old hive interface does not support separate schema</span>
+        <span class="c1"># specification, no need for a connection name</span>
+        <span class="k">return</span> <span class="kc">None</span></div>
+
+<div class="viewcode-block" id="SmvHiveTable.get_connection"><a class="viewcode-back" href="../../smv.html#smv.smvinput.SmvHiveTable.get_connection">[docs]</a>    <span class="k">def</span> <span class="nf">get_connection</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># Create and empty connection info so SmvHiveInputTable will</span>
+        <span class="c1"># default to refer to the tableName without a schema name</span>
+        <span class="k">return</span> <span class="n">SmvHiveConnectionInfo</span><span class="p">(</span><span class="s2">&quot;hiveschema&quot;</span><span class="p">,</span> <span class="p">{})</span></div></div>
+
+
+<div class="viewcode-block" id="SmvCsvStringData"><a class="viewcode-back" href="../../smv.html#smv.smvinput.SmvCsvStringData">[docs]</a><span class="k">class</span> <span class="nc">SmvCsvStringData</span><span class="p">(</span><span class="n">SmvCsvStringInputData</span><span class="p">):</span>
+    <span class="k">pass</span></div>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s1">&#39;SmvMultiCsvFiles&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;SmvCsvFile&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;SmvSqlCsvFile&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;SmvCsvStringData&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;SmvHiveTable&#39;</span>
+<span class="p">]</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Spark Modularized View v2r9 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2017, TresAmigosSD.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.4.
+    </div>
+  </body>
+</html>

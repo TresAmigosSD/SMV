@@ -120,14 +120,14 @@ class DataSetRepoTest(SmvBaseTest):
             # verify provider class names
             all_providers_names = sorted([p.__name__ for p in all_providers.values()])
             self.assertTrue(
-                set(['MyBaseProvider', 'MyConcreteProvider', 'SomeProvider'])
+                set(['MyBaseProvider', 'MyConcreteProvider', 'SomeProvider', 'SomeSemi', 'ModWithProvider'])
                 < set(all_providers_names)
             )
 
             # verify provider type fqns
             all_providers_fqns = sorted(all_providers.keys())
             self.assertTrue(
-                set(['aaa', 'aaa.bbb', 'some'])
+                set(['aaa', 'aaa.bbb', 'some', 'somesemi', 'modprov'])
                 < set(all_providers_fqns)
             )
 
@@ -135,15 +135,16 @@ class DataSetRepoTest(SmvBaseTest):
         """Ensure repo can discover providers by prefix"""
         prov_dir = self.resourceTestDir() + "/provider"
         with AppDir(self.smvApp, prov_dir):
-            self.smvApp.refresh_provider_cache()
             providers = self.smvApp.get_providers_by_prefix("aaa")
-            providers_fqns = sorted([p.provider_type_fqn() for p in providers])
+            providers_fqns = sorted([f for f in providers])
+            providers_fqns_from_class = sorted([p.provider_type_fqn() for (fqn, p) in providers.items()])
             self.assertEqual(providers_fqns, ['aaa', 'aaa.bbb'])
+            self.assertEqual(providers_fqns_from_class, ['aaa', 'aaa.bbb'])
 
     def test_duplicate_providers(self):
         """Ensure repo can detect duplicate providers with same provider type fqn"""
         # the bad_provider dir has multiple providers with fqn "aaa.bbb"
         prov_dir = self.resourceTestDir() + "/bad_provider"
-        with AppDir(self.smvApp, prov_dir):
-            with self.assertRaisesRegexp(SmvRuntimeError, "multiple providers with same fqn: aaa.bbb"):
+        with self.assertRaisesRegexp(SmvRuntimeError, "multiple providers with same fqn: aaa.bbb"):
+            with AppDir(self.smvApp, prov_dir):
                 self.build_new_repo()._all_providers()

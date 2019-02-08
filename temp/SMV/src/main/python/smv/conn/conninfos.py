@@ -27,9 +27,30 @@ class SmvJdbcConnectionInfo(SmvConnectionInfo):
     def provider_type():
         return "jdbc"
 
-    def attributes(self):
+    @staticmethod
+    def attributes():
         return ["url", "driver", "user", "password"]
 
+
+    def _connect_for_read(self, smvApp):
+        builder = smvApp.sqlContext.read\
+            .format('jdbc')\
+            .option('url', self.url)
+
+        if (self.driver is not None):
+            builder = builder.option('driver', self.driver)
+        if (self.user is not None):
+            builder = builder.option('user', self.user)
+        if (self.password is not None):
+            builder = builder.option('password', self.password)
+
+        return builder
+
+    def get_contents(self, smvApp):
+        """Return a list of table names
+        """
+        # TODO: implement for specific DB
+        return []
 
 class SmvHiveConnectionInfo(SmvConnectionInfo):
     """Connection Info for connection type "hive"
@@ -42,8 +63,20 @@ class SmvHiveConnectionInfo(SmvConnectionInfo):
     def provider_type():
         return "hive"
 
-    def attributes(self):
+    @staticmethod
+    def attributes():
         return ['schema']
+
+    def get_contents(self, smvApp):
+        """Return a list of table names
+        """
+        if (self.schema is None):
+            query = 'show tables'
+        else:
+            query = 'show tables from {}'.format(self.schema)
+        tables_df = smvApp.sqlContext.sql(query)
+        tablenames = [str(f[0]) for f in tables_df.select('tableName').collect()]
+        return tablenames
 
 class SmvHdfsConnectionInfo(SmvConnectionInfo):
     """Connection Info for connection type "hdfs"
@@ -63,9 +96,15 @@ class SmvHdfsConnectionInfo(SmvConnectionInfo):
     def provider_type():
         return "hdfs"
 
-    def attributes(self):
+    @staticmethod
+    def attributes():
         return ['path']
 
+    def get_contents(self, smvApp):
+        """Return a list of file/dir names
+        """
+        # TODO: should be recursive and return the tree
+        return [str(f) for f in smvApp._jvm.SmvPythonHelper.getDirList(self.path)]
 
 SmvHdfsEmptyConn = SmvHdfsConnectionInfo(
     "emptydir",
