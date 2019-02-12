@@ -29,7 +29,20 @@ from pyspark.sql import DataFrame
 def _appInfo():
     return SmvAppInfo(SmvApp.getInstance())
 
-def df(name, forceRun=False, quickRun=False):
+def quickRun(name):
+    """Run module and return result.
+        No persist, but use existing persisted if possible.
+        No DQM
+    """
+    return SmvApp.getInstance().runModuleByName(name, forceRun=False, quickRun=True)[0]
+
+def fullRun(name):
+    """Run module and return result.
+        Persist and run DQM if given
+    """
+    return SmvApp.getInstance().runModuleByName(name, forceRun=False, quickRun=False)[0]
+
+def df(name, forceRun=False, quickRun=True):
     """The DataFrame result of running the named module
 
         Args:
@@ -255,6 +268,8 @@ def get_run_info(name, runConfig=None):
     return SmvApp.getInstance().getRunInfoByPartialName(name, runConfig)
 
 __all__ = [
+    'quickRun',
+    'fullRun',
     'df',
     'dshash',
     'getModel',

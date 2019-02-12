@@ -153,7 +153,7 @@ class SmvFrameworkTest2(SmvBaseTest):
         fqn1 = "stage.modules.M1"
         fqn3 = "stage.modules.M3"
         df1 = self.df(fqn1)
-        df3 = self.smvApp.quickRunModule(fqn3)
+        df3 = self.smvApp.quickRunModule(fqn3)[0]
         self.should_be_same(df1, df3)
 
     def test_need_to_run_list(self):
