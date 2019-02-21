@@ -290,10 +290,10 @@ class SmvHiveIoStrategy(SmvIoStrategy):
         raw_data.createOrReplaceTempView("dftable")
         if (_write_mode == 'overwrite' or _write_mode == 'errorifexists'):
             if (_write_mode == 'overwrite'):
-                self.smvApp.sqlContext.sql("drop table if exists {}".format(self.table))
-            self.smvApp.sqlContext.sql("create table {} as select * from dftable".format(self.table))
+                self.smvApp.sqlContext.sql("drop table if exists {}".format(self._table_with_schema()))
+            self.smvApp.sqlContext.sql("create table {} as select * from dftable".format(self._table_with_schema()))
         elif (_write_mode == 'append'):
-            self.smvApp.sqlContext.sql("insert into table {} select * from dftable".format(self.table))
+            self.smvApp.sqlContext.sql("insert into table {} select * from dftable".format(self._table_with_schema()))
 
     # TODO: we should allow persisting intermidiate results in Hive also
     # For that case, however need to specify a convention to store semaphore
