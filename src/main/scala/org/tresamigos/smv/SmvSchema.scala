@@ -467,6 +467,7 @@ class SmvSchema(val entries: Seq[SchemaEntry], val attributes: Map[String, Strin
       s match {
         case "\\t" => '\t' // map \t to tab
         case "\\0" => '\0' // map \0 to null
+        case "semicolon" => ';' // use a sentinel here because ';' is used to split schema string
         case x     => x(0)
       }
     }
@@ -488,6 +489,7 @@ class SmvSchema(val entries: Seq[SchemaEntry], val attributes: Map[String, Strin
       c match {
         case '\t' => "\\t"
         case '\0' => "\\0"
+        case ';' => "semicolon"
         case x    => x.toString
       }
     }
