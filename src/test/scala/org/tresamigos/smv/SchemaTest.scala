@@ -243,6 +243,16 @@ class SmvSchemaTest extends SmvTestUtil {
     assert(ca === CsvAttributes('\t', '|', false))
   }
 
+  test("Test schema extractCsvAttributes when semicolon as delimiter ") {
+    val s  = SmvSchema.fromString("""
+          @has-header = false;
+          @delimiter = semicolon;
+          @quote-char = |;
+          a:string""")
+    val ca = s.extractCsvAttributes()
+    assert(ca === CsvAttributes(';', '|', false))
+  }
+
   // test default values of extracted csv attributes.
   test("Test schema extractCsvAttributes defaults") {
     val s  = SmvSchema.fromString("a:string; b:double")
@@ -252,9 +262,9 @@ class SmvSchemaTest extends SmvTestUtil {
 
   test("Test schema addCsvAttributes") {
     val s1 = SmvSchema.fromString("@delimiter = +; @foo=bar; a:string")
-    val s2 = s1.addCsvAttributes(CsvAttributes('\t', '^', false))
+    val s2 = s1.addCsvAttributes(CsvAttributes(';', '^', false))
     val exp_att =
-      Map("foo" -> "bar", "delimiter" -> "\\t", "has-header" -> "false", "quote-char" -> "^")
+      Map("foo" -> "bar", "delimiter" -> "semicolon", "has-header" -> "false", "quote-char" -> "^")
     assert(s2.attributes === exp_att)
   }
 
