@@ -33,7 +33,8 @@ The schema file can specify the CSV attributes (delimiter, quote char, and heade
 <tr>
 <td>delimiter</td>
 <td>,</td>
-<td>CSV field delimiter/separator. For tab separated files, specify \t as the separator</td>
+<td>CSV field delimiter/separator. For tab separated files, specify \t as the separator; For ";"
+separated files, use "semicolon"</td>
 </tr>
 <tr>
 <td>quote-char</td>
