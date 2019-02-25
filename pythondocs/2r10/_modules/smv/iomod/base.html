@@ -1,0 +1,276 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>smv.iomod.base &#8212; Spark Modularized View v2r10 documentation</title>
+    <link rel="stylesheet" href="../../../_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">Spark Modularized View v2r10 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for smv.iomod.base</h1><div class="highlight"><pre>
+<span></span><span class="c1">#</span>
+<span class="c1"># This file is licensed under the Apache License, Version 2.0</span>
+<span class="c1"># (the &quot;License&quot;); you may not use this file except in compliance with</span>
+<span class="c1"># the License.  You may obtain a copy of the License at</span>
+<span class="c1">#</span>
+<span class="c1">#    http://www.apache.org/licenses/LICENSE-2.0</span>
+<span class="c1">#</span>
+<span class="c1"># Unless required by applicable law or agreed to in writing, software</span>
+<span class="c1"># distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
+<span class="c1"># See the License for the specific language governing permissions and</span>
+<span class="c1"># limitations under the License.</span>
+
+<span class="kn">import</span> <span class="nn">abc</span>
+<span class="kn">import</span> <span class="nn">importlib</span>
+
+<span class="kn">from</span> <span class="nn">pyspark.sql</span> <span class="k">import</span> <span class="n">DataFrame</span>
+
+<span class="kn">from</span> <span class="nn">smv.error</span> <span class="k">import</span> <span class="n">SmvRuntimeError</span>
+<span class="kn">from</span> <span class="nn">smv.utils</span> <span class="k">import</span> <span class="n">smvhash</span>
+<span class="kn">from</span> <span class="nn">smv.datasetrepo</span> <span class="k">import</span> <span class="n">DataSetRepo</span>
+<span class="kn">from</span> <span class="nn">smv.smvgenericmodule</span> <span class="k">import</span> <span class="n">SmvGenericModule</span>
+<span class="kn">from</span> <span class="nn">smv.smviostrategy</span> <span class="k">import</span> <span class="n">SmvNonOpPersistenceStrategy</span>
+
+<div class="viewcode-block" id="SmvIoModule"><a class="viewcode-back" href="../../../smv.iomod.html#smv.iomod.base.SmvIoModule">[docs]</a><span class="k">class</span> <span class="nc">SmvIoModule</span><span class="p">(</span><span class="n">SmvGenericModule</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Base class for input and output modules</span>
+
+<span class="sd">        Has two sub-classes:</span>
+
+<span class="sd">            - SmvInput: no dependency module, single output data</span>
+<span class="sd">            - SmvOutput: single dependency module, no output data</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+<div class="viewcode-block" id="SmvIoModule.isEphemeral"><a class="viewcode-back" href="../../../smv.iomod.html#smv.iomod.base.SmvIoModule.isEphemeral">[docs]</a>    <span class="k">def</span> <span class="nf">isEphemeral</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;SmvIoModules are always ephemeral&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="kc">True</span></div>
+
+<div class="viewcode-block" id="SmvIoModule.persistStrategy"><a class="viewcode-back" href="../../../smv.iomod.html#smv.iomod.base.SmvIoModule.persistStrategy">[docs]</a>    <span class="k">def</span> <span class="nf">persistStrategy</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Never persisting input/output modules&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">SmvNonOpPersistenceStrategy</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="SmvIoModule.connectionType"><a class="viewcode-back" href="../../../smv.iomod.html#smv.iomod.base.SmvIoModule.connectionType">[docs]</a>    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">connectionType</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Connection type supported by a specific io module&quot;&quot;&quot;</span></div>
+
+<div class="viewcode-block" id="SmvIoModule.connectionName"><a class="viewcode-back" href="../../../smv.iomod.html#smv.iomod.base.SmvIoModule.connectionName">[docs]</a>    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">connectionName</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Name of the connection to read/write&quot;&quot;&quot;</span></div>
+
+<div class="viewcode-block" id="SmvIoModule.get_connection"><a class="viewcode-back" href="../../../smv.iomod.html#smv.iomod.base.SmvIoModule.get_connection">[docs]</a>    <span class="k">def</span> <span class="nf">get_connection</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Get data connection instance from connectionName()</span>
+
+<span class="sd">            Connetion should be configured in conf file with at least a class FQN</span>
+
+<span class="sd">            Ex: smv.conn.con_name.class=smv.conn.SmvJdbcConnectionInfo</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">connectionName</span><span class="p">()</span>
+        <span class="n">conn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">smvApp</span><span class="o">.</span><span class="n">get_connection_by_name</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+
+        <span class="c1"># check whether the connection provided by name has the type as expected</span>
+        <span class="n">conn_type</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">provider_type</span><span class="p">()</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">conn_type</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">connectionType</span><span class="p">()):</span>
+            <span class="k">raise</span> <span class="n">SmvRuntimeError</span><span class="p">(</span><span class="s2">&quot;Connection </span><span class="si">{}</span><span class="s2"> has type </span><span class="si">{}</span><span class="s2">, while </span><span class="si">{}</span><span class="s2"> need connection type </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                <span class="n">name</span><span class="p">,</span> <span class="n">conn_type</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">connectionType</span><span class="p">()</span>
+            <span class="p">))</span>
+        <span class="k">return</span> <span class="n">conn</span></div>
+
+<div class="viewcode-block" id="SmvIoModule.connectionHash"><a class="viewcode-back" href="../../../smv.iomod.html#smv.iomod.base.SmvIoModule.connectionHash">[docs]</a>    <span class="k">def</span> <span class="nf">connectionHash</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">conn_hash</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_connection</span><span class="p">()</span><span class="o">.</span><span class="n">conn_hash</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">conn_hash</span></div></div>
+
+
+<div class="viewcode-block" id="SmvInput"><a class="viewcode-back" href="../../../smv.iomod.html#smv.iomod.base.SmvInput">[docs]</a><span class="k">class</span> <span class="nc">SmvInput</span><span class="p">(</span><span class="n">SmvIoModule</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Base class for all Input modules</span>
+
+<span class="sd">        Sub-class need to implement:</span>
+
+<span class="sd">            - connectionType</span>
+<span class="sd">            - _get_input_data</span>
+
+<span class="sd">        User need to implement:</span>
+
+<span class="sd">            - connectionName</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+<div class="viewcode-block" id="SmvInput.requiresDS"><a class="viewcode-back" href="../../../smv.iomod.html#smv.iomod.base.SmvInput.requiresDS">[docs]</a>    <span class="k">def</span> <span class="nf">requiresDS</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[]</span></div>
+
+<div class="viewcode-block" id="SmvInput.dsType"><a class="viewcode-back" href="../../../smv.iomod.html#smv.iomod.base.SmvInput.dsType">[docs]</a>    <span class="k">def</span> <span class="nf">dsType</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s2">&quot;Input&quot;</span></div>
+
+    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">_get_input_data</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Read in input to the desired typed data(frame)&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="SmvInput.doRun"><a class="viewcode-back" href="../../../smv.iomod.html#smv.iomod.base.SmvInput.doRun">[docs]</a>    <span class="k">def</span> <span class="nf">doRun</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">know</span><span class="p">):</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_input_data</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_assure_output_type</span><span class="p">(</span><span class="n">res</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">res</span></div></div>
+
+
+<div class="viewcode-block" id="SmvOutput"><a class="viewcode-back" href="../../../smv.iomod.html#smv.iomod.base.SmvOutput">[docs]</a><span class="k">class</span> <span class="nc">SmvOutput</span><span class="p">(</span><span class="n">SmvIoModule</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Base class for all Output modules</span>
+
+<span class="sd">        Sub-class need to implement:</span>
+
+<span class="sd">            - connectionType</span>
+<span class="sd">            - doRun</span>
+
+<span class="sd">        Within doRun, assert_single_input should be called.</span>
+
+<span class="sd">        User need to implement:</span>
+
+<span class="sd">            - connectionName</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">IsSmvOutput</span> <span class="o">=</span> <span class="kc">True</span>
+
+<div class="viewcode-block" id="SmvOutput.dsType"><a class="viewcode-back" href="../../../smv.iomod.html#smv.iomod.base.SmvOutput.dsType">[docs]</a>    <span class="k">def</span> <span class="nf">dsType</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s2">&quot;Output&quot;</span></div>
+
+    <span class="k">def</span> <span class="nf">_assert_single_input</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Make sure SmvOutput only depends on a single module</span>
+<span class="sd">            This method will not be called, when SmvOutput is used for mixin.</span>
+<span class="sd">            It should be called by the doRun method when SmvOutput is used for</span>
+<span class="sd">            base class</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">requiresDS</span><span class="p">())</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">SmvRuntimeError</span><span class="p">(</span><span class="s2">&quot;SmvOutput modules depend on a single input, more are given: </span><span class="si">{}</span><span class="s2">&quot;</span>\
+                <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">m</span><span class="o">.</span><span class="n">fqn</span><span class="p">()</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">requiresDS</span><span class="p">()]))</span>
+            <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_do_it</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fqn2df</span><span class="p">,</span> <span class="n">run_set</span><span class="p">,</span> <span class="n">collector</span><span class="p">,</span> <span class="n">forceRun</span><span class="p">,</span> <span class="n">is_quick_run</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Override _do_it, since output doRun just need to run, no other fancy stuff</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_assert_single_input</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">doRun</span><span class="p">(</span><span class="n">fqn2df</span><span class="p">)</span>
+        <span class="c1"># output&#39;s doRun guarantees an action</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_run_ancestor_and_me_postAction</span><span class="p">(</span><span class="n">run_set</span><span class="p">,</span> <span class="n">collector</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="AsTable"><a class="viewcode-back" href="../../../smv.iomod.html#smv.iomod.base.AsTable">[docs]</a><span class="k">class</span> <span class="nc">AsTable</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Mixin to assure a tableName method&quot;&quot;&quot;</span>
+<div class="viewcode-block" id="AsTable.tableName"><a class="viewcode-back" href="../../../smv.iomod.html#smv.iomod.base.AsTable.tableName">[docs]</a>    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">tableName</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;The user-specified table name to write to</span>
+
+<span class="sd">            Returns:</span>
+<span class="sd">                (string)</span>
+<span class="sd">        &quot;&quot;&quot;</span></div>
+
+<div class="viewcode-block" id="AsTable.tableNameHash"><a class="viewcode-back" href="../../../smv.iomod.html#smv.iomod.base.AsTable.tableNameHash">[docs]</a>    <span class="k">def</span> <span class="nf">tableNameHash</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="n">smvhash</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tableName</span><span class="p">())</span>
+        <span class="k">return</span> <span class="n">res</span></div></div>
+
+<div class="viewcode-block" id="AsFile"><a class="viewcode-back" href="../../../smv.iomod.html#smv.iomod.base.AsFile">[docs]</a><span class="k">class</span> <span class="nc">AsFile</span><span class="p">(</span><span class="n">SmvIoModule</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Mixin to assure a fileName method&quot;&quot;&quot;</span>
+<div class="viewcode-block" id="AsFile.fileName"><a class="viewcode-back" href="../../../smv.iomod.html#smv.iomod.base.AsFile.fileName">[docs]</a>    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">fileName</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;User-specified file name relative to the path defined in the connection</span>
+
+<span class="sd">            Returns:</span>
+<span class="sd">                (string)</span>
+<span class="sd">        &quot;&quot;&quot;</span></div>
+
+<div class="viewcode-block" id="AsFile.fileNameHash"><a class="viewcode-back" href="../../../smv.iomod.html#smv.iomod.base.AsFile.fileNameHash">[docs]</a>    <span class="k">def</span> <span class="nf">fileNameHash</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="n">smvhash</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fileName</span><span class="p">())</span>
+        <span class="k">return</span> <span class="n">res</span></div>
+
+<div class="viewcode-block" id="AsFile.connectionType"><a class="viewcode-back" href="../../../smv.iomod.html#smv.iomod.base.AsFile.connectionType">[docs]</a>    <span class="k">def</span> <span class="nf">connectionType</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># all files should have hdfs as their connection type</span>
+        <span class="k">return</span> <span class="s1">&#39;hdfs&#39;</span></div>
+
+    <span class="k">def</span> <span class="nf">_assert_file_postfix</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">postfix</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Make sure that file name provided has the desired postfix&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="p">(</span><span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">fileName</span><span class="p">()</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="n">postfix</span><span class="p">)):</span>
+            <span class="k">raise</span> <span class="n">SmvRuntimeError</span><span class="p">(</span>
+                <span class="s2">&quot;Input file provided </span><span class="si">{}</span><span class="s2"> does not have postfix </span><span class="si">{}</span><span class="s2">&quot;</span>
+                <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fileName</span><span class="p">(),</span> <span class="n">postfix</span><span class="p">)</span>
+            <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="SmvSparkDfOutput"><a class="viewcode-back" href="../../../smv.iomod.html#smv.iomod.base.SmvSparkDfOutput">[docs]</a><span class="k">class</span> <span class="nc">SmvSparkDfOutput</span><span class="p">(</span><span class="n">SmvOutput</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;SmvOutput which write out Spark DF</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">_assert_data_is_df</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">DataFrame</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">SmvRuntimeError</span><span class="p">(</span>
+                <span class="s2">&quot;Data provided to </span><span class="si">{}</span><span class="s2"> has type </span><span class="si">{}</span><span class="s2">, should be a DataFrame&quot;</span>
+                <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fqn</span><span class="p">(),</span> <span class="nb">type</span><span class="p">(</span><span class="n">data</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
+            <span class="p">)</span>
+
+<div class="viewcode-block" id="SmvSparkDfOutput.get_spark_df"><a class="viewcode-back" href="../../../smv.iomod.html#smv.iomod.base.SmvSparkDfOutput.get_spark_df">[docs]</a>    <span class="k">def</span> <span class="nf">get_spark_df</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">known</span><span class="p">):</span>
+        <span class="n">i</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">RunParams</span><span class="p">(</span><span class="n">known</span><span class="p">)</span>
+
+        <span class="n">data</span> <span class="o">=</span> <span class="n">i</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">requiresDS</span><span class="p">()[</span><span class="mi">0</span><span class="p">]]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_assert_data_is_df</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">data</span></div></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">Spark Modularized View v2r10 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2017, TresAmigosSD.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.4.
+    </div>
+  </body>
+</html>

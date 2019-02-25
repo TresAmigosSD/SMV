@@ -1,0 +1,224 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>smv.smvmodulerunner &#8212; Spark Modularized View v2r10 documentation</title>
+    <link rel="stylesheet" href="../../_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Spark Modularized View v2r10 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for smv.smvmodulerunner</h1><div class="highlight"><pre>
+<span></span><span class="c1">#</span>
+<span class="c1"># This file is licensed under the Apache License, Version 2.0</span>
+<span class="c1"># (the &quot;License&quot;); you may not use this file except in compliance with</span>
+<span class="c1"># the License.  You may obtain a copy of the License at</span>
+<span class="c1">#</span>
+<span class="c1">#    http://www.apache.org/licenses/LICENSE-2.0</span>
+<span class="c1">#</span>
+<span class="c1"># Unless required by applicable law or agreed to in writing, software</span>
+<span class="c1"># distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
+<span class="c1"># See the License for the specific language governing permissions and</span>
+<span class="c1"># limitations under the License.</span>
+<span class="kn">import</span> <span class="nn">smv</span>
+<span class="kn">from</span> <span class="nn">smv.modulesvisitor</span> <span class="k">import</span> <span class="n">ModulesVisitor</span>
+<span class="kn">from</span> <span class="nn">smv.smviostrategy</span> <span class="k">import</span> <span class="n">SmvCsvPersistenceStrategy</span><span class="p">,</span> <span class="n">SmvJsonOnHdfsPersistenceStrategy</span>
+<span class="kn">from</span> <span class="nn">smv.smvmetadata</span> <span class="k">import</span> <span class="n">SmvMetaHistory</span>
+<span class="kn">from</span> <span class="nn">smv.runinfo</span> <span class="k">import</span> <span class="n">SmvRunInfoCollector</span>
+<span class="kn">from</span> <span class="nn">smv.utils</span> <span class="k">import</span> <span class="n">scala_seq_to_list</span><span class="p">,</span> <span class="n">is_string</span>
+<span class="kn">from</span> <span class="nn">smv.error</span> <span class="k">import</span> <span class="n">SmvRuntimeError</span><span class="p">,</span> <span class="n">SmvMetadataValidationError</span>
+
+<div class="viewcode-block" id="SmvModuleRunner"><a class="viewcode-back" href="../../smv.html#smv.smvmodulerunner.SmvModuleRunner">[docs]</a><span class="k">class</span> <span class="nc">SmvModuleRunner</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Represent the run-transaction. Provides the single entry point to run</span>
+<span class="sd">        a group of modules</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">modules</span><span class="p">,</span> <span class="n">smvApp</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">roots</span> <span class="o">=</span> <span class="n">modules</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">smvApp</span> <span class="o">=</span> <span class="n">smvApp</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">log</span> <span class="o">=</span> <span class="n">smv</span><span class="o">.</span><span class="n">logger</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">visitor</span> <span class="o">=</span> <span class="n">ModulesVisitor</span><span class="p">(</span><span class="n">modules</span><span class="p">)</span>
+
+<div class="viewcode-block" id="SmvModuleRunner.run"><a class="viewcode-back" href="../../smv.html#smv.smvmodulerunner.SmvModuleRunner.run">[docs]</a>    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">forceRun</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="c1"># a set of modules which need to run post_action, keep tracking</span>
+        <span class="c1"># to make sure post_action run one and only one time for each TX</span>
+        <span class="c1"># the set will be updated by _create_df, _create_meta and _force_post</span>
+        <span class="c1"># and eventually be emptied out</span>
+        <span class="c1"># See docs/dev/SmvGenericModule/SmvModuleRunner.md for details</span>
+        <span class="n">mods_to_run_post_action</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">visitor</span><span class="o">.</span><span class="n">modules_needed_for_run</span><span class="p">)</span>
+
+        <span class="c1"># a map from fqn to already run DF, since the `run` interface of</span>
+        <span class="c1"># SmvModule takes a map of class =&gt; df, the map here have to be</span>
+        <span class="c1"># keyed by class method instead of `versioned_fqn`, which is only</span>
+        <span class="c1"># in the resolved instance</span>
+        <span class="n">known</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="n">collector</span> <span class="o">=</span> <span class="n">SmvRunInfoCollector</span><span class="p">()</span>
+
+        <span class="c1"># Do the real module calculation, when there are persistence, run</span>
+        <span class="c1"># the post_actions and ancestor ephemeral modules post actions</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_create_df</span><span class="p">(</span><span class="n">known</span><span class="p">,</span> <span class="n">mods_to_run_post_action</span><span class="p">,</span> <span class="n">collector</span><span class="p">,</span> <span class="n">forceRun</span><span class="p">)</span>
+
+        <span class="c1"># If there are ephemeral modules who has no persisting module</span>
+        <span class="c1"># down stream, (must be part of roots), force an action and run</span>
+        <span class="c1"># post actions</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_force_post</span><span class="p">(</span><span class="n">mods_to_run_post_action</span><span class="p">,</span> <span class="n">collector</span><span class="p">)</span>
+
+        <span class="n">dfs</span> <span class="o">=</span> <span class="p">[</span><span class="n">m</span><span class="o">.</span><span class="n">data</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">roots</span><span class="p">]</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">dfs</span><span class="p">,</span> <span class="n">collector</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SmvModuleRunner.quick_run"><a class="viewcode-back" href="../../smv.html#smv.smvmodulerunner.SmvModuleRunner.quick_run">[docs]</a>    <span class="k">def</span> <span class="nf">quick_run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">forceRun</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="n">known</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">collector</span> <span class="o">=</span> <span class="n">SmvRunInfoCollector</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_create_df</span><span class="p">(</span><span class="n">known</span><span class="p">,</span> <span class="nb">set</span><span class="p">(),</span> <span class="n">forceRun</span><span class="p">,</span> <span class="n">is_quick_run</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">dfs</span> <span class="o">=</span> <span class="p">[</span><span class="n">m</span><span class="o">.</span><span class="n">data</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">roots</span><span class="p">]</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">dfs</span><span class="p">,</span> <span class="n">collector</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SmvModuleRunner.get_runinfo"><a class="viewcode-back" href="../../smv.html#smv.smvmodulerunner.SmvModuleRunner.get_runinfo">[docs]</a>    <span class="k">def</span> <span class="nf">get_runinfo</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">collector</span> <span class="o">=</span> <span class="n">SmvRunInfoCollector</span><span class="p">()</span>
+        <span class="k">def</span> <span class="nf">add_to_coll</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">_collector</span><span class="p">):</span>
+            <span class="n">hist</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">smvApp</span><span class="o">.</span><span class="n">_read_meta_hist</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
+            <span class="n">_collector</span><span class="o">.</span><span class="n">add_runinfo</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">fqn</span><span class="p">(),</span> <span class="n">m</span><span class="o">.</span><span class="n">_get_metadata</span><span class="p">(),</span> <span class="n">hist</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">visitor</span><span class="o">.</span><span class="n">dfs_visit</span><span class="p">(</span><span class="n">add_to_coll</span><span class="p">,</span> <span class="n">collector</span><span class="p">,</span> <span class="n">need_to_run_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">collector</span></div>
+
+    <span class="c1"># TODO: All the publish* methods below should be removed when move to generic output module</span>
+<div class="viewcode-block" id="SmvModuleRunner.publish"><a class="viewcode-back" href="../../smv.html#smv.smvmodulerunner.SmvModuleRunner.publish">[docs]</a>    <span class="k">def</span> <span class="nf">publish</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">publish_dir</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="c1"># run before publish</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="p">(</span><span class="n">publish_dir</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">):</span>
+            <span class="n">pubdir</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">smvApp</span><span class="o">.</span><span class="n">all_data_dirs</span><span class="p">()</span><span class="o">.</span><span class="n">publishDir</span>
+            <span class="n">version</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">smvApp</span><span class="o">.</span><span class="n">all_data_dirs</span><span class="p">()</span><span class="o">.</span><span class="n">publishVersion</span>
+            <span class="n">publish_dir</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">/</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">pubdir</span><span class="p">,</span> <span class="n">version</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">roots</span><span class="p">:</span>
+            <span class="n">publish_base_path</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">/</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">publish_dir</span><span class="p">,</span> <span class="n">m</span><span class="o">.</span><span class="n">fqn</span><span class="p">())</span>
+            <span class="n">publish_csv_path</span> <span class="o">=</span> <span class="n">publish_base_path</span> <span class="o">+</span> <span class="s2">&quot;.csv&quot;</span>
+            <span class="n">publish_meta_path</span> <span class="o">=</span> <span class="n">publish_base_path</span> <span class="o">+</span> <span class="s2">&quot;.meta&quot;</span>
+            <span class="n">publish_hist_path</span> <span class="o">=</span> <span class="n">publish_base_path</span> <span class="o">+</span> <span class="s2">&quot;.hist&quot;</span>
+
+            <span class="n">SmvCsvPersistenceStrategy</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">smvApp</span><span class="p">,</span> <span class="n">m</span><span class="o">.</span><span class="n">fqn</span><span class="p">(),</span> <span class="n">publish_csv_path</span><span class="p">)</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
+            <span class="n">SmvJsonOnHdfsPersistenceStrategy</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">smvApp</span><span class="p">,</span> <span class="n">publish_meta_path</span><span class="p">)</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">module_meta</span><span class="o">.</span><span class="n">toJson</span><span class="p">())</span>
+            <span class="n">hist</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">smvApp</span><span class="o">.</span><span class="n">_read_meta_hist</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
+            <span class="n">SmvJsonOnHdfsPersistenceStrategy</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">smvApp</span><span class="p">,</span> <span class="n">publish_hist_path</span><span class="p">)</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">hist</span><span class="o">.</span><span class="n">toJson</span><span class="p">())</span></div>
+
+<div class="viewcode-block" id="SmvModuleRunner.publish_to_hive"><a class="viewcode-back" href="../../smv.html#smv.smvmodulerunner.SmvModuleRunner.publish_to_hive">[docs]</a>    <span class="k">def</span> <span class="nf">publish_to_hive</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># run before publish</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+
+        <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">roots</span><span class="p">:</span>
+            <span class="n">m</span><span class="o">.</span><span class="n">exportToHive</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="SmvModuleRunner.publish_to_jdbc"><a class="viewcode-back" href="../../smv.html#smv.smvmodulerunner.SmvModuleRunner.publish_to_jdbc">[docs]</a>    <span class="k">def</span> <span class="nf">publish_to_jdbc</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+
+        <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">roots</span><span class="p">:</span>
+            <span class="n">m</span><span class="o">.</span><span class="n">publishThroughJDBC</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="SmvModuleRunner.publish_local"><a class="viewcode-back" href="../../smv.html#smv.smvmodulerunner.SmvModuleRunner.publish_local">[docs]</a>    <span class="k">def</span> <span class="nf">publish_local</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">local_dir</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+
+        <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">roots</span><span class="p">:</span>
+            <span class="n">csv_path</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">/</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">local_dir</span><span class="p">,</span> <span class="n">m</span><span class="o">.</span><span class="n">versioned_fqn</span><span class="p">)</span>
+            <span class="n">m</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">smvExportCsv</span><span class="p">(</span><span class="n">csv_path</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SmvModuleRunner.purge_persisted"><a class="viewcode-back" href="../../smv.html#smv.smvmodulerunner.SmvModuleRunner.purge_persisted">[docs]</a>    <span class="k">def</span> <span class="nf">purge_persisted</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">def</span> <span class="nf">cleaner</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">state</span><span class="p">):</span>
+            <span class="n">m</span><span class="o">.</span><span class="n">persistStrategy</span><span class="p">()</span><span class="o">.</span><span class="n">remove</span><span class="p">()</span>
+            <span class="n">m</span><span class="o">.</span><span class="n">metaStrategy</span><span class="p">()</span><span class="o">.</span><span class="n">remove</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">visitor</span><span class="o">.</span><span class="n">dfs_visit</span><span class="p">(</span><span class="n">cleaner</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">_create_df</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">known</span><span class="p">,</span> <span class="n">need_post</span><span class="p">,</span> <span class="n">collector</span><span class="p">,</span> <span class="n">forceRun</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">is_quick_run</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="c1"># run module and create df. when persisting, post_action</span>
+        <span class="c1"># will run on current module and all upstream modules</span>
+        <span class="k">def</span> <span class="nf">runner</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">state</span><span class="p">):</span>
+            <span class="p">(</span><span class="n">fqn2df</span><span class="p">,</span> <span class="n">run_set</span><span class="p">,</span> <span class="n">collector</span><span class="p">)</span> <span class="o">=</span> <span class="n">state</span>
+            <span class="n">m</span><span class="o">.</span><span class="n">_do_it</span><span class="p">(</span><span class="n">fqn2df</span><span class="p">,</span> <span class="n">run_set</span><span class="p">,</span> <span class="n">collector</span><span class="p">,</span> <span class="n">forceRun</span><span class="p">,</span> <span class="n">is_quick_run</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">visitor</span><span class="o">.</span><span class="n">dfs_visit</span><span class="p">(</span><span class="n">runner</span><span class="p">,</span> <span class="p">(</span><span class="n">known</span><span class="p">,</span> <span class="n">need_post</span><span class="p">,</span> <span class="n">collector</span><span class="p">),</span> <span class="n">need_to_run_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_force_post</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">need_post</span><span class="p">,</span> <span class="n">collector</span><span class="p">):</span>
+        <span class="c1"># If there are still module left for post_action, force a run here</span>
+        <span class="c1"># to run them and all left over on their upstream</span>
+        <span class="k">if</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">need_post</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;leftover mods need to run post action: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                <span class="p">[</span><span class="n">m</span><span class="o">.</span><span class="n">fqn</span><span class="p">()</span>  <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">need_post</span><span class="p">]</span>
+            <span class="p">))</span>
+            <span class="k">def</span> <span class="nf">force_run</span><span class="p">(</span><span class="n">mod</span><span class="p">,</span> <span class="n">state</span><span class="p">):</span>
+                <span class="p">(</span><span class="n">run_set</span><span class="p">,</span> <span class="n">coll</span><span class="p">)</span> <span class="o">=</span> <span class="n">state</span>
+                <span class="n">mod</span><span class="o">.</span><span class="n">_force_post_action</span><span class="p">(</span><span class="n">run_set</span><span class="p">,</span> <span class="n">coll</span><span class="p">)</span>
+            <span class="c1"># Note: we used bfs_visit here run downstream first</span>
+            <span class="c1"># In case of A&lt;-B&lt;-C all need to run, this way will only</span>
+            <span class="c1"># need to force action on C, and A and B&#39;s post action can</span>
+            <span class="c1"># also be calculated</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">visitor</span><span class="o">.</span><span class="n">bfs_visit</span><span class="p">(</span><span class="n">force_run</span><span class="p">,</span> <span class="p">(</span><span class="n">need_post</span><span class="p">,</span> <span class="n">collector</span><span class="p">),</span> <span class="n">need_to_run_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Spark Modularized View v2r10 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2017, TresAmigosSD.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.4.
+    </div>
+  </body>
+</html>
