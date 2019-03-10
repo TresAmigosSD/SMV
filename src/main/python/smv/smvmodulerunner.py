@@ -22,11 +22,12 @@ class SmvModuleRunner(object):
     """Represent the run-transaction. Provides the single entry point to run
         a group of modules
     """
-    def __init__(self, modules, smvApp):
+    def __init__(self, modules, smvApp, callback=None):
         self.roots = modules
         self.smvApp = smvApp
         self.log = smv.logger
         self.visitor = ModulesVisitor(modules)
+        self.callback = callback
 
     def run(self, forceRun=False):
         # a set of modules which need to run post_action, keep tracking
@@ -124,6 +125,8 @@ class SmvModuleRunner(object):
         def runner(m, state):
             (fqn2df, run_set, collector) = state
             m._do_it(fqn2df, run_set, collector, forceRun, is_quick_run)
+            if (self.callback is not None):
+                self.callback({'fqn': m.fqn(), 'status': 'completed'})
         self.visitor.dfs_visit(runner, (known, need_post, collector), need_to_run_only=True)
 
     def _force_post(self, need_post, collector):

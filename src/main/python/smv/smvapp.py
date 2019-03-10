@@ -384,7 +384,7 @@ class SmvApp(object):
         return (dfs[0], coll)
 
     @exception_handling
-    def runModule(self, fqn, forceRun=False, quickRun=False):
+    def runModule(self, fqn, forceRun=False, quickRun=False, callback=None):
         """Runs SmvModule by its Fully Qualified Name(fqn)
 
         Args:
@@ -409,14 +409,14 @@ class SmvApp(object):
         if (quickRun):
             return self._to_single_run_res(SmvModuleRunner([ds], self).quick_run(forceRun))
         else:
-            return self._to_single_run_res(SmvModuleRunner([ds], self).run(forceRun))
+            return self._to_single_run_res(SmvModuleRunner([ds], self, callback).run(forceRun))
 
     @exception_handling
     def quickRunModule(self, fqn):
         return self.runModule(fqn, forceRun=False, quickRun=True)
 
     @exception_handling
-    def runModuleByName(self, name, forceRun=False, quickRun=False):
+    def runModuleByName(self, name, forceRun=False, quickRun=False, callback=None):
         """Runs a SmvModule by its name (can be partial FQN)
 
         See the `runModule` method above
@@ -435,7 +435,7 @@ class SmvApp(object):
               about the run, such as validation results.
         """
         fqn = self.dsm.inferFqn(name)
-        return self.runModule(fqn, forceRun, quickRun)
+        return self.runModule(fqn, forceRun, quickRun, callback)
 
     def get_need_to_run(self, roots, keep_roots=False):
         """Given a list of target modules to run, return a list of modules which
