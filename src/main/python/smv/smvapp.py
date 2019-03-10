@@ -384,7 +384,7 @@ class SmvApp(object):
         return (dfs[0], coll)
 
     @exception_handling
-    def runModule(self, fqn, forceRun=False, quickRun=False, callback=None):
+    def runModule(self, fqn, forceRun=False, quickRun=False, runMonitorCallback=None):
         """Runs SmvModule by its Fully Qualified Name(fqn)
 
         Args:
