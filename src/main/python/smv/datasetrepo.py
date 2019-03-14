@@ -98,10 +98,10 @@ class DataSetRepo(object):
         return ds
 
     def load_pymodule(self, fqn):
-        mod = __import__(fqn)
-        for subname in fqn.split('.')[1:]:
-            mod = getattr(mod, subname)
-        return mod
+            mod = __import__(fqn)
+            for subname in fqn.split('.')[1:]:
+                mod = getattr(mod, subname)
+            return mod
 
     @lazy_property
     def all_project_pymodules(self):
@@ -252,7 +252,14 @@ class DataSetRepo(object):
         prov_dict = {}
 
         for prov_lib_name in prov_libs_names:
-            prov_lib = self.load_pymodule(prov_lib_name)
+            try:
+                prov_lib = self.load_pymodule(prov_lib_name)
+            except Exception as err:
+                # ignore the prov_lib_name if there is any loading error
+                traceback.print_exc()
+                message = "{0}({1!r})".format(type(err).__name__, err.args)
+                smv.logger.debug("Ignoring {} because it has error: {}".format(prov_lib_name, message))
+                continue
             providers = self._matchingClassesInPyModule(prov_lib, is_provider, skip_abs=False)
             for p in providers:
                 p_fqn = p.provider_type_fqn()
