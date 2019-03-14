@@ -98,10 +98,10 @@ class DataSetRepo(object):
         return ds
 
     def load_pymodule(self, fqn):
-            mod = __import__(fqn)
-            for subname in fqn.split('.')[1:]:
-                mod = getattr(mod, subname)
-            return mod
+        mod = __import__(fqn)
+        for subname in fqn.split('.')[1:]:
+            mod = getattr(mod, subname)
+        return mod
 
     @lazy_property
     def all_project_pymodules(self):
