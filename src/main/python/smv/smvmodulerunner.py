@@ -127,12 +127,20 @@ class SmvModuleRunner(object):
             fqn = m.fqn()
             # tell monitor m is running
             if (self.runMonitorCallback is not None):
-                self.runMonitorCallback({'fqn': fqn, 'status': 'started'})
+                self.runMonitorCallback({
+                    'fqn': fqn,
+                    'status': 'started',
+                    'applicationId': self.smvApp.sc.applicationId
+                })
             # Run module
             m._do_it(fqn2df, run_set, collector, forceRun, is_quick_run)
             # tell monitor m is done
             if (self.runMonitorCallback is not None):
-                self.runMonitorCallback({'fqn': fqn, 'status': 'completed'})
+                self.runMonitorCallback({
+                    'fqn': fqn,
+                    'status': 'completed',
+                    'needsToRun': m.needsToRun(),
+                })
 
         self.visitor.dfs_visit(runner, (known, need_post, collector), need_to_run_only=True)
 
