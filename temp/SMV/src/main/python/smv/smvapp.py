@@ -413,8 +413,7 @@ class SmvApp(object):
 
     @exception_handling
     def quickRunModule(self, fqn):
-        ds = self.dsm.load(fqn)[0]
-        return SmvModuleRunner([ds], self).quick_run()[0]
+        return self.runModule(fqn, forceRun=False, quickRun=True)
 
     @exception_handling
     def runModuleByName(self, name, forceRun=False, quickRun=False):

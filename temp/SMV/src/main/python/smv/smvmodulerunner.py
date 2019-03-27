@@ -58,8 +58,10 @@ class SmvModuleRunner(object):
 
     def quick_run(self, forceRun=False):
         known = {}
+        collector = SmvRunInfoCollector()
         self._create_df(known, set(), forceRun, is_quick_run=True)
-        return [m.data for m in self.roots]
+        dfs = [m.data for m in self.roots]
+        return (dfs, collector)
 
     def get_runinfo(self):
         collector = SmvRunInfoCollector()

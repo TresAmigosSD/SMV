@@ -1,0 +1,439 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>smv.smvmodule &#8212; Spark Modularized View v2r11 documentation</title>
+    <link rel="stylesheet" href="../../_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Spark Modularized View v2r11 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for smv.smvmodule</h1><div class="highlight"><pre>
+<span></span><span class="c1"># This file is licensed under the Apache License, Version 2.0</span>
+<span class="c1"># (the &quot;License&quot;); you may not use this file except in compliance with</span>
+<span class="c1"># the License.  You may obtain a copy of the License at</span>
+<span class="c1">#</span>
+<span class="c1">#    http://www.apache.org/licenses/LICENSE-2.0</span>
+<span class="c1">#</span>
+<span class="c1"># Unless required by applicable law or agreed to in writing, software</span>
+<span class="c1"># distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
+<span class="c1"># See the License for the specific language governing permissions and</span>
+<span class="c1"># limitations under the License.</span>
+<span class="sd">&quot;&quot;&quot;SMV DataSet Framework interface</span>
+
+<span class="sd">This module defines the abstract classes which formed the SmvModule Framework for clients&#39; projects</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span> <span class="nn">pyspark.sql</span> <span class="k">import</span> <span class="n">DataFrame</span>
+
+<span class="kn">import</span> <span class="nn">abc</span>
+<span class="kn">import</span> <span class="nn">binascii</span>
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">from</span> <span class="nn">datetime</span> <span class="k">import</span> <span class="n">datetime</span>
+
+<span class="kn">import</span> <span class="nn">smv</span>
+<span class="kn">from</span> <span class="nn">smv.dqm</span> <span class="k">import</span> <span class="n">SmvDQM</span>
+<span class="kn">from</span> <span class="nn">smv.error</span> <span class="k">import</span> <span class="n">SmvRuntimeError</span>
+<span class="kn">from</span> <span class="nn">smv.utils</span> <span class="k">import</span> <span class="n">pickle_lib</span><span class="p">,</span> <span class="n">lazy_property</span>
+<span class="kn">from</span> <span class="nn">smv.smviostrategy</span> <span class="k">import</span> <span class="n">SmvCsvPersistenceStrategy</span><span class="p">,</span> <span class="n">SmvPicklablePersistenceStrategy</span><span class="p">,</span> <span class="n">SmvParquetPersistenceStrategy</span>
+<span class="kn">from</span> <span class="nn">smv.smvgenericmodule</span> <span class="k">import</span> <span class="n">SmvProcessModule</span><span class="p">,</span> <span class="n">SmvGenericModule</span>
+
+<div class="viewcode-block" id="SmvOutput"><a class="viewcode-back" href="../../smv.html#smv.smvmodule.SmvOutput">[docs]</a><span class="k">class</span> <span class="nc">SmvOutput</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Mixin which marks an SmvModule as one of the output of its stage</span>
+<span class="sd">        SmvOutputs are distinct from other SmvModule in that</span>
+
+<span class="sd">            * The -s and --run-app options of smv-run only run SmvOutputs and their dependencies.</span>
+
+<span class="sd">        Deprecated. Will be replaced by sub-classed of smv.io.SmvOutput.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">IsSmvOutput</span> <span class="o">=</span> <span class="kc">True</span>
+
+<div class="viewcode-block" id="SmvOutput.tableName"><a class="viewcode-back" href="../../smv.html#smv.smvmodule.SmvOutput.tableName">[docs]</a>    <span class="k">def</span> <span class="nf">tableName</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;The user-specified table name used when exporting data to Hive (optional)</span>
+<span class="sd">            Returns:</span>
+<span class="sd">                (string)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="kc">None</span></div></div>
+
+
+<span class="k">class</span> <span class="nc">SparkDfGenMod</span><span class="p">(</span><span class="n">SmvGenericModule</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Base class for SmvModules create Spark DFs</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">smvApp</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">SparkDfGenMod</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">smvApp</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dqmTimeElapsed</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="c1">#########################################################################</span>
+    <span class="c1"># User interface methods</span>
+    <span class="c1">#</span>
+    <span class="c1"># SparkDfGenMod specific:</span>
+    <span class="c1"># - dqm: Optional, default SmvDQM()</span>
+    <span class="c1">#########################################################################</span>
+    <span class="k">def</span> <span class="nf">dqm</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;DQM policy</span>
+
+<span class="sd">            Override this method to define your own DQM policy (optional).</span>
+<span class="sd">            Default is an empty policy.</span>
+
+<span class="sd">            Returns:</span>
+<span class="sd">                (SmvDQM): a DQM policy</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">SmvDQM</span><span class="p">()</span>
+
+    <span class="c1">#########################################################################</span>
+    <span class="c1"># Implement of SmvGenericModule abatract methos and other private methods</span>
+    <span class="c1">#########################################################################</span>
+    <span class="k">def</span> <span class="nf">_calculate_edd</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;When config smv.forceEdd flag is true, run edd calculation.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">def</span> <span class="nf">get_edd</span><span class="p">(</span><span class="n">df</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">smvApp</span><span class="o">.</span><span class="n">_jvm</span><span class="o">.</span><span class="n">SmvPythonHelper</span><span class="o">.</span><span class="n">getEddJsonArray</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">_jdf</span><span class="p">)</span>
+
+        <span class="p">(</span><span class="n">edd_json_array</span><span class="p">,</span> <span class="n">eddTimeElapsed</span><span class="p">)</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_do_action_on_df</span><span class="p">(</span>
+            <span class="n">get_edd</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="s2">&quot;CALCULATE EDD&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">module_meta</span><span class="o">.</span><span class="n">addEddResult</span><span class="p">(</span><span class="n">edd_json_array</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">module_meta</span><span class="o">.</span><span class="n">addDuration</span><span class="p">(</span><span class="s2">&quot;edd&quot;</span><span class="p">,</span> <span class="n">eddTimeElapsed</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_force_an_action</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">df</span><span class="p">):</span>
+        <span class="c1"># Since optimization can be done on a DF actions like count, we have to convert DF</span>
+        <span class="c1"># to RDD and than apply an action, otherwise fix count will be always zero</span>
+        <span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dqmTimeElapsed</span><span class="p">)</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_do_action_on_df</span><span class="p">(</span>
+            <span class="k">lambda</span> <span class="n">d</span><span class="p">:</span> <span class="n">d</span><span class="o">.</span><span class="n">rdd</span><span class="o">.</span><span class="n">count</span><span class="p">(),</span> <span class="n">df</span><span class="p">,</span> <span class="s2">&quot;FORCE AN ACTION FOR DQM&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Override this method to add the edd calculation if config</span>
+    <span class="k">def</span> <span class="nf">_calculate_user_meta</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">SparkDfGenMod</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">_calculate_user_meta</span><span class="p">()</span>
+        <span class="k">if</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">smvApp</span><span class="o">.</span><span class="n">py_smvconf</span><span class="o">.</span><span class="n">force_edd</span><span class="p">()):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_calculate_edd</span><span class="p">()</span>
+
+    <span class="c1"># Override this method to add the dqmTimeElapsed</span>
+    <span class="k">def</span> <span class="nf">_finalize_meta</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">SparkDfGenMod</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">_finalize_meta</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">module_meta</span><span class="o">.</span><span class="n">addSchemaMetadata</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
+        <span class="c1"># Need to add duration at the very end, just before persist</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">module_meta</span><span class="o">.</span><span class="n">addDuration</span><span class="p">(</span><span class="s2">&quot;dqm&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dqmTimeElapsed</span><span class="p">)</span>
+
+    <span class="c1"># Override this to add the task to a Spark job group</span>
+    <span class="k">def</span> <span class="nf">_do_action_on_df</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">func</span><span class="p">,</span> <span class="n">df</span><span class="p">,</span> <span class="n">desc</span><span class="p">):</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fqn</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">smvApp</span><span class="o">.</span><span class="n">sc</span><span class="o">.</span><span class="n">setJobGroup</span><span class="p">(</span><span class="n">groupId</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="n">desc</span><span class="p">)</span>
+        <span class="p">(</span><span class="n">res</span><span class="p">,</span> <span class="n">secondsElapsed</span><span class="p">)</span> <span class="o">=</span> <span class="nb">super</span><span class="p">(</span><span class="n">SparkDfGenMod</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">_do_action_on_df</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="n">df</span><span class="p">,</span> <span class="n">desc</span><span class="p">)</span>
+
+        <span class="c1"># Python api does not have clearJobGroup</span>
+        <span class="c1"># set groupId and description to None is equivalent</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">smvApp</span><span class="o">.</span><span class="n">sc</span><span class="o">.</span><span class="n">setJobGroup</span><span class="p">(</span><span class="n">groupId</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">res</span><span class="p">,</span> <span class="n">secondsElapsed</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">persistStrategy</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">_format</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">smvApp</span><span class="o">.</span><span class="n">py_smvconf</span><span class="o">.</span><span class="n">df_persist_format</span><span class="p">()</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">_format</span> <span class="o">==</span> <span class="s2">&quot;smvcsv_on_hdfs&quot;</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">SmvCsvPersistenceStrategy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">smvApp</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">versioned_fqn</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="p">(</span><span class="n">_format</span> <span class="o">==</span> <span class="s2">&quot;parquet_on_hdfs&quot;</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">SmvParquetPersistenceStrategy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">smvApp</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">versioned_fqn</span><span class="p">)</span>
+
+    <span class="nd">@lazy_property</span>
+    <span class="k">def</span> <span class="nf">_dqmValidator</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">smvApp</span><span class="o">.</span><span class="n">_jvm</span><span class="o">.</span><span class="n">DQMValidator</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dqm</span><span class="p">())</span>
+
+    <span class="k">def</span> <span class="nf">_pre_action</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">df</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;DF in and DF out, to perform operations on created from run method&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">DataFrame</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_dqmValidator</span><span class="o">.</span><span class="n">attachTasks</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">_jdf</span><span class="p">),</span> <span class="n">df</span><span class="o">.</span><span class="n">sql_ctx</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_post_action</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Will run when action happens on a DF, here for DQM validation&quot;&quot;&quot;</span>
+        <span class="n">validation_result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dqmValidator</span><span class="o">.</span><span class="n">validate</span><span class="p">()</span>
+        <span class="k">if</span> <span class="p">(</span><span class="ow">not</span> <span class="n">validation_result</span><span class="o">.</span><span class="n">isEmpty</span><span class="p">()):</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span>
+                <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">validation_result</span><span class="o">.</span><span class="n">toJSON</span><span class="p">()),</span>
+                <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">separators</span><span class="o">=</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">,</span> <span class="s1">&#39;: &#39;</span><span class="p">)</span>
+            <span class="p">)</span>
+            <span class="n">smv</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s2">&quot;Nontrivial DQM result:</span><span class="se">\n</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">msg</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">module_meta</span><span class="o">.</span><span class="n">addDqmValidationResult</span><span class="p">(</span><span class="n">validation_result</span><span class="o">.</span><span class="n">toJSON</span><span class="p">())</span>
+
+    <span class="k">def</span> <span class="nf">_assure_output_type</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">run_output</span><span class="p">):</span>
+        <span class="k">if</span> <span class="p">(</span><span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">run_output</span><span class="p">,</span> <span class="n">DataFrame</span><span class="p">)):</span>
+            <span class="k">raise</span> <span class="n">SmvRuntimeError</span><span class="p">(</span>
+                <span class="s1">&#39;The output data from this module should be a Spark DataFrame, but </span><span class="si">{}</span><span class="s1"> is given.&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">run_output</span><span class="p">))</span>
+            <span class="p">)</span>
+
+<span class="k">class</span> <span class="nc">SmvSparkDfModule</span><span class="p">(</span><span class="n">SmvProcessModule</span><span class="p">,</span> <span class="n">SparkDfGenMod</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Base class for SmvModules create Spark DFs</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">IsSmvModule</span> <span class="o">=</span> <span class="kc">True</span>
+
+    <span class="k">def</span> <span class="nf">dsType</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s2">&quot;Module&quot;</span>
+
+    <span class="c1">#########################################################################</span>
+    <span class="c1"># User interface methods</span>
+    <span class="c1">#</span>
+    <span class="c1"># Inherited from SmvGenericModule:</span>
+    <span class="c1">#</span>
+    <span class="c1"># - isEphemeral: Optional, default False</span>
+    <span class="c1"># - description: Optional, default class docstr</span>
+    <span class="c1"># - requiresDS: Required</span>
+    <span class="c1"># - requiresConfig: Optional, default []</span>
+    <span class="c1"># - requiresLib: Optional, default []</span>
+    <span class="c1"># - metadata: Optional, default {}</span>
+    <span class="c1"># - validateMetadata: Optional, default None</span>
+    <span class="c1"># - metadataHistorySize: Optional, default 5</span>
+    <span class="c1"># - version: Optional, default &quot;0&quot; --- Deprecated!</span>
+    <span class="c1">#</span>
+    <span class="c1"># SmvSparkDfModule specific:</span>
+    <span class="c1"># - dqm: Optional, default SmvDQM()</span>
+    <span class="c1"># - publishHiveSql: Optional, default None</span>
+    <span class="c1"># - run: Required</span>
+    <span class="c1">#########################################################################</span>
+
+    <span class="k">def</span> <span class="nf">publishHiveSql</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;An optional sql query to run to publish the results of this module when the</span>
+<span class="sd">           --publish-hive command line is used.  The DataFrame result of running this</span>
+<span class="sd">           module will be available to the query as the &quot;dftable&quot; table.</span>
+
+<span class="sd">            Example:</span>
+<span class="sd">                &gt;&gt;&gt; return &quot;insert overwrite table mytable select * from dftable&quot;</span>
+
+<span class="sd">            Note:</span>
+<span class="sd">                If this method is not specified, the default is to just create the</span>
+<span class="sd">                table specified by tableName() with the results of the module.</span>
+
+<span class="sd">           Returns:</span>
+<span class="sd">               (string): the query to run.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+
+
+    <span class="c1"># All publish related methods should be moved to generic output module class</span>
+    <span class="k">def</span> <span class="nf">exportToHive</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># if user provided a publish hive sql command, run it instead of default</span>
+        <span class="c1"># table creation from data frame result.</span>
+        <span class="k">if</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">publishHiveSql</span><span class="p">()</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">):</span>
+            <span class="n">queries</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="s2">&quot;drop table if exists </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tableName</span><span class="p">()),</span>
+                <span class="s2">&quot;create table </span><span class="si">{}</span><span class="s2"> as select * from dftable&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tableName</span><span class="p">())</span>
+            <span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">queries</span> <span class="o">=</span> <span class="p">[</span><span class="n">l</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">publishHiveSql</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;;&quot;</span><span class="p">)]</span>
+
+        <span class="n">smv</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Hive publish query: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s2">&quot;;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">queries</span><span class="p">)))</span>
+        <span class="k">def</span> <span class="nf">run_query</span><span class="p">(</span><span class="n">df</span><span class="p">):</span>
+            <span class="c1"># register the dataframe as a temp table.  Will be overwritten on next register.</span>
+            <span class="n">df</span><span class="o">.</span><span class="n">createOrReplaceTempView</span><span class="p">(</span><span class="s2">&quot;dftable&quot;</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="n">queries</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">smvApp</span><span class="o">.</span><span class="n">sqlContext</span><span class="o">.</span><span class="n">sql</span><span class="p">(</span><span class="n">l</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_do_action_on_df</span><span class="p">(</span><span class="n">run_query</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="s2">&quot;PUBLISH TO HIVE&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">publishThroughJDBC</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">url</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">smvApp</span><span class="o">.</span><span class="n">jdbcUrl</span><span class="p">()</span>
+        <span class="n">driver</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">smvApp</span><span class="o">.</span><span class="n">jdbcDriver</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">smvApp</span><span class="o">.</span><span class="n">j_smvPyClient</span><span class="o">.</span><span class="n">writeThroughJDBC</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">_jdf</span><span class="p">,</span> <span class="n">url</span><span class="p">,</span> <span class="n">driver</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">tableName</span><span class="p">())</span>
+
+<div class="viewcode-block" id="SmvModule"><a class="viewcode-back" href="../../smv.html#smv.smvmodule.SmvModule">[docs]</a><span class="k">class</span> <span class="nc">SmvModule</span><span class="p">(</span><span class="n">SmvSparkDfModule</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;SmvModule is the same as SmvSparkDfModule. Since it was used in all the</span>
+<span class="sd">        SMV projects, we will not change the its name for backward compatibility.</span>
+<span class="sd">        May deprecate when the full SmvGenericModule framework get adopted</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="SmvSqlModule"><a class="viewcode-back" href="../../smv.html#smv.smvmodule.SmvSqlModule">[docs]</a><span class="k">class</span> <span class="nc">SmvSqlModule</span><span class="p">(</span><span class="n">SmvModule</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;An SMV module which executes a SQL query in place of a run method</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># User must specify table names. We can&#39;t use FQN because the name can&#39;t</span>
+    <span class="c1"># can&#39;t contain &#39;.&#39;, and defaulting to the module&#39;s base name would invite</span>
+    <span class="c1"># name collisions.</span>
+<div class="viewcode-block" id="SmvSqlModule.tables"><a class="viewcode-back" href="../../smv.html#smv.smvmodule.SmvSqlModule.tables">[docs]</a>    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">tables</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Dict of dependencies by table name.</span>
+<span class="sd">        &quot;&quot;&quot;</span></div>
+
+<div class="viewcode-block" id="SmvSqlModule.requiresDS"><a class="viewcode-back" href="../../smv.html#smv.smvmodule.SmvSqlModule.requiresDS">[docs]</a>    <span class="k">def</span> <span class="nf">requiresDS</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tables</span><span class="p">()</span><span class="o">.</span><span class="n">values</span><span class="p">())</span></div>
+
+<div class="viewcode-block" id="SmvSqlModule.query"><a class="viewcode-back" href="../../smv.html#smv.smvmodule.SmvSqlModule.query">[docs]</a>    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">query</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;User-specified SQL query defining the behavior of this module</span>
+
+<span class="sd">            Before the query is executed, all dependencies will be registered as</span>
+<span class="sd">            tables with the names specified in the tables method.</span>
+<span class="sd">        &quot;&quot;&quot;</span></div>
+
+<div class="viewcode-block" id="SmvSqlModule.run"><a class="viewcode-back" href="../../smv.html#smv.smvmodule.SmvSqlModule.run">[docs]</a>    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">i</span><span class="p">):</span>
+        <span class="n">tbl_name_2_ds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">tables</span><span class="p">()</span>
+
+        <span class="c1"># temporarily register DataFrame inputs as tables</span>
+        <span class="k">for</span> <span class="n">tbl_name</span> <span class="ow">in</span> <span class="n">tbl_name_2_ds</span><span class="p">:</span>
+            <span class="n">ds</span> <span class="o">=</span> <span class="n">tbl_name_2_ds</span><span class="p">[</span><span class="n">tbl_name</span><span class="p">]</span>
+            <span class="n">i</span><span class="p">[</span><span class="n">ds</span><span class="p">]</span><span class="o">.</span><span class="n">registerTempTable</span><span class="p">(</span><span class="n">tbl_name</span><span class="p">)</span>
+
+        <span class="n">res</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">smvApp</span><span class="o">.</span><span class="n">sqlContext</span><span class="o">.</span><span class="n">sql</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">query</span><span class="p">())</span>
+
+        <span class="c1"># drop temporary tables</span>
+        <span class="k">for</span> <span class="n">tbl_name</span> <span class="ow">in</span> <span class="n">tbl_name_2_ds</span><span class="p">:</span>
+            <span class="c1"># This currently causes an &quot;error&quot; to be reported saying &quot;table does</span>
+            <span class="c1"># not exist&quot;. This happens even when using &quot;drop table if exists &quot;.</span>
+            <span class="c1"># It is annoying but can be safely ignored.</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">smvApp</span><span class="o">.</span><span class="n">sqlContext</span><span class="o">.</span><span class="n">sql</span><span class="p">(</span><span class="s2">&quot;drop table &quot;</span> <span class="o">+</span> <span class="n">tbl_name</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">res</span></div></div>
+
+
+<div class="viewcode-block" id="SmvModel"><a class="viewcode-back" href="../../smv.html#smv.smvmodule.SmvModel">[docs]</a><span class="k">class</span> <span class="nc">SmvModel</span><span class="p">(</span><span class="n">SmvProcessModule</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;SmvModule whose result is a data model</span>
+
+<span class="sd">        The result must be picklable - see</span>
+<span class="sd">        https://docs.python.org/2/library/pickle.html#what-can-be-pickled-and-unpickled.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Exists only to be paired with SmvModelExec</span>
+<div class="viewcode-block" id="SmvModel.dsType"><a class="viewcode-back" href="../../smv.html#smv.smvmodule.SmvModel.dsType">[docs]</a>    <span class="k">def</span> <span class="nf">dsType</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s2">&quot;Model&quot;</span></div>
+
+<div class="viewcode-block" id="SmvModel.persistStrategy"><a class="viewcode-back" href="../../smv.html#smv.smvmodule.SmvModel.persistStrategy">[docs]</a>    <span class="k">def</span> <span class="nf">persistStrategy</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">SmvPicklablePersistenceStrategy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">smvApp</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">versioned_fqn</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="SmvModelExec"><a class="viewcode-back" href="../../smv.html#smv.smvmodule.SmvModelExec">[docs]</a><span class="k">class</span> <span class="nc">SmvModelExec</span><span class="p">(</span><span class="n">SmvModule</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;SmvModule that runs a model produced by an SmvModel</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+<div class="viewcode-block" id="SmvModelExec.dsType"><a class="viewcode-back" href="../../smv.html#smv.smvmodule.SmvModelExec.dsType">[docs]</a>    <span class="k">def</span> <span class="nf">dsType</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s2">&quot;ModelExec&quot;</span></div>
+
+    <span class="k">def</span> <span class="nf">_dependencies</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">model_mod</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">requiresModel</span><span class="p">()</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_targetIsSmvModel</span><span class="p">(</span><span class="n">model_mod</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">SmvRuntimeError</span><span class="p">(</span><span class="s2">&quot;requiresModel method must return an SmvModel or a link to one&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">model_mod</span><span class="p">]</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">requiresDS</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_targetIsSmvModel</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">target</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="n">SmvModel</span><span class="p">):</span>
+                <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>
+            <span class="c1"># if target is not a class or other type object, issubclass will raise TypeError</span>
+            <span class="k">pass</span>
+
+        <span class="k">return</span> <span class="kc">False</span>
+
+<div class="viewcode-block" id="SmvModelExec.requiresModel"><a class="viewcode-back" href="../../smv.html#smv.smvmodule.SmvModelExec.requiresModel">[docs]</a>    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">requiresModel</span><span class="p">():</span>
+        <span class="sd">&quot;&quot;&quot;User-specified SmvModel module</span>
+
+<span class="sd">            Returns:</span>
+<span class="sd">                (SmvModel): the SmvModel this module depends on</span>
+<span class="sd">        &quot;&quot;&quot;</span></div>
+
+<div class="viewcode-block" id="SmvModelExec.doRun"><a class="viewcode-back" href="../../smv.html#smv.smvmodule.SmvModelExec.doRun">[docs]</a>    <span class="k">def</span> <span class="nf">doRun</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">known</span><span class="p">):</span>
+        <span class="n">i</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">RunParams</span><span class="p">(</span><span class="n">known</span><span class="p">)</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">i</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">requiresModel</span><span class="p">()]</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">model</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SmvModelExec.run"><a class="viewcode-back" href="../../smv.html#smv.smvmodule.SmvModelExec.run">[docs]</a>    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">model</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;User-specified definition of the operations of this SmvModule</span>
+
+<span class="sd">            Override this method to define the output of this module, given a map</span>
+<span class="sd">            &#39;i&#39; from input SmvGenericModule to resulting DataFrame. &#39;i&#39; will have a</span>
+<span class="sd">            mapping for each SmvGenericModule listed in requiresDS. E.g.</span>
+
+<span class="sd">            def requiresDS(self):</span>
+<span class="sd">                return [MyDependency]</span>
+
+<span class="sd">            def run(self, i):</span>
+<span class="sd">                return i[MyDependency].select(&quot;importantColumn&quot;)</span>
+
+<span class="sd">            Args:</span>
+<span class="sd">                i (RunParams): mapping from input SmvGenericModule to DataFrame</span>
+<span class="sd">                model (SmvModel): the model this module depends on</span>
+
+<span class="sd">            Returns:</span>
+<span class="sd">                (object): picklable output of this SmvModule</span>
+<span class="sd">        &quot;&quot;&quot;</span></div></div>
+
+
+<div class="viewcode-block" id="SmvModuleLink"><a class="viewcode-back" href="../../smv.html#smv.smvmodule.SmvModuleLink">[docs]</a><span class="k">def</span> <span class="nf">SmvModuleLink</span><span class="p">(</span><span class="n">target</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">target</span></div>
+
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s1">&#39;SmvOutput&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;SmvModule&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;SmvSqlModule&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;SmvModel&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;SmvModelExec&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;SmvModuleLink&#39;</span>
+<span class="p">]</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Spark Modularized View v2r11 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2017, TresAmigosSD.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.5.
+    </div>
+  </body>
+</html>

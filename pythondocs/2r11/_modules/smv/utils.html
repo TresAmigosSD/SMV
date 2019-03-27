@@ -1,0 +1,230 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>smv.utils &#8212; Spark Modularized View v2r11 documentation</title>
+    <link rel="stylesheet" href="../../_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Spark Modularized View v2r11 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for smv.utils</h1><div class="highlight"><pre>
+<span></span><span class="c1">#</span>
+<span class="c1"># This file is licensed under the Apache License, Version 2.0</span>
+<span class="c1"># (the &quot;License&quot;); you may not use this file except in compliance with</span>
+<span class="c1"># the License.  You may obtain a copy of the License at</span>
+<span class="c1">#</span>
+<span class="c1">#    http://www.apache.org/licenses/LICENSE-2.0</span>
+<span class="c1">#</span>
+<span class="c1"># Unless required by applicable law or agreed to in writing, software</span>
+<span class="c1"># distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
+<span class="c1"># See the License for the specific language governing permissions and</span>
+<span class="c1"># limitations under the License.</span>
+
+<span class="kn">from</span> <span class="nn">pyspark.sql.column</span> <span class="k">import</span> <span class="n">Column</span>
+<span class="kn">from</span> <span class="nn">pyspark.sql</span> <span class="k">import</span> <span class="n">DataFrame</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">itertools</span>
+<span class="kn">import</span> <span class="nn">pkgutil</span>
+<span class="kn">from</span> <span class="nn">smv.error</span> <span class="k">import</span> <span class="n">SmvRuntimeError</span>
+
+<div class="viewcode-block" id="lazy_property"><a class="viewcode-back" href="../../smv.html#smv.utils.lazy_property">[docs]</a><span class="k">def</span> <span class="nf">lazy_property</span><span class="p">(</span><span class="n">fn</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;Decorator that makes a property lazy-evaluated.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">attr_name</span> <span class="o">=</span> <span class="s1">&#39;_lazy_&#39;</span> <span class="o">+</span> <span class="n">fn</span><span class="o">.</span><span class="vm">__name__</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">_lazy_property</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attr_name</span><span class="p">):</span>
+            <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attr_name</span><span class="p">,</span> <span class="n">fn</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span>
+        <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attr_name</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">_lazy_property</span></div>
+
+<div class="viewcode-block" id="smv_copy_array"><a class="viewcode-back" href="../../smv.html#smv.utils.smv_copy_array">[docs]</a><span class="k">def</span> <span class="nf">smv_copy_array</span><span class="p">(</span><span class="n">sc</span><span class="p">,</span> <span class="o">*</span><span class="n">cols</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Copy Python list to appropriate Java array</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">cols</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">):</span>        <span class="c1"># may need to pass the correct java type somehow</span>
+        <span class="k">return</span> <span class="n">sc</span><span class="o">.</span><span class="n">_gateway</span><span class="o">.</span><span class="n">new_array</span><span class="p">(</span><span class="n">sc</span><span class="o">.</span><span class="n">_jvm</span><span class="o">.</span><span class="n">java</span><span class="o">.</span><span class="n">lang</span><span class="o">.</span><span class="n">String</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+
+    <span class="n">elem</span> <span class="o">=</span> <span class="n">cols</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">is_string</span><span class="p">(</span><span class="n">elem</span><span class="p">):</span>
+        <span class="n">jcols</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">_gateway</span><span class="o">.</span><span class="n">new_array</span><span class="p">(</span><span class="n">sc</span><span class="o">.</span><span class="n">_jvm</span><span class="o">.</span><span class="n">java</span><span class="o">.</span><span class="n">lang</span><span class="o">.</span><span class="n">String</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">cols</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">jcols</span><span class="p">)):</span>
+            <span class="n">jcols</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">cols</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">elem</span><span class="p">,</span> <span class="n">Column</span><span class="p">):</span>
+        <span class="n">jcols</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">_gateway</span><span class="o">.</span><span class="n">new_array</span><span class="p">(</span><span class="n">sc</span><span class="o">.</span><span class="n">_jvm</span><span class="o">.</span><span class="n">org</span><span class="o">.</span><span class="n">apache</span><span class="o">.</span><span class="n">spark</span><span class="o">.</span><span class="n">sql</span><span class="o">.</span><span class="n">Column</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">cols</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">jcols</span><span class="p">)):</span>
+            <span class="n">jcols</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">cols</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">_jc</span>
+    <span class="k">elif</span> <span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">elem</span><span class="p">,</span> <span class="n">DataFrame</span><span class="p">)):</span>
+        <span class="n">jcols</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">_gateway</span><span class="o">.</span><span class="n">new_array</span><span class="p">(</span><span class="n">sc</span><span class="o">.</span><span class="n">_jvm</span><span class="o">.</span><span class="n">org</span><span class="o">.</span><span class="n">apache</span><span class="o">.</span><span class="n">spark</span><span class="o">.</span><span class="n">sql</span><span class="o">.</span><span class="n">Dataset</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">cols</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">jcols</span><span class="p">)):</span>
+            <span class="n">jcols</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">cols</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">_jdf</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">elem</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span> <span class="c1"># a list of list</span>
+        <span class="c1"># use Java List as the outermost container; an Array[Array]</span>
+        <span class="c1"># will not always work, because the inner list may be of</span>
+        <span class="c1"># different lengths</span>
+        <span class="n">jcols</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">_jvm</span><span class="o">.</span><span class="n">java</span><span class="o">.</span><span class="n">util</span><span class="o">.</span><span class="n">ArrayList</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">cols</span><span class="p">)):</span>
+            <span class="n">jcols</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">smv_copy_array</span><span class="p">(</span><span class="n">sc</span><span class="p">,</span> <span class="o">*</span><span class="n">cols</span><span class="p">[</span><span class="n">i</span><span class="p">]))</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">elem</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
+        <span class="n">jcols</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">_jvm</span><span class="o">.</span><span class="n">java</span><span class="o">.</span><span class="n">util</span><span class="o">.</span><span class="n">ArrayList</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">cols</span><span class="p">)):</span>
+            <span class="c1"># Use Java List for tuple</span>
+            <span class="n">je</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">_jvm</span><span class="o">.</span><span class="n">java</span><span class="o">.</span><span class="n">util</span><span class="o">.</span><span class="n">ArrayList</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">cols</span><span class="p">[</span><span class="n">i</span><span class="p">]:</span> <span class="n">je</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+            <span class="n">jcols</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">je</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Cannot copy array of type&quot;</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="n">elem</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="n">jcols</span></div>
+
+<div class="viewcode-block" id="scala_seq_to_list"><a class="viewcode-back" href="../../smv.html#smv.utils.scala_seq_to_list">[docs]</a><span class="k">def</span> <span class="nf">scala_seq_to_list</span><span class="p">(</span><span class="n">_jvm</span><span class="p">,</span> <span class="n">j_seq</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Convert Scala Seq to Python list</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">j_list</span> <span class="o">=</span> <span class="n">_jvm</span><span class="o">.</span><span class="n">scala</span><span class="o">.</span><span class="n">collection</span><span class="o">.</span><span class="n">JavaConversions</span><span class="o">.</span><span class="n">seqAsJavaList</span><span class="p">(</span><span class="n">j_seq</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">j_list</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="check_socket"><a class="viewcode-back" href="../../smv.html#smv.utils.check_socket">[docs]</a><span class="k">def</span> <span class="nf">check_socket</span><span class="p">(</span><span class="n">port</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Check whether the given port is open to bind&quot;&quot;&quot;</span>
+    <span class="kn">import</span> <span class="nn">socket</span>
+    <span class="kn">from</span> <span class="nn">contextlib</span> <span class="k">import</span> <span class="n">closing</span>
+
+    <span class="k">with</span> <span class="n">closing</span><span class="p">(</span><span class="n">socket</span><span class="o">.</span><span class="n">socket</span><span class="p">(</span><span class="n">socket</span><span class="o">.</span><span class="n">AF_INET</span><span class="p">,</span> <span class="n">socket</span><span class="o">.</span><span class="n">SOCK_STREAM</span><span class="p">))</span> <span class="k">as</span> <span class="n">sock</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">sock</span><span class="o">.</span><span class="n">bind</span><span class="p">((</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">port</span><span class="p">))</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="c1">#Port is not open</span>
+            <span class="n">res</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1">#Port is open</span>
+            <span class="n">res</span> <span class="o">=</span> <span class="kc">True</span>
+
+    <span class="k">return</span> <span class="n">res</span></div>
+
+<div class="viewcode-block" id="is_string"><a class="viewcode-back" href="../../smv.html#smv.utils.is_string">[docs]</a><span class="k">def</span> <span class="nf">is_string</span><span class="p">(</span><span class="n">obj</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Check whether object is a string type with Python 2 and Python 3 compatibility</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># See http://www.rfk.id.au/blog/entry/preparing-pyenchant-for-python-3/</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">basestring</span><span class="p">)</span>
+    <span class="k">except</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="list_distinct"><a class="viewcode-back" href="../../smv.html#smv.utils.list_distinct">[docs]</a><span class="k">def</span> <span class="nf">list_distinct</span><span class="p">(</span><span class="n">l</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Return a the distinct version of the input list, perserve order</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">uniq_list</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">seen</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">l</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">x</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">seen</span><span class="p">:</span>
+            <span class="n">seen</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+            <span class="n">uniq_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">uniq_list</span></div>
+
+<div class="viewcode-block" id="infer_full_name_from_part"><a class="viewcode-back" href="../../smv.html#smv.utils.infer_full_name_from_part">[docs]</a><span class="k">def</span> <span class="nf">infer_full_name_from_part</span><span class="p">(</span><span class="n">full_names</span><span class="p">,</span> <span class="n">part_name</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;For a given partial name (postfix), infer full name from a list</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">candidates</span> <span class="o">=</span> <span class="p">[</span><span class="n">s</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">full_names</span> <span class="k">if</span> <span class="n">s</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="n">part_name</span><span class="p">)]</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">candidates</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="n">SmvRuntimeError</span><span class="p">(</span><span class="s2">&quot;Can&#39;t find name </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">part_name</span><span class="p">))</span>
+    <span class="k">elif</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">candidates</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">candidates</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">SmvRuntimeError</span><span class="p">(</span><span class="s2">&quot;Partial name </span><span class="si">{}</span><span class="s2"> is ambiguous&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">part_name</span><span class="p">))</span></div>
+
+<span class="c1"># If using Python 2, prefer cPickle because it is faster</span>
+<span class="c1"># If using Python 3, there is no cPickle (cPickle is now the implementation of pickle)</span>
+<span class="c1"># see https://docs.python.org/3.1/whatsnew/3.0.html#library-changes</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="n">pickle_lib</span> <span class="o">=</span> <span class="nb">__import__</span><span class="p">(</span><span class="s2">&quot;cPickle&quot;</span><span class="p">)</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="n">pickle_lib</span> <span class="o">=</span> <span class="nb">__import__</span><span class="p">(</span><span class="s2">&quot;pickle&quot;</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="smvhash"><a class="viewcode-back" href="../../smv.html#smv.utils.smvhash">[docs]</a><span class="k">def</span> <span class="nf">smvhash</span><span class="p">(</span><span class="n">text</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Python&#39;s hash function will return different numbers from run to</span>
+<span class="sd">    from, starting from 3.  Provide a deterministic hash function for</span>
+<span class="sd">    use to calculate sourceCodeHash.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">import</span> <span class="nn">binascii</span>
+
+    <span class="c1"># Python 2* has &quot;str&quot; type the same as bytes, while Python 3 has</span>
+    <span class="c1"># to covert &quot;str&quot; to bytes through &quot;str&quot;.encode(&quot;utf-8&quot;)</span>
+    <span class="k">if</span> <span class="n">sys</span><span class="o">.</span><span class="n">version_info</span> <span class="o">&gt;=</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">0</span><span class="p">):</span>
+        <span class="n">byte_str</span> <span class="o">=</span> <span class="n">text</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">byte_str</span> <span class="o">=</span> <span class="n">text</span>
+
+    <span class="k">return</span> <span class="n">binascii</span><span class="o">.</span><span class="n">crc32</span><span class="p">(</span><span class="n">byte_str</span><span class="p">)</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Spark Modularized View v2r11 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2017, TresAmigosSD.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.5.
+    </div>
+  </body>
+</html>
