@@ -11,7 +11,7 @@ Spark Modularized View enables users to build enterprise scale applications on A
 
 * [Quick Start](#smv-quickstart)
 * [User Guide](docs/user/0_user_toc.md)
-* [Python API docs](http://tresamigossd.github.io/SMV/pythondocs/2r10/index.html)
+* [Python API docs](http://tresamigossd.github.io/SMV/pythondocs/2r11/index.html)
 
 # SMV Quickstart
 
