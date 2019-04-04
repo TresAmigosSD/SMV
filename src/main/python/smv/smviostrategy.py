@@ -205,6 +205,9 @@ class SmvParquetPersistenceStrategy(SmvFileOnHdfsPersistenceStrategy):
         return self.smvApp.sparkSession.read.parquet(self._file_path)
 
     def _write(self, rawdata):
+        # default to overwrite to be consistent with csv persist
+        self.smvApp._jvm.SmvHDFS.deleteFile(self._file_path)
+
         rawdata.write.parquet(self._file_path)
         self.smvApp._jvm.SmvHDFS.createFileAtomic(self._semaphore_path)
 
