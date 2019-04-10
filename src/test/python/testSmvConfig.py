@@ -28,6 +28,12 @@ class SmvConfigTest(SmvBaseTest):
         self.assertEqual(props.get('smv.test1'), 'in_user_conf')
         self.assertEqual(props.get('smv.test2'), 'in_cmd_line')
 
+
+    def test_runtime_config_file_props(self):
+        props = self.smvApp.py_smvconf.merged_props()
+        self.assertEqual(props.get('smv.config.a'), '4')
+        self.assertEqual(props.get('smv.config.b'), 'today')
+
     def test_can_get_conn_conf(self):
         props = self.smvApp.py_smvconf.merged_props()
         self.assertEqual(props.get('smv.conn.myhdfs.type'), 'hdfs')

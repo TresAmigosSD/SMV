@@ -121,7 +121,7 @@ class SmvApp(object):
 
         self.smvSchemaObj = self._jvm.SmvPythonHelper.getSmvSchema()
 
-        self.py_smvconf = SmvConfig(arglist, self._jvm)
+        self.py_smvconf = SmvConfig(arglist)
 
         # configure spark sql params
         if (self.sparkSession is not None):
