@@ -265,6 +265,12 @@ class SmvConfig(object):
         full_user_conf_path = os.path.join(self.app_dir, self.user_conf_path)
 
         app_conf_props = SmvConfig.load(full_app_conf_path)
+        # runtime_config_file is the relative path which defined in app_conf_props
+        runtime_config_file = app_conf_props.get('smv.runtimeConfigFile')
+        runtime_conf_props_from_file = {}
+        if (runtime_config_file is not None):
+            full_runtime_config_file_path = os.path.join(self.app_dir, runtime_config_file)
+            runtime_conf_props_from_file = SmvConfig.load(full_runtime_config_file_path)
         conn_conf_props = SmvConfig.load(full_conn_conf_path)
         home_conf_props = SmvConfig.load(self.home_conf_path)
         user_conf_props = SmvConfig.load(full_user_conf_path)
@@ -288,12 +294,7 @@ class SmvConfig(object):
         res = {}
         res.update(default_props)
         res.update(app_conf_props)
-        # inject the props defined in the runtime config file if exists
-        runtime_config_file = res.get('smv.runtimeConfigFile')
-        if (runtime_config_file is not None):
-            full_runtime_config_file_path = os.path.join(self.app_dir, runtime_config_file)
-            runtime_conf_props_from_file = SmvConfig.load(full_runtime_config_file_path)
-            res.update(runtime_conf_props_from_file)
+        res.update(runtime_conf_props_from_file)
         res.update(conn_conf_props)
         res.update(home_conf_props)
         res.update(user_conf_props)
