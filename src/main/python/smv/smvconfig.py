@@ -29,8 +29,7 @@ class SmvConfig(object):
             - read in property files
             - dynamic configuration handling
     """
-    def __init__(self, arglist, _jvm):
-        self._jvm = _jvm
+    def __init__(self, arglist):
         self.cmdline = self._create_cmdline_conf(arglist)
 
         DEFAULT_SMV_APP_CONF_FILE  = "conf/smv-app-conf.props"
@@ -72,6 +71,17 @@ class SmvConfig(object):
             for k, v in self.merged_props().items()
             if k.startswith("spark.sql")
         }
+
+    def read_props_from_kernel_config_file(self):
+        """Read props from the kernel config file
+            The specfic props `smv.kernelConfigFile` defines the relative path of kernel config file
+            against the current app dir
+        """
+        kernel_config_file = self.merged_props().get('smv.kernelConfigFile')
+        if (kernel_config_file is not None):
+            full_kernel_config_file_path = os.path.join(self.app_dir, kernel_config_file)
+            return SmvConfig.load(full_kernel_config_file_path)
+        return {}
 
     def set_dynamic_props(self, new_d_props):
         """Reset dynamic props
@@ -236,6 +246,13 @@ class SmvConfig(object):
         res = vars(parser.parse_args(arglist))
         return res
 
+    @staticmethod
+    def load(path):
+        if os.path.exists(path):
+            with open(path) as fp:
+                return jprops.load_properties(fp)
+        else:
+            return {}
 
     def _read_props(self):
         """Read property files
@@ -247,17 +264,16 @@ class SmvConfig(object):
         full_conn_conf_path = os.path.join(self.app_dir, self.conn_conf_path)
         full_user_conf_path = os.path.join(self.app_dir, self.user_conf_path)
 
-        def load(path):
-            if os.path.exists(path):
-                with open(path) as fp:
-                    return jprops.load_properties(fp)
-            else:
-                return {}
-
-        app_conf_props = load(full_app_conf_path)
-        conn_conf_props = load(full_conn_conf_path)
-        home_conf_props = load(self.home_conf_path)
-        user_conf_props = load(full_user_conf_path)
+        app_conf_props = SmvConfig.load(full_app_conf_path)
+        # runtime_config_file is the relative path which defined in app_conf_props
+        runtime_config_file = app_conf_props.get('smv.runtimeConfigFile')
+        runtime_conf_props_from_file = {}
+        if (runtime_config_file is not None):
+            full_runtime_config_file_path = os.path.join(self.app_dir, runtime_config_file)
+            runtime_conf_props_from_file = SmvConfig.load(full_runtime_config_file_path)
+        conn_conf_props = SmvConfig.load(full_conn_conf_path)
+        home_conf_props = SmvConfig.load(self.home_conf_path)
+        user_conf_props = SmvConfig.load(full_user_conf_path)
 
         default_props = {
             "smv.appName"            : "Smv Application",
@@ -270,6 +286,7 @@ class SmvConfig(object):
         # Priority: Low to High
         #   - default
         #   - conf/smv-app-conf.props
+        #   - props defined in the runtime config file
         #   - conf/connections.props
         #   - ${HOME}/.smv/smv-user-conf.props
         #   - conf/smv-user-conf.props
@@ -277,6 +294,7 @@ class SmvConfig(object):
         res = {}
         res.update(default_props)
         res.update(app_conf_props)
+        res.update(runtime_conf_props_from_file)
         res.update(conn_conf_props)
         res.update(home_conf_props)
         res.update(user_conf_props)

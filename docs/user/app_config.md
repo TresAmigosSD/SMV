@@ -176,6 +176,20 @@ Can be overridden using <code>--publish-dir</code> command line option</td>
 <td>JDBC driver to use for publishing and reading tables</td>
 </tr>
 
+<tr>
+<td>smv.runtimeConfigFile</td>
+<td>None</td>
+<td>Optional</td>
+<td>Relative path to the file which defines runtime props </td>
+</tr>
+
+<tr>
+<td>smv.kernelConfigFile</td>
+<td>None</td>
+<td>Optional</td>
+<td>Relative path to the file which defines spark conf props to create Spark session</td>
+</tr>
+
 </table>
 
 Please refer [Runtime User Configuration](run_config.md) for details and examples
