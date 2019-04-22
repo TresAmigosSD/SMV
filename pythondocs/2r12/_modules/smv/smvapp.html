@@ -1,0 +1,787 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>smv.smvapp &#8212; Spark Modularized View v2r12 documentation</title>
+    <link rel="stylesheet" href="../../_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Spark Modularized View v2r12 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for smv.smvapp</h1><div class="highlight"><pre>
+<span></span><span class="c1">#</span>
+<span class="c1"># This file is licensed under the Apache License, Version 2.0</span>
+<span class="c1"># (the &quot;License&quot;); you may not use this file except in compliance with</span>
+<span class="c1"># the License.  You may obtain a copy of the License at</span>
+<span class="c1">#</span>
+<span class="c1">#    http://www.apache.org/licenses/LICENSE-2.0</span>
+<span class="c1">#</span>
+<span class="c1"># Unless required by applicable law or agreed to in writing, software</span>
+<span class="c1"># distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
+<span class="c1"># See the License for the specific language governing permissions and</span>
+<span class="c1"># limitations under the License.</span>
+
+<span class="sd">&quot;&quot;&quot;SmvApp entry class</span>
+<span class="sd">This module provides the main SMV Python entry point ``SmvPy`` class and a singleton `smvApp`.</span>
+<span class="sd">It is equivalent to ``SmvApp`` on Scala side</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span> <span class="nn">datetime</span> <span class="k">import</span> <span class="n">datetime</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">pkgutil</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="k">import</span> <span class="n">namedtuple</span>
+
+<span class="kn">from</span> <span class="nn">py4j.java_gateway</span> <span class="k">import</span> <span class="n">java_import</span><span class="p">,</span> <span class="n">JavaObject</span>
+<span class="kn">from</span> <span class="nn">pyspark.java_gateway</span> <span class="k">import</span> <span class="n">launch_gateway</span>
+<span class="kn">from</span> <span class="nn">pyspark</span> <span class="k">import</span> <span class="n">SparkContext</span>
+<span class="kn">from</span> <span class="nn">pyspark.sql</span> <span class="k">import</span> <span class="n">SparkSession</span><span class="p">,</span> <span class="n">DataFrame</span>
+
+
+<span class="kn">from</span> <span class="nn">smv.datasetmgr</span> <span class="k">import</span> <span class="n">DataSetMgr</span>
+<span class="kn">from</span> <span class="nn">smv.smvappinfo</span> <span class="k">import</span> <span class="n">SmvAppInfo</span>
+<span class="kn">from</span> <span class="nn">smv.datasetrepo</span> <span class="k">import</span> <span class="n">DataSetRepoFactory</span><span class="p">,</span> <span class="n">DataSetRepo</span>
+<span class="kn">from</span> <span class="nn">smv.utils</span> <span class="k">import</span> <span class="n">smv_copy_array</span><span class="p">,</span> <span class="n">check_socket</span><span class="p">,</span> <span class="n">scala_seq_to_list</span>
+<span class="kn">from</span> <span class="nn">smv.error</span> <span class="k">import</span> <span class="n">SmvRuntimeError</span><span class="p">,</span> <span class="n">SmvDqmValidationError</span>
+<span class="kn">import</span> <span class="nn">smv.helpers</span>
+<span class="kn">from</span> <span class="nn">smv.runinfo</span> <span class="k">import</span> <span class="n">SmvRunInfoCollector</span>
+<span class="kn">from</span> <span class="nn">smv.modulesvisitor</span> <span class="k">import</span> <span class="n">ModulesVisitor</span>
+<span class="kn">from</span> <span class="nn">smv.smvmodulerunner</span> <span class="k">import</span> <span class="n">SmvModuleRunner</span>
+<span class="kn">from</span> <span class="nn">smv.smvconfig</span> <span class="k">import</span> <span class="n">SmvConfig</span>
+<span class="kn">from</span> <span class="nn">smv.smviostrategy</span> <span class="k">import</span> <span class="n">SmvJsonOnHdfsPersistenceStrategy</span>
+<span class="kn">from</span> <span class="nn">smv.conn</span> <span class="k">import</span> <span class="n">SmvHdfsConnectionInfo</span>
+<span class="kn">from</span> <span class="nn">smv.smvmetadata</span> <span class="k">import</span> <span class="n">SmvMetaHistory</span>
+<span class="kn">from</span> <span class="nn">smv.smvhdfs</span> <span class="k">import</span> <span class="n">SmvHDFS</span>
+<span class="kn">from</span> <span class="nn">py4j.protocol</span> <span class="k">import</span> <span class="n">Py4JJavaError</span>
+
+
+
+<div class="viewcode-block" id="SmvApp"><a class="viewcode-back" href="../../smv.html#smv.smvapp.SmvApp">[docs]</a><span class="k">class</span> <span class="nc">SmvApp</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;The Python representation of SMV.</span>
+
+<span class="sd">    Its singleton instance is created later in the containing module</span>
+<span class="sd">    and is named smvApp</span>
+
+<span class="sd">    Adds `java_imports` to the namespace in the JVM gateway in</span>
+<span class="sd">    SparkContext (in pyspark).  It also creates an instance of</span>
+<span class="sd">    SmvPyClient.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># Singleton instance of SmvApp</span>
+    <span class="n">_instance</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="c1"># default rel path for python sources from appDir</span>
+    <span class="n">SRC_PROJECT_PATH</span> <span class="o">=</span> <span class="s2">&quot;src/main/python&quot;</span>
+    <span class="c1"># default location for py UDL&#39;s in smv projects</span>
+    <span class="n">SRC_LIB_PATH</span> <span class="o">=</span> <span class="s2">&quot;library&quot;</span>
+    <span class="c1"># prefix which under SRC_LIB_PATH but should be excluded from userlib</span>
+    <span class="n">SEMI_PRIVATE_LIB_PREFIX</span> <span class="o">=</span> <span class="s2">&quot;dsalib&quot;</span>
+
+<div class="viewcode-block" id="SmvApp.getInstance"><a class="viewcode-back" href="../../smv.html#smv.smvapp.SmvApp.getInstance">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">getInstance</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_instance</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">SmvRuntimeError</span><span class="p">(</span><span class="s2">&quot;An instance of SmvApp has not been created&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_instance</span></div>
+
+<div class="viewcode-block" id="SmvApp.createInstance"><a class="viewcode-back" href="../../smv.html#smv.smvapp.SmvApp.createInstance">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">createInstance</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">arglist</span><span class="p">,</span> <span class="n">_sparkSession</span><span class="p">,</span> <span class="n">py_module_hotload</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Create singleton instance. Also returns the instance.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">cls</span><span class="o">.</span><span class="n">_instance</span> <span class="o">=</span> <span class="bp">cls</span><span class="p">(</span><span class="n">arglist</span><span class="p">,</span> <span class="n">_sparkSession</span><span class="p">,</span> <span class="n">py_module_hotload</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_instance</span></div>
+
+<div class="viewcode-block" id="SmvApp.setInstance"><a class="viewcode-back" href="../../smv.html#smv.smvapp.SmvApp.setInstance">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">setInstance</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">app</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Set the singleton instance.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">cls</span><span class="o">.</span><span class="n">_instance</span> <span class="o">=</span> <span class="n">app</span></div>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">arglist</span><span class="p">,</span> <span class="n">_sparkSession</span><span class="p">,</span> <span class="n">py_module_hotload</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">smvHome</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;SMV_HOME&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">smvHome</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">SmvRuntimeError</span><span class="p">(</span><span class="s2">&quot;SMV_HOME env variable not set!&quot;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">sparkSession</span> <span class="o">=</span> <span class="n">_sparkSession</span>
+
+        <span class="k">if</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sparkSession</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">):</span>
+            <span class="n">sc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sparkSession</span><span class="o">.</span><span class="n">sparkContext</span>
+            <span class="n">sc</span><span class="o">.</span><span class="n">setLogLevel</span><span class="p">(</span><span class="s2">&quot;ERROR&quot;</span><span class="p">)</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">sc</span> <span class="o">=</span> <span class="n">sc</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">sqlContext</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sparkSession</span><span class="o">.</span><span class="n">_wrapped</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_jvm</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">_jvm</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">j_smvPyClient</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_jvm</span><span class="o">.</span><span class="n">org</span><span class="o">.</span><span class="n">tresamigos</span><span class="o">.</span><span class="n">smv</span><span class="o">.</span><span class="n">python</span><span class="o">.</span><span class="n">SmvPyClientFactory</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sparkSession</span><span class="o">.</span><span class="n">_jsparkSession</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">j_smvApp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">j_smvPyClient</span><span class="o">.</span><span class="n">j_smvApp</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">_gw</span> <span class="o">=</span> <span class="n">launch_gateway</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_jvm</span> <span class="o">=</span> <span class="n">_gw</span><span class="o">.</span><span class="n">jvm</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">py_module_hotload</span> <span class="o">=</span> <span class="n">py_module_hotload</span>
+
+        <span class="n">java_import</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_jvm</span><span class="p">,</span> <span class="s2">&quot;org.tresamigos.smv.ColumnHelper&quot;</span><span class="p">)</span>
+        <span class="n">java_import</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_jvm</span><span class="p">,</span> <span class="s2">&quot;org.tresamigos.smv.SmvDFHelper&quot;</span><span class="p">)</span>
+        <span class="n">java_import</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_jvm</span><span class="p">,</span> <span class="s2">&quot;org.tresamigos.smv.dqm.*&quot;</span><span class="p">)</span>
+        <span class="n">java_import</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_jvm</span><span class="p">,</span> <span class="s2">&quot;org.tresamigos.smv.panel.*&quot;</span><span class="p">)</span>
+        <span class="n">java_import</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_jvm</span><span class="p">,</span> <span class="s2">&quot;org.tresamigos.smv.python.SmvPythonHelper&quot;</span><span class="p">)</span>
+        <span class="n">java_import</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_jvm</span><span class="p">,</span> <span class="s2">&quot;org.tresamigos.smv.SmvHDFS&quot;</span><span class="p">)</span>
+        <span class="n">java_import</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_jvm</span><span class="p">,</span> <span class="s2">&quot;org.tresamigos.smv.DfCreator&quot;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">smvSchemaObj</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_jvm</span><span class="o">.</span><span class="n">SmvPythonHelper</span><span class="o">.</span><span class="n">getSmvSchema</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">py_smvconf</span> <span class="o">=</span> <span class="n">SmvConfig</span><span class="p">(</span><span class="n">arglist</span><span class="p">)</span>
+
+        <span class="c1"># configure spark sql params</span>
+        <span class="k">if</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sparkSession</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">py_smvconf</span><span class="o">.</span><span class="n">spark_sql_props</span><span class="p">()</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">sqlContext</span><span class="o">.</span><span class="n">setConf</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span>
+
+        <span class="c1"># issue #429 set application name from smv config</span>
+        <span class="k">if</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sparkSession</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">):</span>
+            <span class="n">sc</span><span class="o">.</span><span class="n">_conf</span><span class="o">.</span><span class="n">setAppName</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">appName</span><span class="p">())</span>
+
+        <span class="c1"># CmdLine is static, so can be an attribute</span>
+        <span class="n">cl</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">py_smvconf</span><span class="o">.</span><span class="n">cmdline</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cmd_line</span> <span class="o">=</span> <span class="n">namedtuple</span><span class="p">(</span><span class="s2">&quot;CmdLine&quot;</span><span class="p">,</span> <span class="n">cl</span><span class="o">.</span><span class="n">keys</span><span class="p">())(</span><span class="o">*</span><span class="n">cl</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+
+        <span class="c1"># shortcut is meant for internal use only</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dsm</span> <span class="o">=</span> <span class="n">DataSetMgr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_jvm</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">py_smvconf</span><span class="p">)</span>
+
+        <span class="c1"># computed df cache, keyed by m.versioned_fqn</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data_cache</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="c1"># AFTER app is available but BEFORE stages,</span>
+        <span class="c1"># use the dynamically configured app dir to set the source path, library path</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">prependDefaultDirs</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">repoFactory</span> <span class="o">=</span> <span class="n">DataSetRepoFactory</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dsm</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">repoFactory</span><span class="p">)</span>
+
+        <span class="c1"># provider cache, keyed by providers&#39; fqn</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">provider_cache</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">refresh_provider_cache</span><span class="p">()</span>
+
+        <span class="c1"># Initialize DataFrame and Column with helper methods</span>
+        <span class="n">smv</span><span class="o">.</span><span class="n">helpers</span><span class="o">.</span><span class="n">init_helpers</span><span class="p">()</span>
+
+<div class="viewcode-block" id="SmvApp.smvVersion"><a class="viewcode-back" href="../../smv.html#smv.smvapp.SmvApp.smvVersion">[docs]</a>    <span class="k">def</span> <span class="nf">smvVersion</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">versionFile</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">smvHome</span> <span class="o">+</span> <span class="s2">&quot;/.smv_version&quot;</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">versionFile</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fp</span><span class="p">:</span>
+            <span class="n">line</span> <span class="o">=</span> <span class="n">fp</span><span class="o">.</span><span class="n">readline</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="SmvApp.exception_handling"><a class="viewcode-back" href="../../smv.html#smv.smvapp.SmvApp.exception_handling">[docs]</a>    <span class="k">def</span> <span class="nf">exception_handling</span><span class="p">(</span><span class="n">func</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Decorator function to catch Py4JJavaError and raise SmvDqmValidationError if any.</span>
+<span class="sd">            Otherwise just pass through the original exception</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">def</span> <span class="nf">func_wrapper</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">func</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+            <span class="k">except</span> <span class="n">Py4JJavaError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">java_exception</span> <span class="ow">and</span> <span class="n">e</span><span class="o">.</span><span class="n">java_exception</span><span class="o">.</span><span class="n">getClass</span><span class="p">()</span><span class="o">.</span><span class="n">getName</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;org.tresamigos.smv.dqm.SmvDqmValidationError&quot;</span><span class="p">):</span>
+                    <span class="n">dqmValidationResult</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">java_exception</span><span class="o">.</span><span class="n">getMessage</span><span class="p">())</span>
+                    <span class="k">raise</span> <span class="n">SmvDqmValidationError</span><span class="p">(</span><span class="n">dqmValidationResult</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="n">e</span>
+        <span class="k">return</span> <span class="n">func_wrapper</span></div>
+
+<div class="viewcode-block" id="SmvApp.prependDefaultDirs"><a class="viewcode-back" href="../../smv.html#smv.smvapp.SmvApp.prependDefaultDirs">[docs]</a>    <span class="k">def</span> <span class="nf">prependDefaultDirs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Ensure that mods in src/main/python and library/ are discoverable.</span>
+<span class="sd">            If we add more default dirs, we&#39;ll make this a set</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">prepend_source</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">SRC_LIB_PATH</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">prepend_source</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">SRC_PROJECT_PATH</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SmvApp.removeDefaultDirs"><a class="viewcode-back" href="../../smv.html#smv.smvapp.SmvApp.removeDefaultDirs">[docs]</a>    <span class="k">def</span> <span class="nf">removeDefaultDirs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; The cleanup version of prependDefaultDirs</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">remove_source</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">SRC_PROJECT_PATH</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">remove_source</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">SRC_LIB_PATH</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SmvApp.all_data_dirs"><a class="viewcode-back" href="../../smv.html#smv.smvapp.SmvApp.all_data_dirs">[docs]</a>    <span class="k">def</span> <span class="nf">all_data_dirs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; All the config data dirs as an object.</span>
+<span class="sd">            Could be dynamic, so calculate each time when use</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">dds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">py_smvconf</span><span class="o">.</span><span class="n">all_data_dirs</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">namedtuple</span><span class="p">(</span><span class="s2">&quot;DataDirs&quot;</span><span class="p">,</span> <span class="n">dds</span><span class="o">.</span><span class="n">keys</span><span class="p">())(</span><span class="o">*</span><span class="n">dds</span><span class="o">.</span><span class="n">values</span><span class="p">())</span></div>
+
+<div class="viewcode-block" id="SmvApp.appName"><a class="viewcode-back" href="../../smv.html#smv.smvapp.SmvApp.appName">[docs]</a>    <span class="k">def</span> <span class="nf">appName</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">py_smvconf</span><span class="o">.</span><span class="n">app_name</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="SmvApp.appDir"><a class="viewcode-back" href="../../smv.html#smv.smvapp.SmvApp.appDir">[docs]</a>    <span class="k">def</span> <span class="nf">appDir</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">py_smvconf</span><span class="o">.</span><span class="n">app_dir</span></div>
+
+<div class="viewcode-block" id="SmvApp.jdbcUrl"><a class="viewcode-back" href="../../smv.html#smv.smvapp.SmvApp.jdbcUrl">[docs]</a>    <span class="k">def</span> <span class="nf">jdbcUrl</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">py_smvconf</span><span class="o">.</span><span class="n">merged_props</span><span class="p">()</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;smv.jdbc.url&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">res</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">SmvRuntimeError</span><span class="p">(</span><span class="s2">&quot;JDBC url not specified in SMV config&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">res</span></div>
+
+<div class="viewcode-block" id="SmvApp.jdbcDriver"><a class="viewcode-back" href="../../smv.html#smv.smvapp.SmvApp.jdbcDriver">[docs]</a>    <span class="k">def</span> <span class="nf">jdbcDriver</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">py_smvconf</span><span class="o">.</span><span class="n">merged_props</span><span class="p">()</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;smv.jdbc.driver&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">res</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">SmvRuntimeError</span><span class="p">(</span><span class="s2">&quot;JDBC driver is not specified in SMV config&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">res</span></div>
+
+<div class="viewcode-block" id="SmvApp.getConf"><a class="viewcode-back" href="../../smv.html#smv.smvapp.SmvApp.getConf">[docs]</a>    <span class="k">def</span> <span class="nf">getConf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">py_smvconf</span><span class="o">.</span><span class="n">get_run_config</span><span class="p">(</span><span class="n">key</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SmvApp.setAppDir"><a class="viewcode-back" href="../../smv.html#smv.smvapp.SmvApp.setAppDir">[docs]</a>    <span class="k">def</span> <span class="nf">setAppDir</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">appDir</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; SMV&#39;s equivalent of &#39;cd&#39; for app dirs. &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">removeDefaultDirs</span><span class="p">()</span>
+
+        <span class="c1"># this call sets the scala side&#39;s picture of app dir and forces</span>
+        <span class="c1"># the app properties to be read from disk and reevaluated</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">py_smvconf</span><span class="o">.</span><span class="n">set_app_dir</span><span class="p">(</span><span class="n">appDir</span><span class="p">)</span>
+
+        <span class="n">smv</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Set app dir to &quot;</span> <span class="o">+</span> <span class="n">appDir</span><span class="p">)</span>
+        <span class="n">smv</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Current SMV configuration: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">py_smvconf</span><span class="o">.</span><span class="n">merged_props</span><span class="p">()))</span>
+
+        <span class="c1"># this call will use the dynamic appDir that we just set ^</span>
+        <span class="c1"># to change sys.path, allowing py modules, UDL&#39;s to be discovered by python</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">prependDefaultDirs</span><span class="p">()</span>
+
+        <span class="c1"># As switch app dir, need to re-discover providers</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">refresh_provider_cache</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="SmvApp.setDynamicRunConfig"><a class="viewcode-back" href="../../smv.html#smv.smvapp.SmvApp.setDynamicRunConfig">[docs]</a>    <span class="k">def</span> <span class="nf">setDynamicRunConfig</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">runConfig</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">py_smvconf</span><span class="o">.</span><span class="n">set_dynamic_props</span><span class="p">(</span><span class="n">runConfig</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SmvApp.getCurrentProperties"><a class="viewcode-back" href="../../smv.html#smv.smvapp.SmvApp.getCurrentProperties">[docs]</a>    <span class="k">def</span> <span class="nf">getCurrentProperties</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Python dict of current megred props</span>
+<span class="sd">            defaultProps ++ appConfProps ++ homeConfProps ++ usrConfProps ++ cmdLineProps ++ dynamicRunConfig</span>
+<span class="sd">            Where right wins out in map merge.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">py_smvconf</span><span class="o">.</span><span class="n">merged_props</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="SmvApp.stages"><a class="viewcode-back" href="../../smv.html#smv.smvapp.SmvApp.stages">[docs]</a>    <span class="k">def</span> <span class="nf">stages</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Stages is a function as they can be set dynamically on an SmvApp instance&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">py_smvconf</span><span class="o">.</span><span class="n">stage_names</span><span class="p">()</span></div>
+
+    <span class="k">def</span> <span class="nf">_libsInDir</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lib_dir</span><span class="p">,</span> <span class="n">prefix</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Use introspection to determine list of availabe libs in a given directory.&quot;&quot;&quot;</span>
+        <span class="n">lib_walker</span> <span class="o">=</span> <span class="n">pkgutil</span><span class="o">.</span><span class="n">walk_packages</span><span class="p">([</span><span class="n">lib_dir</span><span class="p">],</span> <span class="n">prefix</span><span class="p">)</span>
+        <span class="n">lib_names</span> <span class="o">=</span> <span class="p">[</span><span class="n">name</span> <span class="k">for</span> <span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">is_pkg</span><span class="p">)</span> <span class="ow">in</span> <span class="n">lib_walker</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">is_pkg</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">lib_names</span>
+
+<div class="viewcode-block" id="SmvApp.userLibs"><a class="viewcode-back" href="../../smv.html#smv.smvapp.SmvApp.userLibs">[docs]</a>    <span class="k">def</span> <span class="nf">userLibs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Use introspection to determine list of availabe user libs.&quot;&quot;&quot;</span>
+        <span class="n">lib_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">appDir</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">SRC_LIB_PATH</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_libsInDir</span><span class="p">(</span><span class="n">lib_dir</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">i</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">SEMI_PRIVATE_LIB_PREFIX</span><span class="p">)]</span></div>
+
+<div class="viewcode-block" id="SmvApp.semiLibs"><a class="viewcode-back" href="../../smv.html#smv.smvapp.SmvApp.semiLibs">[docs]</a>    <span class="k">def</span> <span class="nf">semiLibs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Use introspection to determine list of availabe semiprivate libs.&quot;&quot;&quot;</span>
+        <span class="n">lib_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">appDir</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">SRC_LIB_PATH</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">SEMI_PRIVATE_LIB_PREFIX</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_libsInDir</span><span class="p">(</span><span class="n">lib_dir</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">SEMI_PRIVATE_LIB_PREFIX</span> <span class="o">+</span> <span class="s2">&quot;.&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SmvApp.smvLibs"><a class="viewcode-back" href="../../smv.html#smv.smvapp.SmvApp.smvLibs">[docs]</a>    <span class="k">def</span> <span class="nf">smvLibs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Use introspection to determine list of availabe smv builtin libs.&quot;&quot;&quot;</span>
+        <span class="c1"># Note: since sys.path has the src/main/python, we need to prefix all discovered</span>
+        <span class="c1"># objects by `smv.` so that they are importable.</span>
+        <span class="n">lib_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">smvHome</span><span class="p">,</span> <span class="s2">&quot;src/main/python/smv&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_libsInDir</span><span class="p">(</span><span class="n">lib_dir</span><span class="p">,</span> <span class="s2">&quot;smv.&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SmvApp.refresh_provider_cache"><a class="viewcode-back" href="../../smv.html#smv.smvapp.SmvApp.refresh_provider_cache">[docs]</a>    <span class="k">def</span> <span class="nf">refresh_provider_cache</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Re-discover providers and set provider_cache&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">provider_cache</span> <span class="o">=</span> <span class="n">DataSetRepo</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">_all_providers</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="SmvApp.get_providers_by_prefix"><a class="viewcode-back" href="../../smv.html#smv.smvapp.SmvApp.get_providers_by_prefix">[docs]</a>    <span class="k">def</span> <span class="nf">get_providers_by_prefix</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fqn_prefix</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Discover all providers in user lib and smv lib that have an provider type fqn</span>
+<span class="sd">           starting with the given prefix.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">providers</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">provider_cache</span>
+        <span class="k">return</span> <span class="p">{</span><span class="n">fqn</span><span class="p">:</span><span class="n">p</span> <span class="k">for</span> <span class="p">(</span><span class="n">fqn</span><span class="p">,</span> <span class="n">p</span><span class="p">)</span> <span class="ow">in</span> <span class="n">providers</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">fqn</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">fqn_prefix</span><span class="p">)}</span></div>
+
+<div class="viewcode-block" id="SmvApp.get_provider_by_fqn"><a class="viewcode-back" href="../../smv.html#smv.smvapp.SmvApp.get_provider_by_fqn">[docs]</a>    <span class="k">def</span> <span class="nf">get_provider_by_fqn</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fqn</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return provider class from provider name fqn</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">providers</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">provider_cache</span>
+        <span class="k">return</span> <span class="n">providers</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">fqn</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SmvApp.get_connection_by_name"><a class="viewcode-back" href="../../smv.html#smv.smvapp.SmvApp.get_connection_by_name">[docs]</a>    <span class="k">def</span> <span class="nf">get_connection_by_name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Get connection instance from name</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">props</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">py_smvconf</span><span class="o">.</span><span class="n">merged_props</span><span class="p">()</span>
+        <span class="n">type_name</span> <span class="o">=</span> <span class="s2">&quot;smv.conn.</span><span class="si">{}</span><span class="s2">.type&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="p">(</span><span class="n">type_name</span> <span class="ow">in</span> <span class="n">props</span><span class="p">):</span>
+            <span class="n">con_type</span> <span class="o">=</span> <span class="n">props</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">type_name</span><span class="p">)</span>
+            <span class="n">provider_fqn</span> <span class="o">=</span> <span class="s2">&quot;conn.</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">con_type</span><span class="p">)</span>
+            <span class="n">ConnClass</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_provider_by_fqn</span><span class="p">(</span><span class="n">provider_fqn</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">ConnClass</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">props</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">SmvRuntimeError</span><span class="p">(</span><span class="s2">&quot;Connection name </span><span class="si">{}</span><span class="s2"> is not configured with a type&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">name</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="SmvApp.get_all_connection_names"><a class="viewcode-back" href="../../smv.html#smv.smvapp.SmvApp.get_all_connection_names">[docs]</a>    <span class="k">def</span> <span class="nf">get_all_connection_names</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Get all connetions defined in the app, return a list of names</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">props</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">py_smvconf</span><span class="o">.</span><span class="n">merged_props</span><span class="p">()</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">props</span><span class="p">:</span>
+            <span class="n">s</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="s1">&#39;smv\.conn\.(.*)\.type&#39;</span><span class="p">,</span> <span class="n">k</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">s</span><span class="p">:</span>
+                <span class="n">name</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>  <span class="c1"># matched in &#39;(.*)&#39;</span>
+                <span class="n">res</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">res</span></div>
+
+<div class="viewcode-block" id="SmvApp.appId"><a class="viewcode-back" href="../../smv.html#smv.smvapp.SmvApp.appId">[docs]</a>    <span class="k">def</span> <span class="nf">appId</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">py_smvconf</span><span class="o">.</span><span class="n">app_id</span><span class="p">()</span></div>
+
+    <span class="c1"># TODO: deprecate method below.  Users should use SmvSchema.discover() instead.</span>
+<div class="viewcode-block" id="SmvApp.discoverSchemaAsSmvSchema"><a class="viewcode-back" href="../../smv.html#smv.smvapp.SmvApp.discoverSchemaAsSmvSchema">[docs]</a>    <span class="k">def</span> <span class="nf">discoverSchemaAsSmvSchema</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">csvAttributes</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">100000</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Discovers the schema of a .csv file and returns a Scala SmvSchema instance</span>
+
+<span class="sd">        path --- path to csvfile</span>
+<span class="sd">        n --- number of records used to discover schema (optional)</span>
+<span class="sd">        csvAttributes --- Scala CsvAttributes instance (optional)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_jvm</span><span class="o">.</span><span class="n">SmvPythonHelper</span><span class="o">.</span><span class="n">discoverSchemaAsSmvSchema</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">csvAttributes</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SmvApp.getSchemaByDataFileAsSmvSchema"><a class="viewcode-back" href="../../smv.html#smv.smvapp.SmvApp.getSchemaByDataFileAsSmvSchema">[docs]</a>    <span class="k">def</span> <span class="nf">getSchemaByDataFileAsSmvSchema</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data_file_name</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Get the schema of a data file from its path and returns a Scala SmvSchema instance.</span>
+<span class="sd">           The result will be None if the corresponding schema file does not exist or is invalid.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">data_file_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inputDir</span><span class="p">()</span> <span class="k">if</span> <span class="n">path</span> <span class="o">==</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">path</span><span class="p">,</span> <span class="n">data_file_name</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">j_smvPyClient</span><span class="o">.</span><span class="n">readSchemaFromDataPathAsSmvSchema</span><span class="p">(</span><span class="n">data_file_path</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SmvApp.inputDir"><a class="viewcode-back" href="../../smv.html#smv.smvapp.SmvApp.inputDir">[docs]</a>    <span class="k">def</span> <span class="nf">inputDir</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">all_data_dirs</span><span class="p">()</span><span class="o">.</span><span class="n">inputDir</span></div>
+
+<div class="viewcode-block" id="SmvApp.input_connection"><a class="viewcode-back" href="../../smv.html#smv.smvapp.SmvApp.input_connection">[docs]</a>    <span class="k">def</span> <span class="nf">input_connection</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">SmvHdfsConnectionInfo</span><span class="p">(</span>
+            <span class="s2">&quot;inputdir&quot;</span><span class="p">,</span>
+            <span class="p">{</span><span class="s2">&quot;smv.conn.inputdir.path&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputDir</span><span class="p">()}</span>
+        <span class="p">)</span></div>
+
+<div class="viewcode-block" id="SmvApp.getFileNamesByType"><a class="viewcode-back" href="../../smv.html#smv.smvapp.SmvApp.getFileNamesByType">[docs]</a>    <span class="k">def</span> <span class="nf">getFileNamesByType</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ftype</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return a list of file names which has the postfix ftype</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">all_files</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_jvm</span><span class="o">.</span><span class="n">SmvPythonHelper</span><span class="o">.</span><span class="n">getDirList</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inputDir</span><span class="p">())</span>
+        <span class="k">return</span> <span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">f</span><span class="p">)</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">all_files</span> <span class="k">if</span> <span class="n">f</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="n">ftype</span><span class="p">)]</span></div>
+
+<div class="viewcode-block" id="SmvApp.get_graph_json"><a class="viewcode-back" href="../../smv.html#smv.smvapp.SmvApp.get_graph_json">[docs]</a>    <span class="k">def</span> <span class="nf">get_graph_json</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Generate a json string representing the dependency graph.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">SmvAppInfo</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">create_graph_json</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="SmvApp.get_module_state_json"><a class="viewcode-back" href="../../smv.html#smv.smvapp.SmvApp.get_module_state_json">[docs]</a>    <span class="k">def</span> <span class="nf">get_module_state_json</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fqns</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Generate a json string for modules&#39; needToRun state of the app</span>
+
+<span class="sd">            Args:</span>
+<span class="sd">                fqns (list(string)): module fqn list to get state for</span>
+
+<span class="sd">            Return:</span>
+<span class="sd">                (string): json string. E.g. {&quot;stage.mymod&quot;: {&quot;needsToRun&quot; : True}}</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">SmvAppInfo</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">create_module_state_json</span><span class="p">(</span><span class="n">fqns</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SmvApp.getModuleResult"><a class="viewcode-back" href="../../smv.html#smv.smvapp.SmvApp.getModuleResult">[docs]</a>    <span class="k">def</span> <span class="nf">getModuleResult</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fqn</span><span class="p">,</span> <span class="n">forceRun</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Run module and get its result, which may not be a DataFrame</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">df</span><span class="p">,</span> <span class="n">collector</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">runModule</span><span class="p">(</span><span class="n">fqn</span><span class="p">,</span> <span class="n">forceRun</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">df</span></div>
+
+<div class="viewcode-block" id="SmvApp.load_single_ds"><a class="viewcode-back" href="../../smv.html#smv.smvapp.SmvApp.load_single_ds">[docs]</a>    <span class="k">def</span> <span class="nf">load_single_ds</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fqn</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return ds from fqn&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">dsm</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">fqn</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span></div>
+
+    <span class="k">def</span> <span class="nf">_to_single_run_res</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">res</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;run and quick_run of SmvModuleRunner, returns (list(DF), SmvRunInfoCollector)</span>
+<span class="sd">            for a single module, convert to (DF, SmvRunInfoCollector)&quot;&quot;&quot;</span>
+        <span class="p">(</span><span class="n">dfs</span><span class="p">,</span> <span class="n">coll</span><span class="p">)</span> <span class="o">=</span> <span class="n">res</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">dfs</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">coll</span><span class="p">)</span>
+
+<div class="viewcode-block" id="SmvApp.runModule"><a class="viewcode-back" href="../../smv.html#smv.smvapp.SmvApp.runModule">[docs]</a>    <span class="nd">@exception_handling</span>
+    <span class="k">def</span> <span class="nf">runModule</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fqn</span><span class="p">,</span> <span class="n">forceRun</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">quickRun</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">runMonitorCallback</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Runs SmvModule by its Fully Qualified Name(fqn)</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            fqn (str): The FQN of a module</span>
+<span class="sd">            forceRun (bool): True if the module should be forced to run even if it has persisted output. False otherwise.</span>
+<span class="sd">            quickRun (bool): skip computing dqm+metadata and persisting csv</span>
+<span class="sd">            runMonitorCallback: when is not quick run, runner will call this with ({fqn, statues})</span>
+
+<span class="sd">        Example:</span>
+<span class="sd">            To get just the dataframe of the module:</span>
+<span class="sd">                dataframe = smvApp.runModule(&#39;package.module.SmvModuleClass&#39;)[0]</span>
+<span class="sd">            To get both the dataframe and the run info collector:</span>
+<span class="sd">                dataframe, collector = smvApp.runModule(&#39;package.module.SmvModuleClass&#39;)</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            (DataFrame, SmvRunInfoCollector) tuple</span>
+<span class="sd">            - DataFrame is the computed result of the module</span>
+<span class="sd">            - SmvRunInfoCollector contains additional information</span>
+<span class="sd">              about the run, such as validation results.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">ds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dsm</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">fqn</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="p">(</span><span class="n">quickRun</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_to_single_run_res</span><span class="p">(</span><span class="n">SmvModuleRunner</span><span class="p">([</span><span class="n">ds</span><span class="p">],</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">quick_run</span><span class="p">(</span><span class="n">forceRun</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_to_single_run_res</span><span class="p">(</span><span class="n">SmvModuleRunner</span><span class="p">([</span><span class="n">ds</span><span class="p">],</span> <span class="bp">self</span><span class="p">,</span> <span class="n">runMonitorCallback</span><span class="p">)</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">forceRun</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="SmvApp.quickRunModule"><a class="viewcode-back" href="../../smv.html#smv.smvapp.SmvApp.quickRunModule">[docs]</a>    <span class="nd">@exception_handling</span>
+    <span class="k">def</span> <span class="nf">quickRunModule</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fqn</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">runModule</span><span class="p">(</span><span class="n">fqn</span><span class="p">,</span> <span class="n">forceRun</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">quickRun</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SmvApp.runModuleByName"><a class="viewcode-back" href="../../smv.html#smv.smvapp.SmvApp.runModuleByName">[docs]</a>    <span class="nd">@exception_handling</span>
+    <span class="k">def</span> <span class="nf">runModuleByName</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">forceRun</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">quickRun</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">runMonitorCallback</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Runs a SmvModule by its name (can be partial FQN)</span>
+
+<span class="sd">        See the `runModule` method above</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            name (str): The unique name of a module. Does not have to be the FQN.</span>
+<span class="sd">            forceRun (bool): True if the module should be forced to run even if it has persisted output. False otherwise.</span>
+<span class="sd">            quickRun (bool): skip computing dqm+metadata and persisting csv</span>
+<span class="sd">            runMonitorCallback: if is not quick run, runner will call this with ({fqn, statues})</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            (DataFrame, SmvRunInfoCollector) tuple</span>
+<span class="sd">            - DataFrame is the computed result of the module</span>
+<span class="sd">            - SmvRunInfoCollector contains additional information</span>
+<span class="sd">              about the run, such as validation results.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">fqn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dsm</span><span class="o">.</span><span class="n">inferFqn</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">runModule</span><span class="p">(</span><span class="n">fqn</span><span class="p">,</span> <span class="n">forceRun</span><span class="p">,</span> <span class="n">quickRun</span><span class="p">,</span> <span class="n">runMonitorCallback</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SmvApp.get_need_to_run"><a class="viewcode-back" href="../../smv.html#smv.smvapp.SmvApp.get_need_to_run">[docs]</a>    <span class="k">def</span> <span class="nf">get_need_to_run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">roots</span><span class="p">,</span> <span class="n">keep_roots</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Given a list of target modules to run, return a list of modules which</span>
+<span class="sd">            will run and be persisted in the order of how they should run. This</span>
+<span class="sd">            is a sub-set of modules_needed_for_run, but only keep the</span>
+<span class="sd">            non-ephemeral and not-persisted-yet modules.</span>
+<span class="sd">            Please note that some of the roots may not be in this list, to include</span>
+<span class="sd">            all roots, set `keep_roots` to True</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">visitor</span> <span class="o">=</span> <span class="n">ModulesVisitor</span><span class="p">(</span><span class="n">roots</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">m</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">visitor</span><span class="o">.</span><span class="n">modules_needed_for_run</span>
+            <span class="k">if</span> <span class="p">((</span><span class="ow">not</span> <span class="n">m</span><span class="o">.</span><span class="n">_is_persisted</span><span class="p">()</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">m</span><span class="o">.</span><span class="n">isEphemeral</span><span class="p">())</span>
+                <span class="ow">or</span> <span class="p">(</span><span class="n">keep_roots</span> <span class="ow">and</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">roots</span><span class="p">))</span>
+        <span class="p">]</span></div>
+
+<div class="viewcode-block" id="SmvApp.getRunInfo"><a class="viewcode-back" href="../../smv.html#smv.smvapp.SmvApp.getRunInfo">[docs]</a>    <span class="k">def</span> <span class="nf">getRunInfo</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fqn</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns the run information of a module and all its dependencies</span>
+<span class="sd">        from the last run.</span>
+
+<span class="sd">        Unlike the runModule() method, which returns the run</span>
+<span class="sd">        information just for that run, this method returns the run</span>
+<span class="sd">        information from the last run.</span>
+
+<span class="sd">        If no module was run (e.g. the code did not change, so the</span>
+<span class="sd">        data is read from persistent storage), the SmRunInfoCollector</span>
+<span class="sd">        returned from the runModule() method would be empty.  But the</span>
+<span class="sd">        SmvRunInfoCollector returned from this method would contain</span>
+<span class="sd">        all latest run information about all dependent modules.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            fqn (str): fqn of target module</span>
+<span class="sd">            runConfig (dict): runConfig to apply when collecting info. If module</span>
+<span class="sd">                              was run with a config, the same config needs to be</span>
+<span class="sd">                              specified here to retrieve the info.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            SmvRunInfoCollector</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">ds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dsm</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">fqn</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">SmvModuleRunner</span><span class="p">([</span><span class="n">ds</span><span class="p">],</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">get_runinfo</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="SmvApp.getRunInfoByPartialName"><a class="viewcode-back" href="../../smv.html#smv.smvapp.SmvApp.getRunInfoByPartialName">[docs]</a>    <span class="k">def</span> <span class="nf">getRunInfoByPartialName</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns the run information of a module and all its dependencies</span>
+<span class="sd">        from the last run.</span>
+
+<span class="sd">        Unlike the runModule() method, which returns the run</span>
+<span class="sd">        information just for that run, this method returns the run</span>
+<span class="sd">        information from the last run.</span>
+
+<span class="sd">        If no module was run (e.g. the code did not change, so the</span>
+<span class="sd">        data is read from persistent storage), the SmRunInfoCollector</span>
+<span class="sd">        returned from the runModule() method would be empty.  But the</span>
+<span class="sd">        SmvRunInfoCollector returned from this method would contain</span>
+<span class="sd">        all latest run information about all dependent modules.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            name (str): unique suffix to fqn of target module</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            SmvRunInfoCollector</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">fqn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dsm</span><span class="o">.</span><span class="n">inferFqn</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">getRunInfo</span><span class="p">(</span><span class="n">fqn</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SmvApp.publishModuleToHiveByName"><a class="viewcode-back" href="../../smv.html#smv.smvapp.SmvApp.publishModuleToHiveByName">[docs]</a>    <span class="nd">@exception_handling</span>
+    <span class="k">def</span> <span class="nf">publishModuleToHiveByName</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Publish an SmvModule to Hive by its name (can be partial FQN)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">fqn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dsm</span><span class="o">.</span><span class="n">inferFqn</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+        <span class="n">ds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">load_single_ds</span><span class="p">(</span><span class="n">fqn</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">SmvModuleRunner</span><span class="p">([</span><span class="n">ds</span><span class="p">],</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">publish_to_hive</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="SmvApp.getMetadataJson"><a class="viewcode-back" href="../../smv.html#smv.smvapp.SmvApp.getMetadataJson">[docs]</a>    <span class="k">def</span> <span class="nf">getMetadataJson</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fqn</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns the metadata for a given fqn&quot;&quot;&quot;</span>
+        <span class="n">ds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">load_single_ds</span><span class="p">(</span><span class="n">fqn</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">ds</span><span class="o">.</span><span class="n">_get_metadata</span><span class="p">()</span><span class="o">.</span><span class="n">toJson</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="SmvApp.getMetadataHistoryJson"><a class="viewcode-back" href="../../smv.html#smv.smvapp.SmvApp.getMetadataHistoryJson">[docs]</a>    <span class="k">def</span> <span class="nf">getMetadataHistoryJson</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fqn</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns the metadata history for a given fqn&quot;&quot;&quot;</span>
+        <span class="n">ds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">load_single_ds</span><span class="p">(</span><span class="n">fqn</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_read_meta_hist</span><span class="p">(</span><span class="n">ds</span><span class="p">)</span><span class="o">.</span><span class="n">toJson</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="SmvApp.getDsHash"><a class="viewcode-back" href="../../smv.html#smv.smvapp.SmvApp.getDsHash">[docs]</a>    <span class="k">def</span> <span class="nf">getDsHash</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;The current hashOfHash for the named module as a hex string</span>
+
+<span class="sd">            Args:</span>
+<span class="sd">                name (str): The uniquen name of a module. Does not have to be the FQN.</span>
+<span class="sd">                runConfig (dict): runConfig to apply when collecting info. If module</span>
+<span class="sd">                                  was run with a config, the same config needs to be</span>
+<span class="sd">                                  specified here to retrieve the correct hash.</span>
+
+<span class="sd">            Returns:</span>
+<span class="sd">                (str): The hashOfHash of the named module</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">dsm</span><span class="o">.</span><span class="n">inferDS</span><span class="p">(</span><span class="n">name</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">_ver_hex</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="SmvApp.copyToHdfs"><a class="viewcode-back" href="../../smv.html#smv.smvapp.SmvApp.copyToHdfs">[docs]</a>    <span class="k">def</span> <span class="nf">copyToHdfs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fileobj</span><span class="p">,</span> <span class="n">destination</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Copies the content of a file object to an HDFS location.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            fileobj (file object): a file-like object whose content is to be copied,</span>
+<span class="sd">                such as one returned by open(), or StringIO</span>
+<span class="sd">            destination (str): specifies the destination path in the hadoop file system</span>
+
+<span class="sd">        The file object is expected to have been opened in binary read mode.</span>
+
+<span class="sd">        The file object is closed when this function completes.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">SmvHDFS</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_jvm</span><span class="o">.</span><span class="n">SmvHDFS</span><span class="p">)</span><span class="o">.</span><span class="n">writeToFile</span><span class="p">(</span><span class="n">fileobj</span><span class="p">,</span> <span class="n">destination</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SmvApp.getStageFromModuleFqn"><a class="viewcode-back" href="../../smv.html#smv.smvapp.SmvApp.getStageFromModuleFqn">[docs]</a>    <span class="k">def</span> <span class="nf">getStageFromModuleFqn</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fqn</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns the stage name for a given fqn&quot;&quot;&quot;</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="p">[</span><span class="n">s</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">stages</span><span class="p">()</span> <span class="k">if</span> <span class="n">fqn</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">s</span> <span class="o">+</span> <span class="s2">&quot;.&quot;</span><span class="p">)]</span>
+        <span class="k">if</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">res</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">SmvRuntimeError</span><span class="p">(</span><span class="s2">&quot;Can&#39;t find </span><span class="si">{}</span><span class="s2"> from stages </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">fqn</span><span class="p">,</span> <span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">stages</span><span class="p">())))</span>
+        <span class="k">return</span> <span class="n">res</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="SmvApp.outputDir"><a class="viewcode-back" href="../../smv.html#smv.smvapp.SmvApp.outputDir">[docs]</a>    <span class="k">def</span> <span class="nf">outputDir</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">all_data_dirs</span><span class="p">()</span><span class="o">.</span><span class="n">outputDir</span></div>
+
+<div class="viewcode-block" id="SmvApp.scalaOption"><a class="viewcode-back" href="../../smv.html#smv.smvapp.SmvApp.scalaOption">[docs]</a>    <span class="k">def</span> <span class="nf">scalaOption</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns a Scala Option containing the value&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_jvm</span><span class="o">.</span><span class="n">scala</span><span class="o">.</span><span class="n">Option</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">val</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SmvApp.scalaNone"><a class="viewcode-back" href="../../smv.html#smv.smvapp.SmvApp.scalaNone">[docs]</a>    <span class="k">def</span> <span class="nf">scalaNone</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns a Scala None value&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">scalaOption</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SmvApp.createDFWithLogger"><a class="viewcode-back" href="../../smv.html#smv.smvapp.SmvApp.createDFWithLogger">[docs]</a>    <span class="k">def</span> <span class="nf">createDFWithLogger</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">schema</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">readerLogger</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">DataFrame</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_jvm</span><span class="o">.</span><span class="n">DfCreator</span><span class="o">.</span><span class="n">createDFWithLogger</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">sparkSession</span><span class="o">.</span><span class="n">_jsparkSession</span><span class="p">,</span>
+            <span class="n">schema</span><span class="p">,</span>
+            <span class="n">data</span><span class="p">,</span>
+            <span class="n">readerLogger</span>
+        <span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">sqlContext</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SmvApp.createDF"><a class="viewcode-back" href="../../smv.html#smv.smvapp.SmvApp.createDF">[docs]</a>    <span class="k">def</span> <span class="nf">createDF</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">schema</span><span class="p">,</span> <span class="n">data</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+        <span class="n">readerLogger</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_jvm</span><span class="o">.</span><span class="n">SmvPythonHelper</span><span class="o">.</span><span class="n">getTerminateParserLogger</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">createDFWithLogger</span><span class="p">(</span><span class="n">schema</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">readerLogger</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">_mkCsvAttr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">delimiter</span><span class="o">=</span><span class="s1">&#39;,&#39;</span><span class="p">,</span> <span class="n">quotechar</span><span class="o">=</span><span class="s1">&#39;&quot;&#39;</span><span class="p">,</span> <span class="n">hasHeader</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Factory method for creating instances of Scala case class CsvAttributes&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_jvm</span><span class="o">.</span><span class="n">org</span><span class="o">.</span><span class="n">tresamigos</span><span class="o">.</span><span class="n">smv</span><span class="o">.</span><span class="n">CsvAttributes</span><span class="p">(</span><span class="n">delimiter</span><span class="p">,</span> <span class="n">quotechar</span><span class="p">,</span> <span class="n">hasHeader</span><span class="p">)</span>
+
+<div class="viewcode-block" id="SmvApp.defaultCsvWithHeader"><a class="viewcode-back" href="../../smv.html#smv.smvapp.SmvApp.defaultCsvWithHeader">[docs]</a>    <span class="k">def</span> <span class="nf">defaultCsvWithHeader</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mkCsvAttr</span><span class="p">(</span><span class="n">hasHeader</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SmvApp.defaultTsv"><a class="viewcode-back" href="../../smv.html#smv.smvapp.SmvApp.defaultTsv">[docs]</a>    <span class="k">def</span> <span class="nf">defaultTsv</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mkCsvAttr</span><span class="p">(</span><span class="n">delimiter</span><span class="o">=</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">&#39;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SmvApp.defaultTsvWithHeader"><a class="viewcode-back" href="../../smv.html#smv.smvapp.SmvApp.defaultTsvWithHeader">[docs]</a>    <span class="k">def</span> <span class="nf">defaultTsvWithHeader</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mkCsvAttr</span><span class="p">(</span><span class="n">delimiter</span><span class="o">=</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">hasHeader</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SmvApp.abs_path_for_project_path"><a class="viewcode-back" href="../../smv.html#smv.smvapp.SmvApp.abs_path_for_project_path">[docs]</a>    <span class="k">def</span> <span class="nf">abs_path_for_project_path</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">project_path</span><span class="p">):</span>
+        <span class="c1"># Load dynamic app dir from scala</span>
+        <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">appDir</span><span class="p">(),</span> <span class="n">project_path</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="SmvApp.prepend_source"><a class="viewcode-back" href="../../smv.html#smv.smvapp.SmvApp.prepend_source">[docs]</a>    <span class="k">def</span> <span class="nf">prepend_source</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">project_path</span><span class="p">):</span>
+        <span class="n">abs_path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">abs_path_for_project_path</span><span class="p">(</span><span class="n">project_path</span><span class="p">)</span>
+        <span class="c1"># Source must be added to front of path to make sure it is found first</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">abs_path</span><span class="p">)</span>
+        <span class="n">smv</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Prepended </span><span class="si">{}</span><span class="s2"> to sys.path&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">abs_path</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="SmvApp.remove_source"><a class="viewcode-back" href="../../smv.html#smv.smvapp.SmvApp.remove_source">[docs]</a>    <span class="k">def</span> <span class="nf">remove_source</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">project_path</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">abs_path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">abs_path_for_project_path</span><span class="p">(</span><span class="n">project_path</span><span class="p">)</span>
+            <span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">abs_path</span><span class="p">)</span>
+            <span class="n">smv</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Removed </span><span class="si">{}</span><span class="s2"> from sys.path&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">abs_path</span><span class="p">))</span>
+        <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+            <span class="c1"># ValueError will be raised if the project path was not previously</span>
+            <span class="c1"># added to the sys.path</span>
+            <span class="k">pass</span></div>
+
+    <span class="k">def</span> <span class="nf">_hist_io_strategy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">m</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Meta history is managed by smvapp and smvmodulerunner, module</span>
+<span class="sd">            instances does not need to know it&quot;&quot;&quot;</span>
+        <span class="n">hist_dir</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">all_data_dirs</span><span class="p">()</span><span class="o">.</span><span class="n">historyDir</span>
+        <span class="n">hist_path</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">/</span><span class="si">{}</span><span class="s2">.hist&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">hist_dir</span><span class="p">,</span> <span class="n">m</span><span class="o">.</span><span class="n">fqn</span><span class="p">())</span>
+        <span class="k">return</span> <span class="n">SmvJsonOnHdfsPersistenceStrategy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">hist_path</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_read_meta_hist</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">m</span><span class="p">):</span>
+        <span class="n">io_strategy</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_hist_io_strategy</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">hist_json</span> <span class="o">=</span> <span class="n">io_strategy</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+            <span class="n">hist</span> <span class="o">=</span> <span class="n">SmvMetaHistory</span><span class="p">()</span><span class="o">.</span><span class="n">fromJson</span><span class="p">(</span><span class="n">hist_json</span><span class="p">)</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="n">hist</span> <span class="o">=</span> <span class="n">SmvMetaHistory</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">hist</span>
+
+    <span class="k">def</span> <span class="nf">_purge_current_output_files</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mods</span><span class="p">):</span>
+        <span class="n">SmvModuleRunner</span><span class="p">(</span><span class="n">mods</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">purge_persisted</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_dry_run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mods</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Execute as dry-run if the dry-run flag is specified.</span>
+<span class="sd">            This will show which modules are not yet persisted that need to run, without</span>
+<span class="sd">            actually running the modules.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">mods_need_to_run</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_need_to_run</span><span class="p">(</span><span class="n">mods</span><span class="p">,</span> <span class="n">keep_roots</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Dry run - modules not persisted:&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;----------------------&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">m</span><span class="o">.</span><span class="n">fqn</span><span class="p">()</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">mods_need_to_run</span><span class="p">]))</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;----------------------&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_generate_dot_graph</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Genrate app level graphviz dot file</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">dot_graph_str</span> <span class="o">=</span> <span class="n">SmvAppInfo</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">create_graph_dot</span><span class="p">()</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">.dot&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">appName</span><span class="p">())</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">dot_graph_str</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_print_dead_modules</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Print dead modules:</span>
+<span class="sd">        Modules which do not contribute to any output modules are considered dead</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">SmvAppInfo</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">ls_dead</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_modules_to_run</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">modPartialNames</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">py_smvconf</span><span class="o">.</span><span class="n">mods_to_run</span>
+        <span class="n">stageNames</span>      <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">py_smvconf</span><span class="o">.</span><span class="n">infer_stage_full_name</span><span class="p">(</span><span class="n">f</span><span class="p">)</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">py_smvconf</span><span class="o">.</span><span class="n">stages_to_run</span><span class="p">]</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">dsm</span><span class="o">.</span><span class="n">modulesToRun</span><span class="p">(</span><span class="n">modPartialNames</span><span class="p">,</span> <span class="n">stageNames</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">cmd_line</span><span class="o">.</span><span class="n">runAllApp</span><span class="p">)</span>
+
+
+    <span class="k">def</span> <span class="nf">_publish_modules</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mods</span><span class="p">):</span>
+        <span class="n">SmvModuleRunner</span><span class="p">(</span><span class="n">mods</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">publish</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_publish_modules_to_hive</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mods</span><span class="p">):</span>
+        <span class="n">SmvModuleRunner</span><span class="p">(</span><span class="n">mods</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">publish_to_hive</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_publish_modules_through_jdbc</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mods</span><span class="p">):</span>
+        <span class="n">SmvModuleRunner</span><span class="p">(</span><span class="n">mods</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">publish_to_jdbc</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_publish_modules_locally</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mods</span><span class="p">):</span>
+        <span class="n">local_dir</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cmd_line</span><span class="o">.</span><span class="n">exportCsv</span>
+        <span class="n">SmvModuleRunner</span><span class="p">(</span><span class="n">mods</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">publish_local</span><span class="p">(</span><span class="n">local_dir</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_generate_output_modules</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mods</span><span class="p">):</span>
+        <span class="n">SmvModuleRunner</span><span class="p">(</span><span class="n">mods</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+
+<div class="viewcode-block" id="SmvApp.run"><a class="viewcode-back" href="../../smv.html#smv.smvapp.SmvApp.run">[docs]</a>    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">mods</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_modules_to_run</span><span class="p">()</span>
+
+        <span class="k">if</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cmd_line</span><span class="o">.</span><span class="n">forceRunAll</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_purge_current_output_files</span><span class="p">(</span><span class="n">mods</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">mods</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">):</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Modules to run/publish&quot;</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;----------------------&quot;</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">m</span><span class="o">.</span><span class="n">fqn</span><span class="p">()</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">mods</span><span class="p">]))</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;----------------------&quot;</span><span class="p">)</span>
+
+        <span class="c1">#either generate graphs, publish modules, or run output modules (only one will occur)</span>
+        <span class="k">if</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cmd_line</span><span class="o">.</span><span class="n">printDeadModules</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_print_dead_modules</span><span class="p">()</span>
+        <span class="k">elif</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cmd_line</span><span class="o">.</span><span class="n">dryRun</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_dry_run</span><span class="p">(</span><span class="n">mods</span><span class="p">)</span>
+        <span class="k">elif</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cmd_line</span><span class="o">.</span><span class="n">graph</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_generate_dot_graph</span><span class="p">()</span>
+        <span class="k">elif</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cmd_line</span><span class="o">.</span><span class="n">publishHive</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_publish_modules_to_hive</span><span class="p">(</span><span class="n">mods</span><span class="p">)</span>
+        <span class="k">elif</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cmd_line</span><span class="o">.</span><span class="n">publish</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_publish_modules</span><span class="p">(</span><span class="n">mods</span><span class="p">)</span>
+        <span class="k">elif</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cmd_line</span><span class="o">.</span><span class="n">publishJDBC</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_publish_modules_through_jdbc</span><span class="p">(</span><span class="n">mods</span><span class="p">)</span>
+        <span class="k">elif</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cmd_line</span><span class="o">.</span><span class="n">exportCsv</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_publish_modules_locally</span><span class="p">(</span><span class="n">mods</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_generate_output_modules</span><span class="p">(</span><span class="n">mods</span><span class="p">)</span></div></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Spark Modularized View v2r12 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2017, TresAmigosSD.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.0.1.
+    </div>
+  </body>
+</html>

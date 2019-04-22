@@ -384,13 +384,14 @@ class SmvApp(object):
         return (dfs[0], coll)
 
     @exception_handling
-    def runModule(self, fqn, forceRun=False, quickRun=False):
+    def runModule(self, fqn, forceRun=False, quickRun=False, runMonitorCallback=None):
         """Runs SmvModule by its Fully Qualified Name(fqn)
 
         Args:
             fqn (str): The FQN of a module
             forceRun (bool): True if the module should be forced to run even if it has persisted output. False otherwise.
             quickRun (bool): skip computing dqm+metadata and persisting csv
+            runMonitorCallback: when is not quick run, runner will call this with ({fqn, statues})
 
         Example:
             To get just the dataframe of the module:
@@ -409,14 +410,14 @@ class SmvApp(object):
         if (quickRun):
             return self._to_single_run_res(SmvModuleRunner([ds], self).quick_run(forceRun))
         else:
-            return self._to_single_run_res(SmvModuleRunner([ds], self).run(forceRun))
+            return self._to_single_run_res(SmvModuleRunner([ds], self, runMonitorCallback).run(forceRun))
 
     @exception_handling
     def quickRunModule(self, fqn):
         return self.runModule(fqn, forceRun=False, quickRun=True)
 
     @exception_handling
-    def runModuleByName(self, name, forceRun=False, quickRun=False):
+    def runModuleByName(self, name, forceRun=False, quickRun=False, runMonitorCallback=None):
         """Runs a SmvModule by its name (can be partial FQN)
 
         See the `runModule` method above
@@ -424,9 +425,8 @@ class SmvApp(object):
         Args:
             name (str): The unique name of a module. Does not have to be the FQN.
             forceRun (bool): True if the module should be forced to run even if it has persisted output. False otherwise.
-            version (str): The name of the published version to load from
-            runConfig (dict): runtime configuration to use when running the module
             quickRun (bool): skip computing dqm+metadata and persisting csv
+            runMonitorCallback: if is not quick run, runner will call this with ({fqn, statues})
 
         Returns:
             (DataFrame, SmvRunInfoCollector) tuple
@@ -435,7 +435,7 @@ class SmvApp(object):
               about the run, such as validation results.
         """
         fqn = self.dsm.inferFqn(name)
-        return self.runModule(fqn, forceRun, quickRun)
+        return self.runModule(fqn, forceRun, quickRun, runMonitorCallback)
 
     def get_need_to_run(self, roots, keep_roots=False):
         """Given a list of target modules to run, return a list of modules which

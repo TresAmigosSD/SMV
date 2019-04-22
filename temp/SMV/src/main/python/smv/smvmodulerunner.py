@@ -22,11 +22,12 @@ class SmvModuleRunner(object):
     """Represent the run-transaction. Provides the single entry point to run
         a group of modules
     """
-    def __init__(self, modules, smvApp):
+    def __init__(self, modules, smvApp, runMonitorCallback=None):
         self.roots = modules
         self.smvApp = smvApp
         self.log = smv.logger
         self.visitor = ModulesVisitor(modules)
+        self.runMonitorCallback = runMonitorCallback
 
     def run(self, forceRun=False):
         # a set of modules which need to run post_action, keep tracking
@@ -123,7 +124,24 @@ class SmvModuleRunner(object):
         # will run on current module and all upstream modules
         def runner(m, state):
             (fqn2df, run_set, collector) = state
+            fqn = m.fqn()
+            # tell monitor m is running
+            if (self.runMonitorCallback is not None):
+                self.runMonitorCallback({
+                    'fqn': fqn,
+                    'status': 'started',
+                    'applicationId': self.smvApp.sc.applicationId
+                })
+            # Run module
             m._do_it(fqn2df, run_set, collector, forceRun, is_quick_run)
+            # tell monitor m is done
+            if (self.runMonitorCallback is not None):
+                self.runMonitorCallback({
+                    'fqn': fqn,
+                    'status': 'completed',
+                    'needsToRun': m.needsToRun(),
+                })
+
         self.visitor.dfs_visit(runner, (known, need_post, collector), need_to_run_only=True)
 
     def _force_post(self, need_post, collector):

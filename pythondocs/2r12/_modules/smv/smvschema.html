@@ -1,0 +1,157 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>smv.smvschema &#8212; Spark Modularized View v2r12 documentation</title>
+    <link rel="stylesheet" href="../../_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Spark Modularized View v2r12 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for smv.smvschema</h1><div class="highlight"><pre>
+<span></span><span class="c1">#</span>
+<span class="c1"># This file is licensed under the Apache License, Version 2.0</span>
+<span class="c1"># (the &quot;License&quot;); you may not use this file except in compliance with</span>
+<span class="c1"># the License.  You may obtain a copy of the License at</span>
+<span class="c1">#</span>
+<span class="c1">#    http://www.apache.org/licenses/LICENSE-2.0</span>
+<span class="c1">#</span>
+<span class="c1"># Unless required by applicable law or agreed to in writing, software</span>
+<span class="c1"># distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
+<span class="c1"># See the License for the specific language governing permissions and</span>
+<span class="c1"># limitations under the License.</span>
+
+<span class="kn">import</span> <span class="nn">datetime</span>
+<span class="kn">import</span> <span class="nn">pyspark.sql.types</span> <span class="k">as</span> <span class="nn">sql_types</span>
+<span class="kn">from</span> <span class="nn">smv.smvapp</span> <span class="k">import</span> <span class="n">SmvApp</span>
+
+<div class="viewcode-block" id="SmvSchema"><a class="viewcode-back" href="../../smv.html#smv.smvschema.SmvSchema">[docs]</a><span class="k">class</span> <span class="nc">SmvSchema</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;The Python representation of SmvSchema scala class.</span>
+
+<span class="sd">    Most of the work is still being done on the scala side and this is just a pass through.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">j_smv_schema</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">j_smv_schema</span> <span class="o">=</span> <span class="n">j_smv_schema</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">spark_schema</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_toStructType</span><span class="p">()</span>
+
+<div class="viewcode-block" id="SmvSchema.discover"><a class="viewcode-back" href="../../smv.html#smv.smvschema.SmvSchema.discover">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">discover</span><span class="p">(</span><span class="n">csv_path</span><span class="p">,</span> <span class="n">csvAttributes</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">100000</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Discover schema from CSV file with given csv attributes&quot;&quot;&quot;</span>
+        <span class="n">smvApp</span> <span class="o">=</span> <span class="n">SmvApp</span><span class="o">.</span><span class="n">getInstance</span><span class="p">()</span>
+        <span class="n">j_smv_schema</span> <span class="o">=</span> <span class="n">smvApp</span><span class="o">.</span><span class="n">discoverSchemaAsSmvSchema</span><span class="p">(</span><span class="n">csv_path</span><span class="p">,</span> <span class="n">csvAttributes</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">SmvSchema</span><span class="p">(</span><span class="n">j_smv_schema</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SmvSchema.fromFile"><a class="viewcode-back" href="../../smv.html#smv.smvschema.SmvSchema.fromFile">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">fromFile</span><span class="p">(</span><span class="n">schema_file</span><span class="p">):</span>
+        <span class="n">smvApp</span> <span class="o">=</span> <span class="n">SmvApp</span><span class="o">.</span><span class="n">getInstance</span><span class="p">()</span>
+        <span class="n">j_smv_schema</span> <span class="o">=</span> <span class="n">smvApp</span><span class="o">.</span><span class="n">smvSchemaObj</span><span class="o">.</span><span class="n">fromFile</span><span class="p">(</span><span class="n">smvApp</span><span class="o">.</span><span class="n">j_smvApp</span><span class="o">.</span><span class="n">sc</span><span class="p">(),</span> <span class="n">schema_file</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">SmvSchema</span><span class="p">(</span><span class="n">j_smv_schema</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SmvSchema.fromString"><a class="viewcode-back" href="../../smv.html#smv.smvschema.SmvSchema.fromString">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">fromString</span><span class="p">(</span><span class="n">schema_str</span><span class="p">):</span>
+        <span class="n">smvApp</span> <span class="o">=</span> <span class="n">SmvApp</span><span class="o">.</span><span class="n">getInstance</span><span class="p">()</span>
+        <span class="n">j_smv_schema</span> <span class="o">=</span> <span class="n">smvApp</span><span class="o">.</span><span class="n">smvSchemaObj</span><span class="o">.</span><span class="n">fromString</span><span class="p">(</span><span class="n">schema_str</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">SmvSchema</span><span class="p">(</span><span class="n">j_smv_schema</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SmvSchema.toValue"><a class="viewcode-back" href="../../smv.html#smv.smvschema.SmvSchema.toValue">[docs]</a>    <span class="k">def</span> <span class="nf">toValue</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">str_val</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;convert the string value to native value based on type defined in schema.</span>
+
+<span class="sd">           For example, if first column was of type Int, then call of `toValue(0, &quot;55&quot;)`</span>
+<span class="sd">           would return integer 55.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">val</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">j_smv_schema</span><span class="o">.</span><span class="n">toValue</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">str_val</span><span class="p">)</span>
+        <span class="n">j_type</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">spark_schema</span><span class="o">.</span><span class="n">fields</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">dataType</span><span class="o">.</span><span class="n">typeName</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">j_type</span> <span class="o">==</span> <span class="n">sql_types</span><span class="o">.</span><span class="n">DateType</span><span class="o">.</span><span class="n">typeName</span><span class="p">():</span>
+            <span class="n">val</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">date</span><span class="p">(</span><span class="mi">1900</span> <span class="o">+</span> <span class="n">val</span><span class="o">.</span><span class="n">getYear</span><span class="p">(),</span> <span class="n">val</span><span class="o">.</span><span class="n">getMonth</span><span class="p">()</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="n">val</span><span class="o">.</span><span class="n">getDate</span><span class="p">())</span>
+        <span class="k">return</span> <span class="n">val</span></div>
+
+<div class="viewcode-block" id="SmvSchema.saveToLocalFile"><a class="viewcode-back" href="../../smv.html#smv.smvschema.SmvSchema.saveToLocalFile">[docs]</a>    <span class="k">def</span> <span class="nf">saveToLocalFile</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">schema_file</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Save schema to local (driver) file&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">j_smv_schema</span><span class="o">.</span><span class="n">saveToLocalFile</span><span class="p">(</span><span class="n">schema_file</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">_scala_to_python_field_type</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">scala_field_type</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;create a python FieldType from the scala field type&quot;&quot;&quot;</span>
+        <span class="n">col_name</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">scala_field_type</span><span class="o">.</span><span class="n">name</span><span class="p">())</span>
+        <span class="n">col_type_name</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">scala_field_type</span><span class="o">.</span><span class="n">dataType</span><span class="p">())</span>
+        <span class="c1"># map string &quot;IntegerType&quot; to actual class IntegerType</span>
+        <span class="n">col_type_class</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">sql_types</span><span class="p">,</span> <span class="n">col_type_name</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">sql_types</span><span class="o">.</span><span class="n">StructField</span><span class="p">(</span><span class="n">col_name</span><span class="p">,</span> <span class="n">col_type_class</span><span class="p">())</span>
+
+    <span class="k">def</span> <span class="nf">_toStructType</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;return equivalent Spark schema (StructType) from this smv schema&quot;&quot;&quot;</span>
+        <span class="c1"># ss is the raw scala spark schema (Scala StructType).  This has no</span>
+        <span class="c1"># iterator defined on the python side, so we use old school for loop.</span>
+        <span class="n">ss</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">j_smv_schema</span><span class="o">.</span><span class="n">toStructType</span><span class="p">()</span>
+        <span class="n">spark_schema</span> <span class="o">=</span> <span class="n">sql_types</span><span class="o">.</span><span class="n">StructType</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">ss</span><span class="o">.</span><span class="n">length</span><span class="p">()):</span>
+            <span class="c1"># use &quot;apply&quot; to get the nth StructField item in StructType</span>
+            <span class="n">ft</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_scala_to_python_field_type</span><span class="p">(</span><span class="n">ss</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">i</span><span class="p">))</span>
+            <span class="n">spark_schema</span> <span class="o">=</span> <span class="n">spark_schema</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">ft</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">spark_schema</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Spark Modularized View v2r12 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2017, TresAmigosSD.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.0.1.
+    </div>
+  </body>
+</html>

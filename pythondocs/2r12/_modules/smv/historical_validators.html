@@ -1,0 +1,147 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>smv.historical_validators &#8212; Spark Modularized View v2r12 documentation</title>
+    <link rel="stylesheet" href="../../_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Spark Modularized View v2r12 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for smv.historical_validators</h1><div class="highlight"><pre>
+<div class="viewcode-block" id="SmvHistoricalValidators"><a class="viewcode-back" href="../../smv.html#smv.historical_validators.SmvHistoricalValidators">[docs]</a><span></span><span class="k">def</span> <span class="nf">SmvHistoricalValidators</span><span class="p">(</span><span class="o">*</span><span class="n">validators</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Decorator to specify set of validators to apply to an SmvGenericModule.</span>
+
+<span class="sd">        Each validator should specify the standard `metadata` and `validateMetadata`</span>
+<span class="sd">        methods.  In addition, each validator will have a unique key defined that</span>
+<span class="sd">        will determine how it is stored in the final metadata structure.  This</span>
+<span class="sd">        decorator will take care of composing the union of all metadata from validators</span>
+<span class="sd">        and decomposing the full metadata structure into individual pieces for each</span>
+<span class="sd">        validator (hint: the _key() method of each validator is used to key into the</span>
+<span class="sd">        final metadata structure)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">df</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;return the union of all `metedata` results from all validators.&quot;&quot;&quot;</span>
+        <span class="n">all_metadata</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">validators</span><span class="p">:</span>
+            <span class="n">m</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">metadata</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
+            <span class="n">k</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">_key</span><span class="p">()</span>
+            <span class="n">all_metadata</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">m</span>
+
+        <span class="k">return</span> <span class="n">all_metadata</span>
+
+    <span class="k">def</span> <span class="nf">validateMetadata</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cur_metadata</span><span class="p">,</span> <span class="n">hist_metadata</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;validate the results for all validators.  Fail if any validator failed.&quot;&quot;&quot;</span>
+        <span class="n">failed_list</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">validators</span><span class="p">:</span>
+            <span class="c1"># extract the current/historical metadata for this validator</span>
+            <span class="n">k</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">_key</span><span class="p">()</span>
+            <span class="n">v_cur_metadata</span> <span class="o">=</span> <span class="n">cur_metadata</span><span class="p">[</span><span class="s1">&#39;_userMetadata&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
+            <span class="n">v_hist_metadata</span> <span class="o">=</span> <span class="p">[</span><span class="n">m</span><span class="p">[</span><span class="s1">&#39;_userMetadata&#39;</span><span class="p">][</span><span class="n">k</span><span class="p">]</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">hist_metadata</span> <span class="k">if</span> <span class="n">m</span><span class="p">[</span><span class="s1">&#39;_userMetadata&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">k</span><span class="p">)]</span>
+
+            <span class="n">v_res</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">validateMetadata</span><span class="p">(</span><span class="n">v_cur_metadata</span><span class="p">,</span> <span class="n">v_hist_metadata</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">v_res</span> <span class="o">!=</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">failed_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">v_res</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">failed_list</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s2">&quot;;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">failed_list</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="k">def</span> <span class="nf">cls_wrapper</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+        <span class="bp">cls</span><span class="o">.</span><span class="n">_smvHistoricalValidatorsList</span> <span class="o">=</span> <span class="n">validators</span>
+        <span class="bp">cls</span><span class="o">.</span><span class="n">metadata</span> <span class="o">=</span> <span class="n">metadata</span>
+        <span class="bp">cls</span><span class="o">.</span><span class="n">validateMetadata</span> <span class="o">=</span> <span class="n">validateMetadata</span>
+        <span class="k">return</span> <span class="bp">cls</span>
+
+    <span class="k">return</span> <span class="n">cls_wrapper</span></div>
+
+
+<div class="viewcode-block" id="SmvHistoricalValidator"><a class="viewcode-back" href="../../smv.html#smv.historical_validators.SmvHistoricalValidator">[docs]</a><span class="k">class</span> <span class="nc">SmvHistoricalValidator</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Base of all user defined historical validator rules.</span>
+
+<span class="sd">        Derived classes must override the metadata`, and `validateMetadata` methods.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">args</span> <span class="o">=</span> <span class="n">args</span>
+
+    <span class="k">def</span> <span class="nf">_key</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;computes a unique &quot;key&quot; for this instance of the validator based on</span>
+<span class="sd">           the validator arguments and type.&quot;&quot;&quot;</span>
+        <span class="n">key_args</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">args</span><span class="p">]</span>
+        <span class="k">return</span> <span class="p">(</span><span class="s2">&quot;:&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">key_args</span><span class="p">))</span>
+
+<div class="viewcode-block" id="SmvHistoricalValidator.metadata"><a class="viewcode-back" href="../../smv.html#smv.historical_validators.SmvHistoricalValidator.metadata">[docs]</a>    <span class="k">def</span> <span class="nf">metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">df</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;identical interface to standard dataset `metadata` method&quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;missing metadata() method&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SmvHistoricalValidator.validateMetadata"><a class="viewcode-back" href="../../smv.html#smv.historical_validators.SmvHistoricalValidator.validateMetadata">[docs]</a>    <span class="k">def</span> <span class="nf">validateMetadata</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cur</span><span class="p">,</span> <span class="n">hist</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;identical interface to standard dataset `validateMetadata` method&quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;missing validateMetadata() method&quot;</span><span class="p">)</span></div></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Spark Modularized View v2r12 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2017, TresAmigosSD.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.0.1.
+    </div>
+  </body>
+</html>
