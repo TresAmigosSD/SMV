@@ -4,7 +4,7 @@ organization := "_GROUP_ID_"
 
 version := "1.0-SNAPSHOT"
 
-scalaVersion := "2.11.8"
+scalaVersion := "2.12.8"
 
 scalacOptions ++= Seq("-deprecation", "-feature")
 

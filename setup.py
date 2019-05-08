@@ -93,7 +93,7 @@ setuptools.setup(
     # https://docs.python.org/2/distutils/setupscript.html#listing-whole-packages
     package_dir={
         '':'src/main/python',
-        'smv.target': 'target/scala-2.11',
+        'smv.target': 'target/scala-2.12',
         'smv.docker': 'docker',
         'smv.docs': 'docs',
         'smv.tools': 'tools',

@@ -3,7 +3,7 @@ include LICENSE
 include .smv_version
 include .supported_spark
 include log4j.properties
-include target/scala-2.11/*.jar
+include target/scala-2.12/*.jar
 recursive-include docker *
 recursive-include docs *
 recursive-include tools *

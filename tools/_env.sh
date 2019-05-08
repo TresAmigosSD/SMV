@@ -139,12 +139,12 @@ function find_file_in_dir()
 function find_fat_jar()
 {
   local smv_tools_dir="$(get_smv_tools_dir)"
-  SMV_FAT_JAR="${smv_tools_dir}/../target/scala-2.11"
+  SMV_FAT_JAR="${smv_tools_dir}/../target/scala-2.12"
 
   # try sbt-build location first if not found try mvn-build location next.
   # then repeat from the parent directory, because the shell is
   # sometimes run from a notebook subdirectory of a data project
-  dirs=("target/scala-2.11" "target" "../target/scala-2.11" "../target" "$SMV_FAT_JAR" "${SMV_HOME}/target" "${SMV_HOME}/target/scala-2.11")
+  dirs=("target/scala-2.12" "target" "../target/scala-2.12" "../target" "$SMV_FAT_JAR" "${SMV_HOME}/target" "${SMV_HOME}/target/scala-2.12")
   APP_JAR=$(find_file_in_dir "smv*jar-with-dependencies.jar" "${dirs[@]}")
 
   if [ -z "$APP_JAR" ]; then
