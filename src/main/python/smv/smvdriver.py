@@ -28,7 +28,11 @@ class SmvDriver(object):
         smvconf = SmvConfig(smv_args)
         kernel_conf = smvconf.read_props_from_kernel_config_file()
         for key in kernel_conf:
-            spark_builder = spark_builder.config(key, kernel_conf.get(key))
+            # use the master setting in the config file if exists
+            if key == 'master':
+                spark_builder = spark_builder.master(kernel_conf.get(key))
+            else:
+                spark_builder = spark_builder.config(key, kernel_conf.get(key))
 
         sparkSession = spark_builder.getOrCreate()
 
