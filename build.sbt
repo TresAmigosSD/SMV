@@ -8,8 +8,11 @@ scalaVersion := "2.10.4"
 
 scalacOptions ++= Seq("-deprecation", "-feature")
 
-val sparkVersion = "1.6.2"
+// build to run with spark-assembly-1.6.0-cdh5.15.2-hadoop2.6.0-cdh5.15.2.jar
+val sparkVersion = "1.6.0-cdh5.15.2"
 javacOptions ++= Seq("-source", "1.6", "-target", "1.6")
+
+resolvers += "CDH" at "https://repository.cloudera.com/cloudera/cloudera-repos/"
 
 libraryDependencies ++= Seq(
   "org.apache.spark"             %% "spark-sql"         % sparkVersion % "provided",
