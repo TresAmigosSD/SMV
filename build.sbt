@@ -12,6 +12,7 @@ scalacOptions ++= Seq("-deprecation", "-feature")
 val sparkVersion = "1.6.0-cdh5.15.2"
 javacOptions ++= Seq("-source", "1.6", "-target", "1.6")
 
+// Need to add this for CDH dependencies
 resolvers += "CDH" at "https://repository.cloudera.com/cloudera/cloudera-repos/"
 
 libraryDependencies ++= Seq(
