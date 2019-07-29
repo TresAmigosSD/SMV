@@ -22,7 +22,7 @@ function error()
 
 function usage()
 {
-  echo "USAGE: ${PROG_NAME} [--new-branch] [--latest] build_dir branch_name github_user:github_token docker_user docker_password smv_version_to_release(a.b.c.d)"
+  echo "USAGE: ${PROG_NAME} [--new-branch] [--latest] [--skip-docker] build_dir branch_name github_user:github_token [docker_user] [docker_password] smv_version_to_release(a.b.c.d)"
   echo "See (https://help.github.com/articles/creating-a-personal-access-token-for-the-command-line/) for auth tokens"
   exit $1
 }
@@ -43,14 +43,25 @@ function parse_args()
     shift
   fi
 
+  DO_DOCKER_RELEASE=1
+  if [ "$1" == "--skip-docker"]; then
+    DO_DOCKER_RELEASE=0
+    shift
+  fi
+
   [ $# -ne 6 ] && echo "ERROR: invalid number of arguments" && usage 1
 
   BUILD_DIR="$1"
   SMV_BRANCH="$2"
   GITHUB_USER_TOKEN="$3"
-  DOCKERHUB_USER_NAME="$4"
-  DOCKERHUB_USER_PASSWORD="$5"
-  SMV_VERSION="$6"
+  
+  if [ ${DO_DOCKER_RELEASE} -eq 1 ]; then
+    DOCKERHUB_USER_NAME="$4"
+    DOCKERHUB_USER_PASSWORD="$5"
+    SMV_VERSION="$6"
+  else
+    SMV_VERSION="$4"
+  fi
 
   validate_version "$SMV_VERSION"
   if [ ! -d "${BUILD_DIR}" ]; then
@@ -414,5 +425,7 @@ attach_tar_to_github_release
 get_latest_ghpages
 update_ghpages_docs
 push_ghpages_docs
-create_docker_image
+if [ ${DO_DOCKER_RELEASE} -eq 1 ]; then
+  create_docker_image
+fi
 info "Finish Release on: $(date)"
