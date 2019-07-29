@@ -44,12 +44,16 @@ function parse_args()
   fi
 
   DO_DOCKER_RELEASE=1
-  if [ "$1" == "--skip-docker"]; then
+  if [ "$1" == "--skip-docker" ]; then
     DO_DOCKER_RELEASE=0
     shift
   fi
 
-  [ $# -ne 6 ] && echo "ERROR: invalid number of arguments" && usage 1
+  if [ ${DO_DOCKER_RELEASE} -eq 1 ]; then
+    [ $# -ne 6 ] && echo "ERROR: invalid number of arguments" && usage 1
+  else
+    [ $# -ne 4 ] && echo "ERROR: invalid number of arguments" && usage 1
+  fi
 
   BUILD_DIR="$1"
   SMV_BRANCH="$2"
