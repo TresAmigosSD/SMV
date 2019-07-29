@@ -22,7 +22,7 @@ function error()
 
 function usage()
 {
-  echo "USAGE: ${PROG_NAME} [--new-branch] [--latest] [--skip-docker] build_dir branch_name github_user:github_token [docker_user] [docker_password] smv_version_to_release(a.b.c.d)"
+  echo "USAGE: ${PROG_NAME} [--new-branch] [--latest] [--skip-docker] [--prev-docker-version prev-docker-version] build_dir branch_name github_user:github_token [docker_user] [docker_password] smv_version_to_release(a.b.c.d)"
   echo "See (https://help.github.com/articles/creating-a-personal-access-token-for-the-command-line/) for auth tokens"
   exit $1
 }
@@ -46,6 +46,12 @@ function parse_args()
   DO_DOCKER_RELEASE=1
   if [ "$1" == "--skip-docker" ]; then
     DO_DOCKER_RELEASE=0
+    shift
+  fi
+
+  if [ "$1" == "--prev-docker-version" ]; then
+    shift
+    PREV_DOCKER_VERSION="$1"
     shift
   fi
 
@@ -112,6 +118,10 @@ function get_prev_smv_version()
   PREV_SMV_VERSION=$(cat "${SMV_DIR}/.smv_version")
   info "previous SMV version: $PREV_SMV_VERSION"
   validate_version "$PREV_SMV_VERSION"
+  if [ -z ${PREV_DOCKER_VERSION} ]; then
+    PREV_DOCKER_VERSION=${PREV_SMV_VERSION}
+  fi
+  validate_version "$PREV_DOCKER_VERSION"
 }
 
 # make sure version is of the format a.b.c.d[.pe] where a,b,c,d,e are all numbers.
@@ -131,7 +141,7 @@ function run_sbt_in_docker()
   info "Running sbt ${target}"
 
   # explicitly add -ivy flag as SMV docker image is not picking up sbtopts file. (SMV issue #556)
-  docker run --rm -it -v ${PROJ_DIR}:/projects tresamigos/smv:v${PREV_SMV_VERSION} \
+  docker run --rm -it -v ${PROJ_DIR}:/projects tresamigos/smv:v${PREV_DOCKER_VERSION} \
     -u $(id -u) sh -c "cd $DOCKER_SMV_DIR; sbt -ivy /projects/.ivy2 $target" \
     >> ${LOGFILE} 2>&1 || error "SMV sbt $target failed"
 }
@@ -323,7 +333,7 @@ function gen_pydocs()
 
   docker run --rm -it \
     -v ${PROJ_DIR}:/projects -v ${DOCS_DIR}/python:/pydoc \
-    tresamigos/smv:v${PREV_SMV_VERSION} \
+    tresamigos/smv:v${PREV_DOCKER_VERSION} \
     -u $(id -u)\
     sh -c "
       set -e;
@@ -344,7 +354,7 @@ function gen_scaladocs()
 
   docker run --rm -it \
     -v ${PROJ_DIR}:/projects -v ${DOCS_DIR}/scala:/scaladoc \
-    tresamigos/smv:v${PREV_SMV_VERSION} \
+    tresamigos/smv:v${PREV_DOCKER_VERSION} \
     -u $(id -u)\
     sh -c "
       cd $DOCKER_SMV_DIR;
@@ -419,17 +429,19 @@ find_gnu_tar
 find_release_msg_file
 build_smv
 test_smv
-gen_pydocs
-gen_scaladocs
+if [ ${DO_DOCKER_RELEASE} -eq 1 ]; then
+  gen_pydocs
+  gen_scaladocs
+fi
 update_version
 tag_release
 create_tar
 create_github_release
 attach_tar_to_github_release
-get_latest_ghpages
-update_ghpages_docs
-push_ghpages_docs
 if [ ${DO_DOCKER_RELEASE} -eq 1 ]; then
+  get_latest_ghpages
+  update_ghpages_docs
+  push_ghpages_docs
   create_docker_image
 fi
 info "Finish Release on: $(date)"
