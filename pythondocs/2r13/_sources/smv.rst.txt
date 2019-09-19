@@ -1,0 +1,278 @@
+smv package
+===========
+
+Subpackages
+-----------
+
+.. toctree::
+
+   smv.conn
+   smv.iomod
+
+Submodules
+----------
+
+smv.csv\_attributes module
+--------------------------
+
+.. automodule:: smv.csv_attributes
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+smv.datasetmgr module
+---------------------
+
+.. automodule:: smv.datasetmgr
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+smv.datasetrepo module
+----------------------
+
+.. automodule:: smv.datasetrepo
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+smv.datasetresolver module
+--------------------------
+
+.. automodule:: smv.datasetresolver
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+smv.dqm module
+--------------
+
+.. automodule:: smv.dqm
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+smv.error module
+----------------
+
+.. automodule:: smv.error
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+smv.functions module
+--------------------
+
+.. automodule:: smv.functions
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+smv.helpers module
+------------------
+
+.. automodule:: smv.helpers
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+smv.historical\_validators module
+---------------------------------
+
+.. automodule:: smv.historical_validators
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+smv.jprops module
+-----------------
+
+.. automodule:: smv.jprops
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+smv.matcher module
+------------------
+
+.. automodule:: smv.matcher
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+smv.modulesvisitor module
+-------------------------
+
+.. automodule:: smv.modulesvisitor
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+smv.panel module
+----------------
+
+.. automodule:: smv.panel
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+smv.provider module
+-------------------
+
+.. automodule:: smv.provider
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+smv.runconfig module
+--------------------
+
+.. automodule:: smv.runconfig
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+smv.runinfo module
+------------------
+
+.. automodule:: smv.runinfo
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+smv.schema\_meta\_ops module
+----------------------------
+
+.. automodule:: smv.schema_meta_ops
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+smv.smvapp module
+-----------------
+
+.. automodule:: smv.smvapp
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+smv.smvappinfo module
+---------------------
+
+.. automodule:: smv.smvappinfo
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+smv.smvconfig module
+--------------------
+
+.. automodule:: smv.smvconfig
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+smv.smvdriver module
+--------------------
+
+.. automodule:: smv.smvdriver
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+smv.smvgenericmodule module
+---------------------------
+
+.. automodule:: smv.smvgenericmodule
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+smv.smvhdfs module
+------------------
+
+.. automodule:: smv.smvhdfs
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+smv.smvinput module
+-------------------
+
+.. automodule:: smv.smvinput
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+smv.smviostrategy module
+------------------------
+
+.. automodule:: smv.smviostrategy
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+smv.smvlock module
+------------------
+
+.. automodule:: smv.smvlock
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+smv.smvmetadata module
+----------------------
+
+.. automodule:: smv.smvmetadata
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+smv.smvmodule module
+--------------------
+
+.. automodule:: smv.smvmodule
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+smv.smvmodulerunner module
+--------------------------
+
+.. automodule:: smv.smvmodulerunner
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+smv.smvschema module
+--------------------
+
+.. automodule:: smv.smvschema
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+smv.smvshell module
+-------------------
+
+.. automodule:: smv.smvshell
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+smv.utils module
+----------------
+
+.. automodule:: smv.utils
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+
+Module contents
+---------------
+
+.. automodule:: smv
+   :members:
+   :undoc-members:
+   :show-inheritance:

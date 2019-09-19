@@ -1,0 +1,475 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>smv.smviostrategy &#8212; Spark Modularized View v2r13 documentation</title>
+    <link rel="stylesheet" href="../../_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Spark Modularized View v2r13 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for smv.smviostrategy</h1><div class="highlight"><pre>
+<span></span><span class="c1">#</span>
+<span class="c1"># This file is licensed under the Apache License, Version 2.0</span>
+<span class="c1"># (the &quot;License&quot;); you may not use this file except in compliance with</span>
+<span class="c1"># the License.  You may obtain a copy of the License at</span>
+<span class="c1">#</span>
+<span class="c1">#    http://www.apache.org/licenses/LICENSE-2.0</span>
+<span class="c1">#</span>
+<span class="c1"># Unless required by applicable law or agreed to in writing, software</span>
+<span class="c1"># distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
+<span class="c1"># See the License for the specific language governing permissions and</span>
+<span class="c1"># limitations under the License.</span>
+<span class="kn">import</span> <span class="nn">abc</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">import</span> <span class="nn">binascii</span>
+
+<span class="kn">from</span> <span class="nn">pyspark.sql</span> <span class="k">import</span> <span class="n">DataFrame</span>
+<span class="kn">from</span> <span class="nn">smv.utils</span> <span class="k">import</span> <span class="n">scala_seq_to_list</span>
+<span class="kn">import</span> <span class="nn">smv</span>
+<span class="kn">from</span> <span class="nn">smv.error</span> <span class="k">import</span> <span class="n">SmvRuntimeError</span>
+
+<span class="k">if</span> <span class="n">sys</span><span class="o">.</span><span class="n">version_info</span> <span class="o">&gt;=</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">):</span>
+    <span class="n">ABC</span> <span class="o">=</span> <span class="n">abc</span><span class="o">.</span><span class="n">ABC</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="n">ABC</span> <span class="o">=</span> <span class="n">abc</span><span class="o">.</span><span class="n">ABCMeta</span><span class="p">(</span><span class="s1">&#39;ABC&#39;</span><span class="p">,</span> <span class="p">(),</span> <span class="p">{})</span>
+
+<span class="c1"># If using Python 2, prefer cPickle because it is faster</span>
+<span class="c1"># If using Python 3, there is no cPickle (cPickle is now the implementation of pickle)</span>
+<span class="c1"># see https://docs.python.org/3.1/whatsnew/3.0.html#library-changes</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">import</span> <span class="nn">cPickle</span> <span class="k">as</span> <span class="nn">pickle_lib</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="kn">import</span> <span class="nn">pickle</span> <span class="k">as</span> <span class="nn">pickle_lib</span>
+
+<div class="viewcode-block" id="SmvIoStrategy"><a class="viewcode-back" href="../../smv.html#smv.smviostrategy.SmvIoStrategy">[docs]</a><span class="k">class</span> <span class="nc">SmvIoStrategy</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Base class for all module I/O, including read, write and persistence&quot;&quot;&quot;</span>
+<div class="viewcode-block" id="SmvIoStrategy.read"><a class="viewcode-back" href="../../smv.html#smv.smviostrategy.SmvIoStrategy.read">[docs]</a>    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">read</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Read data from persisted&quot;&quot;&quot;</span></div>
+
+<div class="viewcode-block" id="SmvIoStrategy.write"><a class="viewcode-back" href="../../smv.html#smv.smviostrategy.SmvIoStrategy.write">[docs]</a>    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">raw_data</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Write data to persist file/db&quot;&quot;&quot;</span></div></div>
+
+<div class="viewcode-block" id="SmvPersistenceStrategy"><a class="viewcode-back" href="../../smv.html#smv.smviostrategy.SmvPersistenceStrategy">[docs]</a><span class="k">class</span> <span class="nc">SmvPersistenceStrategy</span><span class="p">(</span><span class="n">SmvIoStrategy</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Base class for IO strategy which used for persisting data&quot;&quot;&quot;</span>
+<div class="viewcode-block" id="SmvPersistenceStrategy.isPersisted"><a class="viewcode-back" href="../../smv.html#smv.smviostrategy.SmvPersistenceStrategy.isPersisted">[docs]</a>    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">isPersisted</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Whether the data got successfully persisted before&quot;&quot;&quot;</span></div>
+
+<div class="viewcode-block" id="SmvPersistenceStrategy.remove"><a class="viewcode-back" href="../../smv.html#smv.smviostrategy.SmvPersistenceStrategy.remove">[docs]</a>    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">remove</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Remove persisted file(s)&quot;&quot;&quot;</span></div></div>
+
+<div class="viewcode-block" id="SmvNonOpPersistenceStrategy"><a class="viewcode-back" href="../../smv.html#smv.smviostrategy.SmvNonOpPersistenceStrategy">[docs]</a><span class="k">class</span> <span class="nc">SmvNonOpPersistenceStrategy</span><span class="p">(</span><span class="n">SmvPersistenceStrategy</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Never persist, isPersisted always returns false&quot;&quot;&quot;</span>
+<div class="viewcode-block" id="SmvNonOpPersistenceStrategy.read"><a class="viewcode-back" href="../../smv.html#smv.smviostrategy.SmvNonOpPersistenceStrategy.read">[docs]</a>    <span class="k">def</span> <span class="nf">read</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="SmvNonOpPersistenceStrategy.write"><a class="viewcode-back" href="../../smv.html#smv.smviostrategy.SmvNonOpPersistenceStrategy.write">[docs]</a>    <span class="k">def</span> <span class="nf">write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">raw_data</span><span class="p">):</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="SmvNonOpPersistenceStrategy.isPersisted"><a class="viewcode-back" href="../../smv.html#smv.smviostrategy.SmvNonOpPersistenceStrategy.isPersisted">[docs]</a>    <span class="k">def</span> <span class="nf">isPersisted</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">False</span></div>
+
+<div class="viewcode-block" id="SmvNonOpPersistenceStrategy.remove"><a class="viewcode-back" href="../../smv.html#smv.smviostrategy.SmvNonOpPersistenceStrategy.remove">[docs]</a>    <span class="k">def</span> <span class="nf">remove</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">pass</span></div></div>
+
+<div class="viewcode-block" id="SmvFileOnHdfsPersistenceStrategy"><a class="viewcode-back" href="../../smv.html#smv.smviostrategy.SmvFileOnHdfsPersistenceStrategy">[docs]</a><span class="k">class</span> <span class="nc">SmvFileOnHdfsPersistenceStrategy</span><span class="p">(</span><span class="n">SmvPersistenceStrategy</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Abstract class for persisting data to Hdfs file system</span>
+<span class="sd">        handling general tasks as file name creation, locking when write, etc.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            smvApp(SmvApp):</span>
+<span class="sd">            versioned_fqn(str): data/module&#39;s FQN/Name with hash_of_hash</span>
+<span class="sd">            postfix(str): persisted file&#39;s postfix</span>
+<span class="sd">            file_path(str): parameters &quot;versioned_fqn&quot; and &quot;postfix&quot; are used to create</span>
+<span class="sd">                a data file path. However if &quot;file_path&quot; is provided, all the other 3</span>
+<span class="sd">                parameters are ignored</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">smvApp</span><span class="p">,</span> <span class="n">versioned_fqn</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">postfix</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">file_path</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">smvApp</span> <span class="o">=</span> <span class="n">smvApp</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">file_path</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">):</span>
+            <span class="n">output_dir</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">smvApp</span><span class="o">.</span><span class="n">all_data_dirs</span><span class="p">()</span><span class="o">.</span><span class="n">outputDir</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_file_path</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">/</span><span class="si">{}</span><span class="s2">.</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">output_dir</span><span class="p">,</span> <span class="n">versioned_fqn</span><span class="p">,</span> <span class="n">postfix</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_file_path</span> <span class="o">=</span> <span class="n">file_path</span>
+
+    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">_read</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;The raw io read action&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="SmvFileOnHdfsPersistenceStrategy.read"><a class="viewcode-back" href="../../smv.html#smv.smviostrategy.SmvFileOnHdfsPersistenceStrategy.read">[docs]</a>    <span class="k">def</span> <span class="nf">read</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># May add lock or other logic here in future</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_read</span><span class="p">()</span></div>
+
+    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">_write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">raw_data</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;The raw io write action&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="SmvFileOnHdfsPersistenceStrategy.write"><a class="viewcode-back" href="../../smv.html#smv.smviostrategy.SmvFileOnHdfsPersistenceStrategy.write">[docs]</a>    <span class="k">def</span> <span class="nf">write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataframe</span><span class="p">):</span>
+        <span class="c1"># May add lock or other logic here in future</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_write</span><span class="p">(</span><span class="n">dataframe</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SmvFileOnHdfsPersistenceStrategy.isPersisted"><a class="viewcode-back" href="../../smv.html#smv.smviostrategy.SmvFileOnHdfsPersistenceStrategy.isPersisted">[docs]</a>    <span class="k">def</span> <span class="nf">isPersisted</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">smvApp</span><span class="o">.</span><span class="n">_jvm</span><span class="o">.</span><span class="n">SmvHDFS</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_file_path</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SmvFileOnHdfsPersistenceStrategy.remove"><a class="viewcode-back" href="../../smv.html#smv.smviostrategy.SmvFileOnHdfsPersistenceStrategy.remove">[docs]</a>    <span class="k">def</span> <span class="nf">remove</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">smvApp</span><span class="o">.</span><span class="n">_jvm</span><span class="o">.</span><span class="n">SmvHDFS</span><span class="o">.</span><span class="n">deleteFile</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_file_path</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="SmvCsvPersistenceStrategy"><a class="viewcode-back" href="../../smv.html#smv.smviostrategy.SmvCsvPersistenceStrategy">[docs]</a><span class="k">class</span> <span class="nc">SmvCsvPersistenceStrategy</span><span class="p">(</span><span class="n">SmvFileOnHdfsPersistenceStrategy</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Persist strategy for using Smv CSV IO handler</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            smvApp(SmvApp):</span>
+<span class="sd">            versioned_fqn(str): data/module&#39;s FQN/Name with hash_of_hash</span>
+<span class="sd">            file_path(str): parameter &quot;versioned_fqn&quot; is used to create</span>
+<span class="sd">                a data file path. However if &quot;file_path&quot; is provided, all the other 2</span>
+<span class="sd">                parameters are ignored</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">smvApp</span><span class="p">,</span> <span class="n">versioned_fqn</span><span class="p">,</span> <span class="n">file_path</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">SmvCsvPersistenceStrategy</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">smvApp</span><span class="p">,</span> <span class="n">versioned_fqn</span><span class="p">,</span> <span class="s1">&#39;csv&#39;</span><span class="p">,</span> <span class="n">file_path</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">_schema_path</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="s2">&quot;\.csv$&quot;</span><span class="p">,</span> <span class="s2">&quot;.schema&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_file_path</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">raw_data</span><span class="p">):</span>
+        <span class="n">smv</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Output path: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_file_path</span><span class="p">))</span>
+        <span class="c1"># this call creates both .csv and .schema file from the scala side</span>
+        <span class="n">record_count</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">smvApp</span><span class="o">.</span><span class="n">j_smvPyClient</span><span class="o">.</span><span class="n">persistDF</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_file_path</span><span class="p">,</span> <span class="n">raw_data</span><span class="o">.</span><span class="n">_jdf</span><span class="p">)</span>
+        <span class="n">smv</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;N: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">record_count</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">_read</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">smv_schema</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">smvApp</span><span class="o">.</span><span class="n">smvSchemaObj</span><span class="o">.</span><span class="n">fromFile</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">smvApp</span><span class="o">.</span><span class="n">j_smvApp</span><span class="o">.</span><span class="n">sc</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">_schema_path</span><span class="p">)</span>
+
+        <span class="n">terminateLogger</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">smvApp</span><span class="o">.</span><span class="n">_jvm</span><span class="o">.</span><span class="n">SmvPythonHelper</span><span class="o">.</span><span class="n">getTerminateParserLogger</span><span class="p">()</span>
+        <span class="n">handler</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">smvApp</span><span class="o">.</span><span class="n">j_smvPyClient</span><span class="o">.</span><span class="n">createFileIOHandler</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_file_path</span><span class="p">)</span>
+
+        <span class="n">jdf</span> <span class="o">=</span> <span class="n">handler</span><span class="o">.</span><span class="n">csvFileWithSchema</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">smv_schema</span><span class="p">,</span> <span class="n">terminateLogger</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">DataFrame</span><span class="p">(</span><span class="n">jdf</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">smvApp</span><span class="o">.</span><span class="n">sqlContext</span><span class="p">)</span>
+
+<div class="viewcode-block" id="SmvCsvPersistenceStrategy.isPersisted"><a class="viewcode-back" href="../../smv.html#smv.smviostrategy.SmvCsvPersistenceStrategy.isPersisted">[docs]</a>    <span class="k">def</span> <span class="nf">isPersisted</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># since within the persistDF call on scala side, schema was written after</span>
+        <span class="c1"># csv file, so we can use the schema file as a semaphore</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">smvApp</span><span class="o">.</span><span class="n">_jvm</span><span class="o">.</span><span class="n">SmvHDFS</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_schema_path</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SmvCsvPersistenceStrategy.remove"><a class="viewcode-back" href="../../smv.html#smv.smviostrategy.SmvCsvPersistenceStrategy.remove">[docs]</a>    <span class="k">def</span> <span class="nf">remove</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">smvApp</span><span class="o">.</span><span class="n">_jvm</span><span class="o">.</span><span class="n">SmvHDFS</span><span class="o">.</span><span class="n">deleteFile</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_file_path</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">smvApp</span><span class="o">.</span><span class="n">_jvm</span><span class="o">.</span><span class="n">SmvHDFS</span><span class="o">.</span><span class="n">deleteFile</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_schema_path</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="SmvJsonOnHdfsPersistenceStrategy"><a class="viewcode-back" href="../../smv.html#smv.smviostrategy.SmvJsonOnHdfsPersistenceStrategy">[docs]</a><span class="k">class</span> <span class="nc">SmvJsonOnHdfsPersistenceStrategy</span><span class="p">(</span><span class="n">SmvFileOnHdfsPersistenceStrategy</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">smvApp</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">SmvJsonOnHdfsPersistenceStrategy</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">smvApp</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_read</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">smvApp</span><span class="o">.</span><span class="n">_jvm</span><span class="o">.</span><span class="n">SmvHDFS</span><span class="o">.</span><span class="n">readFromFile</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_file_path</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rawdata</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">smvApp</span><span class="o">.</span><span class="n">_jvm</span><span class="o">.</span><span class="n">SmvHDFS</span><span class="o">.</span><span class="n">writeToFile</span><span class="p">(</span><span class="n">rawdata</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_file_path</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="SmvPicklablePersistenceStrategy"><a class="viewcode-back" href="../../smv.html#smv.smviostrategy.SmvPicklablePersistenceStrategy">[docs]</a><span class="k">class</span> <span class="nc">SmvPicklablePersistenceStrategy</span><span class="p">(</span><span class="n">SmvFileOnHdfsPersistenceStrategy</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">smvApp</span><span class="p">,</span> <span class="n">versioned_fqn</span><span class="p">,</span> <span class="n">file_path</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">SmvPicklablePersistenceStrategy</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">smvApp</span><span class="p">,</span> <span class="n">versioned_fqn</span><span class="p">,</span> <span class="s1">&#39;pickle&#39;</span><span class="p">,</span> <span class="n">file_path</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_read</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># reverses result of applying _write. see _write for explanation.</span>
+        <span class="n">hex_encoded_pickle_as_str</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">smvApp</span><span class="o">.</span><span class="n">_jvm</span><span class="o">.</span><span class="n">SmvHDFS</span><span class="o">.</span><span class="n">readFromFile</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_file_path</span><span class="p">)</span>
+        <span class="n">pickled_res_as_str</span> <span class="o">=</span> <span class="n">binascii</span><span class="o">.</span><span class="n">unhexlify</span><span class="p">(</span><span class="n">hex_encoded_pickle_as_str</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">pickle_lib</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">pickled_res_as_str</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rawdata</span><span class="p">):</span>
+        <span class="n">pickled_res</span> <span class="o">=</span> <span class="n">pickle_lib</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">rawdata</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="c1"># pickle may contain problematic characters like newlines, so we</span>
+        <span class="c1"># encode the pickle it as a hex string</span>
+        <span class="n">hex_encoded_pickle</span> <span class="o">=</span> <span class="n">binascii</span><span class="o">.</span><span class="n">hexlify</span><span class="p">(</span><span class="n">pickled_res</span><span class="p">)</span>
+        <span class="c1"># encoding will be a bytestring object if in Python 3, so need to convert it to string</span>
+        <span class="c1"># str.decode converts string to utf8 in python 2 and bytes to str in Python 3</span>
+        <span class="n">hex_encoded_pickle_as_str</span> <span class="o">=</span> <span class="n">hex_encoded_pickle</span><span class="o">.</span><span class="n">decode</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">smvApp</span><span class="o">.</span><span class="n">_jvm</span><span class="o">.</span><span class="n">SmvHDFS</span><span class="o">.</span><span class="n">writeToFile</span><span class="p">(</span><span class="n">hex_encoded_pickle_as_str</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_file_path</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="SmvParquetPersistenceStrategy"><a class="viewcode-back" href="../../smv.html#smv.smviostrategy.SmvParquetPersistenceStrategy">[docs]</a><span class="k">class</span> <span class="nc">SmvParquetPersistenceStrategy</span><span class="p">(</span><span class="n">SmvFileOnHdfsPersistenceStrategy</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Persist strategy for using Spark native parquet</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            smvApp(SmvApp):</span>
+<span class="sd">            versioned_fqn(str): data/module&#39;s FQN/Name with hash_of_hash</span>
+<span class="sd">            file_path(str): parameter &quot;versioned_fqn&quot; is used to create</span>
+<span class="sd">                a data file path. However if &quot;file_path&quot; is provided, all the other 2</span>
+<span class="sd">                parameters are ignored</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">smvApp</span><span class="p">,</span> <span class="n">versioned_fqn</span><span class="p">,</span> <span class="n">file_path</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">SmvParquetPersistenceStrategy</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">smvApp</span><span class="p">,</span> <span class="n">versioned_fqn</span><span class="p">,</span> <span class="s1">&#39;parquet&#39;</span><span class="p">,</span> <span class="n">file_path</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">_semaphore_path</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="s2">&quot;\.parquet$&quot;</span><span class="p">,</span> <span class="s2">&quot;.semaphore&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_file_path</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_read</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">smvApp</span><span class="o">.</span><span class="n">sparkSession</span><span class="o">.</span><span class="n">read</span><span class="o">.</span><span class="n">parquet</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_file_path</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rawdata</span><span class="p">):</span>
+        <span class="c1"># default to overwrite to be consistent with csv persist</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">smvApp</span><span class="o">.</span><span class="n">_jvm</span><span class="o">.</span><span class="n">SmvHDFS</span><span class="o">.</span><span class="n">deleteFile</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_file_path</span><span class="p">)</span>
+
+        <span class="n">rawdata</span><span class="o">.</span><span class="n">write</span><span class="o">.</span><span class="n">parquet</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_file_path</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">smvApp</span><span class="o">.</span><span class="n">_jvm</span><span class="o">.</span><span class="n">SmvHDFS</span><span class="o">.</span><span class="n">createFileAtomic</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_semaphore_path</span><span class="p">)</span>
+
+<div class="viewcode-block" id="SmvParquetPersistenceStrategy.remove"><a class="viewcode-back" href="../../smv.html#smv.smviostrategy.SmvParquetPersistenceStrategy.remove">[docs]</a>    <span class="k">def</span> <span class="nf">remove</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">smvApp</span><span class="o">.</span><span class="n">_jvm</span><span class="o">.</span><span class="n">SmvHDFS</span><span class="o">.</span><span class="n">deleteFile</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_file_path</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">smvApp</span><span class="o">.</span><span class="n">_jvm</span><span class="o">.</span><span class="n">SmvHDFS</span><span class="o">.</span><span class="n">deleteFile</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_semaphore_path</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SmvParquetPersistenceStrategy.isPersisted"><a class="viewcode-back" href="../../smv.html#smv.smviostrategy.SmvParquetPersistenceStrategy.isPersisted">[docs]</a>    <span class="k">def</span> <span class="nf">isPersisted</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">smvApp</span><span class="o">.</span><span class="n">_jvm</span><span class="o">.</span><span class="n">SmvHDFS</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_semaphore_path</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="SmvJdbcIoStrategy"><a class="viewcode-back" href="../../smv.html#smv.smviostrategy.SmvJdbcIoStrategy">[docs]</a><span class="k">class</span> <span class="nc">SmvJdbcIoStrategy</span><span class="p">(</span><span class="n">SmvIoStrategy</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Persist strategy for spark JDBC IO</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            smvApp(SmvApp):</span>
+<span class="sd">            conn_info(SmvConnectionInfo): Jdbc connection info</span>
+<span class="sd">            table_name(str): the table to read from/write to</span>
+<span class="sd">            write_mode(str): spark df writer&#39;s SaveMode</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">smvApp</span><span class="p">,</span> <span class="n">conn_info</span><span class="p">,</span> <span class="n">table_name</span><span class="p">,</span> <span class="n">write_mode</span><span class="o">=</span><span class="s2">&quot;errorifexists&quot;</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">smvApp</span> <span class="o">=</span> <span class="n">smvApp</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">conn</span> <span class="o">=</span> <span class="n">conn_info</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">table</span> <span class="o">=</span> <span class="n">table_name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">write_mode</span> <span class="o">=</span> <span class="n">write_mode</span>
+
+<div class="viewcode-block" id="SmvJdbcIoStrategy.read"><a class="viewcode-back" href="../../smv.html#smv.smviostrategy.SmvJdbcIoStrategy.read">[docs]</a>    <span class="k">def</span> <span class="nf">read</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">conn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">conn</span>
+        <span class="n">builder</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">_connect_for_read</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">smvApp</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">builder</span>\
+            <span class="o">.</span><span class="n">option</span><span class="p">(</span><span class="s1">&#39;dbtable&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">table</span><span class="p">)</span>\
+            <span class="o">.</span><span class="n">load</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="SmvJdbcIoStrategy.write"><a class="viewcode-back" href="../../smv.html#smv.smviostrategy.SmvJdbcIoStrategy.write">[docs]</a>    <span class="k">def</span> <span class="nf">write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">raw_data</span><span class="p">):</span>
+        <span class="n">conn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">conn</span>
+        <span class="n">builder</span> <span class="o">=</span> <span class="n">raw_data</span><span class="o">.</span><span class="n">write</span>\
+            <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s2">&quot;jdbc&quot;</span><span class="p">)</span> \
+            <span class="o">.</span><span class="n">mode</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">write_mode</span><span class="p">)</span> \
+            <span class="o">.</span><span class="n">option</span><span class="p">(</span><span class="s1">&#39;url&#39;</span><span class="p">,</span> <span class="n">conn</span><span class="o">.</span><span class="n">url</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="p">(</span><span class="n">conn</span><span class="o">.</span><span class="n">driver</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">):</span>
+            <span class="n">builder</span> <span class="o">=</span> <span class="n">builder</span><span class="o">.</span><span class="n">option</span><span class="p">(</span><span class="s1">&#39;driver&#39;</span><span class="p">,</span> <span class="n">conn</span><span class="o">.</span><span class="n">driver</span><span class="p">)</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">conn</span><span class="o">.</span><span class="n">user</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">):</span>
+            <span class="n">builder</span> <span class="o">=</span> <span class="n">builder</span><span class="o">.</span><span class="n">option</span><span class="p">(</span><span class="s1">&#39;user&#39;</span><span class="p">,</span> <span class="n">conn</span><span class="o">.</span><span class="n">user</span><span class="p">)</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">conn</span><span class="o">.</span><span class="n">password</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">):</span>
+            <span class="n">builder</span> <span class="o">=</span> <span class="n">builder</span><span class="o">.</span><span class="n">option</span><span class="p">(</span><span class="s1">&#39;password&#39;</span><span class="p">,</span> <span class="n">conn</span><span class="o">.</span><span class="n">password</span><span class="p">)</span>
+
+        <span class="n">builder</span> \
+            <span class="o">.</span><span class="n">option</span><span class="p">(</span><span class="s2">&quot;dbtable&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">table</span><span class="p">)</span> \
+            <span class="o">.</span><span class="n">save</span><span class="p">()</span></div></div>
+
+
+<div class="viewcode-block" id="SmvHiveIoStrategy"><a class="viewcode-back" href="../../smv.html#smv.smviostrategy.SmvHiveIoStrategy">[docs]</a><span class="k">class</span> <span class="nc">SmvHiveIoStrategy</span><span class="p">(</span><span class="n">SmvIoStrategy</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Persist strategy for spark Hive IO</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            smvApp(SmvApp):</span>
+<span class="sd">            conn_info(SmvConnectionInfo): Hive connection info</span>
+<span class="sd">            table_name(str): the table to read from/write to</span>
+<span class="sd">            write_mode(str): spark df writer&#39;s SaveMode</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">smvApp</span><span class="p">,</span> <span class="n">conn_info</span><span class="p">,</span> <span class="n">table_name</span><span class="p">,</span> <span class="n">write_mode</span><span class="o">=</span><span class="s2">&quot;errorifexists&quot;</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">smvApp</span> <span class="o">=</span> <span class="n">smvApp</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">conn</span> <span class="o">=</span> <span class="n">conn_info</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">table</span> <span class="o">=</span> <span class="n">table_name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">write_mode</span> <span class="o">=</span> <span class="n">write_mode</span>
+
+    <span class="k">def</span> <span class="nf">_table_with_schema</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">conn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">conn</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">conn</span><span class="o">.</span><span class="n">schema</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">table</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">.</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">conn</span><span class="o">.</span><span class="n">schema</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">table</span><span class="p">)</span>
+
+<div class="viewcode-block" id="SmvHiveIoStrategy.read"><a class="viewcode-back" href="../../smv.html#smv.smviostrategy.SmvHiveIoStrategy.read">[docs]</a>    <span class="k">def</span> <span class="nf">read</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">query</span> <span class="o">=</span> <span class="s2">&quot;select * from </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_table_with_schema</span><span class="p">())</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">smvApp</span><span class="o">.</span><span class="n">sqlContext</span><span class="o">.</span><span class="n">sql</span><span class="p">(</span><span class="n">query</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SmvHiveIoStrategy.write"><a class="viewcode-back" href="../../smv.html#smv.smviostrategy.SmvHiveIoStrategy.write">[docs]</a>    <span class="k">def</span> <span class="nf">write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">raw_data</span><span class="p">):</span>
+        <span class="c1"># TODO: write_mode == &#39;Ignore&#39;</span>
+        <span class="n">_write_mode</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">write_mode</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+        <span class="n">raw_data</span><span class="o">.</span><span class="n">createOrReplaceTempView</span><span class="p">(</span><span class="s2">&quot;dftable&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">_write_mode</span> <span class="o">==</span> <span class="s1">&#39;overwrite&#39;</span> <span class="ow">or</span> <span class="n">_write_mode</span> <span class="o">==</span> <span class="s1">&#39;errorifexists&#39;</span><span class="p">):</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">_write_mode</span> <span class="o">==</span> <span class="s1">&#39;overwrite&#39;</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">smvApp</span><span class="o">.</span><span class="n">sqlContext</span><span class="o">.</span><span class="n">sql</span><span class="p">(</span><span class="s2">&quot;drop table if exists </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_table_with_schema</span><span class="p">()))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">smvApp</span><span class="o">.</span><span class="n">sqlContext</span><span class="o">.</span><span class="n">sql</span><span class="p">(</span><span class="s2">&quot;create table </span><span class="si">{}</span><span class="s2"> as select * from dftable&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_table_with_schema</span><span class="p">()))</span>
+        <span class="k">elif</span> <span class="p">(</span><span class="n">_write_mode</span> <span class="o">==</span> <span class="s1">&#39;append&#39;</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">smvApp</span><span class="o">.</span><span class="n">sqlContext</span><span class="o">.</span><span class="n">sql</span><span class="p">(</span><span class="s2">&quot;insert into table </span><span class="si">{}</span><span class="s2"> select * from dftable&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_table_with_schema</span><span class="p">()))</span></div></div>
+
+    <span class="c1"># TODO: we should allow persisting intermidiate results in Hive also</span>
+    <span class="c1"># For that case, however need to specify a convention to store semaphore</span>
+
+
+<div class="viewcode-block" id="SmvTextOnHdfsIoStrategy"><a class="viewcode-back" href="../../smv.html#smv.smviostrategy.SmvTextOnHdfsIoStrategy">[docs]</a><span class="k">class</span> <span class="nc">SmvTextOnHdfsIoStrategy</span><span class="p">(</span><span class="n">SmvIoStrategy</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Simple read/write a small text file on Hdfs&quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">smvApp</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">smvApp</span> <span class="o">=</span> <span class="n">smvApp</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_file_path</span> <span class="o">=</span> <span class="n">path</span>
+
+<div class="viewcode-block" id="SmvTextOnHdfsIoStrategy.read"><a class="viewcode-back" href="../../smv.html#smv.smviostrategy.SmvTextOnHdfsIoStrategy.read">[docs]</a>    <span class="k">def</span> <span class="nf">read</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">smvApp</span><span class="o">.</span><span class="n">_jvm</span><span class="o">.</span><span class="n">SmvHDFS</span><span class="o">.</span><span class="n">readFromFile</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_file_path</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SmvTextOnHdfsIoStrategy.write"><a class="viewcode-back" href="../../smv.html#smv.smviostrategy.SmvTextOnHdfsIoStrategy.write">[docs]</a>    <span class="k">def</span> <span class="nf">write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rawdata</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">smvApp</span><span class="o">.</span><span class="n">_jvm</span><span class="o">.</span><span class="n">SmvHDFS</span><span class="o">.</span><span class="n">writeToFile</span><span class="p">(</span><span class="n">rawdata</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_file_path</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="SmvXmlOnHdfsIoStrategy"><a class="viewcode-back" href="../../smv.html#smv.smviostrategy.SmvXmlOnHdfsIoStrategy">[docs]</a><span class="k">class</span> <span class="nc">SmvXmlOnHdfsIoStrategy</span><span class="p">(</span><span class="n">SmvIoStrategy</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Read/write Xml file on Hdfs using Spark DF reader/writer&quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">smvApp</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">rowTag</span><span class="p">,</span> <span class="n">schema</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">smvApp</span> <span class="o">=</span> <span class="n">smvApp</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_file_path</span> <span class="o">=</span> <span class="n">path</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_rowTag</span> <span class="o">=</span> <span class="n">rowTag</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_schema</span> <span class="o">=</span> <span class="n">schema</span>
+
+<div class="viewcode-block" id="SmvXmlOnHdfsIoStrategy.read"><a class="viewcode-back" href="../../smv.html#smv.smviostrategy.SmvXmlOnHdfsIoStrategy.read">[docs]</a>    <span class="k">def</span> <span class="nf">read</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># TODO: look for possibilities to feed to readerLogger</span>
+        <span class="n">reader</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">smvApp</span><span class="o">.</span><span class="n">sqlContext</span>\
+            <span class="o">.</span><span class="n">read</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s1">&#39;com.databricks.spark.xml&#39;</span><span class="p">)</span>\
+            <span class="o">.</span><span class="n">options</span><span class="p">(</span><span class="n">rowTag</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_rowTag</span><span class="p">)</span>
+
+        <span class="c1"># If no schema specified, infer from data</span>
+        <span class="k">if</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_schema</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">reader</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_file_path</span><span class="p">,</span> <span class="n">schema</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_schema</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">reader</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_file_path</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SmvXmlOnHdfsIoStrategy.write"><a class="viewcode-back" href="../../smv.html#smv.smviostrategy.SmvXmlOnHdfsIoStrategy.write">[docs]</a>    <span class="k">def</span> <span class="nf">write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rawdata</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;SmvXmlOnHdfsIoStrategy&#39;s write method is not implemented&quot;</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="SmvSchemaOnHdfsIoStrategy"><a class="viewcode-back" href="../../smv.html#smv.smviostrategy.SmvSchemaOnHdfsIoStrategy">[docs]</a><span class="k">class</span> <span class="nc">SmvSchemaOnHdfsIoStrategy</span><span class="p">(</span><span class="n">SmvIoStrategy</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Read/write of an SmvSchema file on Hdfs&quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">smvApp</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">write_mode</span><span class="o">=</span><span class="s2">&quot;overwrite&quot;</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">smvApp</span> <span class="o">=</span> <span class="n">smvApp</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_file_path</span> <span class="o">=</span> <span class="n">path</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_write_mode</span> <span class="o">=</span> <span class="n">write_mode</span>
+
+<div class="viewcode-block" id="SmvSchemaOnHdfsIoStrategy.read"><a class="viewcode-back" href="../../smv.html#smv.smviostrategy.SmvSchemaOnHdfsIoStrategy.read">[docs]</a>    <span class="k">def</span> <span class="nf">read</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># To be backward compatable read using spark sc.textFile</span>
+        <span class="n">smv_schema</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">smvApp</span><span class="o">.</span><span class="n">smvSchemaObj</span><span class="o">.</span><span class="n">fromFile</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">smvApp</span><span class="o">.</span><span class="n">j_smvApp</span><span class="o">.</span><span class="n">sc</span><span class="p">(),</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_file_path</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">smv_schema</span></div>
+
+    <span class="k">def</span> <span class="nf">_remove</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">smvApp</span><span class="o">.</span><span class="n">_jvm</span><span class="o">.</span><span class="n">SmvHDFS</span><span class="o">.</span><span class="n">deleteFile</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_file_path</span><span class="p">)</span>
+
+<div class="viewcode-block" id="SmvSchemaOnHdfsIoStrategy.write"><a class="viewcode-back" href="../../smv.html#smv.smviostrategy.SmvSchemaOnHdfsIoStrategy.write">[docs]</a>    <span class="k">def</span> <span class="nf">write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">smvSchema</span><span class="p">):</span>
+        <span class="n">schema_str</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">scala_seq_to_list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">smvApp</span><span class="o">.</span><span class="n">_jvm</span><span class="p">,</span> <span class="n">smvSchema</span><span class="o">.</span><span class="n">toStringsWithMeta</span><span class="p">()))</span>
+        <span class="k">if</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_write_mode</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;overwrite&quot;</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_remove</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">SmvRuntimeError</span><span class="p">(</span><span class="s2">&quot;Write mode </span><span class="si">{}</span><span class="s2"> is not implemented yet. (Only support overwrite)&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_write_mode</span><span class="p">))</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">smvApp</span><span class="o">.</span><span class="n">_jvm</span><span class="o">.</span><span class="n">SmvHDFS</span><span class="o">.</span><span class="n">writeToFile</span><span class="p">(</span><span class="n">schema_str</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_file_path</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="SmvCsvOnHdfsIoStrategy"><a class="viewcode-back" href="../../smv.html#smv.smviostrategy.SmvCsvOnHdfsIoStrategy">[docs]</a><span class="k">class</span> <span class="nc">SmvCsvOnHdfsIoStrategy</span><span class="p">(</span><span class="n">SmvIoStrategy</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Simply read/write of csv, given schema. Not for persisting,</span>
+<span class="sd">        which should be handled by SmvCsvPersistenceStrategy&quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">smvApp</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">smvSchema</span><span class="p">,</span> <span class="n">logger</span><span class="p">,</span> <span class="n">write_mode</span><span class="o">=</span><span class="s2">&quot;overwrite&quot;</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">smvApp</span> <span class="o">=</span> <span class="n">smvApp</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_file_path</span> <span class="o">=</span> <span class="n">path</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_smv_schema</span> <span class="o">=</span> <span class="n">smvSchema</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_logger</span> <span class="o">=</span> <span class="n">logger</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_write_mode</span> <span class="o">=</span> <span class="n">write_mode</span>
+
+<div class="viewcode-block" id="SmvCsvOnHdfsIoStrategy.read"><a class="viewcode-back" href="../../smv.html#smv.smviostrategy.SmvCsvOnHdfsIoStrategy.read">[docs]</a>    <span class="k">def</span> <span class="nf">read</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">handler</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">smvApp</span><span class="o">.</span><span class="n">j_smvPyClient</span><span class="o">.</span><span class="n">createFileIOHandler</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_file_path</span><span class="p">)</span>
+
+        <span class="n">jdf</span> <span class="o">=</span> <span class="n">handler</span><span class="o">.</span><span class="n">csvFileWithSchema</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_smv_schema</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_logger</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">DataFrame</span><span class="p">(</span><span class="n">jdf</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">smvApp</span><span class="o">.</span><span class="n">sqlContext</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">_remove</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">smvApp</span><span class="o">.</span><span class="n">_jvm</span><span class="o">.</span><span class="n">SmvHDFS</span><span class="o">.</span><span class="n">deleteFile</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_file_path</span><span class="p">)</span>
+
+<div class="viewcode-block" id="SmvCsvOnHdfsIoStrategy.write"><a class="viewcode-back" href="../../smv.html#smv.smviostrategy.SmvCsvOnHdfsIoStrategy.write">[docs]</a>    <span class="k">def</span> <span class="nf">write</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">raw_data</span><span class="p">):</span>
+        <span class="n">jdf</span> <span class="o">=</span> <span class="n">raw_data</span><span class="o">.</span><span class="n">_jdf</span>
+
+        <span class="k">if</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_write_mode</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;overwrite&quot;</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_remove</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">SmvRuntimeError</span><span class="p">(</span><span class="s2">&quot;Write mode </span><span class="si">{}</span><span class="s2"> is not implemented yet. (Only support overwrite)&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_write_mode</span><span class="p">))</span>
+
+        <span class="n">handler</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">smvApp</span><span class="o">.</span><span class="n">j_smvPyClient</span><span class="o">.</span><span class="n">createFileIOHandler</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_file_path</span><span class="p">)</span>
+        <span class="n">handler</span><span class="o">.</span><span class="n">saveAsCsv</span><span class="p">(</span><span class="n">jdf</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_smv_schema</span><span class="p">)</span></div></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Spark Modularized View v2r13 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2017, TresAmigosSD.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.0.
+    </div>
+  </body>
+</html>

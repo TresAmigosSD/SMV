@@ -1,0 +1,829 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>smv.smvgenericmodule &#8212; Spark Modularized View v2r13 documentation</title>
+    <link rel="stylesheet" href="../../_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Spark Modularized View v2r13 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for smv.smvgenericmodule</h1><div class="highlight"><pre>
+<span></span><span class="c1"># This file is licensed under the Apache License, Version 2.0</span>
+<span class="c1"># (the &quot;License&quot;); you may not use this file except in compliance with</span>
+<span class="c1"># the License.  You may obtain a copy of the License at</span>
+<span class="c1">#</span>
+<span class="c1">#    http://www.apache.org/licenses/LICENSE-2.0</span>
+<span class="c1">#</span>
+<span class="c1"># Unless required by applicable law or agreed to in writing, software</span>
+<span class="c1"># distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
+<span class="c1"># See the License for the specific language governing permissions and</span>
+<span class="c1"># limitations under the License.</span>
+<span class="kn">import</span> <span class="nn">abc</span>
+<span class="kn">import</span> <span class="nn">inspect</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">traceback</span>
+<span class="kn">import</span> <span class="nn">binascii</span>
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">from</span> <span class="nn">datetime</span> <span class="k">import</span> <span class="n">datetime</span>
+
+<span class="kn">import</span> <span class="nn">smv</span>
+<span class="kn">from</span> <span class="nn">smv.utils</span> <span class="k">import</span> <span class="n">lazy_property</span><span class="p">,</span> <span class="n">is_string</span><span class="p">,</span> <span class="n">smvhash</span>
+<span class="kn">from</span> <span class="nn">smv.error</span> <span class="k">import</span> <span class="n">SmvRuntimeError</span><span class="p">,</span> <span class="n">SmvMetadataValidationError</span>
+<span class="kn">from</span> <span class="nn">smv.modulesvisitor</span> <span class="k">import</span> <span class="n">ModulesVisitor</span>
+<span class="kn">from</span> <span class="nn">smv.smviostrategy</span> <span class="k">import</span> <span class="n">SmvJsonOnHdfsPersistenceStrategy</span>
+<span class="kn">from</span> <span class="nn">smv.smvmetadata</span> <span class="k">import</span> <span class="n">SmvMetaData</span>
+<span class="kn">from</span> <span class="nn">smv.smvlock</span> <span class="k">import</span> <span class="n">SmvLock</span><span class="p">,</span> <span class="n">NonOpLock</span>
+
+<span class="k">if</span> <span class="n">sys</span><span class="o">.</span><span class="n">version_info</span> <span class="o">&gt;=</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">):</span>
+    <span class="n">ABC</span> <span class="o">=</span> <span class="n">abc</span><span class="o">.</span><span class="n">ABC</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="n">ABC</span> <span class="o">=</span> <span class="n">abc</span><span class="o">.</span><span class="n">ABCMeta</span><span class="p">(</span><span class="s1">&#39;ABC&#39;</span><span class="p">,</span> <span class="p">(),</span> <span class="p">{})</span>
+
+
+<span class="k">def</span> <span class="nf">_stripComments</span><span class="p">(</span><span class="n">code</span><span class="p">):</span>
+    <span class="kn">import</span> <span class="nn">re</span>
+    <span class="k">return</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;(?m)^ *(#.*\n?|[ \t]*\n)&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">code</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">_sourceHash</span><span class="p">(</span><span class="n">module</span><span class="p">):</span>
+    <span class="n">src</span> <span class="o">=</span> <span class="n">inspect</span><span class="o">.</span><span class="n">getsource</span><span class="p">(</span><span class="n">module</span><span class="p">)</span>
+    <span class="n">src_no_comm</span> <span class="o">=</span> <span class="n">_stripComments</span><span class="p">(</span><span class="n">src</span><span class="p">)</span>
+    <span class="c1"># DO NOT use the compiled byte code for the hash computation as</span>
+    <span class="c1"># it doesn&#39;t change when constant values are changed.  For example,</span>
+    <span class="c1"># &quot;a = 5&quot; and &quot;a = 6&quot; compile to same byte code.</span>
+    <span class="c1"># co_code = compile(src, inspect.getsourcefile(cls), &#39;exec&#39;).co_code</span>
+    <span class="k">return</span> <span class="n">smvhash</span><span class="p">(</span><span class="n">src_no_comm</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="SmvGenericModule"><a class="viewcode-back" href="../../smv.html#smv.smvgenericmodule.SmvGenericModule">[docs]</a><span class="k">class</span> <span class="nc">SmvGenericModule</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Abstract base class for all SMV modules, including dataset and task modules</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># TODO: Change the name to IsSmvGenericModule</span>
+    <span class="c1"># Python&#39;s issubclass() check does not work well with dynamically</span>
+    <span class="c1"># loaded modules.  In addition, there are some issues with the</span>
+    <span class="c1"># check, when the `abc` module is used as a metaclass, that we</span>
+    <span class="c1"># don&#39;t yet quite understand.  So for a workaround we add the</span>
+    <span class="c1"># typcheck in the Smv hierarchies themselves.</span>
+    <span class="n">IsSmvDataSet</span> <span class="o">=</span> <span class="kc">True</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">smvApp</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">smvApp</span> <span class="o">=</span> <span class="n">smvApp</span>
+
+        <span class="c1"># Set when instant created and resolved</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">timestamp</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">resolvedRequiresDS</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="c1"># keep a reference to the result data</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">module_meta</span> <span class="o">=</span> <span class="n">SmvMetaData</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">userMetadataTimeElapsed</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">persistingTimeElapsed</span> <span class="o">=</span> <span class="kc">None</span>
+
+<div class="viewcode-block" id="SmvGenericModule.fqn"><a class="viewcode-back" href="../../smv.html#smv.smvgenericmodule.SmvGenericModule.fqn">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">fqn</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns the fully qualified name</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="vm">__module__</span> <span class="o">+</span> <span class="s2">&quot;.&quot;</span> <span class="o">+</span> <span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span></div>
+
+    <span class="c1">#########################################################################</span>
+    <span class="c1"># User interface methods</span>
+    <span class="c1">#</span>
+    <span class="c1"># - isEphemeral: Required</span>
+    <span class="c1"># - description: Optional, default class docstr</span>
+    <span class="c1"># - requiresDS: Required</span>
+    <span class="c1"># - metadata: Optional, default {}</span>
+    <span class="c1"># - validateMetadata: Optional, default None</span>
+    <span class="c1"># - metadataHistorySize: Optional, default 5</span>
+    <span class="c1"># - version: Optional, default &quot;0&quot; --- Deprecated!</span>
+    <span class="c1">#########################################################################</span>
+
+<div class="viewcode-block" id="SmvGenericModule.isEphemeral"><a class="viewcode-back" href="../../smv.html#smv.smvgenericmodule.SmvGenericModule.isEphemeral">[docs]</a>    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">isEphemeral</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Should this SmvGenericModule skip persisting its data?</span>
+
+<span class="sd">            Returns:</span>
+<span class="sd">                (bool): True if this SmvGenericModule should not persist its data, false otherwise</span>
+<span class="sd">        &quot;&quot;&quot;</span></div>
+
+<div class="viewcode-block" id="SmvGenericModule.description"><a class="viewcode-back" href="../../smv.html#smv.smvgenericmodule.SmvGenericModule.description">[docs]</a>    <span class="k">def</span> <span class="nf">description</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__doc__</span></div>
+
+<div class="viewcode-block" id="SmvGenericModule.requiresDS"><a class="viewcode-back" href="../../smv.html#smv.smvgenericmodule.SmvGenericModule.requiresDS">[docs]</a>    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">requiresDS</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;User-specified list of dependencies</span>
+
+<span class="sd">            Override this method to specify the SmvGenericModule needed as inputs.</span>
+
+<span class="sd">            Returns:</span>
+<span class="sd">                (list(SmvGenericModule)): a list of dependencies</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="SmvGenericModule.metadata"><a class="viewcode-back" href="../../smv.html#smv.smvgenericmodule.SmvGenericModule.metadata">[docs]</a>    <span class="k">def</span> <span class="nf">metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">df</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;User-defined metadata</span>
+
+<span class="sd">            Override this method to define metadata that will be logged with your module&#39;s results.</span>
+<span class="sd">            Defaults to empty dictionary.</span>
+
+<span class="sd">            Arguments:</span>
+<span class="sd">                df (DataFrame): result of running the module, used to generate metadata</span>
+
+<span class="sd">            Returns:</span>
+<span class="sd">                (dict): dictionary of serializable metadata</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">{}</span></div>
+
+<div class="viewcode-block" id="SmvGenericModule.validateMetadata"><a class="viewcode-back" href="../../smv.html#smv.smvgenericmodule.SmvGenericModule.validateMetadata">[docs]</a>    <span class="k">def</span> <span class="nf">validateMetadata</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">current</span><span class="p">,</span> <span class="n">history</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;User-defined metadata validation</span>
+
+<span class="sd">            Override this method to define validation rules for metadata given</span>
+<span class="sd">            the current metadata and historical metadata.</span>
+
+<span class="sd">            Arguments:</span>
+<span class="sd">                current (dict): current metadata kv</span>
+<span class="sd">                history (list(dict)): list of historical metadata kv&#39;s</span>
+
+<span class="sd">            Returns:</span>
+<span class="sd">                (str): Validation failure message. Return None (or omit a return statement) if</span>
+<span class="sd">                successful.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="kc">None</span></div>
+
+<div class="viewcode-block" id="SmvGenericModule.metadataHistorySize"><a class="viewcode-back" href="../../smv.html#smv.smvgenericmodule.SmvGenericModule.metadataHistorySize">[docs]</a>    <span class="k">def</span> <span class="nf">metadataHistorySize</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Override to define the maximum size of the metadata history for this module</span>
+
+<span class="sd">            Return:</span>
+<span class="sd">                (int): size</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="mi">5</span></div>
+
+<div class="viewcode-block" id="SmvGenericModule.version"><a class="viewcode-back" href="../../smv.html#smv.smvgenericmodule.SmvGenericModule.version">[docs]</a>    <span class="k">def</span> <span class="nf">version</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Version number</span>
+<span class="sd">            Deprecated!</span>
+
+<span class="sd">            Returns:</span>
+<span class="sd">                (str): version number of this SmvGenericModule</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="s2">&quot;0&quot;</span></div>
+
+
+    <span class="c1">#########################################################################</span>
+    <span class="c1"># Methods for sub-classes to implement and/or override</span>
+    <span class="c1">#</span>
+    <span class="c1"># - dsType: Required</span>
+    <span class="c1"># - persistStrategy: Required</span>
+    <span class="c1"># - metaStrategy: Required</span>
+    <span class="c1"># - _dependencies: Optional, default self.requiresDS()</span>
+    <span class="c1"># - _pre_action: Optional, default pass through the input data</span>
+    <span class="c1"># - _post_action: Optional, default pass</span>
+    <span class="c1"># - _force_an_action: Optional, default pass</span>
+    <span class="c1"># - instanceValHash: Optional, default 0</span>
+    <span class="c1"># - doRun: Required</span>
+    <span class="c1"># - _assure_output_type: Optional</span>
+    <span class="c1">#########################################################################</span>
+<div class="viewcode-block" id="SmvGenericModule.dsType"><a class="viewcode-back" href="../../smv.html#smv.smvgenericmodule.SmvGenericModule.dsType">[docs]</a>    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">dsType</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return SmvGenericModule&#39;s type&quot;&quot;&quot;</span></div>
+
+<div class="viewcode-block" id="SmvGenericModule.persistStrategy"><a class="viewcode-back" href="../../smv.html#smv.smvgenericmodule.SmvGenericModule.persistStrategy">[docs]</a>    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">persistStrategy</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return an SmvIoStrategy for data persisting&quot;&quot;&quot;</span></div>
+
+<div class="viewcode-block" id="SmvGenericModule.metaStrategy"><a class="viewcode-back" href="../../smv.html#smv.smvgenericmodule.SmvGenericModule.metaStrategy">[docs]</a>    <span class="k">def</span> <span class="nf">metaStrategy</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return an SmvIoStrategy for metadata persisting&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">SmvJsonOnHdfsPersistenceStrategy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">smvApp</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_meta_path</span><span class="p">())</span></div>
+
+    <span class="k">def</span> <span class="nf">_dependencies</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Can be overridden when a module has dependency other than requiresDS</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">requiresDS</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_pre_action</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">df</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;DF in and DF out, to perform operations on created from run method&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">df</span>
+
+    <span class="k">def</span> <span class="nf">_post_action</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Will run when action happens on a DF, here for DQM validation and others</span>
+<span class="sd">            which need to be done after an action on lazy-eval data&quot;&quot;&quot;</span>
+        <span class="k">pass</span>
+
+    <span class="k">def</span> <span class="nf">_force_an_action</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">df</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;For Spark DF and other data with lazy-eval, may need to force an action to</span>
+<span class="sd">            trigger the post_action calculation. For general data without lazy-eval, do nothing</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">pass</span>
+
+<div class="viewcode-block" id="SmvGenericModule.instanceValHash"><a class="viewcode-back" href="../../smv.html#smv.smvgenericmodule.SmvGenericModule.instanceValHash">[docs]</a>    <span class="k">def</span> <span class="nf">instanceValHash</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Hash computed based on instance values of the dataset, such as the timestamp of an input file</span>
+
+<span class="sd">            Returns:</span>
+<span class="sd">                (int)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="mi">0</span></div>
+
+    <span class="k">def</span> <span class="nf">_assure_output_type</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Check whether the output of run method is expected by the concrete module</span>
+<span class="sd">            Raise an exception if check failed</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">pass</span>
+
+<div class="viewcode-block" id="SmvGenericModule.doRun"><a class="viewcode-back" href="../../smv.html#smv.smvgenericmodule.SmvGenericModule.doRun">[docs]</a>    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">doRun</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">known</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Do the real data calculation or the task of this module&quot;&quot;&quot;</span></div>
+
+    <span class="c1"># Sub-class implementation of doRun may use RunParams</span>
+<div class="viewcode-block" id="SmvGenericModule.RunParams"><a class="viewcode-back" href="../../smv.html#smv.smvgenericmodule.SmvGenericModule.RunParams">[docs]</a>    <span class="k">class</span> <span class="nc">RunParams</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Map from SmvGenericModule to resulting DataFrame</span>
+
+<span class="sd">            We need to simulate a dict from ds to df where the same object can be</span>
+<span class="sd">            keyed by different datasets with the same fqn. For example, in the</span>
+<span class="sd">            module</span>
+
+<span class="sd">            class X(SmvModule):</span>
+<span class="sd">                def requiresDS(self): return [Foo]</span>
+<span class="sd">                def run(self, i): return i[Foo]</span>
+
+<span class="sd">            the i argument of the run method should map Foo to</span>
+<span class="sd">            the correct DataFrame.</span>
+
+<span class="sd">            Args:</span>
+<span class="sd">                (dict): a map from fqn to DataFrame</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fqn2df</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">fqn2df</span> <span class="o">=</span> <span class="n">fqn2df</span>
+
+        <span class="k">def</span> <span class="nf">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ds</span><span class="p">):</span>
+            <span class="sd">&quot;&quot;&quot;Called by the &#39;[]&#39; operator</span>
+<span class="sd">            &quot;&quot;&quot;</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">ds</span><span class="p">,</span> <span class="s1">&#39;fqn&#39;</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s1">&#39;Argument to RunParams must be an SmvGenericModule&#39;</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">fqn2df</span><span class="p">[</span><span class="n">ds</span><span class="o">.</span><span class="n">fqn</span><span class="p">()]</span></div>
+
+    <span class="c1">####################################################################################</span>
+    <span class="c1"># Private methods: not expect to be overrided by sub-classes, but could be</span>
+    <span class="c1">####################################################################################</span>
+
+    <span class="c1"># Set when resolving</span>
+    <span class="k">def</span> <span class="nf">_setTimestamp</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dt</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">timestamp</span> <span class="o">=</span> <span class="n">dt</span>
+
+    <span class="c1"># Called by resolver, recursively resolve all dependencies. Use self.dependencies</span>
+    <span class="c1"># instead of requiresDS to make sure model dependency also included</span>
+    <span class="k">def</span> <span class="nf">_resolve</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">resolver</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">resolvedRequiresDS</span> <span class="o">=</span> <span class="n">resolver</span><span class="o">.</span><span class="n">loadDataSet</span><span class="p">([</span><span class="n">ds</span><span class="o">.</span><span class="n">fqn</span><span class="p">()</span> <span class="k">for</span> <span class="n">ds</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dependencies</span><span class="p">()])</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+    <span class="nd">@lazy_property</span>
+    <span class="k">def</span> <span class="nf">_ancestor_and_me_visitor</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">ModulesVisitor</span><span class="p">([</span><span class="bp">self</span><span class="p">])</span>
+
+    <span class="k">def</span> <span class="nf">_do_it</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fqn2df</span><span class="p">,</span> <span class="n">run_set</span><span class="p">,</span> <span class="n">collector</span><span class="p">,</span> <span class="n">forceRun</span><span class="p">,</span> <span class="n">is_quick_run</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Entry point for the module runner</span>
+<span class="sd">            By default, just need to calculate modout data</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_populate_data</span><span class="p">(</span><span class="n">fqn2df</span><span class="p">,</span> <span class="n">run_set</span><span class="p">,</span> <span class="n">collector</span><span class="p">,</span> <span class="n">forceRun</span><span class="p">,</span> <span class="n">is_quick_run</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="k">def</span> <span class="nf">_populate_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fqn2df</span><span class="p">,</span> <span class="n">run_set</span><span class="p">,</span> <span class="n">collector</span><span class="p">,</span> <span class="n">forceRun</span><span class="p">,</span> <span class="n">is_quick_run</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;create or get data from smvApp level cache and populate module data cache</span>
+
+<span class="sd">            Args:</span>
+<span class="sd">                fqn2df({str:DataFrame}) already run modules current module may depends</span>
+<span class="sd">                run_set(set(SmvGenericModule)) modules yet to run post_action</span>
+<span class="sd">                collector(SmvRunInfoCollector) collect runinfo of current run</span>
+<span class="sd">                forceRun(bool) ignore DF cache in smvApp</span>
+<span class="sd">                is_quick_run(bool) skip meta, dqm, persist, but use persisted as possible</span>
+
+<span class="sd">            fqn2df will be appended, and run_set will shrink</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">forceRun</span> <span class="ow">or</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">versioned_fqn</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">smvApp</span><span class="o">.</span><span class="n">data_cache</span><span class="p">)):</span>
+            <span class="n">res</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_computeData</span><span class="p">(</span><span class="n">fqn2df</span><span class="p">,</span> <span class="n">run_set</span><span class="p">,</span> <span class="n">collector</span><span class="p">,</span> <span class="n">is_quick_run</span><span class="p">)</span>
+            <span class="k">if</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">isEphemeral</span><span class="p">()):</span>
+                <span class="c1"># Only cache ephemeral modules data, since non-ephemeral any how</span>
+                <span class="c1"># will be read from persisted result, no need to persist the logic</span>
+                <span class="c1"># of &quot;read from persisted file&quot;. Actually caching on non-ephemeral</span>
+                <span class="c1"># could cause problems: in the life-time of an SmvApp, it&#39;s</span>
+                <span class="c1"># possible some persisted files are deleted, it that case, the</span>
+                <span class="c1"># cached DF will still try to read from those deleted files and</span>
+                <span class="c1"># cause error.</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">smvApp</span><span class="o">.</span><span class="n">data_cache</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
+                    <span class="p">{</span><span class="bp">self</span><span class="o">.</span><span class="n">versioned_fqn</span><span class="p">:</span><span class="n">res</span><span class="p">}</span>
+                <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">smv</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{}</span><span class="s2"> had a cache in SmvApp.data_cache&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fqn</span><span class="p">()))</span>
+            <span class="n">res</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">smvApp</span><span class="o">.</span><span class="n">data_cache</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">versioned_fqn</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">res</span>
+        <span class="n">fqn2df</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="bp">self</span><span class="o">.</span><span class="n">fqn</span><span class="p">():</span> <span class="n">res</span><span class="p">})</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="k">def</span> <span class="nf">_computeData</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fqn2df</span><span class="p">,</span> <span class="n">run_set</span><span class="p">,</span> <span class="n">collector</span><span class="p">,</span> <span class="n">is_quick_run</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;When DF is not in cache, do the real calculation here</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">smv</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;compute: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fqn</span><span class="p">()))</span>
+
+        <span class="k">if</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">isEphemeral</span><span class="p">()):</span>
+            <span class="n">raw_df</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">doRun</span><span class="p">(</span><span class="n">fqn2df</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pre_action</span><span class="p">(</span><span class="n">raw_df</span><span class="p">)</span>
+        <span class="k">elif</span><span class="p">(</span><span class="n">is_quick_run</span><span class="p">):</span>
+            <span class="n">_strategy</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">persistStrategy</span><span class="p">()</span>
+            <span class="k">if</span> <span class="p">(</span><span class="ow">not</span> <span class="n">_strategy</span><span class="o">.</span><span class="n">isPersisted</span><span class="p">()):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">doRun</span><span class="p">(</span><span class="n">fqn2df</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">_strategy</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">_strategy</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">persistStrategy</span><span class="p">()</span>
+            <span class="k">if</span> <span class="p">(</span><span class="ow">not</span> <span class="n">_strategy</span><span class="o">.</span><span class="n">isPersisted</span><span class="p">()):</span>
+                <span class="n">raw_df</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">doRun</span><span class="p">(</span><span class="n">fqn2df</span><span class="p">)</span>
+                <span class="n">df</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pre_action</span><span class="p">(</span><span class="n">raw_df</span><span class="p">)</span>
+                <span class="c1"># Acquire lock on persist to ensure write is atomic</span>
+                <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_smvLock</span><span class="p">():</span>
+                    <span class="k">if</span> <span class="p">(</span><span class="n">_strategy</span><span class="o">.</span><span class="n">isPersisted</span><span class="p">()):</span>
+                        <span class="c1"># There is a chance that when waiting lock, another process persisted the same</span>
+                        <span class="c1"># module. In that case just read back</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">_strategy</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+                        <span class="n">run_set</span><span class="o">.</span><span class="n">discard</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="p">(</span><span class="n">res</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">persistingTimeElapsed</span><span class="p">)</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_do_action_on_df</span><span class="p">(</span>
+                            <span class="n">_strategy</span><span class="o">.</span><span class="n">write</span><span class="p">,</span> <span class="n">df</span><span class="p">,</span> <span class="s2">&quot;RUN &amp; PERSIST OUTPUT&quot;</span><span class="p">)</span>
+                        <span class="c1"># Need to populate self.data, since postAction need it</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">_strategy</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">_run_ancestor_and_me_postAction</span><span class="p">(</span><span class="n">run_set</span><span class="p">,</span> <span class="n">collector</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">smv</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{}</span><span class="s2"> had a persisted file&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fqn</span><span class="p">()))</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">_strategy</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+                <span class="n">run_set</span><span class="o">.</span><span class="n">discard</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span>
+
+
+    <span class="k">def</span> <span class="nf">_calculate_user_meta</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Calculate user defined metadata</span>
+<span class="sd">            could have action on the result df</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">module_meta</span><span class="o">.</span><span class="n">addSystemMeta</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="p">(</span><span class="n">user_meta</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">userMetadataTimeElapsed</span><span class="p">)</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_do_action_on_df</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="s2">&quot;GENERATE USER METADATA&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">user_meta</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">SmvRuntimeError</span><span class="p">(</span><span class="s2">&quot;User metadata </span><span class="si">{}</span><span class="s2"> is not a dict&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">repr</span><span class="p">(</span><span class="n">user_meta</span><span class="p">)))</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">module_meta</span><span class="o">.</span><span class="n">addUserMeta</span><span class="p">(</span><span class="n">user_meta</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_finalize_meta</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># Need to add duration at the very end, just before persist</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">module_meta</span><span class="o">.</span><span class="n">addDuration</span><span class="p">(</span><span class="s2">&quot;persisting&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">persistingTimeElapsed</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">module_meta</span><span class="o">.</span><span class="n">addDuration</span><span class="p">(</span><span class="s2">&quot;metadata&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">userMetadataTimeElapsed</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_validate_meta</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">hist</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">smvApp</span><span class="o">.</span><span class="n">_read_meta_hist</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">validateMetadata</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">module_meta</span><span class="p">,</span> <span class="n">hist</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">res</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">is_string</span><span class="p">(</span><span class="n">res</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">SmvRuntimeError</span><span class="p">(</span><span class="s2">&quot;Validation failure message </span><span class="si">{}</span><span class="s2"> is not a string&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">repr</span><span class="p">(</span><span class="n">res</span><span class="p">)))</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">is_string</span><span class="p">(</span><span class="n">res</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">res</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">SmvMetadataValidationError</span><span class="p">(</span><span class="n">res</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_persist_meta</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">meta_json</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">module_meta</span><span class="o">.</span><span class="n">toJson</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">metaStrategy</span><span class="p">()</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">meta_json</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_collect_runinfo_and_update_hist</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">collector</span><span class="p">):</span>
+        <span class="n">hist</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">smvApp</span><span class="o">.</span><span class="n">_read_meta_hist</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="c1"># Collect before update hist</span>
+        <span class="n">collector</span><span class="o">.</span><span class="n">add_runinfo</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fqn</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">module_meta</span><span class="p">,</span> <span class="n">hist</span><span class="p">)</span>
+        <span class="n">hist</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">module_meta</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">metadataHistorySize</span><span class="p">())</span>
+        <span class="n">io_strategy</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">smvApp</span><span class="o">.</span><span class="n">_hist_io_strategy</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="n">io_strategy</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">hist</span><span class="o">.</span><span class="n">toJson</span><span class="p">())</span>
+
+    <span class="k">def</span> <span class="nf">_get_metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return the best meta without run. If persisted, use it, otherwise</span>
+<span class="sd">            add info up to resolved DS&quot;&quot;&quot;</span>
+        <span class="n">io_strategy</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">metaStrategy</span><span class="p">()</span>
+        <span class="n">persisted</span> <span class="o">=</span> <span class="n">io_strategy</span><span class="o">.</span><span class="n">isPersisted</span><span class="p">()</span>
+        <span class="k">if</span> <span class="p">(</span><span class="ow">not</span> <span class="n">persisted</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">module_meta</span><span class="o">.</span><span class="n">addSystemMeta</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">module_meta</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">meta_json</span> <span class="o">=</span> <span class="n">io_strategy</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+            <span class="k">return</span> <span class="n">SmvMetaData</span><span class="p">()</span><span class="o">.</span><span class="n">fromJson</span><span class="p">(</span><span class="n">meta_json</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_force_post_action</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">run_set</span><span class="p">,</span> <span class="n">collector</span><span class="p">):</span>
+        <span class="k">if</span> <span class="p">(</span><span class="bp">self</span> <span class="ow">in</span> <span class="n">run_set</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_force_an_action</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_run_ancestor_and_me_postAction</span><span class="p">(</span><span class="n">run_set</span><span class="p">,</span> <span class="n">collector</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_run_ancestor_and_me_postAction</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">run_set</span><span class="p">,</span> <span class="n">collector</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;When action happens on current module, run the the delayed</span>
+<span class="sd">            post action of the ancestor ephemeral modules</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">def</span> <span class="nf">not_persisted_or_no_edd_when_forced</span><span class="p">(</span><span class="n">io_strategy</span><span class="p">):</span>
+            <span class="k">if</span> <span class="p">(</span><span class="ow">not</span> <span class="n">io_strategy</span><span class="o">.</span><span class="n">isPersisted</span><span class="p">()):</span>
+                <span class="k">return</span> <span class="kc">True</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">meta</span> <span class="o">=</span> <span class="n">io_strategy</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+                <span class="n">force_edd</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">smvApp</span><span class="o">.</span><span class="n">py_smvconf</span><span class="o">.</span><span class="n">force_edd</span><span class="p">()</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">force_edd</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">meta</span><span class="o">.</span><span class="n">getEddResult</span><span class="p">())</span> <span class="o">==</span> <span class="mi">0</span><span class="p">):</span>
+                    <span class="k">return</span> <span class="kc">True</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="kc">False</span>
+
+        <span class="k">def</span> <span class="nf">run_delayed_postAction</span><span class="p">(</span><span class="n">mod</span><span class="p">,</span> <span class="n">state</span><span class="p">):</span>
+            <span class="p">(</span><span class="n">_run_set</span><span class="p">,</span> <span class="n">coll</span><span class="p">)</span> <span class="o">=</span> <span class="n">state</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">mod</span> <span class="ow">in</span> <span class="n">_run_set</span><span class="p">):</span>
+                <span class="n">smv</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Run post_action of </span><span class="si">{}</span><span class="s2"> from </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">mod</span><span class="o">.</span><span class="n">fqn</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">fqn</span><span class="p">()))</span>
+                <span class="n">mod</span><span class="o">.</span><span class="n">_post_action</span><span class="p">()</span>
+                <span class="n">meta_io_strategy</span> <span class="o">=</span> <span class="n">mod</span><span class="o">.</span><span class="n">metaStrategy</span><span class="p">()</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">not_persisted_or_no_edd_when_forced</span><span class="p">(</span><span class="n">meta_io_strategy</span><span class="p">)):</span>
+                    <span class="c1"># data cache should be populated by this step</span>
+                    <span class="k">if</span> <span class="p">(</span><span class="n">mod</span><span class="o">.</span><span class="n">data</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">):</span>
+                        <span class="k">raise</span> <span class="n">SmvRuntimeError</span><span class="p">(</span><span class="s2">&quot;Module </span><span class="si">{}</span><span class="s2">&#39;s data is None, can&#39;t run postAction&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">mod</span><span class="o">.</span><span class="n">fqn</span><span class="p">()))</span>
+                    <span class="c1"># Since the ancestor list will be visited as depth-first, although</span>
+                    <span class="c1"># user_meta may trigger actions, the upper stream modules&#39; post action</span>
+                    <span class="c1"># are already run. No need to call _run_ancestor_and_me_postAction</span>
+                    <span class="c1"># in the calculate_user_meta() any more</span>
+                    <span class="n">mod</span><span class="o">.</span><span class="n">_calculate_user_meta</span><span class="p">()</span>
+                    <span class="n">mod</span><span class="o">.</span><span class="n">_finalize_meta</span><span class="p">()</span>
+                    <span class="n">mod</span><span class="o">.</span><span class="n">_validate_meta</span><span class="p">()</span>
+                    <span class="n">mod</span><span class="o">.</span><span class="n">_persist_meta</span><span class="p">()</span>
+                    <span class="n">mod</span><span class="o">.</span><span class="n">_collect_runinfo_and_update_hist</span><span class="p">(</span><span class="n">coll</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">meta_json</span> <span class="o">=</span> <span class="n">meta_io_strategy</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">module_meta</span> <span class="o">=</span> <span class="n">SmvMetaData</span><span class="p">()</span><span class="o">.</span><span class="n">fromJson</span><span class="p">(</span><span class="n">meta_json</span><span class="p">)</span>
+                <span class="n">_run_set</span><span class="o">.</span><span class="n">discard</span><span class="p">(</span><span class="n">mod</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_ancestor_and_me_visitor</span><span class="o">.</span><span class="n">dfs_visit</span><span class="p">(</span><span class="n">run_delayed_postAction</span><span class="p">,</span> <span class="p">(</span><span class="n">run_set</span><span class="p">,</span> <span class="n">collector</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">_do_action_on_df</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">func</span><span class="p">,</span> <span class="n">df</span><span class="p">,</span> <span class="n">desc</span><span class="p">):</span>
+        <span class="n">log</span> <span class="o">=</span> <span class="n">smv</span><span class="o">.</span><span class="n">logger</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;STARTING </span><span class="si">{}</span><span class="s2"> on </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">desc</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">fqn</span><span class="p">()))</span>
+
+        <span class="n">before</span>  <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
+
+        <span class="n">res</span> <span class="o">=</span> <span class="n">func</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
+
+        <span class="n">after</span>   <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
+        <span class="n">duration</span> <span class="o">=</span> <span class="p">(</span><span class="n">after</span> <span class="o">-</span> <span class="n">before</span><span class="p">)</span>
+        <span class="n">secondsElapsed</span> <span class="o">=</span> <span class="n">duration</span><span class="o">.</span><span class="n">total_seconds</span><span class="p">()</span>
+
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;COMPLETED </span><span class="si">{}</span><span class="s2">: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">desc</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">fqn</span><span class="p">()))</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;RunTime: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">duration</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="p">(</span><span class="n">res</span><span class="p">,</span> <span class="n">secondsElapsed</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_dataset_hash</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;current module&#39;s hash value, depend on code and potentially</span>
+<span class="sd">            linked data (such as for SmvCsvFile)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">log</span> <span class="o">=</span> <span class="n">smv</span><span class="o">.</span><span class="n">logger</span>
+        <span class="n">_instanceValHash</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">instanceValHash</span><span class="p">()</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{}</span><span class="s2">.instanceValHash = </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fqn</span><span class="p">(),</span> <span class="n">_instanceValHash</span><span class="p">))</span>
+
+        <span class="n">_sourceCodeHash</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sourceCodeHash</span><span class="p">()</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{}</span><span class="s2">.sourceCodeHash = $</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fqn</span><span class="p">(),</span> <span class="n">_sourceCodeHash</span><span class="p">))</span>
+
+        <span class="n">res</span> <span class="o">=</span> <span class="n">_instanceValHash</span> <span class="o">+</span> <span class="n">_sourceCodeHash</span>
+
+        <span class="c1"># ensure python&#39;s numeric type can fit in a java.lang.Integer</span>
+        <span class="k">return</span> <span class="n">res</span> <span class="o">&amp;</span> <span class="mh">0x7fffffff</span>
+
+    <span class="nd">@lazy_property</span>
+    <span class="k">def</span> <span class="nf">_hash_of_hash</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;hash depends on current module&#39;s _dataset_hash, and all ancestors.</span>
+<span class="sd">            this calculation could be expensive, so made it a lazy property</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># TODO: implement using visitor too</span>
+        <span class="n">log</span> <span class="o">=</span> <span class="n">smv</span><span class="o">.</span><span class="n">logger</span>
+        <span class="n">_dataset_hash</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dataset_hash</span><span class="p">()</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{}</span><span class="s2">.dataset_hash = </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fqn</span><span class="p">(),</span> <span class="n">_dataset_hash</span><span class="p">))</span>
+
+        <span class="n">res</span> <span class="o">=</span> <span class="n">_dataset_hash</span>
+        <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">resolvedRequiresDS</span><span class="p">:</span>
+            <span class="n">res</span> <span class="o">+=</span> <span class="n">m</span><span class="o">.</span><span class="n">_hash_of_hash</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{}</span><span class="s2">.hash_of_hash = </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fqn</span><span class="p">(),</span> <span class="n">res</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">res</span>
+
+    <span class="k">def</span> <span class="nf">_ver_hex</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s2">&quot;</span><span class="si">{0:08x}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_hash_of_hash</span><span class="p">)</span>
+
+    <span class="nd">@lazy_property</span>
+    <span class="k">def</span> <span class="nf">versioned_fqn</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;module fqn with the hash of hash. It is the signature of a specific</span>
+<span class="sd">            version of the module</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">_</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fqn</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ver_hex</span><span class="p">())</span>
+
+    <span class="k">def</span> <span class="nf">_meta_path</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">/</span><span class="si">{}</span><span class="s2">.meta&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">smvApp</span><span class="o">.</span><span class="n">all_data_dirs</span><span class="p">()</span><span class="o">.</span><span class="n">outputDir</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">versioned_fqn</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_lock_path</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">/</span><span class="si">{}</span><span class="s2">.lock&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">smvApp</span><span class="o">.</span><span class="n">all_data_dirs</span><span class="p">()</span><span class="o">.</span><span class="n">lockDir</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">versioned_fqn</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_smvLock</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">smvApp</span><span class="o">.</span><span class="n">py_smvconf</span><span class="o">.</span><span class="n">use_lock</span><span class="p">()):</span>
+            <span class="k">return</span> <span class="n">SmvLock</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">smvApp</span><span class="o">.</span><span class="n">_jvm</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lock_path</span><span class="p">())</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">NonOpLock</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_is_persisted</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Is current module persisted or not. Can&#39;t be lazy, since the persisted</span>
+<span class="sd">            file could be removed from OS</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">persistStrategy</span><span class="p">()</span><span class="o">.</span><span class="n">isPersisted</span><span class="p">()</span>
+
+<div class="viewcode-block" id="SmvGenericModule.needsToRun"><a class="viewcode-back" href="../../smv.html#smv.smvgenericmodule.SmvGenericModule.needsToRun">[docs]</a>    <span class="k">def</span> <span class="nf">needsToRun</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;For non-ephemeral module, when persisted, no need to run</span>
+<span class="sd">            for ephemeral module if all its requiresDS no need to run,</span>
+<span class="sd">            also no need to run</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">isEphemeral</span><span class="p">()):</span>
+            <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">resolvedRequiresDS</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">m</span><span class="o">.</span><span class="n">needsToRun</span><span class="p">():</span>
+                    <span class="k">return</span> <span class="kc">True</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">persistStrategy</span><span class="p">()</span><span class="o">.</span><span class="n">isPersisted</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="SmvGenericModule.isSmvOutput"><a class="viewcode-back" href="../../smv.html#smv.smvgenericmodule.SmvGenericModule.isSmvOutput">[docs]</a>    <span class="k">def</span> <span class="nf">isSmvOutput</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">IsSmvOutput</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span></div>
+
+    <span class="k">def</span> <span class="nf">_sourceCodeHash</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Hash computed based on the source code of the dataset&#39;s class</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="bp">cls</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span>
+        <span class="c1"># get hash of module&#39;s source code text</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">sourceHash</span> <span class="o">=</span> <span class="n">_sourceHash</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>  <span class="c1"># `inspect` will raise error for classes defined in the REPL</span>
+            <span class="c1"># Instead of handle the case that module defined in REPL, just raise Exception here</span>
+            <span class="n">traceback</span><span class="o">.</span><span class="n">print_exc</span><span class="p">()</span>
+            <span class="n">message</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{0}</span><span class="s2">(</span><span class="si">{1!r}</span><span class="s2">)&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">err</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="n">err</span><span class="o">.</span><span class="n">args</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span>
+                <span class="n">message</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">+</span> <span class="s2">&quot;SmvGenericModule &quot;</span> <span class="o">+</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">fqn</span><span class="p">()</span> <span class="o">+</span> <span class="s2">&quot; defined in shell can&#39;t be persisted&quot;</span>
+            <span class="p">)</span>
+
+        <span class="n">smv</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{}</span><span class="s2"> sourceHash: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fqn</span><span class="p">(),</span> <span class="n">sourceHash</span><span class="p">))</span>
+        <span class="n">res</span> <span class="o">+=</span> <span class="n">sourceHash</span>
+
+        <span class="c1"># incorporate source code hash of module&#39;s parent classes</span>
+        <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">inspect</span><span class="o">.</span><span class="n">getmro</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="c1"># TODO: it probably shouldn&#39;t matter if the upstream class is an SmvGenericModule - it could be a mixin</span>
+                <span class="c1"># whose behavior matters but which doesn&#39;t inherit from SmvGenericModule</span>
+                <span class="k">if</span> <span class="n">m</span><span class="o">.</span><span class="n">IsSmvDataSet</span> <span class="ow">and</span> <span class="n">m</span> <span class="o">!=</span> <span class="bp">cls</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">m</span><span class="o">.</span><span class="n">fqn</span><span class="p">()</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;smv.&quot;</span><span class="p">):</span>
+                    <span class="n">res</span> <span class="o">+=</span> <span class="n">m</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">smvApp</span><span class="p">)</span><span class="o">.</span><span class="n">_sourceCodeHash</span><span class="p">()</span>
+            <span class="k">except</span><span class="p">:</span>
+                <span class="k">pass</span>
+
+        <span class="k">return</span> <span class="n">res</span></div>
+
+<div class="viewcode-block" id="SmvProcessModule"><a class="viewcode-back" href="../../smv.html#smv.smvgenericmodule.SmvProcessModule">[docs]</a><span class="k">class</span> <span class="nc">SmvProcessModule</span><span class="p">(</span><span class="n">SmvGenericModule</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Base class for all intermediate data process modules</span>
+
+<span class="sd">        This is a sub-class of SmvGenericModule and as a sibling class of</span>
+<span class="sd">        SmvIoModule.</span>
+
+<span class="sd">            - SmvProcessModule: multiple input, single output</span>
+<span class="sd">            - SmvInput: non-input, single output</span>
+<span class="sd">            - SmvOutput: single-input, non-output</span>
+
+<span class="sd">        User need to implement:</span>
+
+<span class="sd">            - requiresDS</span>
+<span class="sd">            - run</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="SmvProcessModule.isEphemeral"><a class="viewcode-back" href="../../smv.html#smv.smvgenericmodule.SmvProcessModule.isEphemeral">[docs]</a>    <span class="k">def</span> <span class="nf">isEphemeral</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Default SmvProcessModule&#39;s ephemeral flag to false</span>
+<span class="sd">            so when mixin SmvOutput, will still be non-ephemeral&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="kc">False</span></div>
+
+    <span class="c1">#########################################################################</span>
+    <span class="c1"># User interface methods</span>
+    <span class="c1"># - run: Required</span>
+    <span class="c1"># - requiresConfig: Optional, default []</span>
+    <span class="c1"># - requiresLib: Optional, default []</span>
+    <span class="c1">#########################################################################</span>
+<div class="viewcode-block" id="SmvProcessModule.requiresConfig"><a class="viewcode-back" href="../../smv.html#smv.smvgenericmodule.SmvProcessModule.requiresConfig">[docs]</a>    <span class="k">def</span> <span class="nf">requiresConfig</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;User-specified list of config keys this module depends on</span>
+
+<span class="sd">            The given keys and their values will influence the dataset hash</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_is_smv_run_config</span><span class="p">()</span>
+            <span class="n">is_run_conf</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="n">is_run_conf</span> <span class="o">=</span> <span class="kc">False</span>
+
+        <span class="k">if</span> <span class="p">(</span><span class="n">is_run_conf</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">smvApp</span><span class="o">.</span><span class="n">py_smvconf</span><span class="o">.</span><span class="n">get_run_config_keys</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[]</span></div>
+
+<div class="viewcode-block" id="SmvProcessModule.requiresLib"><a class="viewcode-back" href="../../smv.html#smv.smvgenericmodule.SmvProcessModule.requiresLib">[docs]</a>    <span class="k">def</span> <span class="nf">requiresLib</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;User-specified list of &#39;library&#39; dependencies. These are code, other than</span>
+<span class="sd">            the DataSet&#39;s run method that impact its output or behaviour.</span>
+
+<span class="sd">            Override this method to assist in re-running this module based on changes</span>
+<span class="sd">            in other python objects (functions, classes, packages).</span>
+
+<span class="sd">            Limitations: For python modules and packages, the &#39;requiresLib()&#39; method is</span>
+<span class="sd">            limited to registering changes on the main file of the package (for module</span>
+<span class="sd">            &#39;foo&#39;, that&#39;s &#39;foo.py&#39;, for package &#39;bar&#39;, that&#39;s &#39;bar/__init__.py&#39;). This</span>
+<span class="sd">            means that if a module or package imports other modules, the imported</span>
+<span class="sd">            module&#39;s changes will not impact DataSet hashes.</span>
+
+<span class="sd">            Returns:</span>
+<span class="sd">                (list(module)): a list of library dependencies</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">[]</span></div>
+
+<div class="viewcode-block" id="SmvProcessModule.run"><a class="viewcode-back" href="../../smv.html#smv.smvgenericmodule.SmvProcessModule.run">[docs]</a>    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">i</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;User-specified definition of the operations of this SmvModule</span>
+
+<span class="sd">            Override this method to define the output of this module, given a map</span>
+<span class="sd">            &#39;i&#39; from input SmvGenericModule to resulting DataFrame. &#39;i&#39; will have a</span>
+<span class="sd">            mapping for each SmvGenericModule listed in requiresDS. E.g.</span>
+
+<span class="sd">            def requiresDS(self):</span>
+<span class="sd">                return [MyDependency]</span>
+
+<span class="sd">            def run(self, i):</span>
+<span class="sd">                return i[MyDependency].select(&quot;importantColumn&quot;)</span>
+
+<span class="sd">            Args:</span>
+<span class="sd">                (RunParams): mapping from input SmvGenericModule to DataFrame</span>
+
+<span class="sd">            Returns:</span>
+<span class="sd">                (DataFrame): output of this SmvModule</span>
+<span class="sd">        &quot;&quot;&quot;</span></div>
+
+
+    <span class="c1">####################################################################################</span>
+    <span class="c1"># Methods can be called from client code (in run method)</span>
+    <span class="c1">####################################################################################</span>
+<div class="viewcode-block" id="SmvProcessModule.smvGetRunConfig"><a class="viewcode-back" href="../../smv.html#smv.smvgenericmodule.SmvProcessModule.smvGetRunConfig">[docs]</a>    <span class="k">def</span> <span class="nf">smvGetRunConfig</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;return the current user run configuration value for the given key.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">requiresConfig</span><span class="p">()):</span>
+            <span class="k">raise</span> <span class="n">SmvRuntimeError</span><span class="p">(</span><span class="s2">&quot;RunConfig key </span><span class="si">{}</span><span class="s2"> was not specified in requiresConfig method</span><span class="si">{}</span><span class="s2">.&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">requiresConfig</span><span class="p">()))</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">smvApp</span><span class="o">.</span><span class="n">getConf</span><span class="p">(</span><span class="n">key</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SmvProcessModule.smvGetRunConfigAsInt"><a class="viewcode-back" href="../../smv.html#smv.smvgenericmodule.SmvProcessModule.smvGetRunConfigAsInt">[docs]</a>    <span class="k">def</span> <span class="nf">smvGetRunConfigAsInt</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+        <span class="n">runConfig</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">smvGetRunConfig</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">runConfig</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">runConfig</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SmvProcessModule.smvGetRunConfigAsBool"><a class="viewcode-back" href="../../smv.html#smv.smvgenericmodule.SmvProcessModule.smvGetRunConfigAsBool">[docs]</a>    <span class="k">def</span> <span class="nf">smvGetRunConfigAsBool</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+        <span class="n">runConfig</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">smvGetRunConfig</span><span class="p">(</span><span class="n">key</span><span class="p">);</span>
+        <span class="k">if</span> <span class="n">runConfig</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="n">sval</span> <span class="o">=</span> <span class="n">runConfig</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">sval</span> <span class="o">==</span> <span class="s2">&quot;1&quot;</span> <span class="ow">or</span> <span class="n">sval</span> <span class="o">==</span> <span class="s2">&quot;true&quot;</span><span class="p">)</span></div>
+
+    <span class="c1">#########################################################################</span>
+    <span class="c1"># Methods for sub-classes to implement and/or override</span>
+    <span class="c1">#</span>
+    <span class="c1"># - doRun: Optional, default call run</span>
+    <span class="c1">#########################################################################</span>
+<div class="viewcode-block" id="SmvProcessModule.doRun"><a class="viewcode-back" href="../../smv.html#smv.smvgenericmodule.SmvProcessModule.doRun">[docs]</a>    <span class="k">def</span> <span class="nf">doRun</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">known</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Compute this dataset, and return the dataframe&quot;&quot;&quot;</span>
+        <span class="n">i</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">RunParams</span><span class="p">(</span><span class="n">known</span><span class="p">)</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_assure_output_type</span><span class="p">(</span><span class="n">res</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">res</span></div>
+
+    <span class="c1">####################################################################################</span>
+    <span class="c1"># Private methods: not expect to be overrided by sub-classes, but could be</span>
+    <span class="c1">####################################################################################</span>
+
+    <span class="k">def</span> <span class="nf">_config_hash</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Integer value representing the SMV config&#39;s contribution to the dataset hash</span>
+
+<span class="sd">            Only the keys declared in requiresConfig will be considered.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">kvs</span> <span class="o">=</span> <span class="p">[(</span><span class="n">k</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">smvGetRunConfig</span><span class="p">(</span><span class="n">k</span><span class="p">))</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">requiresConfig</span><span class="p">()]</span>
+        <span class="c1"># the config_hash should change IFF the config changes</span>
+        <span class="c1"># sort keys to ensure config hash is independent from key order</span>
+        <span class="n">sorted_kvs</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">kvs</span><span class="p">)</span>
+        <span class="c1"># we need a unique string representation of sorted_kvs to hash</span>
+        <span class="c1"># repr should change iff sorted_kvs changes</span>
+        <span class="n">kv_str</span> <span class="o">=</span> <span class="nb">repr</span><span class="p">(</span><span class="n">sorted_kvs</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">smvhash</span><span class="p">(</span><span class="n">kv_str</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_sourceCodeHash</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Hash computed based on the source code of and config, lib usage</span>
+<span class="sd">            Adding config and lib to base class&#39;s soruce code hash</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">res</span> <span class="o">=</span> <span class="nb">super</span><span class="p">(</span><span class="n">SmvProcessModule</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">_sourceCodeHash</span><span class="p">()</span>
+
+        <span class="bp">cls</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span>
+        <span class="c1"># incorporate hash of KVs for config keys listed in requiresConfig</span>
+        <span class="n">config_hash</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_config_hash</span><span class="p">()</span>
+        <span class="n">smv</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{}</span><span class="s2"> config_hash: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fqn</span><span class="p">(),</span> <span class="n">config_hash</span><span class="p">))</span>
+        <span class="n">res</span> <span class="o">+=</span> <span class="n">config_hash</span>
+
+        <span class="c1"># iterate through libs/modules that this DataSet depends on and use their source towards hash as well</span>
+        <span class="k">for</span> <span class="n">lib</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">requiresLib</span><span class="p">():</span>
+            <span class="c1"># It is possible that inspect.getsource raises</span>
+            <span class="c1"># (Python 2) &quot;IOError: source code not available&quot;</span>
+            <span class="c1"># (Python 3) &quot;TypeError&quot;</span>
+            <span class="c1"># for c-lib, e.g. time</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">lib_src_hash</span> <span class="o">=</span> <span class="n">_sourceHash</span><span class="p">(</span><span class="n">lib</span><span class="p">)</span>
+            <span class="k">except</span> <span class="p">(</span><span class="ne">IOError</span><span class="p">,</span> <span class="ne">TypeError</span><span class="p">)</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="n">lib_src_hash</span> <span class="o">=</span> <span class="mi">0</span>
+
+            <span class="n">smv</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{}</span><span class="s2"> sourceHash: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">lib</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="n">lib_src_hash</span><span class="p">))</span>
+            <span class="n">res</span> <span class="o">+=</span> <span class="n">lib_src_hash</span>
+
+        <span class="c1"># if module has high order historical validation rules, add their hash to sum.</span>
+        <span class="c1"># they key() of a validator should change if its parameters change.</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="s2">&quot;_smvHistoricalValidatorsList&quot;</span><span class="p">):</span>
+            <span class="n">keys_hash</span> <span class="o">=</span> <span class="p">[</span><span class="n">smvhash</span><span class="p">(</span><span class="n">v</span><span class="o">.</span><span class="n">_key</span><span class="p">())</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_smvHistoricalValidatorsList</span><span class="p">]</span>
+            <span class="n">historical_keys_hash</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">keys_hash</span><span class="p">)</span>
+            <span class="n">smv</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{}</span><span class="s2"> historical keys hash: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">historical_keys_hash</span><span class="p">))</span>
+            <span class="n">res</span> <span class="o">+=</span> <span class="n">historical_keys_hash</span>
+
+        <span class="k">return</span> <span class="n">res</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Spark Modularized View v2r13 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2017, TresAmigosSD.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.0.
+    </div>
+  </body>
+</html>

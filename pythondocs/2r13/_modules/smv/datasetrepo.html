@@ -1,0 +1,347 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>smv.datasetrepo &#8212; Spark Modularized View v2r13 documentation</title>
+    <link rel="stylesheet" href="../../_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Spark Modularized View v2r13 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for smv.datasetrepo</h1><div class="highlight"><pre>
+<span></span><span class="c1">#</span>
+<span class="c1"># This file is licensed under the Apache License, Version 2.0</span>
+<span class="c1"># (the &quot;License&quot;); you may not use this file except in compliance with</span>
+<span class="c1"># the License.  You may obtain a copy of the License at</span>
+<span class="c1">#</span>
+<span class="c1">#    http://www.apache.org/licenses/LICENSE-2.0</span>
+<span class="c1">#</span>
+<span class="c1"># Unless required by applicable law or agreed to in writing, software</span>
+<span class="c1"># distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
+<span class="c1"># See the License for the specific language governing permissions and</span>
+<span class="c1"># limitations under the License.</span>
+<span class="kn">import</span> <span class="nn">itertools</span>
+<span class="kn">import</span> <span class="nn">inspect</span>
+<span class="kn">import</span> <span class="nn">pkgutil</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">traceback</span>
+
+<span class="kn">import</span> <span class="nn">smv</span>
+<span class="kn">from</span> <span class="nn">smv.error</span> <span class="k">import</span> <span class="n">SmvRuntimeError</span>
+<span class="kn">from</span> <span class="nn">smv.utils</span> <span class="k">import</span> <span class="n">smv_copy_array</span><span class="p">,</span> <span class="n">lazy_property</span>
+
+<span class="sd">&quot;&quot;&quot;Python implementations of IDataSetRepoPy4J and IDataSetRepoFactoryPy4J interfaces</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="DataSetRepoFactory"><a class="viewcode-back" href="../../smv.html#smv.datasetrepo.DataSetRepoFactory">[docs]</a><span class="k">class</span> <span class="nc">DataSetRepoFactory</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">smvApp</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">smvApp</span> <span class="o">=</span> <span class="n">smvApp</span>
+
+<div class="viewcode-block" id="DataSetRepoFactory.createRepo"><a class="viewcode-back" href="../../smv.html#smv.datasetrepo.DataSetRepoFactory.createRepo">[docs]</a>    <span class="k">def</span> <span class="nf">createRepo</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">DataSetRepo</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">smvApp</span><span class="p">)</span></div></div>
+
+<div class="viewcode-block" id="DataSetRepo"><a class="viewcode-back" href="../../smv.html#smv.datasetrepo.DataSetRepo">[docs]</a><span class="k">class</span> <span class="nc">DataSetRepo</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">smvApp</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">smvApp</span> <span class="o">=</span> <span class="n">smvApp</span>
+        <span class="c1"># When SmvApp init with py_module_hotload flag (by default),</span>
+        <span class="c1"># remove client modules from sys.modules to force reload of all client</span>
+        <span class="c1"># code in the new transaction</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">smvApp</span><span class="o">.</span><span class="n">py_module_hotload</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_clear_sys_modules</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_clear_sys_modules</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">            Clear all client modules from sys.modules</span>
+<span class="sd">            If modules have names like &#39;stage1.stage2.file.mod&#39;, then we have to clear all of</span>
+<span class="sd">            set( &#39;stage1&#39;, &#39;stage1.stage2&#39;, &#39;stage1.stage2.file&#39;, &#39;stage1.stage2.file.mod&#39; )</span>
+<span class="sd">            from the sys.modules dictionary to avoid getting cached modules from python when</span>
+<span class="sd">            we contruct a new DSR.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># The set of all user-defined code that needs to be decached</span>
+        <span class="c1"># { &#39;stage1&#39; } from our example</span>
+        <span class="n">user_code_fqns</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">smvApp</span><span class="o">.</span><span class="n">stages</span><span class="p">())</span><span class="o">.</span><span class="n">union</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">smvApp</span><span class="o">.</span><span class="n">userLibs</span><span class="p">())</span>
+        <span class="n">fqn_stubs_to_remove</span> <span class="o">=</span> <span class="p">{</span><span class="n">fqn</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">fqn</span> <span class="ow">in</span> <span class="n">user_code_fqns</span><span class="p">}</span>
+
+        <span class="k">for</span> <span class="n">loaded_mod_fqn</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">modules</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
+            <span class="k">for</span> <span class="n">stubbed_fqn</span> <span class="ow">in</span> <span class="n">fqn_stubs_to_remove</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">loaded_mod_fqn</span> <span class="o">==</span> <span class="n">stubbed_fqn</span> <span class="ow">or</span> <span class="n">loaded_mod_fqn</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">stubbed_fqn</span> <span class="o">+</span> <span class="s1">&#39;.&#39;</span><span class="p">):</span>
+                    <span class="n">sys</span><span class="o">.</span><span class="n">modules</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">loaded_mod_fqn</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_for_name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Dynamically load a module in a stage by its name.</span>
+
+<span class="sd">            Similar to Java&#39;s Class.forName, but only looks in configured stages.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">lastdot</span> <span class="o">=</span> <span class="n">name</span><span class="o">.</span><span class="n">rfind</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)</span>
+        <span class="n">file_name</span> <span class="o">=</span> <span class="n">name</span><span class="p">[</span> <span class="p">:</span> <span class="n">lastdot</span><span class="p">]</span>
+        <span class="n">ds_name</span> <span class="o">=</span> <span class="n">name</span><span class="p">[</span><span class="n">lastdot</span><span class="o">+</span><span class="mi">1</span> <span class="p">:</span> <span class="p">]</span>
+
+        <span class="n">ds</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="c1"># if file isn&#39;t discoverable, module doesn&#39;t exist</span>
+        <span class="k">if</span> <span class="n">file_name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">all_project_pymodules</span><span class="p">:</span>
+            <span class="n">pymod</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">all_project_pymodules</span><span class="p">[</span><span class="n">file_name</span><span class="p">]</span>
+            <span class="c1"># leave ds as None if the file exists but doesnt have an attribute with that name</span>
+            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">pymod</span><span class="p">,</span> <span class="n">ds_name</span><span class="p">):</span>
+                <span class="n">ds</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">pymod</span><span class="p">,</span> <span class="n">ds_name</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">ds</span>
+
+    <span class="c1"># Implementation of IDataSetRepoPy4J loadDataSet, which loads the dataset</span>
+    <span class="c1"># from the most recent source. If the dataset does not exist, returns None.</span>
+    <span class="c1"># However, if there is an error (such as a SyntaxError) which prevents the</span>
+    <span class="c1"># user&#39;s file from being imported, the error will propagate back to the</span>
+    <span class="c1"># DataSetRepoPython.</span>
+<div class="viewcode-block" id="DataSetRepo.loadDataSet"><a class="viewcode-back" href="../../smv.html#smv.datasetrepo.DataSetRepo.loadDataSet">[docs]</a>    <span class="k">def</span> <span class="nf">loadDataSet</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fqn</span><span class="p">):</span>
+        <span class="n">ds</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">ds_class</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_for_name</span><span class="p">(</span><span class="n">fqn</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">ds_class</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">ds</span> <span class="o">=</span> <span class="n">ds_class</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">smvApp</span><span class="p">)</span>
+
+            <span class="c1"># Python issue https://bugs.python.org/issue1218234</span>
+            <span class="c1"># need to invalidate inspect.linecache to make dataset hash work</span>
+            <span class="n">srcfile</span> <span class="o">=</span> <span class="n">inspect</span><span class="o">.</span><span class="n">getsourcefile</span><span class="p">(</span><span class="n">ds_class</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">srcfile</span><span class="p">:</span>
+                <span class="n">inspect</span><span class="o">.</span><span class="n">linecache</span><span class="o">.</span><span class="n">checkcache</span><span class="p">(</span><span class="n">srcfile</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">ds</span></div>
+
+<div class="viewcode-block" id="DataSetRepo.load_pymodule"><a class="viewcode-back" href="../../smv.html#smv.datasetrepo.DataSetRepo.load_pymodule">[docs]</a>    <span class="k">def</span> <span class="nf">load_pymodule</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fqn</span><span class="p">):</span>
+        <span class="n">mod</span> <span class="o">=</span> <span class="nb">__import__</span><span class="p">(</span><span class="n">fqn</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">subname</span> <span class="ow">in</span> <span class="n">fqn</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)[</span><span class="mi">1</span><span class="p">:]:</span>
+            <span class="n">mod</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">mod</span><span class="p">,</span> <span class="n">subname</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">mod</span></div>
+
+    <span class="nd">@lazy_property</span>
+    <span class="k">def</span> <span class="nf">all_project_pymodules</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;An index of discoverable Python modules by fqn</span>
+
+<span class="sd">            A Python module is discoverable if it is importable and belongs to a stage. We cache this information</span>
+<span class="sd">            because walk_packages is slow and walking packages repeatedly while loading many datasets explodes</span>
+<span class="sd">            the running time of operations like getting the graph of a project.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">def</span> <span class="nf">packages_in_stage</span><span class="p">(</span><span class="n">stage_name</span><span class="p">):</span>
+            <span class="n">stage_pymod</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">load_pymodule</span><span class="p">(</span><span class="n">stage_name</span><span class="p">)</span>
+
+            <span class="c1"># where to recursively search for pymodules</span>
+            <span class="n">search_path</span> <span class="o">=</span> <span class="n">stage_pymod</span><span class="o">.</span><span class="n">__path__</span>
+
+            <span class="c1"># Prefix of all pymodules and packages found in this dir. This is a little strange - suppose we are</span>
+            <span class="c1"># searching in stage foo.bar which has the following structure:</span>
+            <span class="c1"># |-foo</span>
+            <span class="c1">#   |-bar</span>
+            <span class="c1">#     |-buzz.py</span>
+            <span class="c1">#     |-baz</span>
+            <span class="c1">#       |-file.py</span>
+            <span class="c1"># When walk_packages finds the directory `baz`, it won&#39;t know that the package&#39;s name is `foo.bar.baz` -</span>
+            <span class="c1"># it&#39;s not aware that bar is contained within another package. Unless we provide a prefix, it will think</span>
+            <span class="c1"># that `foo.bar.baz&#39;s` name is just `baz`.  This sort of makes sense, because if you added foo/bar to the</span>
+            <span class="c1"># path then you could `import baz`. However, walk_packages will actually fail because it cannot</span>
+            <span class="c1"># `import baz`, which it needs to do in order to get package details that inform the recursive search.</span>
+            <span class="c1"># If there are no packages (only pymodules) in foo/bar, then `walk_packages` will succeed, but the output</span>
+            <span class="c1"># names will be wrong (e.g. `buzz` instead of `foo.bar.buzz`).</span>
+
+            <span class="c1"># `walk_packages` can generate AttributeError if the system has</span>
+            <span class="c1"># Gtk modules, which are not designed to use with reflection or</span>
+            <span class="c1"># introspection. Best action to take in this situation is probably</span>
+            <span class="c1"># to simply suppress the error.</span>
+            <span class="k">def</span> <span class="nf">onerror</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
+                <span class="n">smv</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;Skipping due to error during walk_packages: &quot;</span> <span class="o">+</span> <span class="n">name</span><span class="p">)</span>
+
+            <span class="k">return</span> <span class="n">pkgutil</span><span class="o">.</span><span class="n">walk_packages</span><span class="p">(</span>
+                <span class="n">path</span><span class="o">=</span><span class="n">search_path</span><span class="p">,</span>
+                <span class="n">prefix</span><span class="o">=</span><span class="n">stage_name</span> <span class="o">+</span> <span class="s1">&#39;.&#39;</span><span class="p">,</span>
+                <span class="n">onerror</span><span class="o">=</span><span class="n">onerror</span><span class="p">)</span>
+
+        <span class="n">stage_walker</span> <span class="o">=</span> <span class="n">itertools</span><span class="o">.</span><span class="n">chain</span><span class="p">(</span><span class="o">*</span><span class="p">(</span><span class="n">packages_in_stage</span><span class="p">(</span><span class="n">stage</span><span class="p">)</span> <span class="k">for</span> <span class="n">stage</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">smvApp</span><span class="o">.</span><span class="n">stages</span><span class="p">()))</span>
+
+        <span class="n">module_iter</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">load_pymodule</span><span class="p">(</span><span class="n">name</span><span class="p">)</span> <span class="k">for</span> <span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">is_pkg</span><span class="p">)</span> <span class="ow">in</span> <span class="n">stage_walker</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">is_pkg</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="p">{</span><span class="n">pymod</span><span class="o">.</span><span class="vm">__name__</span><span class="p">:</span> <span class="n">pymod</span> <span class="k">for</span> <span class="n">pymod</span> <span class="ow">in</span> <span class="n">module_iter</span><span class="p">}</span>
+
+    <span class="k">def</span> <span class="nf">_matchingClassesInPyModule</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pymod</span><span class="p">,</span> <span class="n">is_matching</span><span class="p">,</span> <span class="n">skip_abs</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Finds all matching classes in a given python module.</span>
+
+<span class="sd">           `is_matching` is called on each candidate object in the module.  Only non-abstract</span>
+<span class="sd">           classes where `is_matching` returned true are returned.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">matching_classes</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">pymod_name</span> <span class="o">=</span> <span class="n">pymod</span><span class="o">.</span><span class="vm">__name__</span>
+
+        <span class="c1"># iterate over the attributes of the module, looking for SmvGenericModules</span>
+        <span class="k">for</span> <span class="n">obj_name</span> <span class="ow">in</span> <span class="nb">dir</span><span class="p">(</span><span class="n">pymod</span><span class="p">):</span>
+            <span class="n">obj</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">pymod</span><span class="p">,</span> <span class="n">obj_name</span><span class="p">)</span>
+            <span class="n">smv</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Inspecting </span><span class="si">{}</span><span class="s2"> (</span><span class="si">{}</span><span class="s2">)&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">obj_name</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="n">obj</span><span class="p">)))</span>
+
+            <span class="c1"># skip non-class objects</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">inspect</span><span class="o">.</span><span class="n">isclass</span><span class="p">(</span><span class="n">obj</span><span class="p">):</span>
+                <span class="k">continue</span>
+
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">is_matching</span><span class="p">(</span><span class="n">obj</span><span class="p">):</span>
+                <span class="n">smv</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Ignoring </span><span class="si">{}</span><span class="s2"> because it is not a match.&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">obj_name</span><span class="p">))</span>
+                <span class="k">continue</span>
+
+            <span class="n">obj_fqn</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="vm">__module__</span> <span class="o">+</span> <span class="s2">&quot;.&quot;</span> <span class="o">+</span> <span class="n">obj</span><span class="o">.</span><span class="vm">__name__</span>
+            <span class="c1"># Class should have an fqn which begins with the module name.</span>
+            <span class="c1"># Each package will contain all of the modules, classes, etc.</span>
+            <span class="c1"># that were imported into it, and we need to exclude these</span>
+            <span class="c1"># (so that we only count each module once)</span>
+            <span class="n">obj_declared_in_pymod</span> <span class="o">=</span> <span class="n">obj_fqn</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">pymod_name</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">obj_declared_in_pymod</span><span class="p">:</span>
+                <span class="n">smv</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Ignoring </span><span class="si">{}</span><span class="s2"> because it was not &quot;</span>
+                                        <span class="s2">&quot;declared in </span><span class="si">{}</span><span class="s2">. (Note: it may &quot;</span>
+                                        <span class="s2">&quot;be collected from another module)&quot;</span>
+                                        <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">obj_name</span><span class="p">,</span> <span class="n">pymod_name</span><span class="p">))</span>
+                <span class="k">continue</span>
+
+            <span class="c1"># Class should not be an ABC</span>
+            <span class="n">obj_is_abstract</span> <span class="o">=</span> <span class="n">inspect</span><span class="o">.</span><span class="n">isabstract</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">skip_abs</span> <span class="ow">and</span> <span class="n">obj_is_abstract</span><span class="p">:</span>
+                <span class="c1"># abc labels methods as abstract via the attribute __isabstractmethod__</span>
+                <span class="n">is_abstract_method</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">attr</span><span class="p">:</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">attr</span><span class="p">,</span> <span class="s2">&quot;__isabstractmethod__&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+                <span class="n">abstract_methods</span> <span class="o">=</span> <span class="p">[</span><span class="n">name</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">inspect</span><span class="o">.</span><span class="n">getmembers</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">is_abstract_method</span><span class="p">)]</span>
+                <span class="n">smv</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Ignoring </span><span class="si">{}</span><span class="s2"> because it is abstract (</span><span class="si">{}</span><span class="s2"> undefined)&quot;</span>
+                                        <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">obj_name</span><span class="p">,</span> <span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">abstract_methods</span><span class="p">)))</span>
+
+                <span class="k">continue</span>
+
+            <span class="n">smv</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Collecting &quot;</span> <span class="o">+</span> <span class="n">obj_name</span><span class="p">)</span>
+            <span class="n">matching_classes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">matching_classes</span>
+
+<div class="viewcode-block" id="DataSetRepo.dataSetsForStage"><a class="viewcode-back" href="../../smv.html#smv.datasetrepo.DataSetRepo.dataSetsForStage">[docs]</a>    <span class="k">def</span> <span class="nf">dataSetsForStage</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">stageName</span><span class="p">):</span>
+        <span class="k">def</span> <span class="nf">is_generic_module</span><span class="p">(</span><span class="n">klass</span><span class="p">):</span>
+            <span class="c1"># We try to access the IsSmvDataSet attribute of the object.</span>
+            <span class="c1"># if it does not exist, we will catch the the AttributeError</span>
+            <span class="c1"># and skip the object, as it is not an SmvGenericModules. We</span>
+            <span class="c1"># specifically check that IsSmvDataSet is identical to</span>
+            <span class="c1"># True, because some objects like Py4J&#39;s JavaObject override</span>
+            <span class="c1"># __getattr__ to **always** return something (so IsSmvDataSet</span>
+            <span class="c1"># maybe truthy even though the object is not an SmvGenericModules).</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">klass_is_smv_dataset</span> <span class="o">=</span> <span class="p">(</span><span class="n">klass</span><span class="o">.</span><span class="n">IsSmvDataSet</span> <span class="ow">is</span> <span class="kc">True</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+                <span class="n">klass_is_smv_dataset</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="k">return</span> <span class="n">klass_is_smv_dataset</span>
+
+        <span class="n">fqns</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="n">smv</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Searching for SmvGenericModules in stage &quot;</span> <span class="o">+</span> <span class="n">stageName</span><span class="p">)</span>
+        <span class="n">smv</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;sys.path=&quot;</span> <span class="o">+</span> <span class="nb">repr</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="p">))</span>
+
+        <span class="k">for</span> <span class="n">pymod_name</span><span class="p">,</span> <span class="n">pymod</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">all_project_pymodules</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="c1"># The additional &quot;.&quot; is necessary to prevent false positive, e.g. stage_2.M1 matches stage</span>
+            <span class="k">if</span> <span class="n">pymod_name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">stageName</span> <span class="o">+</span> <span class="s2">&quot;.&quot;</span><span class="p">):</span>
+                <span class="n">smv</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Searching for SmvGenericModules in &quot;</span> <span class="o">+</span> <span class="nb">repr</span><span class="p">(</span><span class="n">pymod</span><span class="p">))</span>
+
+                <span class="n">gen_modules</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_matchingClassesInPyModule</span><span class="p">(</span><span class="n">pymod</span><span class="p">,</span> <span class="n">is_generic_module</span><span class="p">)</span>
+                <span class="n">fqns</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="n">obj</span><span class="o">.</span><span class="n">fqn</span><span class="p">()</span> <span class="k">for</span> <span class="n">obj</span> <span class="ow">in</span> <span class="n">gen_modules</span><span class="p">])</span>
+
+        <span class="k">return</span> <span class="n">fqns</span></div>
+
+    <span class="k">def</span> <span class="nf">_all_providers</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;scans user libraries and smv libraries for &quot;provider&quot; classes.</span>
+<span class="sd">            Returns list of discovered provider classes</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">def</span> <span class="nf">is_provider</span><span class="p">(</span><span class="n">klass</span><span class="p">):</span>
+            <span class="sd">&quot;&quot;&quot;A class is a provider if it has `IS_PROVIDER` and is not the base `SmvProvider`</span>
+<span class="sd">               which returns empty string for provider type.</span>
+<span class="sd">            &quot;&quot;&quot;</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">klass_is_provider</span> <span class="o">=</span> <span class="p">(</span><span class="n">klass</span><span class="o">.</span><span class="n">IS_PROVIDER</span> <span class="ow">is</span> <span class="kc">True</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">klass</span><span class="o">.</span><span class="n">provider_type</span><span class="p">())</span>
+            <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+                <span class="n">klass_is_provider</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="k">return</span> <span class="n">klass_is_provider</span>
+
+        <span class="c1"># providers can be in user libs dir or builtin smv</span>
+        <span class="n">prov_libs_names</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">smvApp</span><span class="o">.</span><span class="n">userLibs</span><span class="p">()</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">smvApp</span><span class="o">.</span><span class="n">semiLibs</span><span class="p">()</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">smvApp</span><span class="o">.</span><span class="n">smvLibs</span><span class="p">()</span>
+        <span class="n">prov_dict</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="k">for</span> <span class="n">prov_lib_name</span> <span class="ow">in</span> <span class="n">prov_libs_names</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">prov_lib</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">load_pymodule</span><span class="p">(</span><span class="n">prov_lib_name</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
+                <span class="c1"># ignore the prov_lib_name if there is any loading error</span>
+                <span class="n">traceback</span><span class="o">.</span><span class="n">print_exc</span><span class="p">()</span>
+                <span class="n">message</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{0}</span><span class="s2">(</span><span class="si">{1!r}</span><span class="s2">)&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">err</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="n">err</span><span class="o">.</span><span class="n">args</span><span class="p">)</span>
+                <span class="n">smv</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Ignoring </span><span class="si">{}</span><span class="s2"> because it has error: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">prov_lib_name</span><span class="p">,</span> <span class="n">message</span><span class="p">))</span>
+                <span class="k">continue</span>
+            <span class="n">providers</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_matchingClassesInPyModule</span><span class="p">(</span><span class="n">prov_lib</span><span class="p">,</span> <span class="n">is_provider</span><span class="p">,</span> <span class="n">skip_abs</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">providers</span><span class="p">:</span>
+                <span class="n">p_fqn</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">provider_type_fqn</span><span class="p">()</span>
+                <span class="k">if</span> <span class="n">p_fqn</span> <span class="ow">in</span> <span class="n">prov_dict</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="n">SmvRuntimeError</span><span class="p">(</span><span class="s2">&quot;multiple providers with same fqn: &quot;</span> <span class="o">+</span> <span class="n">p_fqn</span><span class="p">)</span>
+                <span class="n">prov_dict</span><span class="p">[</span><span class="n">p_fqn</span><span class="p">]</span> <span class="o">=</span> <span class="n">p</span>
+
+        <span class="k">return</span> <span class="n">prov_dict</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Spark Modularized View v2r13 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2017, TresAmigosSD.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.0.
+    </div>
+  </body>
+</html>

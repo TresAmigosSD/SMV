@@ -1,0 +1,173 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>smv.modulesvisitor &#8212; Spark Modularized View v2r13 documentation</title>
+    <link rel="stylesheet" href="../../_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Spark Modularized View v2r13 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for smv.modulesvisitor</h1><div class="highlight"><pre>
+<span></span><span class="c1"># This file is licensed under the Apache License, Version 2.0</span>
+<span class="c1"># (the &quot;License&quot;); you may not use this file except in compliance with</span>
+<span class="c1"># the License.  You may obtain a copy of the License at</span>
+<span class="c1">#</span>
+<span class="c1">#    http://www.apache.org/licenses/LICENSE-2.0</span>
+<span class="c1">#</span>
+<span class="c1"># Unless required by applicable law or agreed to in writing, software</span>
+<span class="c1"># distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
+<span class="c1"># See the License for the specific language governing permissions and</span>
+<span class="c1"># limitations under the License.</span>
+<span class="kn">from</span> <span class="nn">smv.utils</span> <span class="k">import</span> <span class="n">lazy_property</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="k">import</span> <span class="n">OrderedDict</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+
+<span class="k">if</span> <span class="n">sys</span><span class="o">.</span><span class="n">version_info</span> <span class="o">&gt;=</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">0</span><span class="p">):</span>
+    <span class="kn">import</span> <span class="nn">queue</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="kn">import</span> <span class="nn">Queue</span> <span class="k">as</span> <span class="nn">queue</span>
+
+<div class="viewcode-block" id="ModulesVisitor"><a class="viewcode-back" href="../../smv.html#smv.modulesvisitor.ModulesVisitor">[docs]</a><span class="k">class</span> <span class="nc">ModulesVisitor</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Provides way to do depth and breadth first visit to the sub-graph</span>
+<span class="sd">        of modules given a set of roots</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">roots</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">roots</span> <span class="o">=</span> <span class="n">roots</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">queue</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_queue</span><span class="p">(</span><span class="n">roots</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_build_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">roots</span><span class="p">,</span> <span class="n">un_persisted_only</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Create a breadth first ordered dict for multiple roots,</span>
+<span class="sd">            when un_persisted_only==False</span>
+<span class="sd">            including all the modules up stream of the roots</span>
+<span class="sd">            otherwise</span>
+<span class="sd">            only include modules needed to calculate roots, in other</span>
+<span class="sd">            words if a module is persisted already, its upper steam</span>
+<span class="sd">            modules will be excluded</span>
+<span class="sd">         &quot;&quot;&quot;</span>
+
+        <span class="c1"># to traversal the graph in bfs order</span>
+        <span class="n">_working_queue</span> <span class="o">=</span> <span class="n">queue</span><span class="o">.</span><span class="n">Queue</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">roots</span><span class="p">:</span>
+            <span class="n">_working_queue</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
+
+        <span class="c1"># keep a distinct sorted list of nodes with root always in front of leafs</span>
+        <span class="n">_sorted</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">roots</span><span class="p">:</span>
+            <span class="n">_sorted</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="n">m</span><span class="p">:</span> <span class="kc">True</span><span class="p">})</span>
+
+        <span class="k">while</span><span class="p">(</span><span class="ow">not</span> <span class="n">_working_queue</span><span class="o">.</span><span class="n">empty</span><span class="p">()):</span>
+            <span class="n">mod</span> <span class="o">=</span> <span class="n">_working_queue</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
+            <span class="k">if</span><span class="p">(</span><span class="ow">not</span> <span class="n">un_persisted_only</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">mod</span><span class="o">.</span><span class="n">_is_persisted</span><span class="p">()):</span>
+                <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">mod</span><span class="o">.</span><span class="n">resolvedRequiresDS</span><span class="p">:</span>
+                    <span class="c1"># regardless whether seen before, add to queue, so not drop</span>
+                    <span class="c1"># any dependency which may change the ordering of the result</span>
+                    <span class="n">_working_queue</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
+
+                    <span class="c1"># if in the result list already, remove the old, add the new,</span>
+                    <span class="c1"># to make sure leafs always later</span>
+                    <span class="k">if</span> <span class="p">(</span><span class="n">m</span> <span class="ow">in</span> <span class="n">_sorted</span><span class="p">):</span>
+                        <span class="n">_sorted</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
+                    <span class="n">_sorted</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="n">m</span><span class="p">:</span> <span class="kc">True</span><span class="p">})</span>
+
+        <span class="k">return</span> <span class="n">_sorted</span>
+
+    <span class="k">def</span> <span class="nf">_build_queue</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">roots</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Create a depth first queue for multiple roots&quot;&quot;&quot;</span>
+        <span class="n">_sorted</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_dict</span><span class="p">(</span><span class="n">roots</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+        <span class="c1"># reverse the result before output to make leafs first</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">m</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="nb">reversed</span><span class="p">(</span><span class="n">_sorted</span><span class="p">)]</span>
+
+    <span class="nd">@lazy_property</span>
+    <span class="k">def</span> <span class="nf">modules_needed_for_run</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;For each run, if a module is persisted, all its ancestors</span>
+<span class="sd">            are not even needed to be visited. This method creates a</span>
+<span class="sd">            sub-list for the queue which are needed for current run</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">_sorted</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">roots</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">m</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="nb">reversed</span><span class="p">(</span><span class="n">_sorted</span><span class="p">)]</span>
+
+<div class="viewcode-block" id="ModulesVisitor.dfs_visit"><a class="viewcode-back" href="../../smv.html#smv.modulesvisitor.ModulesVisitor.dfs_visit">[docs]</a>    <span class="k">def</span> <span class="nf">dfs_visit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">action</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">need_to_run_only</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Depth first visit&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">need_to_run_only</span><span class="p">):</span>
+            <span class="n">l</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">modules_needed_for_run</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">l</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">queue</span>
+        <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">l</span><span class="p">:</span>
+            <span class="n">action</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="ModulesVisitor.bfs_visit"><a class="viewcode-back" href="../../smv.html#smv.modulesvisitor.ModulesVisitor.bfs_visit">[docs]</a>    <span class="k">def</span> <span class="nf">bfs_visit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">action</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">need_to_run_only</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Breadth first visit&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">need_to_run_only</span><span class="p">):</span>
+            <span class="n">l</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">modules_needed_for_run</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">l</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">queue</span>
+        <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="nb">reversed</span><span class="p">(</span><span class="n">l</span><span class="p">):</span>
+            <span class="n">action</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span></div></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">Spark Modularized View v2r13 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2017, TresAmigosSD.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.0.
+    </div>
+  </body>
+</html>
