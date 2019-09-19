@@ -54,7 +54,8 @@ EMAIL = 'bzhangusc@live.com'
 AUTHOR = 'Bo Zhang, Ali Tajeldin, Kai Chen, Lane Barlow, Guangning Yu'
 REQUIRES_PYTHON = '>=2.7'
 VERSION = read_file('.smv_version')
-README_CONTENTS = read_file('README.md')
+# Sounds like wheel or twine don't like our README
+# README_CONTENTS = read_file('README.md')
 
 # What packages are required for this module to be executed?
 requirements_file_path = os.path.join("docker", "smv", "requirements.txt")
@@ -71,8 +72,8 @@ setuptools.setup(
     name=NAME,
     version=VERSION,
     description=DESCRIPTION,
-    long_description=README_CONTENTS,
-    long_description_content_type='text/markdown',
+#   long_description=README_CONTENTS,
+#   long_description_content_type='text/markdown',
     author=AUTHOR,
     author_email=EMAIL,
     python_requires=REQUIRES_PYTHON,

@@ -174,9 +174,6 @@ function update_version()
   # update version in README file
   perl -pi -e "s/${PREV_SMV_VERSION_REG}/${SMV_VERSION}/g" README.md
 
-  # update version in Dockerfile
-  perl -pi -e "s/${PREV_SMV_VERSION_REG}/${SMV_VERSION}/g" docker/smv/Dockerfile
-
   # update version in smv-install
   perl -pi -e "s/${PREV_SMV_VERSION_REG}/${SMV_VERSION}/g" tools/smv-install
 
