@@ -333,11 +333,11 @@ key                      count      Pct    cumCount   cumPct
       }
       .head
       .toReport()
+    /* null will be ignored as the hist key */
     assert(rep === """Histogram of b: Boolean
 key                      count      Pct    cumCount   cumPct
-null                         1   25.00%           1   25.00%
-false                        1   25.00%           2   50.00%
-true                         2   50.00%           4  100.00%
+false                        1   33.33%           1   33.33%
+true                         2   66.67%           3  100.00%
 -------------------------------------------------""")
   }
 
@@ -427,9 +427,8 @@ key                      count      Pct    cumCount   cumPct
 -------------------------------------------------
 Histogram of b: Boolean
 key                      count      Pct    cumCount   cumPct
-null                         1   25.00%           1   25.00%
-false                        1   25.00%           2   50.00%
-true                         2   50.00%           4  100.00%
+false                        1   33.33%           1   33.33%
+true                         2   66.67%           3  100.00%
 -------------------------------------------------""")
   }
 

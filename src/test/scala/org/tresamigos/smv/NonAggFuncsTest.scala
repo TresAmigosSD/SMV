@@ -100,7 +100,8 @@ class NonAggFuncsTest extends SmvTestUtil {
     val ssc = sqlContext; import ssc.implicits._
     val df  = dfFrom("a:Integer; b:Boolean;", "1,false;2,;3,true;4,;5,true;6,false")
     val res = df.select(smvCollectSet($"b", BooleanType) as "r1")
-    assertSrddDataEqual(res, "WrappedArray(false, null, true)")
+    // smvCollectSet and native collect_set both will ignore null
+    assertSrddDataEqual(res, "WrappedArray(false, true)")
   }
 
   test("test collectSet for Double") {
