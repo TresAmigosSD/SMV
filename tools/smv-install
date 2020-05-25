@@ -32,7 +32,7 @@ function parse_args()
   done
 
   # SMV version is updated automatically by smv-release
-  SMV_VERSION="2r13"
+  SMV_VERSION="2.4r1"
 
   SMV_DIR="SMV"
   SMV_PROFILE_FILENAME="smv-profile.sh"
